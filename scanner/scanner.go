@@ -248,13 +248,13 @@ func isDigit(char byte) bool {
 }
 
 // isAlpha returns if a character is a-z, A-Z, or _.
-func isAlpha(c byte) bool {
-	return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_'
+func isAlpha(char byte) bool {
+	return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_'
 }
 
 // isAlphaNumeric returns if a character is a-z, A-Z, 0-9, or _.
-func isAlphaNumeric(c byte) bool {
-	return isAlpha(c) || isDigit(c)
+func isAlphaNumeric(char byte) bool {
+	return isAlpha(char) || isDigit(char)
 }
 
 // scannedLexeme returns the portion of the current lexeme that has been scanned.
