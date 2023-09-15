@@ -34,12 +34,13 @@ func (e *syntaxError) Error() string {
 
 // Scanner scans Lox source code into lexical tokens.
 type Scanner struct {
-	src      string
-	startPos int // position of the first character of the lexeme being scanned
-	pos      int // position of the character currently being considered
-	line     int // current line in the source file
-	startCol int // column of the first character of the lexeme being scanned
-	col      int // current column in the source file
+	src       string
+	startPos  int // position of the first character of the lexeme being scanned
+	pos       int // position of the character currently being considered
+	startLine int // line of the first character of the lexeme being scanned
+	line      int // line of the character currently being considered
+	startCol  int // column of the first character of the lexeme being scanned
+	col       int // column of the character currently being considered
 }
 
 // New constructs a Scanner which will scan the provided source code.
@@ -76,6 +77,7 @@ func (s *Scanner) Scan() ([]token.Token, error) {
 func (s *Scanner) consumeToken() (token.Token, error) {
 	s.consumeWhitespace()
 	s.startPos = s.pos
+	s.startLine = s.line
 	s.startCol = s.col
 	switch char := s.consumeChar(); char {
 	case nullChar:
@@ -99,10 +101,15 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 	case '*':
 		return s.newToken(token.Astrisk), nil
 	case '/':
-		// // indicates a comment, so we should consume the rest of the line but ignore its contents
 		if s.peekChar() == '/' {
-			for s.peekChar() != '\n' {
-				s.consumeChar()
+			s.consumeChar()
+			s.consumeLineComment()
+			return s.consumeToken()
+		}
+		if s.peekChar() == '*' {
+			s.consumeChar()
+			if err := s.consumeBlockComment(); err != nil {
+				return token.Token{}, err
 			}
 			return s.consumeToken()
 		}
@@ -140,7 +147,7 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 			tokenType := token.LookupIdent(ident)
 			return s.newToken(tokenType), nil
 		}
-		return token.Token{}, s.newSyntaxErrorf("unexpected character %s", string(char))
+		return token.Token{}, s.syntaxErrorf("unexpected character %s", string(char))
 	}
 }
 
@@ -179,7 +186,6 @@ func (s *Scanner) eofReached() bool {
 	return s.pos >= len(s.src)
 }
 
-// consumeWhitespace consumes characters until either EOF or a non-whitespace character has been reached.
 func (s *Scanner) consumeWhitespace() {
 	for !s.eofReached() {
 		if isWhitespace(s.peekChar()) {
@@ -193,13 +199,34 @@ func (s *Scanner) consumeWhitespace() {
 	}
 }
 
-func isWhitespace(char byte) bool {
-	switch char {
-	case ' ', '\r', '\t', '\n':
-		return true
-	default:
-		return false
+func (s *Scanner) consumeLineComment() {
+	for s.peekChar() != '\n' {
+		s.consumeChar()
 	}
+}
+
+func (s *Scanner) consumeBlockComment() error {
+	// Block comments can span multiple lines and they can also be nested
+	openBlocks := 1 // There's already a block open when this method is called
+	for openBlocks > 0 && !s.eofReached() {
+		if isWhitespace(s.peekChar()) {
+			s.consumeWhitespace()
+		} else if s.peekChar() == '/' && s.peekNextChar() == '*' {
+			s.consumeChar()
+			s.consumeChar()
+			openBlocks++
+		} else if s.peekChar() == '*' && s.peekNextChar() == '/' {
+			s.consumeChar()
+			s.consumeChar()
+			openBlocks--
+		} else {
+			s.consumeChar()
+		}
+	}
+	if openBlocks > 0 {
+		return s.syntaxErrorf("unterminated block comment: %s", s.scannedLexeme())
+	}
+	return nil
 }
 
 func (s *Scanner) consumeStringToken() (token.Token, error) {
@@ -210,7 +237,7 @@ func (s *Scanner) consumeStringToken() (token.Token, error) {
 				"\n", ``,
 				"\r", ``,
 			)
-			return token.Token{}, s.newSyntaxErrorf("unterminated string literal: %s", replacer.Replace(s.scannedLexeme()))
+			return token.Token{}, s.syntaxErrorf("unterminated string literal: %s", replacer.Replace(s.scannedLexeme()))
 		case '"':
 			lexeme := s.scannedLexeme()
 			literal := lexeme[1 : len(lexeme)-2] // trim off leading and trailing "
@@ -224,6 +251,7 @@ func (s *Scanner) consumeNumberToken() token.Token {
 		s.consumeChar()
 	}
 	if s.peekChar() == '.' && isDigit(s.peekNextChar()) {
+		s.consumeChar()
 		s.consumeChar()
 		for isDigit(s.peekChar()) {
 			s.consumeChar()
@@ -241,6 +269,15 @@ func (s *Scanner) consumeIdent() string {
 		s.consumeChar()
 	}
 	return s.scannedLexeme()
+}
+
+func isWhitespace(char byte) bool {
+	switch char {
+	case ' ', '\r', '\t', '\n':
+		return true
+	default:
+		return false
+	}
 }
 
 func isDigit(char byte) bool {
@@ -262,16 +299,6 @@ func (s *Scanner) scannedLexeme() string {
 	return s.src[s.startPos:s.pos]
 }
 
-// newToken returns a Token with its Lexeme, Line, and Col set based on the current state of the Scanner.
-func (s *Scanner) newToken(tokenType token.Type) token.Token {
-	return token.Token{
-		Type:   tokenType,
-		Lexeme: s.scannedLexeme(),
-		Line:   s.line,
-		Col:    s.startCol,
-	}
-}
-
 // newTokenWithLiteral returns a Token with its Lexeme, Line, and Col set based on the current state of the Scanner.
 func (s *Scanner) newTokenWithLiteral(tokenType token.Type, literal any) token.Token {
 	return token.Token{
@@ -283,10 +310,15 @@ func (s *Scanner) newTokenWithLiteral(tokenType token.Type, literal any) token.T
 	}
 }
 
-// newSyntaxErrorf returns a syntaxError with it Line and Col set based on the current state of the Scanner.
-func (s *Scanner) newSyntaxErrorf(format string, a ...any) *syntaxError {
+// newToken returns a Token with its Lexeme, Line, and Col set based on the current state of the Scanner.
+func (s *Scanner) newToken(tokenType token.Type) token.Token {
+	return s.newTokenWithLiteral(tokenType, nil)
+}
+
+// syntaxErrorf returns a syntaxError with its Line and Col set based on the current state of the Scanner.
+func (s *Scanner) syntaxErrorf(format string, a ...any) *syntaxError {
 	return &syntaxError{
-		Line: s.line,
+		Line: s.startLine,
 		Col:  s.startCol,
 		Msg:  fmt.Sprintf(format, a...),
 	}
