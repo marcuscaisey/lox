@@ -236,10 +236,6 @@ func (s *Scanner) consumeNumberToken() token.Token {
 	return s.newTokenWithLiteral(token.Number, literal)
 }
 
-func isDigit(char byte) bool {
-	return '0' <= char && char <= '9'
-}
-
 func (s *Scanner) consumeIdent() string {
 	for isAlphaNumeric(s.peekChar()) {
 		s.consumeChar()
@@ -247,10 +243,16 @@ func (s *Scanner) consumeIdent() string {
 	return s.scannedLexeme()
 }
 
+func isDigit(char byte) bool {
+	return '0' <= char && char <= '9'
+}
+
+// isAlpha returns if a character is a-z, A-Z, or _.
 func isAlpha(c byte) bool {
 	return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_'
 }
 
+// isAlphaNumeric returns if a character is a-z, A-Z, 0-9, or _.
 func isAlphaNumeric(c byte) bool {
 	return isAlpha(c) || isDigit(c)
 }
