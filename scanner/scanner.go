@@ -135,7 +135,7 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 		if isDigit(char) {
 			return s.consumeNumberToken(), nil
 		}
-		if isAlpha(char) || char == '_' {
+		if isAlpha(char) {
 			ident := s.consumeIdent()
 			tokenType := token.LookupIdent(ident)
 			return s.newToken(tokenType), nil
