@@ -147,7 +147,7 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 			tokenType := token.LookupIdent(ident)
 			return s.newToken(tokenType), nil
 		}
-		return token.Token{}, s.syntaxErrorf("unexpected character %s", string(char))
+		return token.Token{}, s.syntaxErrorf("unexpected character %q", char)
 	}
 }
 
