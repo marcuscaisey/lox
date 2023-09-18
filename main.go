@@ -1,17 +1,19 @@
 package main
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
 	"os"
+	"path"
 
+	"github.com/chzyer/readline"
 	"github.com/marcuscaisey/golox/scanner"
 )
 
 func main() {
 	switch len(os.Args) {
 	case 1:
-		if err := runPrompt(); err != nil {
+		if err := runREPL(); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(65)
 		}
@@ -26,18 +28,36 @@ func main() {
 	}
 }
 
-func runPrompt() error {
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Printf(">>> ")
-	for scanner.Scan() {
-		if err := run(scanner.Text()); err != nil {
+func runREPL() error {
+	cfg := &readline.Config{
+		Prompt: ">>> ",
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		cfg.HistoryFile = path.Join(homeDir, ".lox_history")
+	} else {
+		fmt.Fprintf(os.Stderr, "Can't get current user's home directory (%s). Command history will not be saved.\n", err)
+	}
+
+	rl, err := readline.NewEx(cfg)
+	if err != nil {
+		return fmt.Errorf("running Lox REPL: %s", err)
+	}
+
+	for {
+		line, err := rl.Readline()
+		if err != nil {
+			if errors.Is(err, readline.ErrInterrupt) {
+				continue
+			}
+			break // err is io.EOF
+		}
+		if err := run(line); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
-		fmt.Printf(">>> ")
 	}
-	if scanner.Err() != nil {
-		return fmt.Errorf("running Lox prompt: %s", scanner.Err())
-	}
+
 	return nil
 }
 
