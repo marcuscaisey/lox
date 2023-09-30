@@ -68,7 +68,7 @@ type Token struct {
 	Lexeme  string
 	Literal any
 	Line    int
-	Col     int
+	Byte    int
 }
 
 var keywordTypesByIdent = func() map[string]Type {

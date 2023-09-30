@@ -75,7 +75,7 @@ func run(src string) error {
 	positions := make([]string, len(tokens))
 	positionWidth := 0
 	for i, t := range tokens {
-		positions[i] = fmt.Sprintf("%d:%d", t.Line, t.Col)
+		positions[i] = fmt.Sprintf("%d:%d", t.Line, t.Byte)
 	}
 	for _, position := range positions {
 		positionWidth = max(len(position), positionWidth)
