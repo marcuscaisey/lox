@@ -279,8 +279,10 @@ func (s *Scanner) newTokenWithLiteral(tokenType token.Type, literal any) token.T
 		Type:    tokenType,
 		Lexeme:  s.scannedLexeme(),
 		Literal: literal,
-		Line:    s.line,
-		Byte:    s.startByte,
+		Pos: token.Position{
+			Line: s.line,
+			Byte: s.startByte,
+		},
 	}
 }
 

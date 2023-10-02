@@ -3,31 +3,71 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path"
 
 	"github.com/chzyer/readline"
 
+	"github.com/marcuscaisey/golox/ast"
+	"github.com/marcuscaisey/golox/parser"
 	"github.com/marcuscaisey/golox/scanner"
 )
 
+var cmd = flag.String("c", "", "Program passed in as string")
+
+//nolint:revive
+func Usage() {
+	fmt.Fprintf(os.Stderr, "Usage: golox [options] [script]\n")
+	fmt.Fprintf(os.Stderr, "\n")
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	flag.PrintDefaults()
+}
+
 func main() {
-	switch len(os.Args) {
-	case 1:
+	flag.Usage = Usage
+	flag.Parse()
+
+	if *cmd != "" {
+		if err := runSrc(*cmd); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	switch len(flag.Args()) {
+	case 0:
 		if err := runREPL(); err != nil {
 			fmt.Fprintln(os.Stderr, err)
-			os.Exit(65)
+			os.Exit(1)
 		}
-	case 2:
+	case 1:
 		if err := runFile(os.Args[1]); err != nil {
 			fmt.Fprintln(os.Stderr, err)
-			os.Exit(65)
+			os.Exit(1)
 		}
 	default:
-		fmt.Fprintln(os.Stderr, "Usage: golox [script]")
-		os.Exit(64)
+		flag.Usage()
+		os.Exit(2)
 	}
+}
+
+func runSrc(src string) error {
+	s := scanner.New(src)
+	tokens, err := s.Scan()
+	if err != nil {
+		return err
+	}
+	p := parser.New(tokens)
+	root, err := p.Parse()
+	if err != nil {
+		return err
+	}
+	ast.Print(root)
+	return nil
 }
 
 func runREPL() error {
@@ -53,9 +93,12 @@ func runREPL() error {
 			if errors.Is(err, readline.ErrInterrupt) {
 				continue
 			}
-			break // err is io.EOF
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			panic(fmt.Sprintf("Unexpected error from readline: %s", err))
 		}
-		if err := run(line); err != nil {
+		if err := runSrc(line); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
@@ -68,23 +111,5 @@ func runFile(name string) error {
 	if err != nil {
 		return fmt.Errorf("running Lox file: %s", err)
 	}
-	return run(string(srcBytes))
-}
-
-func run(src string) error {
-	s := scanner.New(src)
-	tokens, err := s.Scan()
-	positions := make([]string, len(tokens))
-	positionWidth := 0
-	for i, t := range tokens {
-		positions[i] = fmt.Sprintf("%d:%d", t.Line, t.Byte)
-		positionWidth = max(len(positions[i]), positionWidth)
-	}
-	for i := 0; i < len(tokens); i++ {
-		fmt.Printf("%*s: %s [%s]\n", positionWidth, positions[i], tokens[i].Lexeme, tokens[i].Type)
-	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return runSrc(string(srcBytes))
 }

@@ -1,6 +1,8 @@
 // Package token defines Token which represents a lexical token of the Lox programming language.
 package token
 
+import "fmt"
+
 //go:generate go run golang.org/x/tools/cmd/stringer -type Type -linecomment
 
 // Type is the type of a lexical token of Lox code.
@@ -36,9 +38,11 @@ const (
 	Dot       // .
 
 	// Literals
+	literalsStart
 	Ident  // identifier
 	String // string
 	Number // number
+	literalsEnd
 
 	// Operators
 	Assign       // =
@@ -68,8 +72,27 @@ type Token struct {
 	Type    Type
 	Lexeme  string
 	Literal any
-	Line    int
-	Byte    int
+	Pos     Position
+}
+
+func (t Token) String() string {
+	if t.isLiteral() {
+		return t.Lexeme
+	}
+	return t.Type.String()
+}
+
+func (t Token) isLiteral() bool {
+	return literalsStart < t.Type && t.Type < literalsEnd
+}
+
+// Position is a position in a file.
+type Position struct {
+	Line, Byte int
+}
+
+func (p Position) String() string {
+	return fmt.Sprintf("%d:%d", p.Line, p.Byte)
 }
 
 var keywordTypesByIdent = func() map[string]Type {

@@ -30,31 +30,33 @@ func _() {
 	_ = x[Semicolon-19]
 	_ = x[Comma-20]
 	_ = x[Dot-21]
-	_ = x[Ident-22]
-	_ = x[String-23]
-	_ = x[Number-24]
-	_ = x[Assign-25]
-	_ = x[Plus-26]
-	_ = x[Minus-27]
-	_ = x[Asterisk-28]
-	_ = x[Slash-29]
-	_ = x[Less-30]
-	_ = x[LessEqual-31]
-	_ = x[Greater-32]
-	_ = x[GreaterEqual-33]
-	_ = x[Equal-34]
-	_ = x[NotEqual-35]
-	_ = x[Bang-36]
-	_ = x[OpenParen-37]
-	_ = x[CloseParen-38]
-	_ = x[OpenBrace-39]
-	_ = x[CloseBrace-40]
-	_ = x[EOF-41]
+	_ = x[literalsStart-22]
+	_ = x[Ident-23]
+	_ = x[String-24]
+	_ = x[Number-25]
+	_ = x[literalsEnd-26]
+	_ = x[Assign-27]
+	_ = x[Plus-28]
+	_ = x[Minus-29]
+	_ = x[Asterisk-30]
+	_ = x[Slash-31]
+	_ = x[Less-32]
+	_ = x[LessEqual-33]
+	_ = x[Greater-34]
+	_ = x[GreaterEqual-35]
+	_ = x[Equal-36]
+	_ = x[NotEqual-37]
+	_ = x[Bang-38]
+	_ = x[OpenParen-39]
+	_ = x[CloseParen-40]
+	_ = x[OpenBrace-41]
+	_ = x[CloseBrace-42]
+	_ = x[EOF-43]
 }
 
-const _Type_name = "unknownkeywordsStartprintvartruefalsenilifelseandorwhileforfunreturnclassthissuperkeywordsEnd;,.identifierstringnumber=+-*/<<=>>===!=!(){}EOF"
+const _Type_name = "unknownkeywordsStartprintvartruefalsenilifelseandorwhileforfunreturnclassthissuperkeywordsEnd;,.literalsStartidentifierstringnumberliteralsEnd=+-*/<<=>>===!=!(){}EOF"
 
-var _Type_index = [...]uint8{0, 7, 20, 25, 28, 32, 37, 40, 42, 46, 49, 51, 56, 59, 62, 68, 73, 77, 82, 93, 94, 95, 96, 106, 112, 118, 119, 120, 121, 122, 123, 124, 126, 127, 129, 131, 133, 134, 135, 136, 137, 138, 141}
+var _Type_index = [...]uint8{0, 7, 20, 25, 28, 32, 37, 40, 42, 46, 49, 51, 56, 59, 62, 68, 73, 77, 82, 93, 94, 95, 96, 109, 119, 125, 131, 142, 143, 144, 145, 146, 147, 148, 150, 151, 153, 155, 157, 158, 159, 160, 161, 162, 165}
 
 func (i Type) String() string {
 	if i >= Type(len(_Type_index)-1) {
