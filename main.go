@@ -1,3 +1,4 @@
+// Entry point for the golox interpreter.
 package main
 
 import (

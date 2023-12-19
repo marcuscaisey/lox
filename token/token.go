@@ -6,6 +6,7 @@ package token
 // Type is the type of a lexical token of Lox code.
 type Type uint8
 
+// The list of all token types.
 const (
 	unknown Type = iota
 

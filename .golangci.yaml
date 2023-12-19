@@ -1,3 +1,9 @@
 linters:
   enable:
     - revive
+issues:
+  include:
+    - EXC0012 # revive: exported (.+) should have comment( \(or a comment on this block\))? or be unexported
+    - EXC0013 # revive: package comment should be of the form "(.+)...
+    - EXC0014 # revive: comment on exported (.+) should be of the form "(.+)..."
+    - EXC0015 # revive: should have a package comment
