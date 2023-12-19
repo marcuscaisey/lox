@@ -178,14 +178,10 @@ func (s *Scanner) eofReached() bool {
 }
 
 func (s *Scanner) consumeWhitespace() {
-	for !s.eofReached() {
-		if isWhitespace(s.peekChar()) {
-			if s.consumeChar() == '\n' {
-				s.line++
-				s.byte = 1
-			}
-		} else {
-			return
+	for isWhitespace(s.peekChar()) {
+		if s.consumeChar() == '\n' {
+			s.line++
+			s.byte = 1
 		}
 	}
 }
