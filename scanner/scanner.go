@@ -196,9 +196,8 @@ func (s *Scanner) consumeBlockComment() error {
 	// Block comments can span multiple lines and they can also be nested
 	openBlocks := 1 // There's already a block open when this method is called
 	for openBlocks > 0 && !s.eofReached() {
-		if isWhitespace(s.peekChar()) {
-			s.consumeWhitespace()
-		} else if s.peekChar() == '/' && s.peekNextChar() == '*' {
+		s.consumeWhitespace()
+		if s.peekChar() == '/' && s.peekNextChar() == '*' {
 			s.consumeChar()
 			s.consumeChar()
 			openBlocks++
