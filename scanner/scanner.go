@@ -187,7 +187,7 @@ func (s *Scanner) consumeWhitespace() {
 }
 
 func (s *Scanner) consumeLineComment() {
-	for s.peekChar() != '\n' {
+	for !s.eofReached() && s.peekChar() != '\n' {
 		s.consumeChar()
 	}
 }
