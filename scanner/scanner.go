@@ -112,6 +112,10 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 		}
 		return s.newToken(token.Less), nil
 	case '>':
+		if s.peekChar() == '=' {
+			s.consumeChar()
+			return s.newToken(token.GreaterEqual), nil
+		}
 		return s.newToken(token.Greater), nil
 	case '!':
 		if s.peekChar() == '=' {
