@@ -36,7 +36,7 @@ func _() {
 	_ = x[Assign-25]
 	_ = x[Plus-26]
 	_ = x[Minus-27]
-	_ = x[Astrisk-28]
+	_ = x[Asterisk-28]
 	_ = x[Slash-29]
 	_ = x[Less-30]
 	_ = x[LessEqual-31]

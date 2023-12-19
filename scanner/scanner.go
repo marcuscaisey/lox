@@ -90,7 +90,7 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 	case '-':
 		return s.newToken(token.Minus), nil
 	case '*':
-		return s.newToken(token.Astrisk), nil
+		return s.newToken(token.Asterisk), nil
 	case '/':
 		if s.peekChar() == '/' {
 			s.consumeChar()

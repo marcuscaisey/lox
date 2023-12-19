@@ -43,7 +43,7 @@ const (
 	Assign       // =
 	Plus         // +
 	Minus        // -
-	Astrisk      // *
+	Asterisk     // *
 	Slash        // /
 	Less         // <
 	LessEqual    // <=
