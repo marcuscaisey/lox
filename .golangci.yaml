@@ -1,6 +1,14 @@
 linters:
   enable:
+    - gci
     - revive
+linters-settings:
+  gci:
+    sections:
+      - standard # Captures all standard packages.
+      - default # Contains all imports that could not be matched to another section type.
+      - prefix(github.com/marcuscaisey/golox) # Groups all imports with the specified Prefix.
+    custom-order: true
 issues:
   include:
     - EXC0012 # revive: exported (.+) should have comment( \(or a comment on this block\))? or be unexported

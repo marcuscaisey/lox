@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/chzyer/readline"
+
 	"github.com/marcuscaisey/golox/scanner"
 )
 
