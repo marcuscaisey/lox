@@ -262,17 +262,14 @@ func isDigit(char byte) bool {
 	return '0' <= char && char <= '9'
 }
 
-// isAlpha returns if a character is a-z, A-Z, or _.
 func isAlpha(char byte) bool {
 	return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_'
 }
 
-// isAlphaNumeric returns if a character is a-z, A-Z, 0-9, or _.
 func isAlphaNumeric(char byte) bool {
 	return isAlpha(char) || isDigit(char)
 }
 
-// scannedLexeme returns the portion of the current lexeme that has been scanned.
 func (s *Scanner) scannedLexeme() string {
 	return s.src[s.startPos:s.pos]
 }
