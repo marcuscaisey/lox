@@ -44,7 +44,7 @@ func _() {
 	_ = x[GreaterEqual-33]
 	_ = x[Equal-34]
 	_ = x[NotEqual-35]
-	_ = x[Not-36]
+	_ = x[Bang-36]
 	_ = x[OpenParen-37]
 	_ = x[CloseParen-38]
 	_ = x[OpenBrace-39]

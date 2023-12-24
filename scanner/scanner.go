@@ -122,7 +122,7 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 			s.consumeChar()
 			return s.newToken(token.NotEqual), nil
 		}
-		return s.newToken(token.Not), nil
+		return s.newToken(token.Bang), nil
 	case '(':
 		return s.newToken(token.OpenParen), nil
 	case ')':

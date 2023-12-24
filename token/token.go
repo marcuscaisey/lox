@@ -52,7 +52,7 @@ const (
 	GreaterEqual // >=
 	Equal        // ==
 	NotEqual     // !=
-	Not          // !
+	Bang         // !
 
 	// Brackets
 	OpenParen  // (
