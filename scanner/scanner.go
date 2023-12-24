@@ -134,9 +134,8 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 	}
 }
 
-// consumeChar consumes the character at the current position and returns it.
-// If EOF has been reached, nullChar is returned.
-// The current position is advanced if a character is returned.
+// consumeChar returns the character at the current position and advances it if EOF has not been reached. Otherwise,
+// nullChar is returned.
 func (s *Scanner) consumeChar() byte {
 	if s.eofReached() {
 		return nullChar
@@ -147,8 +146,8 @@ func (s *Scanner) consumeChar() byte {
 	return char
 }
 
-// peekChar returns the character at the current position without consuming it.
-// If EOF has been reached, nullChar is returned.
+// peekChar returns the character at the current position without advancing it if EOF has not been reached. Otherwise,
+// nullChar is returned.
 func (s *Scanner) peekChar() byte {
 	if s.eofReached() {
 		return nullChar
