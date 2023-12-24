@@ -217,7 +217,7 @@ func (s *Scanner) consumeStringToken() (token.Token, error) {
 			return token.Token{}, s.syntaxErrorf("unterminated string literal: %s", replacer.Replace(s.scannedLexeme()))
 		case '"':
 			lexeme := s.scannedLexeme()
-			literal := lexeme[1 : len(lexeme)-2] // trim off leading and trailing "
+			literal := lexeme[1 : len(lexeme)-1] // trim off leading and trailing "
 			return s.newTokenWithLiteral(token.String, literal), nil
 		}
 	}
