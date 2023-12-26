@@ -8,19 +8,12 @@ type Node interface {
 	node()
 }
 
-// Expr is the interface which all expression nodes implement.
-type Expr interface {
-	Node
-	exprNode()
-}
-
 // Expression nodes
 type (
-	// BinaryExpr is a binary operator expression, such as a + b.
-	BinaryExpr struct {
-		Left  Expr
-		Op    token.Type
-		Right Expr
+	// Expr is the interface which all expression nodes implement.
+	Expr interface {
+		Node
+		exprNode()
 	}
 
 	// GroupExpr is a group expression, such as (a + b).
@@ -33,28 +26,35 @@ type (
 		Value any
 	}
 
+	// UnaryExpr is a unary operator expression, such as !a.
+	UnaryExpr struct {
+		Op    token.Type
+		Right Expr
+	}
+
+	// BinaryExpr is a binary operator expression, such as a + b.
+	BinaryExpr struct {
+		Left  Expr
+		Op    token.Type
+		Right Expr
+	}
+
 	// TernaryExpr is a ternary operator expression, such as a ? b : c.
 	TernaryExpr struct {
 		Condition Expr
 		Then      Expr
 		Else      Expr
 	}
-
-	// UnaryExpr is a unary operator expression, such as !a.
-	UnaryExpr struct {
-		Op    token.Type
-		Right Expr
-	}
 )
 
-func (BinaryExpr) node()  {}
 func (GroupExpr) node()   {}
 func (LiteralExpr) node() {}
-func (TernaryExpr) node() {}
 func (UnaryExpr) node()   {}
+func (BinaryExpr) node()  {}
+func (TernaryExpr) node() {}
 
-func (BinaryExpr) exprNode()  {}
 func (GroupExpr) exprNode()   {}
 func (LiteralExpr) exprNode() {}
-func (TernaryExpr) exprNode() {}
 func (UnaryExpr) exprNode()   {}
+func (BinaryExpr) exprNode()  {}
+func (TernaryExpr) exprNode() {}

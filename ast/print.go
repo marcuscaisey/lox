@@ -18,18 +18,16 @@ func Sprint(n Node) string {
 
 func sprint(n Node, d int) string {
 	switch n := n.(type) {
-	case BinaryExpr:
-		return sexpr(n, d, sprint(n.Left, d+1), fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
-	case LiteralExpr:
-		return fmt.Sprintf("%#v", n.Value)
 	case GroupExpr:
 		return sexpr(n, d, sprint(n.Expr, d+1))
-	case TernaryExpr:
-		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
+	case LiteralExpr:
+		return fmt.Sprintf("%#v", n.Value)
 	case UnaryExpr:
 		return sexpr(n, d, fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
-	case nil:
-		return "<nil>"
+	case BinaryExpr:
+		return sexpr(n, d, sprint(n.Left, d+1), fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
+	case TernaryExpr:
+		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
 	default:
 		panic(fmt.Sprintf("ast: cannot print node of type %T", n))
 	}
