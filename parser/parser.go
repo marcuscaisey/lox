@@ -166,6 +166,10 @@ func (p *Parser) advance() {
 
 func (p *Parser) addSyntaxError(format string, a ...any) {
 	msg := fmt.Sprintf(format, a...)
+	// TODO: print full line with caret pointing to bad token
+	// Example error from gcc:
+	// test.c:4:18: error: expected expression
+	//   int x = 1 ? 2 :;
 	p.errors = append(p.errors, fmt.Errorf("%s: syntax error: %s", p.nextToken.Pos, msg))
 	p.errored = true
 }
