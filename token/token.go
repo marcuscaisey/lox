@@ -57,6 +57,8 @@ const (
 	Equal        // ==
 	NotEqual     // !=
 	Bang         // !
+	Question     // ?
+	Colon        // :
 
 	// Brackets
 	OpenParen  // (

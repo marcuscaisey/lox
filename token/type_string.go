@@ -47,16 +47,18 @@ func _() {
 	_ = x[Equal-36]
 	_ = x[NotEqual-37]
 	_ = x[Bang-38]
-	_ = x[OpenParen-39]
-	_ = x[CloseParen-40]
-	_ = x[OpenBrace-41]
-	_ = x[CloseBrace-42]
-	_ = x[EOF-43]
+	_ = x[Question-39]
+	_ = x[Colon-40]
+	_ = x[OpenParen-41]
+	_ = x[CloseParen-42]
+	_ = x[OpenBrace-43]
+	_ = x[CloseBrace-44]
+	_ = x[EOF-45]
 }
 
-const _Type_name = "unknownkeywordsStartprintvartruefalsenilifelseandorwhileforfunreturnclassthissuperkeywordsEnd;,.literalsStartidentifierstringnumberliteralsEnd=+-*/<<=>>===!=!(){}EOF"
+const _Type_name = "unknownkeywordsStartprintvartruefalsenilifelseandorwhileforfunreturnclassthissuperkeywordsEnd;,.literalsStartidentifierstringnumberliteralsEnd=+-*/<<=>>===!=!?:(){}EOF"
 
-var _Type_index = [...]uint8{0, 7, 20, 25, 28, 32, 37, 40, 42, 46, 49, 51, 56, 59, 62, 68, 73, 77, 82, 93, 94, 95, 96, 109, 119, 125, 131, 142, 143, 144, 145, 146, 147, 148, 150, 151, 153, 155, 157, 158, 159, 160, 161, 162, 165}
+var _Type_index = [...]uint8{0, 7, 20, 25, 28, 32, 37, 40, 42, 46, 49, 51, 56, 59, 62, 68, 73, 77, 82, 93, 94, 95, 96, 109, 119, 125, 131, 142, 143, 144, 145, 146, 147, 148, 150, 151, 153, 155, 157, 158, 159, 160, 161, 162, 163, 164, 167}
 
 func (i Type) String() string {
 	if i >= Type(len(_Type_index)-1) {

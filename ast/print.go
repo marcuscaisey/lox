@@ -24,6 +24,8 @@ func sprint(n Node, d int) string {
 		return fmt.Sprintf("%#v", n.Value)
 	case GroupExpr:
 		return sexpr(n, d, sprint(n.Expr, d+1))
+	case TernaryExpr:
+		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
 	case UnaryExpr:
 		return sexpr(n, d, fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
 	case nil:

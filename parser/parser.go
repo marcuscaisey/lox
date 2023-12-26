@@ -41,7 +41,24 @@ func (p *Parser) parseExpr() ast.Expr {
 }
 
 func (p *Parser) parseCommaExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseEqualityExpr, token.Comma)
+	return p.parseBinaryExpr(p.parseTernaryExpr, token.Comma)
+}
+
+func (p *Parser) parseTernaryExpr() ast.Expr {
+	expr := p.parseEqualityExpr()
+	if p.match(token.Question) {
+		then := p.parseExpr()
+		if !p.expect(token.Colon) {
+			return nil
+		}
+		elseExpr := p.parseTernaryExpr()
+		expr = ast.TernaryExpr{
+			Condition: expr,
+			Then:      then,
+			Else:      elseExpr,
+		}
+	}
+	return expr
 }
 
 func (p *Parser) parseEqualityExpr() ast.Expr {

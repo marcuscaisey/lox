@@ -111,6 +111,10 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 			return s.newToken(token.NotEqual), nil
 		}
 		return s.newToken(token.Bang), nil
+	case '?':
+		return s.newToken(token.Question), nil
+	case ':':
+		return s.newToken(token.Colon), nil
 	case '(':
 		return s.newToken(token.OpenParen), nil
 	case ')':

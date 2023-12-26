@@ -11,7 +11,8 @@ Markup Language (XML) 1.0 (Fifth Edition)](https://www.w3.org/TR/xml/#sec-notati
 
 ```ebnf
 expr                = comma_expr ;
-comma_expr          = equality_expr ( "," equality_expr )* ;
+comma_expr          = ternary_expr ( "," ternary_expr )* ;
+ternary_expr        = equality_expr ( "?" expr ":" ternary_expr )? ;
 equality_expr       = relational_expr ( ( "==" | "!=" ) relational_expr )* ;
 relational_expr     = additive_expr ( ( "<" | "<=" | ">" | ">=" ) additive_expr )* ;
 additive_expr       = multiplicative_expr ( ( "+" | "-" ) multiplicative_expr )* ;
