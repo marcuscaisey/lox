@@ -37,7 +37,11 @@ func (p *Parser) Parse() (ast.Node, error) {
 }
 
 func (p *Parser) parseExpr() ast.Expr {
-	return p.parseEqualityExpr()
+	return p.parseCommaExpr()
+}
+
+func (p *Parser) parseCommaExpr() ast.Expr {
+	return p.parseBinaryExpr(p.parseEqualityExpr, token.Comma)
 }
 
 func (p *Parser) parseEqualityExpr() ast.Expr {

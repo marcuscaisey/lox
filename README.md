@@ -10,7 +10,8 @@ form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) described
 Markup Language (XML) 1.0 (Fifth Edition)](https://www.w3.org/TR/xml/#sec-notation).
 
 ```ebnf
-expr                = equality_expr ;
+expr                = comma_expr ;
+comma_expr          = equality_expr ( "," equality_expr )* ;
 equality_expr       = relational_expr ( ( "==" | "!=" ) relational_expr )* ;
 relational_expr     = additive_expr ( ( "<" | "<=" | ">" | ">=" ) additive_expr )* ;
 additive_expr       = multiplicative_expr ( ( "+" | "-" ) multiplicative_expr )* ;
