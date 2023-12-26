@@ -41,52 +41,28 @@ func (p *Parser) parseExpr() ast.Expr {
 }
 
 func (p *Parser) parseEqualityExpr() ast.Expr {
-	expr := p.parseRelationalExpr()
-	for p.match(token.Equal, token.NotEqual) {
-		op := p.curToken.Type
-		right := p.parseRelationalExpr()
-		expr = ast.BinaryExpr{
-			Left:  expr,
-			Op:    op,
-			Right: right,
-		}
-	}
-	return expr
+	return p.parseBinaryExpr(p.parseRelationalExpr, token.Equal, token.NotEqual)
 }
 
 func (p *Parser) parseRelationalExpr() ast.Expr {
-	expr := p.parseAdditiveExpr()
-	for p.match(token.Less, token.LessEqual, token.Greater, token.GreaterEqual) {
-		op := p.curToken.Type
-		right := p.parseAdditiveExpr()
-		expr = ast.BinaryExpr{
-			Left:  expr,
-			Op:    op,
-			Right: right,
-		}
-	}
-	return expr
+	return p.parseBinaryExpr(p.parseAdditiveExpr, token.Less, token.LessEqual, token.Greater, token.GreaterEqual)
 }
 
 func (p *Parser) parseAdditiveExpr() ast.Expr {
-	expr := p.parseMultiplicativeExpr()
-	for p.match(token.Plus, token.Minus) {
-		op := p.curToken.Type
-		right := p.parseMultiplicativeExpr()
-		expr = ast.BinaryExpr{
-			Left:  expr,
-			Op:    op,
-			Right: right,
-		}
-	}
-	return expr
+	return p.parseBinaryExpr(p.parseMultiplicativeExpr, token.Plus, token.Minus)
 }
 
 func (p *Parser) parseMultiplicativeExpr() ast.Expr {
-	expr := p.parseUnaryExpr()
-	for p.match(token.Asterisk, token.Slash) {
+	return p.parseBinaryExpr(p.parseUnaryExpr, token.Asterisk, token.Slash)
+}
+
+// parseBinaryExpr parses a binary expression which uses the given operators. next is a function which parses an
+// expression of next highest precedence.
+func (p *Parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) ast.Expr {
+	expr := next()
+	for p.match(operators...) {
 		op := p.curToken.Type
-		right := p.parseUnaryExpr()
+		right := next()
 		expr = ast.BinaryExpr{
 			Left:  expr,
 			Op:    op,
