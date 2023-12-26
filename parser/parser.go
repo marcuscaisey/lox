@@ -158,7 +158,7 @@ func (p *Parser) parseMultiplicativeExpr() ast.Expr {
 func (p *Parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) ast.Expr {
 	expr := next()
 	for slices.Contains(operators, p.tok.Type) {
-		op := p.tok.Type
+		op := p.tok
 		p.next()
 		right := next()
 		expr = ast.BinaryExpr{
@@ -172,7 +172,7 @@ func (p *Parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) 
 
 func (p *Parser) parseUnaryExpr() ast.Expr {
 	if p.tok.Type == token.Bang || p.tok.Type == token.Minus {
-		op := p.tok.Type
+		op := p.tok
 		p.next()
 		right := p.parseUnaryExpr()
 		return ast.UnaryExpr{
@@ -207,19 +207,19 @@ func (p *Parser) parsePrimaryExpr() ast.Expr {
 		p.expect(token.RightParen)
 		primaryExpr = ast.GroupExpr{Expr: expr}
 	default:
-		p.errorf("expected expression, got %s", p.tok)
+		panic(p.syntaxErrorf("expected expression, got %s", p.tok))
 	}
 	p.next()
 	return primaryExpr
 }
 
-// expect checks that the current token is of the given type and calls p.next() if so. Otherwise, an error is raised.
+// expect checks that the current token has the given type and calls next if so. Otherwise, a syntax error is raised.
 func (p *Parser) expect(t token.Type) {
 	if p.tok.Type == t {
 		p.next()
 		return
 	}
-	p.errorf("expected %s, got %s", t, p.tok)
+	panic(p.syntaxErrorf("expected %s, got %s", t, p.tok))
 }
 
 // next reads the next token from the lexer into p.tok.
@@ -227,10 +227,9 @@ func (p *Parser) next() {
 	p.tok = p.l.Next()
 }
 
-func (p *Parser) errorf(format string, a ...any) {
-	err := &syntaxError{
+func (p *Parser) syntaxErrorf(format string, a ...any) error {
+	return &syntaxError{
 		tok: p.tok,
 		msg: fmt.Sprintf(format, a...),
 	}
-	panic(err)
 }

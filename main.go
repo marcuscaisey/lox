@@ -13,11 +13,13 @@ import (
 	"github.com/chzyer/readline"
 
 	"github.com/marcuscaisey/golox/ast"
+	"github.com/marcuscaisey/golox/interpreter"
 	"github.com/marcuscaisey/golox/parser"
 )
 
 var (
 	cmd      = flag.String("c", "", "Program passed in as string")
+	printAST = flag.Bool("p", false, "Print the AST only")
 )
 
 //nolint:revive
@@ -66,8 +68,11 @@ func run(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	ast.Print(root)
-	return nil
+	if *printAST {
+		ast.Print(root)
+		return nil
+	}
+	return interpreter.Interpret(root)
 }
 
 func runREPL() error {

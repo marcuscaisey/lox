@@ -28,14 +28,14 @@ type (
 
 	// UnaryExpr is a unary operator expression, such as !a.
 	UnaryExpr struct {
-		Op    token.Type
+		Op    token.Token
 		Right Expr
 	}
 
 	// BinaryExpr is a binary operator expression, such as a + b.
 	BinaryExpr struct {
 		Left  Expr
-		Op    token.Type
+		Op    token.Token
 		Right Expr
 	}
 
