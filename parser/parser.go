@@ -9,13 +9,16 @@ import (
 	"github.com/marcuscaisey/golox/token"
 )
 
+type parserError struct {
+	error
+}
+
 // Parser parses lexical tokens into an abstract syntax tree.
 type Parser struct {
 	tokens    []token.Token
 	pos       int
 	curToken  token.Token
 	nextToken token.Token
-	errored   bool
 	errors    []error
 }
 
@@ -29,11 +32,24 @@ func New(tokens []token.Token) *Parser {
 
 // Parse parses its tokens and returns the root node of the abstract syntax tree.
 func (p *Parser) Parse() (ast.Node, error) {
-	expr := p.parseExpr()
+	root := p.safelyParseExpr()
 	if len(p.errors) > 0 {
 		return nil, errors.Join(p.errors...)
 	}
-	return expr, nil
+	return root, nil
+}
+
+func (p *Parser) safelyParseExpr() ast.Expr {
+	defer func() {
+		if r := recover(); r != nil {
+			if parserErr, ok := r.(parserError); ok {
+				p.errors = append(p.errors, parserErr)
+			} else {
+				panic(r)
+			}
+		}
+	}()
+	return p.parseExpr()
 }
 
 func (p *Parser) parseExpr() ast.Expr {
@@ -48,9 +64,7 @@ func (p *Parser) parseTernaryExpr() ast.Expr {
 	expr := p.parseEqualityExpr()
 	if p.match(token.Question) {
 		then := p.parseExpr()
-		if !p.expect(token.Colon) {
-			return nil
-		}
+		p.mustMatch(token.Colon)
 		elseExpr := p.parseTernaryExpr()
 		expr = ast.TernaryExpr{
 			Condition: expr,
@@ -120,21 +134,15 @@ func (p *Parser) parsePrimaryExpr() ast.Expr {
 	}
 	if p.match(token.OpenParen) {
 		expr := p.parseExpr()
-		if !p.expect(token.CloseParen) {
-			return nil
-		}
+		p.mustMatch(token.CloseParen)
 		return ast.GroupExpr{Expr: expr}
 	}
-	p.addSyntaxError("expected expression after %s, got %s", p.curToken, p.nextToken)
+	p.error("expected expression after %s, got %s", p.curToken, p.nextToken)
 	return nil
 }
 
 // match returns whether the next token is any of the given types and advances the parser if it is.
-// If the parser has errored then match will return false.
 func (p *Parser) match(types ...token.Type) bool {
-	if p.errored {
-		return false
-	}
 	for _, t := range types {
 		if p.nextToken.Type == t {
 			p.advance()
@@ -144,17 +152,12 @@ func (p *Parser) match(types ...token.Type) bool {
 	return false
 }
 
-// expect does the same as match but adds a syntax error if the next token is not the given type.
-func (p *Parser) expect(t token.Type) bool {
-	if p.errored {
-		return false
+// mustMatch does the same as match but raises an error if the next token is not the given type.
+func (p *Parser) mustMatch(t token.Type) {
+	if p.match(t) {
+		return
 	}
-	if p.nextToken.Type == t {
-		p.advance()
-		return true
-	}
-	p.addSyntaxError("expected %s after %s, got %s", t, p.curToken, p.nextToken)
-	return false
+	p.error("expected %s after %s, got %s", t, p.curToken, p.nextToken)
 }
 
 // advance increments the parser's position and updates the current and next tokens.
@@ -164,12 +167,12 @@ func (p *Parser) advance() {
 	p.nextToken = p.tokens[p.pos]
 }
 
-func (p *Parser) addSyntaxError(format string, a ...any) {
+func (p *Parser) error(format string, a ...any) {
 	msg := fmt.Sprintf(format, a...)
 	// TODO: print full line with caret pointing to bad token
 	// Example error from gcc:
 	// test.c:4:18: error: expected expression
 	//   int x = 1 ? 2 :;
-	p.errors = append(p.errors, fmt.Errorf("%s: syntax error: %s", p.nextToken.Pos, msg))
-	p.errored = true
+	err := fmt.Errorf("%s: syntax error: %s", p.nextToken.Pos, msg)
+	panic(parserError{err})
 }
