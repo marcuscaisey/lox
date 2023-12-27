@@ -134,7 +134,7 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 			tokenType := token.LookupIdent(ident)
 			return s.newToken(tokenType), nil
 		}
-		return token.Token{}, s.syntaxErrorf("unexpected character %q", char)
+		return token.Token{}, s.errorf("unexpected character %q", char)
 	}
 }
 
@@ -205,7 +205,7 @@ func (s *Scanner) consumeBlockComment() error {
 		}
 	}
 	if openBlocks > 0 {
-		return s.syntaxErrorf("unterminated block comment: %s", s.scannedLexeme())
+		return s.errorf("unterminated block comment: %s", s.scannedLexeme())
 	}
 	return nil
 }
@@ -218,7 +218,7 @@ func (s *Scanner) consumeStringToken() (token.Token, error) {
 				"\n", ``,
 				"\r", ``,
 			)
-			return token.Token{}, s.syntaxErrorf("unterminated string literal: %s", replacer.Replace(s.scannedLexeme()))
+			return token.Token{}, s.errorf("unterminated string literal: %s", replacer.Replace(s.scannedLexeme()))
 		case '"':
 			lexeme := s.scannedLexeme()
 			literal := lexeme[1 : len(lexeme)-1] // trim off leading and trailing "
@@ -295,7 +295,7 @@ func (s *Scanner) newToken(tokenType token.Type) token.Token {
 	return s.newTokenWithLiteral(tokenType, nil)
 }
 
-func (s *Scanner) syntaxErrorf(format string, a ...any) error {
+func (s *Scanner) errorf(format string, a ...any) error {
 	msg := fmt.Sprintf(format, a...)
 	return fmt.Errorf("%d:%d: syntax error: %s", s.startLine, s.startByte, msg)
 }
