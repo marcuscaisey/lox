@@ -27,7 +27,7 @@ func New(tokens []token.Token) *Parser {
 	}
 }
 
-// Parse parses the lexical tokens into an abstract syntax tree.
+// Parse parses its tokens and returns the root node of the abstract syntax tree.
 func (p *Parser) Parse() (ast.Node, error) {
 	expr := p.parseExpr()
 	if len(p.errors) > 0 {
