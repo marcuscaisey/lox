@@ -240,7 +240,7 @@ func (s *Scanner) consumeNumberToken() token.Token {
 	}
 	literal, err := strconv.ParseFloat(s.scannedLexeme(), 64)
 	if err != nil {
-		panic(fmt.Sprintf("Parsing of number literal should never fail. Error: %s", err))
+		panic(fmt.Sprintf("unexpected error parsing number literal: %s", err))
 	}
 	return s.newTokenWithLiteral(token.Number, literal)
 }

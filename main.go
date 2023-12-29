@@ -96,7 +96,7 @@ func runREPL() error {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			panic(fmt.Sprintf("Unexpected error from readline: %s", err))
+			panic(fmt.Sprintf("unexpected error from readline: %s", err))
 		}
 		if err := runSrc(line); err != nil {
 			fmt.Fprintln(os.Stderr, err)

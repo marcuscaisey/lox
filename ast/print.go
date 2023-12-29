@@ -29,7 +29,7 @@ func sprint(n Node, d int) string {
 	case TernaryExpr:
 		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
 	default:
-		panic(fmt.Sprintf("ast: cannot print node of type %T", n))
+		panic(fmt.Sprintf("unexpected node type: %T", n))
 	}
 }
 
