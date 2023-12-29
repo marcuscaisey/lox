@@ -4,13 +4,45 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/marcuscaisey/golox/ast"
 	"github.com/marcuscaisey/golox/token"
+	"golang.org/x/term"
 )
+
+var ansiCodes = map[string]string{
+	"RESET":   "\x1b[0m",
+	"BOLD":    "\x1b[1m",
+	"RED":     "\x1b[31m",
+	"DEFAULT": "\x1b[39m",
+}
+
+var isTerminal = term.IsTerminal(int(os.Stderr.Fd()))
 
 type parserError struct {
 	error
+}
+
+type syntaxError struct {
+	msg string
+	pos token.Position
+}
+
+func (e *syntaxError) Error() string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("${BOLD}%s: ${RED}syntax error: ${DEFAULT}%s${RESET}\n", e.pos, e.msg))
+	b.WriteString(fmt.Sprintf("%s\n", e.pos.File.Line(e.pos.Line)))
+	b.WriteString(fmt.Sprintf("${RED}${BOLD}%*s${RESET}", e.pos.Byte, "^"))
+	msg := b.String()
+	for k, v := range ansiCodes {
+		if !isTerminal {
+			v = ""
+		}
+		msg = strings.ReplaceAll(msg, fmt.Sprintf("${%s}", k), v)
+	}
+	return msg
 }
 
 // Parser parses lexical tokens into an abstract syntax tree.
@@ -168,11 +200,9 @@ func (p *Parser) advance() {
 }
 
 func (p *Parser) error(format string, a ...any) {
-	msg := fmt.Sprintf(format, a...)
-	// TODO: print full line with caret pointing to bad token
-	// Example error from gcc:
-	// test.c:4:18: error: expected expression
-	//   int x = 1 ? 2 :;
-	err := fmt.Errorf("%s: syntax error: %s", p.nextToken.Pos, msg)
+	err := &syntaxError{
+		msg: fmt.Sprintf(format, a...),
+		pos: p.nextToken.Pos,
+	}
 	panic(parserError{err})
 }

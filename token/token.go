@@ -90,11 +90,41 @@ func (t Token) isLiteral() bool {
 
 // Position is a position in a file.
 type Position struct {
+	File       *File
 	Line, Byte int
 }
 
 func (p Position) String() string {
 	return fmt.Sprintf("%d:%d", p.Line, p.Byte)
+}
+
+// File is a simple representation of a file.
+type File struct {
+	// TODO: Add Name field
+	contents    string
+	lineOffsets []int
+}
+
+// NewFile returns a new File with the given contents.
+func NewFile(contents string) *File {
+	f := &File{contents: contents}
+	f.lineOffsets = append(f.lineOffsets, 0)
+	for i := 0; i < len(contents); i++ {
+		if contents[i] == '\n' {
+			f.lineOffsets = append(f.lineOffsets, i+1)
+		}
+	}
+	return f
+}
+
+// Line returns the nth line of the file.
+func (f *File) Line(n int) string {
+	low := f.lineOffsets[n-1]
+	high := len(f.contents)
+	if n < len(f.lineOffsets) {
+		high = f.lineOffsets[n] - 1 // -1 to exclude the newline
+	}
+	return f.contents[low:high]
 }
 
 var keywordTypesByIdent = func() map[string]Type {

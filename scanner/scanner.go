@@ -14,6 +14,7 @@ const nullChar = 0
 
 // Scanner scans Lox source code into lexical tokens.
 type Scanner struct {
+	file      *token.File
 	src       string
 	startPos  int // position of the first character of the lexeme being scanned
 	pos       int // position of the character currently being considered
@@ -26,6 +27,7 @@ type Scanner struct {
 // New constructs a Scanner which will scan the provided source code.
 func New(src string) *Scanner {
 	return &Scanner{
+		file: token.NewFile(src),
 		src:  src,
 		line: 1,
 		byte: 1,
@@ -284,6 +286,7 @@ func (s *Scanner) newTokenWithLiteral(tokenType token.Type, literal any) token.T
 		Lexeme:  s.scannedLexeme(),
 		Literal: literal,
 		Pos: token.Position{
+			File: s.file,
 			Line: s.line,
 			Byte: s.startByte,
 		},
