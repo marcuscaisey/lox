@@ -12,8 +12,8 @@ import (
 	"github.com/chzyer/readline"
 
 	"github.com/marcuscaisey/golox/ast"
+	"github.com/marcuscaisey/golox/lexer"
 	"github.com/marcuscaisey/golox/parser"
-	"github.com/marcuscaisey/golox/scanner"
 )
 
 var cmd = flag.String("c", "", "Program passed in as string")
@@ -56,8 +56,8 @@ func main() {
 }
 
 func runSrc(src string) error {
-	s := scanner.New(src)
-	tokens, err := s.Scan()
+	l := lexer.New(src)
+	tokens, err := l.Lex()
 	if err != nil {
 		return err
 	}

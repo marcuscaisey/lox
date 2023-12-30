@@ -1,5 +1,5 @@
-// Package scanner defines Scanner which scans Lox source code into a sequence of lexical tokens.
-package scanner
+// Package lexer implements a lexer for Lox source code.
+package lexer
 
 import (
 	"errors"
@@ -12,8 +12,8 @@ import (
 
 const nullChar = 0
 
-// Scanner scans Lox source code into lexical tokens.
-type Scanner struct {
+// Lexer converts Lox source code into lexical tokens.
+type Lexer struct {
 	file      *token.File
 	src       string
 	startPos  int // position of the first character of the lexeme being scanned
@@ -25,9 +25,9 @@ type Scanner struct {
 	col int // column of the character currently being considered
 }
 
-// New constructs a Scanner which will scan the provided source code.
-func New(src string) *Scanner {
-	return &Scanner{
+// New constructs a Lexer which will lex the provided source code.
+func New(src string) *Lexer {
+	return &Lexer{
 		file: token.NewFile(src),
 		src:  src,
 		line: 1,
@@ -35,8 +35,8 @@ func New(src string) *Scanner {
 	}
 }
 
-// Scan scans the source code into a sequences of tokens.
-func (s *Scanner) Scan() ([]token.Token, error) {
+// Lex converts the source code into a sequences of tokens.
+func (s *Lexer) Lex() ([]token.Token, error) {
 	var tokens []token.Token
 	var errs []error
 	for {
@@ -56,7 +56,7 @@ func (s *Scanner) Scan() ([]token.Token, error) {
 	return tokens, nil
 }
 
-func (s *Scanner) consumeToken() (token.Token, error) {
+func (s *Lexer) consumeToken() (token.Token, error) {
 	s.consumeWhitespace()
 	s.startPos = s.pos
 	s.startLine = s.line
@@ -143,7 +143,7 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 
 // consumeChar returns the character at the current position and advances it if EOF has not been reached. Otherwise,
 // nullChar is returned.
-func (s *Scanner) consumeChar() byte {
+func (s *Lexer) consumeChar() byte {
 	if s.eofReached() {
 		return nullChar
 	}
@@ -155,7 +155,7 @@ func (s *Scanner) consumeChar() byte {
 
 // peekChar returns the character at the current position without advancing it if EOF has not been reached. Otherwise,
 // nullChar is returned.
-func (s *Scanner) peekChar() byte {
+func (s *Lexer) peekChar() byte {
 	if s.eofReached() {
 		return nullChar
 	}
@@ -164,18 +164,18 @@ func (s *Scanner) peekChar() byte {
 
 // peekNextChar returns the character after the current position without consuming it.
 // If EOF has been reached, nullChar is returned.
-func (s *Scanner) peekNextChar() byte {
+func (s *Lexer) peekNextChar() byte {
 	if s.pos >= len(s.src)-1 {
 		return nullChar
 	}
 	return s.src[s.pos+1]
 }
 
-func (s *Scanner) eofReached() bool {
+func (s *Lexer) eofReached() bool {
 	return s.pos >= len(s.src)
 }
 
-func (s *Scanner) consumeWhitespace() {
+func (s *Lexer) consumeWhitespace() {
 	for isWhitespace(s.peekChar()) {
 		if s.consumeChar() == '\n' {
 			s.line++
@@ -184,13 +184,13 @@ func (s *Scanner) consumeWhitespace() {
 	}
 }
 
-func (s *Scanner) consumeLineComment() {
+func (s *Lexer) consumeLineComment() {
 	for !s.eofReached() && s.peekChar() != '\n' {
 		s.consumeChar()
 	}
 }
 
-func (s *Scanner) consumeBlockComment() error {
+func (s *Lexer) consumeBlockComment() error {
 	// Block comments can span multiple lines and they can also be nested
 	openBlocks := 1 // There's already a block open when this method is called
 	for openBlocks > 0 && !s.eofReached() {
@@ -213,7 +213,7 @@ func (s *Scanner) consumeBlockComment() error {
 	return nil
 }
 
-func (s *Scanner) consumeStringToken() (token.Token, error) {
+func (s *Lexer) consumeStringToken() (token.Token, error) {
 	for {
 		switch s.consumeChar() {
 		case nullChar, '\n', '\r':
@@ -230,7 +230,7 @@ func (s *Scanner) consumeStringToken() (token.Token, error) {
 	}
 }
 
-func (s *Scanner) consumeNumberToken() token.Token {
+func (s *Lexer) consumeNumberToken() token.Token {
 	for isDigit(s.peekChar()) {
 		s.consumeChar()
 	}
@@ -248,7 +248,7 @@ func (s *Scanner) consumeNumberToken() token.Token {
 	return s.newTokenWithLiteral(token.Number, literal)
 }
 
-func (s *Scanner) consumeIdent() string {
+func (s *Lexer) consumeIdent() string {
 	for isAlphaNumeric(s.peekChar()) {
 		s.consumeChar()
 	}
@@ -276,12 +276,12 @@ func isAlphaNumeric(char byte) bool {
 	return isAlpha(char) || isDigit(char)
 }
 
-func (s *Scanner) scannedLexeme() string {
+func (s *Lexer) scannedLexeme() string {
 	return s.src[s.startPos:s.pos]
 }
 
-// newTokenWithLiteral returns a Token with its Lexeme, Line, and Column set based on the current state of the Scanner.
-func (s *Scanner) newTokenWithLiteral(tokenType token.Type, literal any) token.Token {
+// newTokenWithLiteral returns a Token with its Lexeme, Line, and Column set based on the current state of the Lexer.
+func (s *Lexer) newTokenWithLiteral(tokenType token.Type, literal any) token.Token {
 	return token.Token{
 		Type:    tokenType,
 		Lexeme:  s.scannedLexeme(),
@@ -294,12 +294,12 @@ func (s *Scanner) newTokenWithLiteral(tokenType token.Type, literal any) token.T
 	}
 }
 
-// newToken returns a Token with its Lexeme, Line, and Column set based on the current state of the Scanner.
-func (s *Scanner) newToken(tokenType token.Type) token.Token {
+// newToken returns a Token with its Lexeme, Line, and Column set based on the current state of the Lexer.
+func (s *Lexer) newToken(tokenType token.Type) token.Token {
 	return s.newTokenWithLiteral(tokenType, nil)
 }
 
-func (s *Scanner) errorf(format string, a ...any) error {
+func (s *Lexer) errorf(format string, a ...any) error {
 	msg := fmt.Sprintf(format, a...)
 	return fmt.Errorf("%d:%d: syntax error: %s", s.startLine, s.startCol, msg)
 }
