@@ -16,7 +16,10 @@ import (
 	"github.com/marcuscaisey/golox/parser"
 )
 
-var cmd = flag.String("c", "", "Program passed in as string")
+var (
+	cmd      = flag.String("c", "", "Program passed in as string")
+	printTok = flag.Bool("t", false, "Print the tokens only")
+)
 
 //nolint:revive
 func Usage() {
@@ -60,6 +63,12 @@ func runSrc(src string) error {
 	tokens, err := l.Lex()
 	if err != nil {
 		return err
+	}
+	if *printTok {
+		for _, t := range tokens {
+			fmt.Printf("%-10s %s\n", t.Type, t.Literal)
+		}
+		return nil
 	}
 	p := parser.New(tokens)
 	root, err := p.Parse()
