@@ -38,11 +38,9 @@ const (
 	Dot       // .
 
 	// Literals
-	literalsStart
 	Ident  // identifier
 	String // string
 	Number // number
-	literalsEnd
 
 	// Operators
 	Assign       // =
@@ -72,20 +70,15 @@ const (
 // Token is a lexical token of Lox code.
 type Token struct {
 	Type    Type
-	Lexeme  string
-	Literal any
+	Literal string
 	Pos     Position
 }
 
 func (t Token) String() string {
-	if t.isLiteral() {
-		return t.Lexeme
+	if t.Literal != "" {
+		return t.Literal
 	}
 	return t.Type.String()
-}
-
-func (t Token) isLiteral() bool {
-	return literalsStart < t.Type && t.Type < literalsEnd
 }
 
 // Position is a position in a file.

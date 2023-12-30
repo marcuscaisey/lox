@@ -4,7 +4,6 @@ package lexer
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/marcuscaisey/golox/token"
@@ -223,9 +222,7 @@ func (s *Lexer) consumeStringToken() (token.Token, error) {
 			)
 			return token.Token{}, s.errorf("unterminated string literal: %s", replacer.Replace(s.scannedLexeme()))
 		case '"':
-			lexeme := s.scannedLexeme()
-			literal := lexeme[1 : len(lexeme)-1] // trim off leading and trailing "
-			return s.newTokenWithLiteral(token.String, literal), nil
+			return s.newToken(token.String), nil
 		}
 	}
 }
@@ -241,11 +238,7 @@ func (s *Lexer) consumeNumberToken() token.Token {
 			s.consumeChar()
 		}
 	}
-	literal, err := strconv.ParseFloat(s.scannedLexeme(), 64)
-	if err != nil {
-		panic(fmt.Sprintf("unexpected error parsing number literal: %s", err))
-	}
-	return s.newTokenWithLiteral(token.Number, literal)
+	return s.newToken(token.Number)
 }
 
 func (s *Lexer) consumeIdent() string {
@@ -280,23 +273,17 @@ func (s *Lexer) scannedLexeme() string {
 	return s.src[s.startPos:s.pos]
 }
 
-// newTokenWithLiteral returns a Token with its Lexeme, Line, and Column set based on the current state of the Lexer.
-func (s *Lexer) newTokenWithLiteral(tokenType token.Type, literal any) token.Token {
+// newToken returns a Token with its Literal, Line, and Column set based on the current state of the Lexer.
+func (s *Lexer) newToken(tokenType token.Type) token.Token {
 	return token.Token{
 		Type:    tokenType,
-		Lexeme:  s.scannedLexeme(),
-		Literal: literal,
+		Literal: s.scannedLexeme(),
 		Pos: token.Position{
 			File:   s.file,
 			Line:   s.line,
 			Column: s.startCol,
 		},
 	}
-}
-
-// newToken returns a Token with its Lexeme, Line, and Column set based on the current state of the Lexer.
-func (s *Lexer) newToken(tokenType token.Type) token.Token {
-	return s.newTokenWithLiteral(tokenType, nil)
 }
 
 func (s *Lexer) errorf(format string, a ...any) error {

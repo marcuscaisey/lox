@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+
+	"golang.org/x/term"
 
 	"github.com/marcuscaisey/golox/ast"
 	"github.com/marcuscaisey/golox/token"
-	"golang.org/x/term"
 )
 
 var ansiCodes = map[string]string{
@@ -152,8 +154,16 @@ func (p *Parser) parseUnaryExpr() ast.Expr {
 }
 
 func (p *Parser) parsePrimaryExpr() ast.Expr {
-	if p.match(token.Number, token.String) {
-		return ast.LiteralExpr{Value: p.curToken.Literal}
+	if p.match(token.Number) {
+		value, err := strconv.ParseFloat(p.curToken.Literal, 64)
+		if err != nil {
+			panic(fmt.Sprintf("unexpected error parsing number literal: %s", err))
+		}
+		return ast.LiteralExpr{Value: value}
+	}
+	if p.match(token.String) {
+		value := p.curToken.Literal[1 : len(p.curToken.Literal)-1] // Remove surrounding quotes
+		return ast.LiteralExpr{Value: value}
 	}
 	if p.match(token.True) {
 		return ast.LiteralExpr{Value: true}
