@@ -90,12 +90,12 @@ func (t Token) isLiteral() bool {
 
 // Position is a position in a file.
 type Position struct {
-	File       *File
-	Line, Byte int
+	File         *File
+	Line, Column int
 }
 
 func (p Position) String() string {
-	return fmt.Sprintf("%d:%d", p.Line, p.Byte)
+	return fmt.Sprintf("%d:%d", p.Line, p.Column)
 }
 
 // File is a simple representation of a file.

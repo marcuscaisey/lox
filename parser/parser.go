@@ -34,7 +34,7 @@ func (e *syntaxError) Error() string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("${BOLD}%s: ${RED}syntax error: ${DEFAULT}%s${RESET}\n", e.pos, e.msg))
 	b.WriteString(fmt.Sprintf("%s\n", e.pos.File.Line(e.pos.Line)))
-	b.WriteString(fmt.Sprintf("${RED}${BOLD}%*s${RESET}", e.pos.Byte, "^"))
+	b.WriteString(fmt.Sprintf("${RED}${BOLD}%*s${RESET}", e.pos.Column, "^"))
 	msg := b.String()
 	for k, v := range ansiCodes {
 		if !isTerminal {

@@ -20,8 +20,9 @@ type Scanner struct {
 	pos       int // position of the character currently being considered
 	startLine int // line of the first character of the lexeme being scanned
 	line      int // line of the character currently being considered
-	startByte int // byte of the first character of the lexeme being scanned
-	byte      int // byte of the character currently being considered
+	startCol  int // column of the first character of the lexeme being scanned
+	// BUG: This is not correct for multi-byte (e.g. UTF-8) characters.
+	col int // column of the character currently being considered
 }
 
 // New constructs a Scanner which will scan the provided source code.
@@ -30,7 +31,7 @@ func New(src string) *Scanner {
 		file: token.NewFile(src),
 		src:  src,
 		line: 1,
-		byte: 1,
+		col:  1,
 	}
 }
 
@@ -59,7 +60,7 @@ func (s *Scanner) consumeToken() (token.Token, error) {
 	s.consumeWhitespace()
 	s.startPos = s.pos
 	s.startLine = s.line
-	s.startByte = s.byte
+	s.startCol = s.col
 	switch char := s.consumeChar(); char {
 	case nullChar:
 		return s.newToken(token.EOF), nil
@@ -148,7 +149,7 @@ func (s *Scanner) consumeChar() byte {
 	}
 	char := s.src[s.pos]
 	s.pos++
-	s.byte++
+	s.col++
 	return char
 }
 
@@ -178,7 +179,7 @@ func (s *Scanner) consumeWhitespace() {
 	for isWhitespace(s.peekChar()) {
 		if s.consumeChar() == '\n' {
 			s.line++
-			s.byte = 1
+			s.col = 1
 		}
 	}
 }
@@ -279,26 +280,26 @@ func (s *Scanner) scannedLexeme() string {
 	return s.src[s.startPos:s.pos]
 }
 
-// newTokenWithLiteral returns a Token with its Lexeme, Line, and Byte set based on the current state of the Scanner.
+// newTokenWithLiteral returns a Token with its Lexeme, Line, and Column set based on the current state of the Scanner.
 func (s *Scanner) newTokenWithLiteral(tokenType token.Type, literal any) token.Token {
 	return token.Token{
 		Type:    tokenType,
 		Lexeme:  s.scannedLexeme(),
 		Literal: literal,
 		Pos: token.Position{
-			File: s.file,
-			Line: s.line,
-			Byte: s.startByte,
+			File:   s.file,
+			Line:   s.line,
+			Column: s.startCol,
 		},
 	}
 }
 
-// newToken returns a Token with its Lexeme, Line, and Byte set based on the current state of the Scanner.
+// newToken returns a Token with its Lexeme, Line, and Column set based on the current state of the Scanner.
 func (s *Scanner) newToken(tokenType token.Type) token.Token {
 	return s.newTokenWithLiteral(tokenType, nil)
 }
 
 func (s *Scanner) errorf(format string, a ...any) error {
 	msg := fmt.Sprintf(format, a...)
-	return fmt.Errorf("%d:%d: syntax error: %s", s.startLine, s.startByte, msg)
+	return fmt.Errorf("%d:%d: syntax error: %s", s.startLine, s.startCol, msg)
 }
