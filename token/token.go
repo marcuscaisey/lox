@@ -10,7 +10,9 @@ type Type uint8
 
 // The list of all token types.
 const (
-	Illegal Type = iota
+	Illegal Type = iota // ILLEGAL
+	Comment             // COMMENT
+	EOF
 
 	// Keywords
 	keywordsStart
@@ -63,8 +65,6 @@ const (
 	RightParen // )
 	LeftBrace  // {
 	RightBrace // }
-
-	EOF
 )
 
 // Token is a lexical token of Lox code.

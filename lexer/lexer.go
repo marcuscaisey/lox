@@ -12,13 +12,13 @@ import (
 const eof = -1
 
 // ErrorHandler is the function which handles syntax errors encountered during lexing.
-// It's passed the position of the offending token and a message describing the error.
-type ErrorHandler func(pos token.Position, msg string)
+// It's passed the offending token and a message describing the error.
+type ErrorHandler func(tok token.Token, msg string)
 
 // Lexer converts Lox source code into lexical tokens.
 // Tokens are read from the lexer using the Next method.
-// Syntax errors are handled by calling the error handler function set using SetErrorHandler. The default error handler
-// is a no-op.
+// Syntax errors are handled by calling the error handler function which can be set using SetErrorHandler. The default
+// error handler is a no-op.
 type Lexer struct {
 	// Immutable state
 	src        []byte
@@ -36,7 +36,7 @@ func New(r io.Reader) (*Lexer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("constructing lexer: %s", err)
 	}
-	errHandler := func(pos token.Position, msg string) {}
+	errHandler := func(token.Token, string) {}
 	filename := name(r)
 
 	l := &Lexer{
@@ -80,8 +80,11 @@ func (l *Lexer) Next() token.Token {
 	}
 
 	if isAlpha(l.ch) {
-		tok.Literal = l.consumeIdent()
-		tok.Type = token.LookupIdent(tok.Literal)
+		ident := l.consumeIdent()
+		tok.Type = token.LookupIdent(ident)
+		if tok.Type == token.Ident {
+			tok.Literal = ident
+		}
 		return tok
 	}
 
@@ -117,7 +120,11 @@ func (l *Lexer) Next() token.Token {
 		if l.peek() == '*' {
 			l.next()
 			l.next()
-			l.skipBlockComment(tok.Position)
+			if comment, terminated := l.skipBlockComment(); !terminated {
+				tok.Type = token.Comment
+				tok.Literal = comment
+				l.errHandler(tok, "unterminated block comment")
+			}
 			return l.Next()
 		}
 	case '<':
@@ -152,9 +159,13 @@ func (l *Lexer) Next() token.Token {
 		tok.Type = token.RightBrace
 	case '"':
 		tok.Type = token.String
-		tok.Literal = l.consumeString(tok.Position)
+		lit, terminated := l.consumeString()
+		tok.Literal = lit
+		if !terminated {
+			l.errHandler(tok, "unterminated string literal")
+		}
 	default:
-		l.errHandler(tok.Position, fmt.Sprintf("illegal character %#U", l.ch))
+		l.errHandler(tok, fmt.Sprintf("illegal character %#U", l.ch))
 		tok.Type = token.Illegal
 		tok.Literal = string(l.ch)
 	}
@@ -175,10 +186,13 @@ func (l *Lexer) skipLineComment() {
 	}
 }
 
-func (l *Lexer) skipBlockComment(startPos token.Position) {
+func (l *Lexer) skipBlockComment() (comment string, terminated bool) {
+	var b strings.Builder
+	b.WriteString("/*")
 	// Block comments can span multiple lines and they can also be nested
 	openBlocks := 1 // There's already a block open when this method is called
 	for openBlocks > 0 && l.ch != eof {
+		b.WriteRune(l.ch)
 		if l.ch == '/' && l.peek() == '*' {
 			l.next()
 			openBlocks++
@@ -188,9 +202,7 @@ func (l *Lexer) skipBlockComment(startPos token.Position) {
 		}
 		l.next()
 	}
-	if openBlocks > 0 {
-		l.errHandler(startPos, "unterminated block comment")
-	}
+	return b.String(), openBlocks == 0
 }
 
 func (l *Lexer) consumeNumber() string {
@@ -212,15 +224,16 @@ func (l *Lexer) consumeNumber() string {
 	return b.String()
 }
 
-func (l *Lexer) consumeString(startPos token.Position) string {
+func (l *Lexer) consumeString() (s string, terminated bool) {
+	l.next()
 	var b strings.Builder
 	b.WriteRune('"')
-	l.next()
+	terminated = true
 loop:
 	for {
 		switch l.ch {
 		case eof, '\n', '\r':
-			l.errHandler(startPos, "unterminated string literal")
+			terminated = false
 			break loop
 		case '"':
 			b.WriteRune(l.ch)
@@ -229,7 +242,7 @@ loop:
 		b.WriteRune(l.ch)
 		l.next()
 	}
-	return b.String()
+	return b.String(), terminated
 }
 
 func (l *Lexer) consumeIdent() string {

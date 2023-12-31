@@ -27,19 +27,25 @@ var ansiCodes = map[string]string{
 var isTerminal = term.IsTerminal(int(os.Stderr.Fd()))
 
 type syntaxError struct {
-	pos token.Position
+	tok token.Token
 	msg string
 }
 
 func (e *syntaxError) Error() string {
+	// Example output:
+	// 1:5: syntax error: unterminated string literal
+	// 1 + "foo
+	//     ^^^^
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("${BOLD}%s: ${RED}syntax error: ${DEFAULT}%s${RESET}\n", e.pos, e.msg))
-	line := e.pos.File.Line(e.pos.Line)
-	before := line[:e.pos.Column-1]
-	after := line[e.pos.Column:]
-	// TODO: highlight the entire token
-	b.WriteString(fmt.Sprintf("%s${RED}%s${RESET}%s\n", before, string(line[e.pos.Column-1]), after))
-	b.WriteString(fmt.Sprintf("${BOLD}${RED}%*s${RESET}", e.pos.Column, "^"))
+	b.WriteString(fmt.Sprintf("${BOLD}%s: syntax error: %s${RESET}\n", e.tok.Position, e.msg))
+	line := e.tok.Position.File.Line(e.tok.Position.Line)
+	col := e.tok.Position.Column
+	before := line[:col-1]
+	// If the literal contains a newline, only show the first line. This is a bit hacky but it's good enough for now.
+	lit, _, _ := strings.Cut(e.tok.String(), "\n")
+	after := line[col+len(lit)-1:]
+	b.WriteString(fmt.Sprintf("%s${RED}%s${RESET}%s\n", before, lit, after))
+	b.WriteString(fmt.Sprintf("%s${BOLD}${RED}%s${RESET}", strings.Repeat(" ", col-1), strings.Repeat("^", len(lit))))
 	msg := b.String()
 	for k, v := range ansiCodes {
 		if !isTerminal {
@@ -67,10 +73,10 @@ func New(r io.Reader) (*Parser, error) {
 
 	p := &Parser{l: l}
 
-	errHandler := func(pos token.Position, msg string) {
-		p.lastErrLine = pos.Line
+	errHandler := func(tok token.Token, msg string) {
+		p.lastErrLine = tok.Position.Line
 		err := &syntaxError{
-			pos: pos,
+			tok: tok,
 			msg: msg,
 		}
 		p.errs = append(p.errs, err)
@@ -95,7 +101,7 @@ func (p *Parser) safelyParseExpr() ast.Expr {
 	defer func() {
 		if r := recover(); r != nil {
 			if syntaxErr, ok := r.(*syntaxError); ok {
-				if len(p.errs) > 0 && syntaxErr.pos.Line == p.lastErrLine {
+				if len(p.errs) > 0 && syntaxErr.tok.Position.Line == p.lastErrLine {
 					return
 				}
 				p.errs = append(p.errs, syntaxErr)
@@ -223,8 +229,8 @@ func (p *Parser) next() {
 
 func (p *Parser) errorf(format string, a ...any) {
 	err := &syntaxError{
+		tok: p.tok,
 		msg: fmt.Sprintf(format, a...),
-		pos: p.tok.Position,
 	}
 	panic(err)
 }
