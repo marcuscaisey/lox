@@ -9,43 +9,55 @@ import (
 	"github.com/marcuscaisey/golox/token"
 )
 
-const nullChar = 0
+const eof = -1
+
+// ErrorHandler is the function which handles syntax errors encountered during lexing.
+// It's passed the position of the offending token and a message describing the error.
+type ErrorHandler func(pos token.Position, msg string)
 
 // Lexer converts Lox source code into lexical tokens.
 type Lexer struct {
-	file      *token.File
-	src       string
-	startPos  int // position of the first character of the lexeme being scanned
-	pos       int // position of the character currently being considered
-	startLine int // line of the first character of the lexeme being scanned
-	line      int // line of the character currently being considered
-	startCol  int // column of the first character of the lexeme being scanned
-	// BUG: This is not correct for multi-byte (e.g. UTF-8) characters.
-	col int // column of the character currently being considered
+	// Immutable state
+	src        string
+	errHandler ErrorHandler
+
+	// Mutable state
+	ch         rune           // character currently being considered
+	pos        token.Position // position of character currently being considered
+	readOffset int            // position of next character to be read
 }
 
 // New constructs a Lexer which will lex the provided source code.
-func New(src string) *Lexer {
-	return &Lexer{
-		file: token.NewFile(src),
-		src:  src,
-		line: 1,
-		col:  1,
+// If errHandler is nil, it will be set to a no-op function.
+func New(src string, errHandler ErrorHandler) *Lexer {
+	if errHandler == nil {
+		errHandler = func(pos token.Position, msg string) {}
 	}
+	l := &Lexer{
+		src:        src,
+		errHandler: errHandler,
+		pos: token.Position{
+			File: token.NewFile(src),
+			Line: 1,
+			// BUG: This is not correct for multi-byte (e.g. UTF-8) characters.
+			Column: 0,
+		},
+	}
+	l.next()
+	return l
 }
 
 // Lex converts the source code into a sequences of tokens.
-func (s *Lexer) Lex() ([]token.Token, error) {
-	var tokens []token.Token
+func (l *Lexer) Lex() ([]token.Token, error) {
 	var errs []error
+	l.errHandler = func(pos token.Position, msg string) {
+		errs = append(errs, fmt.Errorf("%s: syntax error: %s", pos, msg))
+	}
+	var tokens []token.Token
 	for {
-		nextToken, err := s.consumeToken()
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		tokens = append(tokens, nextToken)
-		if nextToken.Type == token.EOF {
+		tok := l.Next()
+		tokens = append(tokens, tok)
+		if tok.Type == token.EOF {
 			break
 		}
 	}
@@ -55,201 +67,182 @@ func (s *Lexer) Lex() ([]token.Token, error) {
 	return tokens, nil
 }
 
-func (s *Lexer) consumeToken() (token.Token, error) {
-	s.consumeWhitespace()
-	s.startPos = s.pos
-	s.startLine = s.line
-	s.startCol = s.col
-	switch char := s.consumeChar(); char {
-	case nullChar:
-		return s.newToken(token.EOF), nil
+// Next returns the next token. An EOF token is returned if the end of the source code has been reached.
+func (l *Lexer) Next() token.Token {
+	l.skipWhitespace()
+
+	tok := token.Token{Position: l.pos}
+
+	if isDigit(l.ch) {
+		tok.Type = token.Number
+		tok.Literal = l.consumeNumber()
+		return tok
+	}
+
+	if isAlpha(l.ch) {
+		tok.Literal = l.consumeIdent()
+		tok.Type = token.LookupIdent(tok.Literal)
+		return tok
+	}
+
+	switch l.ch {
+	case eof:
+		tok.Type = token.EOF
 	case ';':
-		return s.newToken(token.Semicolon), nil
+		tok.Type = token.Semicolon
 	case ',':
-		return s.newToken(token.Comma), nil
+		tok.Type = token.Comma
 	case '.':
-		return s.newToken(token.Dot), nil
+		tok.Type = token.Dot
 	case '=':
-		if s.peekChar() == '=' {
-			s.consumeChar()
-			return s.newToken(token.Equal), nil
+		tok.Type = token.Assign
+		if l.peek() == '=' {
+			l.next()
+			tok.Type = token.Equal
 		}
-		return s.newToken(token.Assign), nil
 	case '+':
-		return s.newToken(token.Plus), nil
+		tok.Type = token.Plus
 	case '-':
-		return s.newToken(token.Minus), nil
+		tok.Type = token.Minus
 	case '*':
-		return s.newToken(token.Asterisk), nil
+		tok.Type = token.Asterisk
 	case '/':
-		if s.peekChar() == '/' {
-			s.consumeChar()
-			s.consumeLineComment()
-			return s.consumeToken()
+		tok.Type = token.Slash
+		if l.peek() == '/' {
+			l.next()
+			l.next()
+			l.skipLineComment()
+			return l.Next()
 		}
-		if s.peekChar() == '*' {
-			s.consumeChar()
-			if err := s.consumeBlockComment(); err != nil {
-				return token.Token{}, err
-			}
-			return s.consumeToken()
+		if l.peek() == '*' {
+			l.next()
+			l.next()
+			l.skipBlockComment(tok.Position)
+			return l.Next()
 		}
-		return s.newToken(token.Slash), nil
 	case '<':
-		if s.peekChar() == '=' {
-			s.consumeChar()
-			return s.newToken(token.LessEqual), nil
+		tok.Type = token.Less
+		if l.peek() == '=' {
+			l.next()
+			tok.Type = token.LessEqual
 		}
-		return s.newToken(token.Less), nil
 	case '>':
-		if s.peekChar() == '=' {
-			s.consumeChar()
-			return s.newToken(token.GreaterEqual), nil
+		tok.Type = token.Greater
+		if l.peek() == '=' {
+			l.next()
+			tok.Type = token.GreaterEqual
 		}
-		return s.newToken(token.Greater), nil
 	case '!':
-		if s.peekChar() == '=' {
-			s.consumeChar()
-			return s.newToken(token.NotEqual), nil
+		tok.Type = token.Bang
+		if l.peek() == '=' {
+			l.next()
+			tok.Type = token.NotEqual
 		}
-		return s.newToken(token.Bang), nil
 	case '?':
-		return s.newToken(token.Question), nil
+		tok.Type = token.Question
 	case ':':
-		return s.newToken(token.Colon), nil
+		tok.Type = token.Colon
 	case '(':
-		return s.newToken(token.OpenParen), nil
+		tok.Type = token.OpenParen
 	case ')':
-		return s.newToken(token.CloseParen), nil
+		tok.Type = token.CloseParen
 	case '{':
-		return s.newToken(token.OpenBrace), nil
+		tok.Type = token.OpenBrace
 	case '}':
-		return s.newToken(token.CloseBrace), nil
+		tok.Type = token.CloseBrace
 	case '"':
-		return s.consumeStringToken()
+		tok.Type = token.String
+		tok.Literal = l.consumeString(tok.Position)
 	default:
-		if isDigit(char) {
-			return s.consumeNumberToken(), nil
-		}
-		if isAlpha(char) {
-			ident := s.consumeIdent()
-			tokenType := token.LookupIdent(ident)
-			return s.newToken(tokenType), nil
-		}
-		return token.Token{}, s.errorf("unexpected character %q", char)
+		l.errHandler(tok.Position, fmt.Sprintf("illegal character %#U", l.ch))
+		tok.Type = token.Illegal
+		tok.Literal = string(l.ch)
+	}
+	l.next()
+
+	return tok
+}
+
+func (l *Lexer) skipWhitespace() {
+	for isWhitespace(l.ch) {
+		l.next()
 	}
 }
 
-// consumeChar returns the character at the current position and advances it if EOF has not been reached. Otherwise,
-// nullChar is returned.
-func (s *Lexer) consumeChar() byte {
-	if s.eofReached() {
-		return nullChar
-	}
-	char := s.src[s.pos]
-	s.pos++
-	s.col++
-	return char
-}
-
-// peekChar returns the character at the current position without advancing it if EOF has not been reached. Otherwise,
-// nullChar is returned.
-func (s *Lexer) peekChar() byte {
-	if s.eofReached() {
-		return nullChar
-	}
-	return s.src[s.pos]
-}
-
-// peekNextChar returns the character after the current position without consuming it.
-// If EOF has been reached, nullChar is returned.
-func (s *Lexer) peekNextChar() byte {
-	if s.pos >= len(s.src)-1 {
-		return nullChar
-	}
-	return s.src[s.pos+1]
-}
-
-func (s *Lexer) eofReached() bool {
-	return s.pos >= len(s.src)
-}
-
-func (s *Lexer) consumeWhitespace() {
-	for isWhitespace(s.peekChar()) {
-		if s.consumeChar() == '\n' {
-			s.line++
-			s.col = 1
-		}
+func (l *Lexer) skipLineComment() {
+	for l.ch != '\n' && l.ch != eof {
+		l.next()
 	}
 }
 
-func (s *Lexer) consumeLineComment() {
-	for !s.eofReached() && s.peekChar() != '\n' {
-		s.consumeChar()
-	}
-}
-
-func (s *Lexer) consumeBlockComment() error {
+func (l *Lexer) skipBlockComment(startPos token.Position) {
 	// Block comments can span multiple lines and they can also be nested
 	openBlocks := 1 // There's already a block open when this method is called
-	for openBlocks > 0 && !s.eofReached() {
-		s.consumeWhitespace()
-		if s.peekChar() == '/' && s.peekNextChar() == '*' {
-			s.consumeChar()
-			s.consumeChar()
+	for openBlocks > 0 && l.ch != eof {
+		if l.ch == '/' && l.peek() == '*' {
+			l.next()
 			openBlocks++
-		} else if s.peekChar() == '*' && s.peekNextChar() == '/' {
-			s.consumeChar()
-			s.consumeChar()
+		} else if l.ch == '*' && l.peek() == '/' {
+			l.next()
 			openBlocks--
-		} else {
-			s.consumeChar()
 		}
+		l.next()
 	}
 	if openBlocks > 0 {
-		return s.errorf("unterminated block comment: %s", s.scannedLexeme())
+		l.errHandler(startPos, "unterminated block comment")
 	}
-	return nil
 }
 
-func (s *Lexer) consumeStringToken() (token.Token, error) {
+func (l *Lexer) consumeNumber() string {
+	var b strings.Builder
+	for isDigit(l.ch) {
+		b.WriteRune(l.ch)
+		l.next()
+	}
+	if l.ch == '.' && isDigit(l.peek()) {
+		b.WriteRune(l.ch)
+		l.next()
+		b.WriteRune(l.ch)
+		l.next()
+		for isDigit(l.ch) {
+			b.WriteRune(l.ch)
+			l.next()
+		}
+	}
+	return b.String()
+}
+
+func (l *Lexer) consumeString(startPos token.Position) string {
+	var b strings.Builder
+	b.WriteRune('"')
+	l.next()
+loop:
 	for {
-		switch s.consumeChar() {
-		case nullChar, '\n', '\r':
-			replacer := strings.NewReplacer(
-				"\n", ``,
-				"\r", ``,
-			)
-			return token.Token{}, s.errorf("unterminated string literal: %s", replacer.Replace(s.scannedLexeme()))
+		switch l.ch {
+		case eof, '\n', '\r':
+			l.errHandler(startPos, "unterminated string literal")
+			break loop
 		case '"':
-			return s.newToken(token.String), nil
+			b.WriteRune(l.ch)
+			break loop
 		}
+		b.WriteRune(l.ch)
+		l.next()
 	}
+	return b.String()
 }
 
-func (s *Lexer) consumeNumberToken() token.Token {
-	for isDigit(s.peekChar()) {
-		s.consumeChar()
+func (l *Lexer) consumeIdent() string {
+	var b strings.Builder
+	for isAlphaNumeric(l.ch) {
+		b.WriteRune(l.ch)
+		l.next()
 	}
-	if s.peekChar() == '.' && isDigit(s.peekNextChar()) {
-		s.consumeChar()
-		s.consumeChar()
-		for isDigit(s.peekChar()) {
-			s.consumeChar()
-		}
-	}
-	return s.newToken(token.Number)
+	return b.String()
 }
 
-func (s *Lexer) consumeIdent() string {
-	for isAlphaNumeric(s.peekChar()) {
-		s.consumeChar()
-	}
-	return s.scannedLexeme()
-}
-
-func isWhitespace(char byte) bool {
-	switch char {
+func isWhitespace(r rune) bool {
+	switch r {
 	case ' ', '\r', '\t', '\n':
 		return true
 	default:
@@ -257,36 +250,42 @@ func isWhitespace(char byte) bool {
 	}
 }
 
-func isDigit(char byte) bool {
-	return '0' <= char && char <= '9'
+func isDigit(r rune) bool {
+	return '0' <= r && r <= '9'
 }
 
-func isAlpha(char byte) bool {
-	return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_'
+func isAlpha(r rune) bool {
+	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z') || r == '_'
 }
 
-func isAlphaNumeric(char byte) bool {
-	return isAlpha(char) || isDigit(char)
+func isAlphaNumeric(r rune) bool {
+	return isAlpha(r) || isDigit(r)
 }
 
-func (s *Lexer) scannedLexeme() string {
-	return s.src[s.startPos:s.pos]
-}
-
-// newToken returns a Token with its Literal, Line, and Column set based on the current state of the Lexer.
-func (s *Lexer) newToken(tokenType token.Type) token.Token {
-	return token.Token{
-		Type:    tokenType,
-		Literal: s.scannedLexeme(),
-		Pos: token.Position{
-			File:   s.file,
-			Line:   s.line,
-			Column: s.startCol,
-		},
+// next reads the next character into s.ch and advances the lexer.
+// If the end of the source code has been reached, s.ch is set to eof.
+func (l *Lexer) next() {
+	if l.readOffset == len(l.src) {
+		l.ch = eof
+		return
 	}
+
+	if l.ch == '\n' {
+		l.pos.Line++
+		l.pos.Column = 1
+	} else {
+		l.pos.Column++
+	}
+
+	l.ch = rune(l.src[l.readOffset])
+	l.readOffset++
 }
 
-func (s *Lexer) errorf(format string, a ...any) error {
-	msg := fmt.Sprintf(format, a...)
-	return fmt.Errorf("%d:%d: syntax error: %s", s.startLine, s.startCol, msg)
+// peek returns the next character without advancing the lexer.
+// If the end of the source code has been reached, eof is returned.
+func (l *Lexer) peek() rune {
+	if l.readOffset >= len(l.src) {
+		return eof
+	}
+	return rune(l.src[l.readOffset])
 }

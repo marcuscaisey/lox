@@ -59,7 +59,7 @@ func main() {
 }
 
 func runSrc(src string) error {
-	l := lexer.New(src)
+	l := lexer.New(src, nil)
 	tokens, err := l.Lex()
 	if err != nil {
 		return err

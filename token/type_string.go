@@ -8,7 +8,7 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[unknown-0]
+	_ = x[Illegal-0]
 	_ = x[keywordsStart-1]
 	_ = x[Print-2]
 	_ = x[Var-3]
@@ -54,7 +54,7 @@ func _() {
 	_ = x[EOF-43]
 }
 
-const _Type_name = "unknownkeywordsStartprintvartruefalsenilifelseandorwhileforfunreturnclassthissuperkeywordsEnd;,.identifierstringnumber=+-*/<<=>>===!=!?:(){}EOF"
+const _Type_name = "IllegalkeywordsStartprintvartruefalsenilifelseandorwhileforfunreturnclassthissuperkeywordsEnd;,.identifierstringnumber=+-*/<<=>>===!=!?:(){}EOF"
 
 var _Type_index = [...]uint8{0, 7, 20, 25, 28, 32, 37, 40, 42, 46, 49, 51, 56, 59, 62, 68, 73, 77, 82, 93, 94, 95, 96, 106, 112, 118, 119, 120, 121, 122, 123, 124, 126, 127, 129, 131, 133, 134, 135, 136, 137, 138, 139, 140, 143}
 

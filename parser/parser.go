@@ -212,7 +212,7 @@ func (p *Parser) advance() {
 func (p *Parser) error(format string, a ...any) {
 	err := &syntaxError{
 		msg: fmt.Sprintf(format, a...),
-		pos: p.nextToken.Pos,
+		pos: p.nextToken.Position,
 	}
 	panic(parserError{err})
 }

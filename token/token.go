@@ -10,7 +10,7 @@ type Type uint8
 
 // The list of all token types.
 const (
-	unknown Type = iota
+	Illegal Type = iota
 
 	// Keywords
 	keywordsStart
@@ -69,9 +69,9 @@ const (
 
 // Token is a lexical token of Lox code.
 type Token struct {
-	Type    Type
-	Literal string
-	Pos     Position
+	Position Position
+	Type     Type
+	Literal  string
 }
 
 func (t Token) String() string {
