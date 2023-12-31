@@ -2,7 +2,6 @@
 package lexer
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -17,6 +16,9 @@ const eof = -1
 type ErrorHandler func(pos token.Position, msg string)
 
 // Lexer converts Lox source code into lexical tokens.
+// Tokens are read from the lexer using the Next method.
+// Syntax errors are handled by calling the error handler function set using SetErrorHandler. The default error handler
+// is a no-op.
 type Lexer struct {
 	// Immutable state
 	src        []byte
@@ -29,16 +31,14 @@ type Lexer struct {
 }
 
 // New constructs a Lexer which will lex the source code read from an io.Reader.
-// If errHandler is nil, it will be set to a no-op function.
-func New(r io.Reader, errHandler ErrorHandler) (*Lexer, error) {
-	if errHandler == nil {
-		errHandler = func(pos token.Position, msg string) {}
-	}
+func New(r io.Reader) (*Lexer, error) {
 	src, err := io.ReadAll(r)
 	if err != nil {
-		return nil, fmt.Errorf("constructing lexer: reading source code: %s", err)
+		return nil, fmt.Errorf("constructing lexer: %s", err)
 	}
+	errHandler := func(pos token.Position, msg string) {}
 	filename := name(r)
+
 	l := &Lexer{
 		src:        src,
 		errHandler: errHandler,
@@ -49,7 +49,9 @@ func New(r io.Reader, errHandler ErrorHandler) (*Lexer, error) {
 			Column: 0,
 		},
 	}
+
 	l.next()
+
 	return l, nil
 }
 
@@ -60,24 +62,9 @@ func name(v any) string {
 	return ""
 }
 
-// Lex converts the source code into a sequences of tokens.
-func (l *Lexer) Lex() ([]token.Token, error) {
-	var errs []error
-	l.errHandler = func(pos token.Position, msg string) {
-		errs = append(errs, fmt.Errorf("%s: syntax error: %s", pos, msg))
-	}
-	var tokens []token.Token
-	for {
-		tok := l.Next()
-		tokens = append(tokens, tok)
-		if tok.Type == token.EOF {
-			break
-		}
-	}
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
-	}
-	return tokens, nil
+// SetErrorHandler sets the error handler function which will be called when a syntax error is encountered.
+func (l *Lexer) SetErrorHandler(errHandler ErrorHandler) {
+	l.errHandler = errHandler
 }
 
 // Next returns the next token. An EOF token is returned if the end of the source code has been reached.

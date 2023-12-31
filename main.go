@@ -13,13 +13,11 @@ import (
 	"github.com/chzyer/readline"
 
 	"github.com/marcuscaisey/golox/ast"
-	"github.com/marcuscaisey/golox/lexer"
 	"github.com/marcuscaisey/golox/parser"
 )
 
 var (
 	cmd      = flag.String("c", "", "Program passed in as string")
-	printTok = flag.Bool("t", false, "Print the tokens only")
 )
 
 //nolint:revive
@@ -60,21 +58,10 @@ func main() {
 }
 
 func run(r io.Reader) error {
-	l, err := lexer.New(r, nil)
+	p, err := parser.New(r)
 	if err != nil {
 		return err
 	}
-	tokens, err := l.Lex()
-	if err != nil {
-		return err
-	}
-	if *printTok {
-		for _, t := range tokens {
-			fmt.Printf("%-10s %s\n", t.Type, t.Literal)
-		}
-		return nil
-	}
-	p := parser.New(tokens)
 	root, err := p.Parse()
 	if err != nil {
 		return err
@@ -122,7 +109,7 @@ func runREPL() error {
 func runFile(name string) error {
 	f, err := os.Open(name)
 	if err != nil {
-		return fmt.Errorf("running Lox file: %s", err)
+		return err
 	}
 	defer f.Close()
 	return run(f)

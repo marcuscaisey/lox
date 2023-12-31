@@ -1,9 +1,10 @@
-// Package parser defines Parser which parses lexical tokens into an abstract syntax tree.
+// Package parser implements a parser for Lox source code.
 package parser
 
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"golang.org/x/term"
 
 	"github.com/marcuscaisey/golox/ast"
+	"github.com/marcuscaisey/golox/lexer"
 	"github.com/marcuscaisey/golox/token"
 )
 
@@ -38,6 +40,7 @@ func (e *syntaxError) Error() string {
 	line := e.pos.File.Line(e.pos.Line)
 	before := line[:e.pos.Column-1]
 	after := line[e.pos.Column:]
+	// TODO: highlight the entire token
 	b.WriteString(fmt.Sprintf("%s${RED}%s${RESET}%s\n", before, string(line[e.pos.Column-1]), after))
 	b.WriteString(fmt.Sprintf("${BOLD}${RED}%*s${RESET}", e.pos.Column, "^"))
 	msg := b.String()
@@ -50,28 +53,45 @@ func (e *syntaxError) Error() string {
 	return msg
 }
 
-// Parser parses lexical tokens into an abstract syntax tree.
+// Parser parses Lox source code into an abstract syntax tree.
 type Parser struct {
-	tokens    []token.Token
-	pos       int
-	curToken  token.Token
-	nextToken token.Token
-	errors    []error
+	l          *lexer.Lexer
+	curToken   token.Token
+	nextToken  token.Token
+	errs       []error
+	lastErrPos token.Position
 }
 
-// New returns a new Parser.
-func New(tokens []token.Token) *Parser {
-	return &Parser{
-		tokens:    tokens,
-		nextToken: tokens[0],
+// New constructs a new Parser which parses the source code read from r.
+func New(r io.Reader) (*Parser, error) {
+	l, err := lexer.New(r)
+	if err != nil {
+		return nil, fmt.Errorf("constructing parser: %s", err)
 	}
+
+	p := &Parser{l: l}
+
+	errHandler := func(pos token.Position, msg string) {
+		p.lastErrPos = pos
+		err := &syntaxError{
+			pos: pos,
+			msg: msg,
+		}
+		p.errs = append(p.errs, err)
+	}
+	l.SetErrorHandler(errHandler)
+
+	// Read two tokens so tok and nextTok are both valid.
+	p.advance()
+
+	return p, nil
 }
 
-// Parse parses its tokens and returns the root node of the abstract syntax tree.
+// Parse parses the source code and returns the root node of the abstract syntax tree.
 func (p *Parser) Parse() (ast.Node, error) {
 	root := p.safelyParseExpr()
-	if len(p.errors) > 0 {
-		return nil, errors.Join(p.errors...)
+	if len(p.errs) > 0 {
+		return nil, errors.Join(p.errs...)
 	}
 	return root, nil
 }
@@ -80,7 +100,10 @@ func (p *Parser) safelyParseExpr() ast.Expr {
 	defer func() {
 		if r := recover(); r != nil {
 			if parserErr, ok := r.(parserError); ok {
-				p.errors = append(p.errors, parserErr)
+				if len(p.errs) > 0 && p.lastErrPos == p.nextToken.Position {
+					return
+				}
+				p.errs = append(p.errs, parserErr)
 			} else {
 				panic(r)
 			}
@@ -208,8 +231,7 @@ func (p *Parser) mustMatch(t token.Type) {
 // advance increments the parser's position and updates the current and next tokens.
 func (p *Parser) advance() {
 	p.curToken = p.nextToken
-	p.pos++
-	p.nextToken = p.tokens[p.pos]
+	p.nextToken = p.l.Next()
 }
 
 func (p *Parser) error(format string, a ...any) {
