@@ -4,6 +4,7 @@ package lexer
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/marcuscaisey/golox/token"
@@ -18,7 +19,7 @@ type ErrorHandler func(pos token.Position, msg string)
 // Lexer converts Lox source code into lexical tokens.
 type Lexer struct {
 	// Immutable state
-	src        string
+	src        []byte
 	errHandler ErrorHandler
 
 	// Mutable state
@@ -27,24 +28,36 @@ type Lexer struct {
 	readOffset int            // position of next character to be read
 }
 
-// New constructs a Lexer which will lex the provided source code.
+// New constructs a Lexer which will lex the source code read from an io.Reader.
 // If errHandler is nil, it will be set to a no-op function.
-func New(src string, errHandler ErrorHandler) *Lexer {
+func New(r io.Reader, errHandler ErrorHandler) (*Lexer, error) {
 	if errHandler == nil {
 		errHandler = func(pos token.Position, msg string) {}
 	}
+	src, err := io.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("constructing lexer: reading source code: %s", err)
+	}
+	filename := name(r)
 	l := &Lexer{
 		src:        src,
 		errHandler: errHandler,
 		pos: token.Position{
-			File: token.NewFile(src),
+			File: token.NewFile(filename, src),
 			Line: 1,
 			// BUG: This is not correct for multi-byte (e.g. UTF-8) characters.
 			Column: 0,
 		},
 	}
 	l.next()
-	return l
+	return l, nil
+}
+
+func name(v any) string {
+	if n, ok := v.(interface{ Name() string }); ok {
+		return n.Name()
+	}
+	return ""
 }
 
 // Lex converts the source code into a sequences of tokens.

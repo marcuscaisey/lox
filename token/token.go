@@ -88,19 +88,26 @@ type Position struct {
 }
 
 func (p Position) String() string {
-	return fmt.Sprintf("%d:%d", p.Line, p.Column)
+	var prefix string
+	if p.File != nil && p.File.Name != "" {
+		prefix = p.File.Name + ":"
+	}
+	return fmt.Sprintf("%s%d:%d", prefix, p.Line, p.Column)
 }
 
 // File is a simple representation of a file.
 type File struct {
-	// TODO: Add Name field
-	contents    string
+	Name        string
+	contents    []byte
 	lineOffsets []int
 }
 
 // NewFile returns a new File with the given contents.
-func NewFile(contents string) *File {
-	f := &File{contents: contents}
+func NewFile(name string, contents []byte) *File {
+	f := &File{
+		Name:     name,
+		contents: contents,
+	}
 	f.lineOffsets = append(f.lineOffsets, 0)
 	for i := 0; i < len(contents); i++ {
 		if contents[i] == '\n' {
@@ -117,7 +124,7 @@ func (f *File) Line(n int) string {
 	if n < len(f.lineOffsets) {
 		high = f.lineOffsets[n] - 1 // -1 to exclude the newline
 	}
-	return f.contents[low:high]
+	return string(f.contents[low:high])
 }
 
 var keywordTypesByIdent = func() map[string]Type {

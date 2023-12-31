@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/chzyer/readline"
 
@@ -34,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	if *cmd != "" {
-		if err := runSrc(*cmd); err != nil {
+		if err := run(strings.NewReader(*cmd)); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -58,8 +59,11 @@ func main() {
 	}
 }
 
-func runSrc(src string) error {
-	l := lexer.New(src, nil)
+func run(r io.Reader) error {
+	l, err := lexer.New(r, nil)
+	if err != nil {
+		return err
+	}
 	tokens, err := l.Lex()
 	if err != nil {
 		return err
@@ -107,7 +111,7 @@ func runREPL() error {
 			}
 			panic(fmt.Sprintf("unexpected error from readline: %s", err))
 		}
-		if err := runSrc(line); err != nil {
+		if err := run(strings.NewReader(line)); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
@@ -116,9 +120,10 @@ func runREPL() error {
 }
 
 func runFile(name string) error {
-	srcBytes, err := os.ReadFile(name)
+	f, err := os.Open(name)
 	if err != nil {
 		return fmt.Errorf("running Lox file: %s", err)
 	}
-	return runSrc(string(srcBytes))
+	defer f.Close()
+	return run(f)
 }
