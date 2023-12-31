@@ -59,10 +59,10 @@ const (
 	Colon        // :
 
 	// Brackets
-	OpenParen  // (
-	CloseParen // )
-	OpenBrace  // {
-	CloseBrace // }
+	LeftParen  // (
+	RightParen // )
+	LeftBrace  // {
+	RightBrace // }
 
 	EOF
 )

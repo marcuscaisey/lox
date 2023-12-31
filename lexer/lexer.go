@@ -143,13 +143,13 @@ func (l *Lexer) Next() token.Token {
 	case ':':
 		tok.Type = token.Colon
 	case '(':
-		tok.Type = token.OpenParen
+		tok.Type = token.LeftParen
 	case ')':
-		tok.Type = token.CloseParen
+		tok.Type = token.RightParen
 	case '{':
-		tok.Type = token.OpenBrace
+		tok.Type = token.LeftBrace
 	case '}':
-		tok.Type = token.CloseBrace
+		tok.Type = token.RightBrace
 	case '"':
 		tok.Type = token.String
 		tok.Literal = l.consumeString(tok.Position)

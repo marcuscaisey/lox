@@ -200,9 +200,9 @@ func (p *Parser) parsePrimaryExpr() ast.Expr {
 	if p.match(token.Nil) {
 		return ast.LiteralExpr{Value: nil}
 	}
-	if p.match(token.OpenParen) {
+	if p.match(token.LeftParen) {
 		expr := p.parseExpr()
-		p.mustMatch(token.CloseParen)
+		p.mustMatch(token.RightParen)
 		return ast.GroupExpr{Expr: expr}
 	}
 	p.error("expected expression after %s, got %s", p.curToken, p.nextToken)

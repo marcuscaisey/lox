@@ -47,10 +47,10 @@ func _() {
 	_ = x[Bang-36]
 	_ = x[Question-37]
 	_ = x[Colon-38]
-	_ = x[OpenParen-39]
-	_ = x[CloseParen-40]
-	_ = x[OpenBrace-41]
-	_ = x[CloseBrace-42]
+	_ = x[LeftParen-39]
+	_ = x[RightParen-40]
+	_ = x[LeftBrace-41]
+	_ = x[RightBrace-42]
 	_ = x[EOF-43]
 }
 
