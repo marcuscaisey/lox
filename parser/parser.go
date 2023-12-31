@@ -28,15 +28,18 @@ type parserError struct {
 }
 
 type syntaxError struct {
-	msg string
 	pos token.Position
+	msg string
 }
 
 func (e *syntaxError) Error() string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("${BOLD}%s: ${RED}syntax error: ${DEFAULT}%s${RESET}\n", e.pos, e.msg))
-	b.WriteString(fmt.Sprintf("%s\n", e.pos.File.Line(e.pos.Line)))
-	b.WriteString(fmt.Sprintf("${RED}${BOLD}%*s${RESET}", e.pos.Column, "^"))
+	line := e.pos.File.Line(e.pos.Line)
+	before := line[:e.pos.Column-1]
+	after := line[e.pos.Column:]
+	b.WriteString(fmt.Sprintf("%s${RED}%s${RESET}%s\n", before, string(line[e.pos.Column-1]), after))
+	b.WriteString(fmt.Sprintf("${BOLD}${RED}%*s${RESET}", e.pos.Column, "^"))
 	msg := b.String()
 	for k, v := range ansiCodes {
 		if !isTerminal {
