@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -24,10 +25,6 @@ var ansiCodes = map[string]string{
 }
 
 var isTerminal = term.IsTerminal(int(os.Stderr.Fd()))
-
-type parserError struct {
-	error
-}
 
 type syntaxError struct {
 	pos token.Position
@@ -55,11 +52,10 @@ func (e *syntaxError) Error() string {
 
 // Parser parses Lox source code into an abstract syntax tree.
 type Parser struct {
-	l          *lexer.Lexer
-	curToken   token.Token
-	nextToken  token.Token
-	errs       []error
-	lastErrPos token.Position
+	l           *lexer.Lexer
+	tok         token.Token // token currently being considered
+	errs        []error
+	lastErrLine int // line number of last error
 }
 
 // New constructs a new Parser which parses the source code read from r.
@@ -72,7 +68,7 @@ func New(r io.Reader) (*Parser, error) {
 	p := &Parser{l: l}
 
 	errHandler := func(pos token.Position, msg string) {
-		p.lastErrPos = pos
+		p.lastErrLine = pos.Line
 		err := &syntaxError{
 			pos: pos,
 			msg: msg,
@@ -81,8 +77,7 @@ func New(r io.Reader) (*Parser, error) {
 	}
 	l.SetErrorHandler(errHandler)
 
-	// Read two tokens so tok and nextTok are both valid.
-	p.advance()
+	p.next()
 
 	return p, nil
 }
@@ -99,11 +94,11 @@ func (p *Parser) Parse() (ast.Node, error) {
 func (p *Parser) safelyParseExpr() ast.Expr {
 	defer func() {
 		if r := recover(); r != nil {
-			if parserErr, ok := r.(parserError); ok {
-				if len(p.errs) > 0 && p.lastErrPos == p.nextToken.Position {
+			if syntaxErr, ok := r.(*syntaxError); ok {
+				if len(p.errs) > 0 && syntaxErr.pos.Line == p.lastErrLine {
 					return
 				}
-				p.errs = append(p.errs, parserErr)
+				p.errs = append(p.errs, syntaxErr)
 			} else {
 				panic(r)
 			}
@@ -122,9 +117,10 @@ func (p *Parser) parseCommaExpr() ast.Expr {
 
 func (p *Parser) parseTernaryExpr() ast.Expr {
 	expr := p.parseEqualityExpr()
-	if p.match(token.Question) {
+	if p.tok.Type == token.Question {
+		p.next()
 		then := p.parseExpr()
-		p.mustMatch(token.Colon)
+		p.expect(token.Colon)
 		elseExpr := p.parseTernaryExpr()
 		expr = ast.TernaryExpr{
 			Condition: expr,
@@ -155,8 +151,9 @@ func (p *Parser) parseMultiplicativeExpr() ast.Expr {
 // expression of next highest precedence.
 func (p *Parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) ast.Expr {
 	expr := next()
-	for p.match(operators...) {
-		op := p.curToken.Type
+	for slices.Contains(operators, p.tok.Type) {
+		op := p.tok.Type
+		p.next()
 		right := next()
 		expr = ast.BinaryExpr{
 			Left:  expr,
@@ -168,8 +165,9 @@ func (p *Parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) 
 }
 
 func (p *Parser) parseUnaryExpr() ast.Expr {
-	if p.match(token.Bang, token.Minus) {
-		op := p.curToken.Type
+	if p.tok.Type == token.Bang || p.tok.Type == token.Minus {
+		op := p.tok.Type
+		p.next()
 		right := p.parseUnaryExpr()
 		return ast.UnaryExpr{
 			Op:    op,
@@ -180,64 +178,53 @@ func (p *Parser) parseUnaryExpr() ast.Expr {
 }
 
 func (p *Parser) parsePrimaryExpr() ast.Expr {
-	if p.match(token.Number) {
-		value, err := strconv.ParseFloat(p.curToken.Literal, 64)
+	var primaryExpr ast.Expr
+	switch p.tok.Type {
+	case token.Number:
+		value, err := strconv.ParseFloat(p.tok.Literal, 64)
 		if err != nil {
 			panic(fmt.Sprintf("unexpected error parsing number literal: %s", err))
 		}
-		return ast.LiteralExpr{Value: value}
-	}
-	if p.match(token.String) {
-		value := p.curToken.Literal[1 : len(p.curToken.Literal)-1] // Remove surrounding quotes
-		return ast.LiteralExpr{Value: value}
-	}
-	if p.match(token.True) {
-		return ast.LiteralExpr{Value: true}
-	}
-	if p.match(token.False) {
-		return ast.LiteralExpr{Value: false}
-	}
-	if p.match(token.Nil) {
-		return ast.LiteralExpr{Value: nil}
-	}
-	if p.match(token.LeftParen) {
+		primaryExpr = ast.LiteralExpr{Value: value}
+	case token.String:
+		value := p.tok.Literal[1 : len(p.tok.Literal)-1] // Remove surrounding quotes
+		primaryExpr = ast.LiteralExpr{Value: value}
+	case token.True:
+		primaryExpr = ast.LiteralExpr{Value: true}
+	case token.False:
+		primaryExpr = ast.LiteralExpr{Value: false}
+	case token.Nil:
+		primaryExpr = ast.LiteralExpr{Value: nil}
+	case token.LeftParen:
+		p.next()
 		expr := p.parseExpr()
-		p.mustMatch(token.RightParen)
-		return ast.GroupExpr{Expr: expr}
+		p.expect(token.RightParen)
+		primaryExpr = ast.GroupExpr{Expr: expr}
+	default:
+		p.errorf("expected expression, got %s", p.tok)
 	}
-	p.error("expected expression after %s, got %s", p.curToken, p.nextToken)
-	return nil
+	p.next()
+	return primaryExpr
 }
 
-// match returns whether the next token is any of the given types and advances the parser if it is.
-func (p *Parser) match(types ...token.Type) bool {
-	for _, t := range types {
-		if p.nextToken.Type == t {
-			p.advance()
-			return true
-		}
-	}
-	return false
-}
-
-// mustMatch does the same as match but raises an error if the next token is not the given type.
-func (p *Parser) mustMatch(t token.Type) {
-	if p.match(t) {
+// expect checks that the current token is of the given type and calls p.next() if so. Otherwise, an error is raised.
+func (p *Parser) expect(t token.Type) {
+	if p.tok.Type == t {
+		p.next()
 		return
 	}
-	p.error("expected %s after %s, got %s", t, p.curToken, p.nextToken)
+	p.errorf("expected %s, got %s", t, p.tok)
 }
 
-// advance increments the parser's position and updates the current and next tokens.
-func (p *Parser) advance() {
-	p.curToken = p.nextToken
-	p.nextToken = p.l.Next()
+// next reads the next token from the lexer into p.tok.
+func (p *Parser) next() {
+	p.tok = p.l.Next()
 }
 
-func (p *Parser) error(format string, a ...any) {
+func (p *Parser) errorf(format string, a ...any) {
 	err := &syntaxError{
 		msg: fmt.Sprintf(format, a...),
-		pos: p.nextToken.Position,
+		pos: p.tok.Position,
 	}
-	panic(parserError{err})
+	panic(err)
 }
