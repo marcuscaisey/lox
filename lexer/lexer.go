@@ -73,43 +73,28 @@ func (l *Lexer) Next() token.Token {
 
 	tok := token.Token{Position: l.pos}
 
-	if isDigit(l.ch) {
-		tok.Type = token.Number
-		tok.Literal = l.consumeNumber()
-		return tok
-	}
-
-	if isAlpha(l.ch) {
-		ident := l.consumeIdent()
-		tok.Type = token.LookupIdent(ident)
-		if tok.Type == token.Ident {
-			tok.Literal = ident
-		}
-		return tok
-	}
-
-	switch l.ch {
-	case eof:
+	switch {
+	case l.ch == eof:
 		tok.Type = token.EOF
-	case ';':
+	case l.ch == ';':
 		tok.Type = token.Semicolon
-	case ',':
+	case l.ch == ',':
 		tok.Type = token.Comma
-	case '.':
+	case l.ch == '.':
 		tok.Type = token.Dot
-	case '=':
+	case l.ch == '=':
 		tok.Type = token.Assign
 		if l.peek() == '=' {
 			l.next()
 			tok.Type = token.Equal
 		}
-	case '+':
+	case l.ch == '+':
 		tok.Type = token.Plus
-	case '-':
+	case l.ch == '-':
 		tok.Type = token.Minus
-	case '*':
+	case l.ch == '*':
 		tok.Type = token.Asterisk
-	case '/':
+	case l.ch == '/':
 		tok.Type = token.Slash
 		if l.peek() == '/' {
 			l.next()
@@ -127,43 +112,55 @@ func (l *Lexer) Next() token.Token {
 			}
 			return l.Next()
 		}
-	case '<':
+	case l.ch == '<':
 		tok.Type = token.Less
 		if l.peek() == '=' {
 			l.next()
 			tok.Type = token.LessEqual
 		}
-	case '>':
+	case l.ch == '>':
 		tok.Type = token.Greater
 		if l.peek() == '=' {
 			l.next()
 			tok.Type = token.GreaterEqual
 		}
-	case '!':
+	case l.ch == '!':
 		tok.Type = token.Bang
 		if l.peek() == '=' {
 			l.next()
 			tok.Type = token.NotEqual
 		}
-	case '?':
+	case l.ch == '?':
 		tok.Type = token.Question
-	case ':':
+	case l.ch == ':':
 		tok.Type = token.Colon
-	case '(':
+	case l.ch == '(':
 		tok.Type = token.LeftParen
-	case ')':
+	case l.ch == ')':
 		tok.Type = token.RightParen
-	case '{':
+	case l.ch == '{':
 		tok.Type = token.LeftBrace
-	case '}':
+	case l.ch == '}':
 		tok.Type = token.RightBrace
-	case '"':
+	case l.ch == '"':
 		tok.Type = token.String
 		lit, terminated := l.consumeString()
 		tok.Literal = lit
 		if !terminated {
 			l.errHandler(tok, "unterminated string literal")
 		}
+		return tok
+	case isDigit(l.ch):
+		tok.Type = token.Number
+		tok.Literal = l.consumeNumber()
+		return tok
+	case isAlpha(l.ch):
+		ident := l.consumeIdent()
+		tok.Type = token.LookupIdent(ident)
+		if tok.Type == token.Ident {
+			tok.Literal = ident
+		}
+		return tok
 	default:
 		tok.Type = token.Illegal
 		tok.Literal = string(l.ch)
@@ -228,21 +225,17 @@ func (l *Lexer) consumeString() (s string, terminated bool) {
 	l.next()
 	var b strings.Builder
 	b.WriteRune('"')
-	terminated = true
-loop:
 	for {
-		switch l.ch {
-		case eof, '\n', '\r':
-			terminated = false
-			break loop
-		case '"':
-			b.WriteRune(l.ch)
-			break loop
+		if l.ch == eof || l.ch == '\n' || l.ch == '\r' {
+			return b.String(), false
 		}
-		b.WriteRune(l.ch)
+		ch := l.ch
+		b.WriteRune(ch)
 		l.next()
+		if ch == '"' {
+			return b.String(), true
+		}
 	}
-	return b.String(), terminated
 }
 
 func (l *Lexer) consumeIdent() string {
