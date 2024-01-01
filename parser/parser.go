@@ -58,10 +58,10 @@ func (e *syntaxError) Error() string {
 
 // Parser parses Lox source code into an abstract syntax tree.
 type Parser struct {
-	l           *lexer.Lexer
-	tok         token.Token // token currently being considered
-	errs        []error
-	lastErrLine int // line number of last error
+	l          *lexer.Lexer
+	tok        token.Token // token currently being considered
+	errs       []error
+	lastErrPos token.Position
 }
 
 // New constructs a new Parser which parses the source code read from r.
@@ -74,7 +74,7 @@ func New(r io.Reader) (*Parser, error) {
 	p := &Parser{l: l}
 
 	errHandler := func(tok token.Token, msg string) {
-		p.lastErrLine = tok.Position.Line
+		p.lastErrPos = tok.Position
 		err := &syntaxError{
 			tok: tok,
 			msg: msg,
@@ -101,7 +101,7 @@ func (p *Parser) safelyParseExpr() ast.Expr {
 	defer func() {
 		if r := recover(); r != nil {
 			if syntaxErr, ok := r.(*syntaxError); ok {
-				if len(p.errs) > 0 && syntaxErr.tok.Position.Line == p.lastErrLine {
+				if len(p.errs) > 0 && syntaxErr.tok.Position == p.lastErrPos {
 					return
 				}
 				p.errs = append(p.errs, syntaxErr)
