@@ -120,7 +120,7 @@ func (l *Lexer) Next() token.Token {
 		if l.peek() == '*' {
 			l.next()
 			l.next()
-			if comment, terminated := l.skipBlockComment(); !terminated {
+			if comment, terminated := l.consumeBlockComment(); !terminated {
 				tok.Type = token.Comment
 				tok.Literal = comment
 				l.errHandler(tok, "unterminated block comment")
@@ -186,7 +186,7 @@ func (l *Lexer) skipLineComment() {
 	}
 }
 
-func (l *Lexer) skipBlockComment() (comment string, terminated bool) {
+func (l *Lexer) consumeBlockComment() (comment string, terminated bool) {
 	var b strings.Builder
 	b.WriteString("/*")
 	// Block comments can span multiple lines and they can also be nested
