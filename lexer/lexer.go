@@ -165,9 +165,9 @@ func (l *Lexer) Next() token.Token {
 			l.errHandler(tok, "unterminated string literal")
 		}
 	default:
-		l.errHandler(tok, fmt.Sprintf("illegal character %#U", l.ch))
 		tok.Type = token.Illegal
 		tok.Literal = string(l.ch)
+		l.errHandler(tok, fmt.Sprintf("illegal character %#U", l.ch))
 	}
 	l.next()
 
