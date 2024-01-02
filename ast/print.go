@@ -34,14 +34,11 @@ func sprint(n Node, d int) string {
 }
 
 func sexpr(n Node, d int, children ...string) string {
-	var sb strings.Builder
-	sb.WriteString("(")
-	sb.WriteString(reflect.TypeOf(n).Name())
+	var b strings.Builder
+	fmt.Fprint(&b, "(", reflect.TypeOf(n).Name())
 	for _, child := range children {
-		sb.WriteString("\n")
-		sb.WriteString(strings.Repeat("  ", d+1))
-		sb.WriteString(child)
+		fmt.Fprint(&b, "\n", strings.Repeat("  ", d+1), child)
 	}
-	sb.WriteString(")")
-	return sb.String()
+	fmt.Fprint(&b, ")")
+	return b.String()
 }

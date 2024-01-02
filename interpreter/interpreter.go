@@ -36,15 +36,15 @@ func (e *runtimeError) Error() string {
 	// TODO: It would be nice to highlight more than just the token that caused the error. I.e. highlight the whole of
 	// 1 + "foo" in the example above. This requires adding more information to the AST nodes.
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("${BOLD}%s: runtime error: %s${RESET}\n", e.tok.Position, e.msg))
 	line := e.tok.Position.File.Line(e.tok.Position.Line)
 	col := e.tok.Position.Column
 	before := line[:col-1]
 	// If the literal contains a newline, only show the first line. This is a bit hacky but it's good enough for now.
 	lit, _, _ := strings.Cut(e.tok.String(), "\n")
 	after := line[col+len(lit)-1:]
-	b.WriteString(fmt.Sprintf("%s${RED}%s${RESET}%s\n", before, lit, after))
-	b.WriteString(fmt.Sprintf("%s${BOLD}${RED}%s${RESET}", strings.Repeat(" ", col-1), strings.Repeat("^", len(lit))))
+	fmt.Fprintf(&b, "${BOLD}%s: runtime error: %s${RESET}\n", e.tok.Position, e.msg)
+	fmt.Fprintf(&b, "%s${RED}%s${RESET}%s\n", before, lit, after)
+	fmt.Fprintf(&b, "${BOLD}${RED}%*s${RESET}", col, strings.Repeat("^", len(lit)))
 	msg := b.String()
 	for k, v := range ansiCodes {
 		if !isTerminal {
