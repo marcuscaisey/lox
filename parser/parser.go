@@ -5,26 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"strconv"
 	"strings"
+	"text/template"
 
-	"golang.org/x/term"
+	"github.com/fatih/color"
+	"github.com/lithammer/dedent"
 
 	"github.com/marcuscaisey/golox/ast"
 	"github.com/marcuscaisey/golox/lexer"
 	"github.com/marcuscaisey/golox/token"
 )
-
-var ansiCodes = map[string]string{
-	"RESET":   "\x1b[0m",
-	"BOLD":    "\x1b[1m",
-	"RED":     "\x1b[31m",
-	"DEFAULT": "\x1b[39m",
-}
-
-var isTerminal = term.IsTerminal(int(os.Stderr.Fd()))
 
 type syntaxError struct {
 	tok token.Token
@@ -32,28 +24,34 @@ type syntaxError struct {
 }
 
 func (e *syntaxError) Error() string {
-	// Example output:
-	// 1:5: syntax error: unterminated string literal
-	// 1 + "foo
-	//     ^^^^
-	var b strings.Builder
+	// If the token spans multiple lines, only show the first one. I'm not sure what the best way of highlighting and
+	// pointing to a multi-line token is.
+	tok, _, _ := strings.Cut(e.tok.String(), "\n")
 	line := e.tok.Position.File.Line(e.tok.Position.Line)
-	col := e.tok.Position.Column
-	before := line[:col-1]
-	// If the literal contains a newline, only show the first line. This is a bit hacky but it's good enough for now.
-	lit, _, _ := strings.Cut(e.tok.String(), "\n")
-	after := line[col+len(lit)-1:]
-	fmt.Fprintf(&b, "${BOLD}%s: syntax error: %s${RESET}\n", e.tok.Position, e.msg)
-	fmt.Fprintf(&b, "%s${RED}%s${RESET}%s\n", before, lit, after)
-	fmt.Fprintf(&b, "${BOLD}${RED}%*s${RESET}", col, strings.Repeat("^", len(lit)))
-	msg := b.String()
-	for k, v := range ansiCodes {
-		if !isTerminal {
-			v = ""
-		}
-		msg = strings.ReplaceAll(msg, fmt.Sprintf("${%s}", k), v)
+	data := map[string]any{
+		"pos":    e.tok.Position,
+		"msg":    e.msg,
+		"before": line[:e.tok.Position.Column-1],
+		"tok":    tok,
+		"after":  line[e.tok.Position.Column+len(tok)-1:],
 	}
-	return msg
+	funcs := template.FuncMap{
+		"red":    color.New(color.FgRed).SprintFunc(),
+		"bold":   color.New(color.Bold).SprintFunc(),
+		"repeat": strings.Repeat,
+	}
+	text := strings.TrimSpace(dedent.Dedent(`
+		{{ .pos }}: syntax error: {{ .msg }}
+		{{ .before }}{{ .tok | bold | red }}{{ .after }}
+		{{ repeat " " (len .before) }}{{ repeat "^" (len .tok) | red | bold }}
+	`))
+
+	tmpl := template.Must(template.New("").Funcs(funcs).Parse(text))
+	var b strings.Builder
+	if err := tmpl.Execute(&b, data); err != nil {
+		panic(err)
+	}
+	return b.String()
 }
 
 // Parser parses Lox source code into an abstract syntax tree.
