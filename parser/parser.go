@@ -89,6 +89,9 @@ func New(r io.Reader) (*Parser, error) {
 // Parse parses the source code and returns the root node of the abstract syntax tree.
 func (p *Parser) Parse() (ast.Node, error) {
 	root := p.safelyParseExpr()
+	for p.tok.Type != token.EOF {
+		p.next()
+	}
 	if len(p.errs) > 0 {
 		return nil, errors.Join(p.errs...)
 	}
