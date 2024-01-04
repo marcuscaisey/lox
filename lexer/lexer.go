@@ -76,6 +76,9 @@ func (l *Lexer) Next() token.Token {
 	switch {
 	case l.ch == eof:
 		tok.Type = token.EOF
+		// Treating EOF as a space instead of an empty string makes it easier to display (e.g. in syntax errors) without
+		// having to special case it.
+		tok.Literal = " "
 	case l.ch == ';':
 		tok.Type = token.Semicolon
 	case l.ch == ',':
@@ -271,8 +274,7 @@ func isAlphaNumeric(r rune) bool {
 // next reads the next character into s.ch and advances the lexer.
 // If the end of the source code has been reached, s.ch is set to eof.
 func (l *Lexer) next() {
-	if l.readOffset == len(l.src) {
-		l.ch = eof
+	if l.ch == eof {
 		return
 	}
 
@@ -281,6 +283,11 @@ func (l *Lexer) next() {
 		l.pos.Column = 1
 	} else {
 		l.pos.Column++
+	}
+
+	if l.readOffset == len(l.src) {
+		l.ch = eof
+		return
 	}
 
 	l.ch = rune(l.src[l.readOffset])

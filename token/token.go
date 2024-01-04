@@ -124,7 +124,11 @@ func (f *File) Line(n int) string {
 	if n < len(f.lineOffsets) {
 		high = f.lineOffsets[n] - 1 // -1 to exclude the newline
 	}
-	return string(f.contents[low:high])
+	line := string(f.contents[low:high])
+	if n == len(f.lineOffsets) {
+		line += " " // We treat EOF as a space at the end of the file
+	}
+	return line
 }
 
 var keywordTypesByIdent = func() map[string]Type {

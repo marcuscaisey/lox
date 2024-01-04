@@ -208,7 +208,7 @@ func (p *Parser) parsePrimaryExpr() ast.Expr {
 		p.expect(token.RightParen)
 		primaryExpr = ast.GroupExpr{Expr: expr}
 	default:
-		panic(p.syntaxErrorf("expected expression, got %s", p.tok))
+		panic(p.syntaxErrorf("expected expression, got %s", p.tok.Type))
 	}
 	p.next()
 	return primaryExpr
@@ -220,7 +220,7 @@ func (p *Parser) expect(t token.Type) {
 		p.next()
 		return
 	}
-	panic(p.syntaxErrorf("expected %s, got %s", t, p.tok))
+	panic(p.syntaxErrorf("expected %s, got %s", t, p.tok.Type))
 }
 
 // next reads the next token from the lexer into p.tok.
