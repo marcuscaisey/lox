@@ -65,12 +65,12 @@ func run(r io.Reader) error {
 		return err
 	}
 	root, err := p.Parse()
-	if err != nil {
-		return err
-	}
 	if *printAST {
 		ast.Print(root)
-		return nil
+		return err
+	}
+	if err != nil {
+		return err
 	}
 	return interpreter.Interpret(root)
 }

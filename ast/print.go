@@ -28,6 +28,8 @@ func sprint(n Node, d int) string {
 		return sexpr(n, d, sprint(n.Left, d+1), fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
 	case TernaryExpr:
 		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
+	case nil:
+		return "nil"
 	default:
 		panic(fmt.Sprintf("unexpected node type: %T", n))
 	}

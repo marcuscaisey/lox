@@ -87,13 +87,14 @@ func New(r io.Reader) (*Parser, error) {
 }
 
 // Parse parses the source code and returns the root node of the abstract syntax tree.
+// If an error is returned then an incomplete AST will still be returned along with it.
 func (p *Parser) Parse() (ast.Node, error) {
 	root := p.safelyParseExpr()
 	for p.tok.Type != token.EOF {
 		p.next()
 	}
 	if len(p.errs) > 0 {
-		return nil, errors.Join(p.errs...)
+		return root, errors.Join(p.errs...)
 	}
 	return root, nil
 }
