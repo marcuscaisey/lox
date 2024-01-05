@@ -1,7 +1,11 @@
 // Package token defines Token which represents a lexical token of the Lox programming language.
 package token
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/fatih/color"
+)
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type Type -linecomment
 
@@ -66,6 +70,23 @@ const (
 	LeftBrace  // {
 	RightBrace // }
 )
+
+// Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the
+// type in cyan.
+func (t Type) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'h':
+		fmt.Fprint(f, color.CyanString(t.String()))
+	case 's', 'q', 'v', 'x', 'X':
+		if !f.Flag('#') {
+			fmt.Fprintf(f, fmt.FormatString(f, verb), t.String())
+			break
+		}
+		fallthrough
+	default:
+		fmt.Fprintf(f, fmt.FormatString(f, verb), uint8(t))
+	}
+}
 
 // Token is a lexical token of Lox code.
 type Token struct {

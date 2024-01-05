@@ -185,42 +185,57 @@ func (p *Parser) parseUnaryExpr() ast.Expr {
 }
 
 func (p *Parser) parsePrimaryExpr() ast.Expr {
-	var primaryExpr ast.Expr
+	var expr ast.Expr
 	switch p.tok.Type {
 	case token.Number:
 		value, err := strconv.ParseFloat(p.tok.Literal, 64)
 		if err != nil {
 			panic(fmt.Sprintf("unexpected error parsing number literal: %s", err))
 		}
-		primaryExpr = ast.LiteralExpr{Value: value}
+		expr = ast.LiteralExpr{Value: value}
 	case token.String:
 		value := p.tok.Literal[1 : len(p.tok.Literal)-1] // Remove surrounding quotes
-		primaryExpr = ast.LiteralExpr{Value: value}
+		expr = ast.LiteralExpr{Value: value}
 	case token.True:
-		primaryExpr = ast.LiteralExpr{Value: true}
+		expr = ast.LiteralExpr{Value: true}
 	case token.False:
-		primaryExpr = ast.LiteralExpr{Value: false}
+		expr = ast.LiteralExpr{Value: false}
 	case token.Nil:
-		primaryExpr = ast.LiteralExpr{Value: nil}
+		expr = ast.LiteralExpr{Value: nil}
 	case token.LeftParen:
 		p.next()
-		expr := p.parseExpr()
+		innerExpr := p.parseExpr()
 		p.expect(token.RightParen)
-		primaryExpr = ast.GroupExpr{Expr: expr}
+		expr = ast.GroupExpr{Expr: innerExpr}
 	default:
-		panic(p.syntaxErrorf("expected expression, got %s", p.tok.Type))
+		p.expect(token.Number, token.String, token.True, token.False, token.Nil, token.LeftParen)
 	}
 	p.next()
-	return primaryExpr
+	return expr
 }
 
 // expect checks that the current token has the given type and calls next if so. Otherwise, a syntax error is raised.
-func (p *Parser) expect(t token.Type) {
-	if p.tok.Type == t {
-		p.next()
-		return
+func (p *Parser) expect(types ...token.Type) {
+	for _, t := range types {
+		if p.tok.Type == t {
+			p.next()
+			return
+		}
 	}
-	panic(p.syntaxErrorf("expected %s, got %s", t, p.tok.Type))
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "unexpected %h, expected %h", p.tok.Type, types[0])
+	switch len(types) {
+	case 1:
+	case 2:
+		fmt.Fprintf(&b, " or %h", types[1])
+	default:
+		for i := 1; i < len(types)-1; i++ {
+			fmt.Fprintf(&b, ", %h", types[i])
+		}
+		fmt.Fprintf(&b, " or %h", types[len(types)-1])
+	}
+	panic(p.syntaxErrorf(b.String()))
 }
 
 // next reads the next token from the lexer into p.tok.
