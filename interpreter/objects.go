@@ -4,12 +4,28 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/fatih/color"
+
 	"github.com/marcuscaisey/golox/token"
 )
 
+// Type is the string representation of a Lox object's type.
+type Type string
+
+// Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the
+// type in green.
+func (t Type) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'h':
+		fmt.Fprint(f, color.GreenString(string(t)))
+	default:
+		fmt.Fprintf(f, fmt.FormatString(f, verb), string(t))
+	}
+}
+
 type loxObject interface {
 	String() string
-	Type() string
+	Type() Type
 	IsTruthy() loxBool
 	UnaryOp(op token.Token) loxObject
 	BinaryOp(op token.Token, right loxObject) loxObject
@@ -18,14 +34,14 @@ type loxObject interface {
 func invalidUnaryOpError(op token.Token, object loxObject) error {
 	return &runtimeError{
 		tok: op,
-		msg: fmt.Sprintf("'%s' operator cannot be used with type '%s'", op.Type, object.Type()),
+		msg: fmt.Sprintf("%h operator cannot be used with type %h", op.Type, object.Type()),
 	}
 }
 
 func invalidBinaryOpError(op token.Token, left, right loxObject) error {
 	return &runtimeError{
 		tok: op,
-		msg: fmt.Sprintf("'%s' operator cannot be used with types '%s' and '%s'", op.Type, left.Type(), right.Type()),
+		msg: fmt.Sprintf("%h operator cannot be used with types %h and %h", op.Type, left.Type(), right.Type()),
 	}
 }
 
@@ -37,7 +53,7 @@ func (n loxNumber) String() string {
 	return strconv.FormatFloat(float64(n), 'f', -1, 64)
 }
 
-func (n loxNumber) Type() string {
+func (n loxNumber) Type() Type {
 	return "number"
 }
 
@@ -93,7 +109,7 @@ func (s loxString) String() string {
 	return string(s)
 }
 
-func (s loxString) Type() string {
+func (s loxString) Type() Type {
 	return "string"
 }
 
@@ -144,7 +160,7 @@ func (b loxBool) String() string {
 	return "false"
 }
 
-func (b loxBool) Type() string {
+func (b loxBool) Type() Type {
 	return "bool"
 }
 
@@ -173,7 +189,7 @@ func (n loxNil) String() string {
 	return "nil"
 }
 
-func (n loxNil) Type() string {
+func (n loxNil) Type() Type {
 	return "nil"
 }
 
