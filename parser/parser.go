@@ -207,6 +207,7 @@ func (p *Parser) parsePrimaryExpr() ast.Expr {
 		innerExpr := p.parseExpr()
 		p.expect(token.RightParen)
 		expr = ast.GroupExpr{Expr: innerExpr}
+		return expr
 	default:
 		p.expect(token.Number, token.String, token.True, token.False, token.Nil, token.LeftParen)
 	}
