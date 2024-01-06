@@ -60,11 +60,7 @@ func main() {
 }
 
 func run(r io.Reader) error {
-	p, err := parser.New(r)
-	if err != nil {
-		return err
-	}
-	root, err := p.Parse()
+	root, err := parser.Parse(r)
 	if *printAST {
 		ast.Print(root)
 		return err
