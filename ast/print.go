@@ -18,6 +18,18 @@ func Sprint(n Node) string {
 
 func sprint(n Node, d int) string {
 	switch n := n.(type) {
+	case Program:
+		stmts := make([]string, len(n.Stmts))
+		for i, stmt := range n.Stmts {
+			stmts[i] = sprint(stmt, d+1)
+		}
+		return sexpr(n, d, stmts...)
+	case ExprStmt:
+		return sexpr(n, d, sprint(n.Expr, d+1))
+	case PrintStmt:
+		return sexpr(n, d, sprint(n.Expr, d+1))
+	case IllegalStmt:
+		return "IllegalStmt"
 	case GroupExpr:
 		return sexpr(n, d, sprint(n.Expr, d+1))
 	case LiteralExpr:
@@ -28,8 +40,8 @@ func sprint(n Node, d int) string {
 		return sexpr(n, d, sprint(n.Left, d+1), fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
 	case TernaryExpr:
 		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
-	case nil:
-		return "nil"
+	case IllegalExpr:
+		return "IllegalExpr"
 	default:
 		panic(fmt.Sprintf("unexpected node type: %T", n))
 	}

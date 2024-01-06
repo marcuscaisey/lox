@@ -62,13 +62,18 @@ func Interpret(node ast.Node) (err error) {
 			}
 		}
 	}()
-	result := interpret(node)
-	fmt.Println(result)
+	interpret(node)
 	return nil
 }
 
 func interpret(node ast.Node) loxObject {
 	switch node := node.(type) {
+	case ast.Program:
+		return interpretProgram(node)
+	case ast.PrintStmt:
+		return interpretPrintStmt(node)
+	case ast.ExprStmt:
+		return interpretExprStmt(node)
 	case ast.GroupExpr:
 		return interpret(node.Expr)
 	case ast.LiteralExpr:
@@ -82,6 +87,25 @@ func interpret(node ast.Node) loxObject {
 	default:
 		panic(fmt.Sprintf("unexpected node type: %T", node))
 	}
+}
+
+func interpretProgram(node ast.Program) loxObject {
+	var result loxObject = loxNil{}
+	for _, stmt := range node.Stmts {
+		result = interpret(stmt)
+	}
+	return result
+}
+
+func interpretPrintStmt(stmt ast.PrintStmt) loxObject {
+	value := interpret(stmt.Expr)
+	fmt.Println(value.String())
+	return loxNil{}
+}
+
+func interpretExprStmt(stmt ast.ExprStmt) loxObject {
+	interpret(stmt.Expr)
+	return loxNil{}
 }
 
 func interpretLiteralExpr(expr ast.LiteralExpr) loxObject {

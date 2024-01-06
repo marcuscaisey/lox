@@ -10,6 +10,12 @@ form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) described
 Markup Language (XML) 1.0 (Fifth Edition)](https://www.w3.org/TR/xml/#sec-notation).
 
 ```ebnf
+program = stmt* EOF ;
+
+stmt       = expr_stmt | print_stmt ;
+expr_stmt  = expr ";" ;
+print_stmt = "print" expr ";" ;
+
 expr                = comma_expr ;
 comma_expr          = ternary_expr ( "," ternary_expr )* ;
 ternary_expr        = equality_expr ( "?" expr ":" ternary_expr )? ;

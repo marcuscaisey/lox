@@ -23,7 +23,7 @@ import (
 func Parse(r io.Reader) (ast.Node, error) {
 	l, err := lexer.New(r)
 	if err != nil {
-		return nil, fmt.Errorf("constructing parser: %s", err)
+		return ast.Program{}, fmt.Errorf("constructing parser: %s", err)
 	}
 
 	p := &parser{l: l}
@@ -52,25 +52,62 @@ type parser struct {
 // If an error is returned then an incomplete AST will still be returned along with it.
 func (p *parser) Parse() (ast.Node, error) {
 	p.next() // Read the first token into p.tok
-	root := p.safelyParseExpr()
+	program := ast.Program{}
 	for p.tok.Type != token.EOF {
-		p.next()
+		program.Stmts = append(program.Stmts, p.safelyParseStmt())
 	}
 	if len(p.errs) > 0 {
-		return root, errors.Join(p.errs...)
+		return program, errors.Join(p.errs...)
 	}
-	return root, nil
+	return program, nil
 }
 
-func (p *parser) safelyParseExpr() ast.Expr {
+func (p *parser) safelyParseStmt() (stmt ast.Stmt) {
 	defer func() {
 		if r := recover(); r != nil {
-			if _, ok := r.(unwind); !ok {
+			if _, ok := r.(unwind); ok {
+				p.sync()
+				stmt = ast.IllegalStmt{}
+			} else {
 				panic(r)
 			}
 		}
 	}()
-	return p.parseExpr()
+	return p.parseStmt()
+}
+
+// sync synchronises the parser with the next statement. This is used to recover from a parsing error.
+func (p *parser) sync() {
+	for p.tok.Type != token.EOF {
+		switch p.tok.Type {
+		case token.Semicolon:
+			p.next()
+			return
+		case token.Print, token.Var, token.If, token.While, token.For, token.Function, token.Return, token.Class:
+			return
+		}
+		p.next()
+	}
+}
+
+func (p *parser) parseStmt() ast.Stmt {
+	if p.tok.Type == token.Print {
+		return p.parsePrintStmt()
+	}
+	return p.parseExprStmt()
+}
+
+func (p *parser) parsePrintStmt() ast.Stmt {
+	p.expect(token.Print)
+	expr := p.parseExpr()
+	p.expect(token.Semicolon)
+	return ast.PrintStmt{Expr: expr}
+}
+
+func (p *parser) parseExprStmt() ast.Stmt {
+	expr := p.parseExpr()
+	p.expect(token.Semicolon)
+	return ast.ExprStmt{Expr: expr}
 }
 
 func (p *parser) parseExpr() ast.Expr {
@@ -183,7 +220,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			right = p.parseUnaryExpr()
 		}
 		return ast.BinaryExpr{
-			Left:  nil,
+			Left:  ast.IllegalExpr{},
 			Op:    tok,
 			Right: right,
 		}
