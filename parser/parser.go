@@ -18,6 +18,10 @@ import (
 	"github.com/marcuscaisey/golox/token"
 )
 
+// unwind is used as a panic value so that we can unwind the stack and recover from a parsing error without having to
+// check for errors after every call to each parsing method.
+type unwind struct{}
+
 type syntaxError struct {
 	tok token.Token
 	msg string
@@ -102,12 +106,7 @@ func (p *Parser) Parse() (ast.Node, error) {
 func (p *Parser) safelyParseExpr() ast.Expr {
 	defer func() {
 		if r := recover(); r != nil {
-			if syntaxErr, ok := r.(*syntaxError); ok {
-				if len(p.errs) > 0 && syntaxErr.tok.Position == p.lastErrPos {
-					return
-				}
-				p.errs = append(p.errs, syntaxErr)
-			} else {
+			if _, ok := r.(unwind); !ok {
 				panic(r)
 			}
 		}
@@ -187,7 +186,7 @@ func (p *Parser) parseUnaryExpr() ast.Expr {
 
 func (p *Parser) parsePrimaryExpr() ast.Expr {
 	var expr ast.Expr
-	switch p.tok.Type {
+	switch tok := p.tok; tok.Type {
 	case token.Number:
 		value, err := strconv.ParseFloat(p.tok.Literal, 64)
 		if err != nil {
@@ -209,6 +208,26 @@ func (p *Parser) parsePrimaryExpr() ast.Expr {
 		p.expect(token.RightParen)
 		expr = ast.GroupExpr{Expr: innerExpr}
 		return expr
+	// Error productions
+	case token.Equal, token.NotEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus:
+		p.addSyntaxErrorf("binary operator %h must have left and right operands", p.tok.Type)
+		p.next()
+		var right ast.Expr
+		switch tok.Type {
+		case token.Equal, token.NotEqual:
+			right = p.parseEqualityExpr()
+		case token.Less, token.LessEqual, token.Greater, token.GreaterEqual:
+			right = p.parseRelationalExpr()
+		case token.Plus:
+			right = p.parseMultiplicativeExpr()
+		case token.Asterisk, token.Slash:
+			right = p.parseUnaryExpr()
+		}
+		return ast.BinaryExpr{
+			Left:  nil,
+			Op:    tok,
+			Right: right,
+		}
 	default:
 		p.expect(token.Number, token.String, token.True, token.False, token.Nil, token.LeftParen)
 	}
@@ -237,7 +256,8 @@ func (p *Parser) expect(types ...token.Type) {
 		}
 		fmt.Fprintf(&b, " or %h", types[len(types)-1])
 	}
-	panic(p.syntaxErrorf(b.String()))
+	p.addSyntaxErrorf(b.String())
+	panic(unwind{})
 }
 
 // next reads the next token from the lexer into p.tok.
@@ -245,9 +265,12 @@ func (p *Parser) next() {
 	p.tok = p.l.Next()
 }
 
-func (p *Parser) syntaxErrorf(format string, a ...any) error {
-	return &syntaxError{
+func (p *Parser) addSyntaxErrorf(format string, a ...any) {
+	if len(p.errs) > 0 && p.tok.Position == p.lastErrPos {
+		return
+	}
+	p.errs = append(p.errs, &syntaxError{
 		tok: p.tok,
 		msg: fmt.Sprintf(format, a...),
-	}
+	})
 }
