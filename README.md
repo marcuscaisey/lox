@@ -21,7 +21,7 @@ unary_expr          = ( ( "!" | "-" ) unary_expr ) | primary_expr ;
 primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | "(" expr ")"
                     /* Error productions */
                     | ( "==" | "!=" ) relational_expr
-                    | ( "< | "<=" | ">" | ">=" ) additive_expr
+                    | ( "<" | "<=" | ">" | ">=" ) additive_expr
                     | "+" multiplicative_expr
                     | ( "*" | "/" ) unary_expr ;
 ```
