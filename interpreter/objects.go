@@ -63,14 +63,10 @@ func (n loxNumber) IsTruthy() loxBool {
 }
 
 func (n loxNumber) UnaryOp(op token.Token) loxObject {
-	switch op.Type {
-	case token.Minus:
+	if op.Type == token.Minus {
 		return -n
-	case token.Bang:
-		return !n.IsTruthy()
-	default:
-		panic(invalidUnaryOpError(op, n))
 	}
+	panic(invalidUnaryOpError(op, n))
 }
 
 func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
@@ -120,12 +116,7 @@ func (s loxString) IsTruthy() loxBool {
 }
 
 func (s loxString) UnaryOp(op token.Token) loxObject {
-	switch op.Type {
-	case token.Bang:
-		return !s.IsTruthy()
-	default:
-		panic(invalidUnaryOpError(op, s))
-	}
+	panic(invalidUnaryOpError(op, s))
 }
 
 func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
@@ -172,12 +163,7 @@ func (b loxBool) IsTruthy() loxBool {
 }
 
 func (b loxBool) UnaryOp(op token.Token) loxObject {
-	switch op.Type {
-	case token.Bang:
-		return !b.IsTruthy()
-	default:
-		panic(invalidUnaryOpError(op, b))
-	}
+	panic(invalidUnaryOpError(op, b))
 }
 
 func (b loxBool) BinaryOp(op token.Token, right loxObject) loxObject {
@@ -201,12 +187,7 @@ func (n loxNil) IsTruthy() loxBool {
 }
 
 func (n loxNil) UnaryOp(op token.Token) loxObject {
-	switch op.Type {
-	case token.Bang:
-		return !n.IsTruthy()
-	default:
-		panic(invalidUnaryOpError(op, n))
-	}
+	panic(invalidUnaryOpError(op, n))
 }
 
 func (n loxNil) BinaryOp(op token.Token, right loxObject) loxObject {

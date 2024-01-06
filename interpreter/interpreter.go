@@ -101,6 +101,10 @@ func interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
 
 func interpretUnaryExpr(expr ast.UnaryExpr) loxObject {
 	right := interpret(expr.Right)
+	if expr.Op.Type == token.Bang {
+		// The behaviour of ! is independent of the type of the operand, so we can implement it here.
+		return !right.IsTruthy()
+	}
 	return right.UnaryOp(expr.Op)
 }
 
