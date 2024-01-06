@@ -49,7 +49,7 @@ func main() {
 			os.Exit(1)
 		}
 	case 1:
-		if err := runFile(os.Args[1]); err != nil {
+		if err := runFile(flag.Arg(0)); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
