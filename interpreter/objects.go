@@ -76,10 +76,6 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 	switch right := right.(type) {
 	case loxNumber:
 		switch op.Type {
-		case token.Equal:
-			return loxBool(n == right)
-		case token.NotEqual:
-			return loxBool(n != right)
 		case token.Asterisk:
 			return n * right
 		case token.Slash:
@@ -130,10 +126,6 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 	switch right := right.(type) {
 	case loxString:
 		switch op.Type {
-		case token.Equal:
-			return loxBool(s == right)
-		case token.NotEqual:
-			return loxBool(s != right)
 		case token.Plus:
 			return s + right
 		case token.Less:
