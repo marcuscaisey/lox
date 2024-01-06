@@ -76,6 +76,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.Asterisk:
 			return n * right
 		case token.Slash:
+			if right == 0 {
+				panic(&runtimeError{
+					tok: op,
+					msg: "division by zero",
+				})
+			}
 			return n / right
 		case token.Plus:
 			return n + right
