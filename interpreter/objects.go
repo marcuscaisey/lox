@@ -46,8 +46,6 @@ func invalidBinaryOpError(op token.Token, left, right loxObject) error {
 	}
 }
 
-var _ loxObject = loxNumber(0)
-
 type loxNumber float64
 
 func (n loxNumber) String() string {
@@ -105,8 +103,6 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 	panic(invalidBinaryOpError(op, n, right))
 }
 
-var _ loxObject = loxString("")
-
 type loxString string
 
 func (s loxString) String() string {
@@ -149,8 +145,6 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 	panic(invalidBinaryOpError(op, s, right))
 }
 
-var _ loxObject = loxBool(false)
-
 type loxBool bool
 
 func (b loxBool) String() string {
@@ -175,8 +169,6 @@ func (b loxBool) UnaryOp(op token.Token) loxObject {
 func (b loxBool) BinaryOp(op token.Token, right loxObject) loxObject {
 	panic(invalidBinaryOpError(op, b, right))
 }
-
-var _ loxObject = loxNil{}
 
 type loxNil struct{}
 
