@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/fatih/color"
 
@@ -93,6 +94,11 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.GreaterEqual:
 			return loxBool(n >= right)
 		}
+	case loxString:
+		switch op.Type {
+		case token.Asterisk:
+			return loxString(strings.Repeat(string(right), int(n)))
+		}
 	}
 	panic(invalidBinaryOpError(op, n, right))
 }
@@ -136,6 +142,11 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 			return loxBool(s > right)
 		case token.GreaterEqual:
 			return loxBool(s >= right)
+		}
+	case loxNumber:
+		switch op.Type {
+		case token.Asterisk:
+			return loxString(strings.Repeat(string(s), int(right)))
 		}
 	}
 	panic(invalidBinaryOpError(op, s, right))
