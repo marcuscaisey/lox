@@ -29,7 +29,7 @@ func sprint(n Node, d int) string {
 	case PrintStmt:
 		return sexpr(n, d, sprint(n.Expr, d+1))
 	case IllegalStmt:
-		return "IllegalStmt"
+		return sexpr(n, d)
 	case GroupExpr:
 		return sexpr(n, d, sprint(n.Expr, d+1))
 	case LiteralExpr:
@@ -41,7 +41,7 @@ func sprint(n Node, d int) string {
 	case TernaryExpr:
 		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
 	case IllegalExpr:
-		return "IllegalExpr"
+		return sexpr(n, d)
 	default:
 		panic(fmt.Sprintf("unexpected node type: %T", n))
 	}
