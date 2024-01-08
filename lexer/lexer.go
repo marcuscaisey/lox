@@ -102,16 +102,16 @@ func (l *Lexer) Next() token.Token {
 		if l.peek() == '/' {
 			l.next()
 			l.next()
-			l.skipLineComment()
+			l.skipSingleLineComment()
 			return l.Next()
 		}
 		if l.peek() == '*' {
 			l.next()
 			l.next()
-			if comment, terminated := l.consumeBlockComment(); !terminated {
+			if comment, terminated := l.consumeMultiLineComment(); !terminated {
 				tok.Type = token.Comment
 				tok.Literal = comment
-				l.errHandler(tok, "unterminated block comment")
+				l.errHandler(tok, "unterminated multi-line comment")
 			}
 			return l.Next()
 		}
@@ -180,29 +180,29 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func (l *Lexer) skipLineComment() {
+func (l *Lexer) skipSingleLineComment() {
 	for l.ch != '\n' && l.ch != eof {
 		l.next()
 	}
 }
 
-func (l *Lexer) consumeBlockComment() (comment string, terminated bool) {
+func (l *Lexer) consumeMultiLineComment() (comment string, terminated bool) {
 	var b strings.Builder
 	b.WriteString("/*")
-	// Block comments can span multiple lines and they can also be nested
-	openBlocks := 1 // There's already a block open when this method is called
-	for openBlocks > 0 && l.ch != eof {
+	// Multi-line comments can be nested
+	openComments := 1 // There's already a comment open when this method is called
+	for openComments > 0 && l.ch != eof {
 		b.WriteRune(l.ch)
 		if l.ch == '/' && l.peek() == '*' {
 			l.next()
-			openBlocks++
+			openComments++
 		} else if l.ch == '*' && l.peek() == '/' {
 			l.next()
-			openBlocks--
+			openComments--
 		}
 		l.next()
 	}
-	return b.String(), openBlocks == 0
+	return b.String(), openComments == 0
 }
 
 func (l *Lexer) consumeNumber() string {
