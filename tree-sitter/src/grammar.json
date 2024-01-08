@@ -1,5 +1,5 @@
 {
-  "name": "Lox",
+  "name": "lox",
   "rules": {
     "program": {
       "type": "REPEAT",

@@ -1,5 +1,5 @@
 module.exports = grammar({
-  name: "Lox",
+  name: "lox",
 
   rules: {
     program: ($) => repeat($._statement),
