@@ -1,0 +1,292 @@
+===============================================================================
+Literals
+===============================================================================
+
+1;
+1.0;
+"one";
+true;
+false;
+nil;
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (number))
+  (expression_statement
+    (number))
+  (expression_statement
+    (string))
+  (expression_statement
+    (boolean))
+  (expression_statement
+    (boolean))
+  (expression_statement
+    (nil)))
+
+===============================================================================
+Unary Expressions
+===============================================================================
+
+!1;
+-1;
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (unary_expression
+      right: (number)))
+  (expression_statement
+    (unary_expression
+      right: (number))))
+
+===============================================================================
+Unary Expressions - Right Associativity
+===============================================================================
+
+!!1;
+--1;
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (unary_expression
+      right: (unary_expression
+        right: (number))))
+  (expression_statement
+    (unary_expression
+      right: (unary_expression
+        right: (number)))))
+
+===============================================================================
+Binary Expressions
+===============================================================================
+
+1, 2;
+1 == 2;
+1 != 2;
+1 < 2;
+1 <= 2;
+1 > 2;
+1 >= 2;
+1 + 2;
+1 - 2;
+1 * 2;
+1 / 2;
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number))))
+
+===============================================================================
+Binary Expressions - Left Associativity
+===============================================================================
+
+1, 2, 3;
+1 == 2 == 3;
+1 != 2 != 3;
+1 < 2 < 3;
+1 <= 2 <= 3;
+1 > 2 > 3;
+1 >= 2 >= 3;
+1 + 2 + 3;
+1 - 2 - 3;
+1 * 2 * 3;
+1 / 2 / 3;
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number)))
+  (expression_statement
+    (binary_expression
+      left: (binary_expression
+        left: (number)
+        right: (number))
+      right: (number))))
+
+===============================================================================
+Ternary Expression
+===============================================================================
+
+1 ? 2 : 3;
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (ternary_expression
+      condition: (number)
+      then: (number)
+      else: (number))))
+
+===============================================================================
+Ternary Expression - Right Associativity
+===============================================================================
+
+1 ? 2 : 3 ? 4 : 5;
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (ternary_expression
+      condition: (number)
+      then: (number)
+      else: (ternary_expression
+        condition: (number)
+        then: (number)
+        else: (number)))))
+
+===============================================================================
+Group Expression
+===============================================================================
+
+(1);
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (group_expression
+      expression: (number))))
+
+===============================================================================
+Operator Precedence
+===============================================================================
+
+1, 1 ? 1 : 1 == 1 < 1 + -1 * 1;
+
+-------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (binary_expression
+      left: (number)
+      ; ","
+      right: (ternary_expression
+        condition: (number)
+        ; "?"
+        then: (number)
+        ; ":"
+        else: (binary_expression
+          left: (number)
+          ; "=="
+          right: (binary_expression
+            left: (number)
+            ; "<"
+            right: (binary_expression
+              left: (number)
+              ; "+"
+              right: (binary_expression
+                left: (unary_expression
+                  ; "-"
+                  right: (number))
+                ; "*"
+                right: (number)))))))))
