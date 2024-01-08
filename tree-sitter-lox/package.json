@@ -26,5 +26,13 @@
   "devDependencies": {
     "tree-sitter-cli": "^0.20.8"
   },
-  "main": "bindings/node"
+  "main": "bindings/node",
+  "tree-sitter": [
+    {
+      "scope": "source.lox",
+      "file-types": [
+        "lox"
+      ]
+    }
+  ]
 }
