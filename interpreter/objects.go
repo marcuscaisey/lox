@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -97,6 +98,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 	case loxString:
 		switch op.Type {
 		case token.Asterisk:
+			if math.Floor(float64(n)) != float64(n) {
+				panic(&runtimeError{
+					tok: op,
+					msg: "cannot multiply string by non-integer",
+				})
+			}
 			return loxString(strings.Repeat(string(right), int(n)))
 		}
 	}
