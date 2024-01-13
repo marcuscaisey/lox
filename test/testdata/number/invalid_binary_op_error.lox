@@ -1,0 +1,5 @@
+// errors
+// testdata/number/invalid_binary_op_error.lox:5:3: runtime error: + operator cannot be used with types number and bool
+// 1 + true;
+//   ^
+1 + true;

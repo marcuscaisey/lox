@@ -6,6 +6,7 @@ require (
 	github.com/chzyer/readline v1.5.1
 	github.com/fatih/color v1.16.0
 	github.com/lithammer/dedent v1.1.0
+	github.com/sergi/go-diff v1.3.1
 	golang.org/x/tools v0.13.0
 )
 

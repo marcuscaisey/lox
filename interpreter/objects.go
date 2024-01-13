@@ -78,7 +78,7 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 			if right == 0 {
 				panic(&runtimeError{
 					tok: op,
-					msg: "division by zero",
+					msg: "cannot divide by 0",
 				})
 			}
 			return n / right
