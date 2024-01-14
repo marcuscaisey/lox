@@ -150,6 +150,7 @@ func (l *Lexer) Next() token.Token {
 		lit, terminated := l.consumeString()
 		tok.Literal = lit
 		if !terminated {
+			tok.Type = token.Illegal
 			l.errHandler(tok, "unterminated string literal")
 		}
 		return tok
