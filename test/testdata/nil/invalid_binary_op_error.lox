@@ -1,0 +1,5 @@
+// errors
+// testdata/nil/invalid_binary_op_error.lox:5:5: runtime error: - operator cannot be used with types nil and nil
+// nil - nil;
+//     ^
+nil - nil;
