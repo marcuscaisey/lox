@@ -1,0 +1,2 @@
+print nil != nil; // prints false
+print nil != 1; // prints true

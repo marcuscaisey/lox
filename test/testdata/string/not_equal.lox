@@ -1,0 +1,4 @@
+print "a" != "a"; // prints false
+print "" != ""; // prints false
+print "a" != "b"; // prints true
+print "a" != 1; // prints true

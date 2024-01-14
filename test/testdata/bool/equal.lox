@@ -1,0 +1,5 @@
+print true == true; // prints true
+print false == false; // prints true
+print true == false; // prints false
+print false == true; // prints false
+print false == 1; // prints false
