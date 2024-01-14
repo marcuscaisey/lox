@@ -97,7 +97,11 @@ func runTest(t *testing.T, path string) {
 
 func runInterpreter(t *testing.T, path string) result {
 	cmd := exec.Command(*interpreter, path)
-	t.Logf("running %s %s", *interpreter, path)
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("running %s %s", *interpreter, absPath)
 
 	stdout, err := cmd.Output()
 	exitErr := &exec.ExitError{}
