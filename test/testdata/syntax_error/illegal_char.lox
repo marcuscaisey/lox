@@ -1,0 +1,5 @@
+// errors
+// testdata/syntax_error/illegal_char.lox:5:9: syntax error: illegal character U+0024 '$'
+// print 1 $ 2;
+//         ^
+print 1 $ 2;

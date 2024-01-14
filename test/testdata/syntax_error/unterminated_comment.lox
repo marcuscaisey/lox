@@ -1,0 +1,7 @@
+// errors
+// testdata/syntax_error/unterminated_comment.lox:5:1: syntax error: unterminated multi-line comment
+// /*
+// ^^
+/*
+ * Unterminated comment
+print "this won't be printed";

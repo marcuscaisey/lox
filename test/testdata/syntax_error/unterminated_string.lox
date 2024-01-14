@@ -1,0 +1,6 @@
+// errors
+// testdata/syntax_error/unterminated_string.lox:5:7: syntax error: unterminated string literal
+// print "aaaa;
+//       ^^^^^^
+print "aaaa;
+print "this won't be printed";
