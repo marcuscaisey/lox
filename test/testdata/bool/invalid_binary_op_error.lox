@@ -1,0 +1,5 @@
+// errors
+// testdata/bool/invalid_binary_op_error.lox:5:6: runtime error: - operator cannot be used with types bool and bool
+// true - false;
+//      ^
+true - false;

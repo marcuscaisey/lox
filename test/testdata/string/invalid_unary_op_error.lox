@@ -1,0 +1,5 @@
+// errors
+// testdata/string/invalid_unary_op_error.lox:5:1: runtime error: - operator cannot be used with type string
+// -"a";
+// ^
+-"a";
