@@ -41,10 +41,12 @@ func runTests(t *testing.T, path string) {
 	}
 
 	for _, path := range matches {
+		path := path
 		testName := snakeToPascalCase(filepath.Base(path))
 		if filepath.Ext(path) == ".lox" {
 			testName = strings.TrimSuffix(testName, ".lox")
 			t.Run(testName, func(t *testing.T) {
+				t.Parallel()
 				if *update {
 					updateExpectedOutput(t, path)
 				} else {
@@ -53,6 +55,7 @@ func runTests(t *testing.T, path string) {
 			})
 		} else {
 			t.Run(testName, func(t *testing.T) {
+				t.Parallel()
 				runTests(t, path)
 			})
 		}
