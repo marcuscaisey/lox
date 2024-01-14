@@ -104,6 +104,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 					msg: "cannot multiply string by non-integer",
 				})
 			}
+			if n < 0 {
+				panic(&runtimeError{
+					tok: op,
+					msg: "cannot multiply string by negative integer",
+				})
+			}
 			return loxString(strings.Repeat(string(right), int(n)))
 		}
 	}
