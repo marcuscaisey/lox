@@ -1,0 +1,2 @@
+print "a" ? "a is truthy" : "a is falsey"; // prints a is truthy
+print "" ? "empty string is truthy" : "empty string is falsey"; // prints empty string is falsey

@@ -98,22 +98,26 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 	case loxString:
 		switch op.Type {
 		case token.Asterisk:
-			if math.Floor(float64(n)) != float64(n) {
-				panic(&runtimeError{
-					tok: op,
-					msg: "cannot multiply string by non-integer",
-				})
-			}
-			if n < 0 {
-				panic(&runtimeError{
-					tok: op,
-					msg: "cannot multiply string by negative integer",
-				})
-			}
-			return loxString(strings.Repeat(string(right), int(n)))
+			return numberTimesString(n, op, right)
 		}
 	}
 	panic(invalidBinaryOpError(op, n, right))
+}
+
+func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
+	if math.Floor(float64(n)) != float64(n) {
+		panic(&runtimeError{
+			tok: op,
+			msg: "cannot multiply string by non-integer",
+		})
+	}
+	if n < 0 {
+		panic(&runtimeError{
+			tok: op,
+			msg: "cannot multiply string by negative integer",
+		})
+	}
+	return loxString(strings.Repeat(string(s), int(n)))
 }
 
 type loxString string
@@ -152,7 +156,7 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 	case loxNumber:
 		switch op.Type {
 		case token.Asterisk:
-			return loxString(strings.Repeat(string(s), int(right)))
+			return numberTimesString(right, op, s)
 		}
 	}
 	panic(invalidBinaryOpError(op, s, right))

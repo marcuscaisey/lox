@@ -1,0 +1,6 @@
+print "b" <= "a"; // prints false
+print "b" <= "b"; // prints true
+print "b" <= "c"; // prints true
+print "aa" <= "a"; // prints false
+print "a" <= "aa"; // prints true
+print "aa" <= "ab"; // prints true

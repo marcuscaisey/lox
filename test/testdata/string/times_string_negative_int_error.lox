@@ -1,0 +1,5 @@
+// errors
+// testdata/string/times_string_negative_int_error.lox:5:15: runtime error: cannot multiply string by negative integer
+// print "hello" * -1;
+//               ^
+print "hello" * -1;

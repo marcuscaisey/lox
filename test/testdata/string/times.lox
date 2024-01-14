@@ -1,0 +1,3 @@
+print "hello" * 0; // prints <empty>
+print "hello" * 1; // prints hello
+print "hello" * 2; // prints hellohello
