@@ -15,7 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/fatih/color"
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/google/go-cmp/cmp"
 )
 
 var interpreter = flag.String("interpreter", "", "path to the interpreter to test")
@@ -112,10 +112,18 @@ func runInterpreter(t *testing.T, path string) result {
 }
 
 func computeDiff(want, got []byte) string {
-	dmp := diffmatchpatch.New()
-	diffs := dmp.DiffMain(string(got), string(want), false)
 	color.NoColor = false
-	return fmt.Sprint(color.RedString("got "), color.GreenString("want\n"), dmp.DiffPrettyText(diffs))
+	diff := cmp.Diff(string(want), string(got))
+	lines := strings.Split(diff, "\n")
+	for i, line := range lines {
+		if strings.HasPrefix(line, "-") {
+			lines[i] = color.GreenString(line)
+		} else if strings.HasPrefix(line, "+") {
+			lines[i] = color.RedString(line)
+		}
+	}
+	diff = strings.Join(lines, "\n")
+	return fmt.Sprint(color.GreenString("want -\n"), color.RedString("got +\n"), diff)
 }
 
 var printsRegexp = regexp.MustCompile(`// prints (.+)`)
