@@ -1,0 +1,7 @@
+// Comment on its own line 1
+// Comment on its own line 2
+print 1; // Comment after statement
+print 2;
+
+// prints 1
+// prints 2

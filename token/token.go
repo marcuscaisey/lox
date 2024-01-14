@@ -15,7 +15,6 @@ type Type uint8
 // The list of all token types.
 const (
 	Illegal Type = iota // ILLEGAL
-	Comment             // COMMENT
 	EOF
 
 	// Keywords

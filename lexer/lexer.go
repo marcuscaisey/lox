@@ -109,7 +109,7 @@ func (l *Lexer) Next() token.Token {
 			l.next()
 			l.next()
 			if comment, terminated := l.consumeMultiLineComment(); !terminated {
-				tok.Type = token.Comment
+				tok.Type = token.Illegal
 				tok.Literal = comment
 				l.errHandler(tok, "unterminated multi-line comment")
 			}
