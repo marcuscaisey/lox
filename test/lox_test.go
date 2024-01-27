@@ -75,6 +75,7 @@ func snakeToPascalCase(s string) string {
 
 type result struct {
 	Stdout        []byte
+	Stderr        []byte
 	SyntaxErrors  [][]byte
 	RuntimeErrors [][]byte
 	ExitCode      int
@@ -84,10 +85,6 @@ func runTest(t *testing.T, path string) {
 	want := parseExpectedResult(t, path)
 	got := runInterpreter(t, path)
 
-	t.Logf("exit code: %d", got.ExitCode)
-	t.Logf("stdout:\n%s", got.Stdout)
-	t.Logf("stderr:\n%s", got.Stdout)
-
 	if want.ExitCode != got.ExitCode {
 		t.Errorf("exit code = %d, want %d", got.ExitCode, want.ExitCode)
 	}
@@ -96,12 +93,19 @@ func runTest(t *testing.T, path string) {
 		t.Errorf("incorrect output printed to stdout:\n%s", computeDiff(want.Stdout, got.Stdout))
 	}
 
+	errorsCorrect := true
 	if !cmp.Equal(want.SyntaxErrors, got.SyntaxErrors) {
+		errorsCorrect = false
 		t.Errorf("incorrect syntax errors printed to stderr:\n%s", computeDiff(want.SyntaxErrors, got.SyntaxErrors))
 	}
 
 	if !cmp.Equal(want.RuntimeErrors, got.RuntimeErrors) {
+		errorsCorrect = false
 		t.Errorf("incorrect runtime errors printed to stderr:\n%s", computeDiff(want.RuntimeErrors, got.RuntimeErrors))
+	}
+
+	if !errorsCorrect {
+		t.Errorf("stderr:\n%s", got.Stderr)
 	}
 }
 
@@ -129,30 +133,9 @@ func runInterpreter(t *testing.T, path string) result {
 		}
 	}
 
-	t.Logf("exit code: %d", cmd.ProcessState.ExitCode())
-	if len(stdout) > 0 {
-		t.Logf("stdout:\n%s", stdout)
-	} else {
-		t.Logf("stdout: <empty>")
-	}
-	if len(exitErr.Stderr) > 0 {
-		t.Logf("stderr:\n%s", exitErr.Stderr)
-		if len(syntaxErrors) > 0 {
-			t.Logf("syntax errors:\n%s", bytes.Join(syntaxErrors, []byte("\n")))
-		} else {
-			t.Logf("syntax errors: <empty>")
-		}
-		if len(runtimeErrors) > 0 {
-			t.Logf("runtime errors:\n%s", bytes.Join(runtimeErrors, []byte("\n")))
-		} else {
-			t.Logf("runtime errors: <empty>")
-		}
-	} else {
-		t.Logf("stderr: <empty>")
-	}
-
 	return result{
 		Stdout:        stdout,
+		Stderr:        exitErr.Stderr,
 		SyntaxErrors:  syntaxErrors,
 		RuntimeErrors: runtimeErrors,
 		ExitCode:      cmd.ProcessState.ExitCode(),
@@ -225,6 +208,28 @@ func updateExpectedOutput(t *testing.T, path string) {
 	t.Logf("updating expected output for %s", path)
 
 	result := runInterpreter(t, path)
+
+	t.Logf("exit code: %d", result.ExitCode)
+	if len(result.Stdout) > 0 {
+		t.Logf("stdout:\n%s", result.Stdout)
+	} else {
+		t.Logf("stdout: <empty>")
+	}
+	if len(result.Stderr) > 0 {
+		t.Logf("stderr:\n%s", result.Stderr)
+		if len(result.SyntaxErrors) > 0 {
+			t.Logf("syntax errors:\n%s", bytes.Join(result.SyntaxErrors, []byte("\n")))
+		} else {
+			t.Logf("syntax errors: <empty>")
+		}
+		if len(result.RuntimeErrors) > 0 {
+			t.Logf("runtime errors:\n%s", bytes.Join(result.RuntimeErrors, []byte("\n")))
+		} else {
+			t.Logf("runtime errors: <empty>")
+		}
+	} else {
+		t.Logf("stderr: <empty>")
+	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
