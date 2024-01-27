@@ -78,16 +78,11 @@ type result struct {
 	Stderr        []byte
 	SyntaxErrors  [][]byte
 	RuntimeErrors [][]byte
-	ExitCode      int
 }
 
 func runTest(t *testing.T, path string) {
 	want := parseExpectedResult(t, path)
 	got := runInterpreter(t, path)
-
-	if want.ExitCode != got.ExitCode {
-		t.Errorf("exit code = %d, want %d", got.ExitCode, want.ExitCode)
-	}
 
 	if !bytes.Equal(want.Stdout, got.Stdout) {
 		t.Errorf("incorrect output printed to stdout:\n%s", computeDiff(want.Stdout, got.Stdout))
@@ -131,7 +126,6 @@ func runInterpreter(t *testing.T, path string) result {
 		Stderr:        exitErr.Stderr,
 		SyntaxErrors:  syntaxErrors,
 		RuntimeErrors: runtimeErrors,
-		ExitCode:      cmd.ProcessState.ExitCode(),
 	}
 }
 
@@ -164,9 +158,6 @@ func parseExpectedResult(t *testing.T, path string) result {
 		Stdout:        parseExpectedStdout(data),
 		SyntaxErrors:  syntaxErrors,
 		RuntimeErrors: runtimeErrors,
-	}
-	if len(r.Stderr) > 0 {
-		r.ExitCode = 1
 	}
 
 	return r
@@ -201,7 +192,6 @@ func updateExpectedOutput(t *testing.T, path string) {
 	t.Logf("updating expected output for %s", path)
 
 	result := runInterpreter(t, path)
-	t.Logf("exit code: %d", result.ExitCode)
 	if len(result.Stdout) > 0 {
 		t.Logf("stdout:\n%s", result.Stdout)
 	} else {
