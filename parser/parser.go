@@ -12,6 +12,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/lithammer/dedent"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/marcuscaisey/golox/ast"
 	"github.com/marcuscaisey/golox/lexer"
@@ -281,35 +282,48 @@ type syntaxError struct {
 }
 
 func (e *syntaxError) Error() string {
+	line := e.tok.Position.File.Line(e.tok.Position.Line)
+
 	var tok string
 	switch {
-	case e.tok.Literal != "":
-		// If the literal spans multiple lines, only show the first one. I'm not sure what the best way of pointing to a
-		// multi-line token is.
-		tok, _, _ = strings.Cut(e.tok.Literal, "\n")
-	case e.tok.Type == token.EOF:
-		// We pretend that the EOF token is a space so that we can show the caret pointing to the end of the file.
-		tok = " "
-	default:
+	case e.tok.IsKeyword(), e.tok.IsSymbol():
 		tok = e.tok.Type.String()
+	case e.tok.IsLiteral():
+		tok = e.tok.Literal
+	case e.tok.Type == token.Illegal:
+		if e.tok.Literal == "" {
+			// If the token has no literal, then we don't have anything to point to.
+			return fmt.Sprintf("%s: syntax error: %s", e.tok.Position, e.msg)
+		}
+		tok = e.tok.Literal
+	case e.tok.Type == token.EOF:
+		// We pretend that the EOF token is a space so that we have something to point to.
+		tok = " "
+		line = append(line, ' ')
 	}
-	line := e.tok.Position.File.Line(e.tok.Position.Line)
+	// If the token spans multiple lines, only show the first one. I'm not sure what the best way of pointing to a
+	// multi-line token is.
+	tok, _, _ = strings.Cut(tok, "\n")
+
 	data := map[string]any{
 		"pos":    e.tok.Position,
 		"msg":    e.msg,
-		"before": line[:e.tok.Position.Column-1],
+		"before": string(line[:e.tok.Position.Column]),
 		"tok":    tok,
-		"after":  line[e.tok.Position.Column+len(tok)-1:],
+		"after":  string(line[e.tok.Position.Column+len(tok):]),
 	}
 	funcs := template.FuncMap{
 		"red":    color.New(color.FgRed).SprintFunc(),
 		"bold":   color.New(color.Bold).SprintFunc(),
 		"repeat": strings.Repeat,
+		"stringWidth": func(s string) int {
+			return runewidth.StringWidth(s)
+		},
 	}
 	text := strings.TrimSpace(dedent.Dedent(`
 		{{ .pos }}: syntax error: {{ .msg }}
 		{{ .before }}{{ .tok | bold | red }}{{ .after }}
-		{{ repeat " " (len .before) }}{{ repeat "^" (len .tok) | red | bold }}
+		{{ repeat " " (stringWidth .before) }}{{ repeat "^" (stringWidth .tok) | red | bold }}
 	`))
 
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(text))

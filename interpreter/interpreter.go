@@ -8,39 +8,41 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/lithammer/dedent"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/marcuscaisey/golox/ast"
 	"github.com/marcuscaisey/golox/token"
 )
 
-// runtimeError is basically the same as syntaxError from the parser package. They'll probably diverge in the future
-// though.
 type runtimeError struct {
 	tok token.Token
 	msg string
 }
 
 func (e *runtimeError) Error() string {
-	// If the token spans multiple lines, only show the first one. I'm not sure what the best way of highlighting and
-	// pointing to a multi-line token is.
+	// If the token spans multiple lines, only show the first one. I'm not sure what the best way of pointing to a
+	// multi-line token is.
 	tok, _, _ := strings.Cut(e.tok.String(), "\n")
 	line := e.tok.Position.File.Line(e.tok.Position.Line)
 	data := map[string]any{
 		"pos":    e.tok.Position,
 		"msg":    e.msg,
-		"before": line[:e.tok.Position.Column-1],
+		"before": string(line[:e.tok.Position.Column]),
 		"tok":    tok,
-		"after":  line[e.tok.Position.Column+len(tok)-1:],
+		"after":  string(line[e.tok.Position.Column+len(tok):]),
 	}
 	funcs := template.FuncMap{
 		"red":    color.New(color.FgRed).SprintFunc(),
 		"bold":   color.New(color.Bold).SprintFunc(),
 		"repeat": strings.Repeat,
+		"stringWidth": func(s string) int {
+			return runewidth.StringWidth(s)
+		},
 	}
 	text := strings.TrimSpace(dedent.Dedent(`
 		{{ .pos }}: runtime error: {{ .msg }}
 		{{ .before }}{{ .tok | bold | red }}{{ .after }}
-		{{ repeat " " (len .before) }}{{ repeat "^" (len .tok) | red | bold }}
+		{{ repeat " " (stringWidth .before) }}{{ repeat "^" (stringWidth .tok) | red | bold }}
 	`))
 
 	tmpl := template.Must(template.New("").Funcs(funcs).Parse(strings.TrimSpace(dedent.Dedent(text))))

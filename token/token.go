@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
+	"github.com/mattn/go-runewidth"
 )
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type Type -linecomment
@@ -37,17 +38,18 @@ const (
 	Super    // super
 	keywordsEnd
 
-	// Delimiters
-	Semicolon // ;
-	Comma     // ,
-	Dot       // .
-
 	// Literals
+	literalsStart
 	Ident  // identifier
 	String // string
 	Number // number
+	literalsEnd
 
-	// Operators
+	// Symbols
+	symbolsStart
+	Semicolon    // ;
+	Comma        // ,
+	Dot          // .
 	Assign       // =
 	Plus         // +
 	Minus        // -
@@ -62,12 +64,11 @@ const (
 	Bang         // !
 	Question     // ?
 	Colon        // :
-
-	// Brackets
-	LeftParen  // (
-	RightParen // )
-	LeftBrace  // {
-	RightBrace // }
+	LeftParen    // (
+	RightParen   // )
+	LeftBrace    // {
+	RightBrace   // }
+	symbolsEnd
 )
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the
@@ -94,6 +95,21 @@ type Token struct {
 	Literal  string
 }
 
+// IsKeyword returns true if the token is a keyword.
+func (t Token) IsKeyword() bool {
+	return keywordsStart < t.Type && t.Type < keywordsEnd
+}
+
+// IsLiteral returns true if the token is a literal.
+func (t Token) IsLiteral() bool {
+	return literalsStart < t.Type && t.Type < literalsEnd
+}
+
+// IsSymbol returns true if the token is a symbol.
+func (t Token) IsSymbol() bool {
+	return symbolsStart < t.Type && t.Type < symbolsEnd
+}
+
 func (t Token) String() string {
 	if t.Literal != "" {
 		return t.Literal
@@ -103,8 +119,9 @@ func (t Token) String() string {
 
 // Position is a position in a file.
 type Position struct {
-	File         *File
-	Line, Column int
+	File   *File
+	Line   int // 1-based line number
+	Column int // 0-based byte offset from the start of the line
 }
 
 func (p Position) String() string {
@@ -112,7 +129,9 @@ func (p Position) String() string {
 	if p.File != nil && p.File.Name != "" {
 		prefix = p.File.Name + ":"
 	}
-	return fmt.Sprintf("%s%d:%d", prefix, p.Line, p.Column)
+	line := p.File.Line(p.Line)
+	col := runewidth.StringWidth(string(line[:p.Column])) + 1
+	return fmt.Sprintf("%s%d:%d", prefix, p.Line, col)
 }
 
 // File is a simple representation of a file.
@@ -138,16 +157,13 @@ func NewFile(name string, contents []byte) *File {
 }
 
 // Line returns the nth line of the file.
-func (f *File) Line(n int) string {
+func (f *File) Line(n int) []byte {
 	low := f.lineOffsets[n-1]
 	high := len(f.contents)
 	if n < len(f.lineOffsets) {
 		high = f.lineOffsets[n] - 1 // -1 to exclude the newline
 	}
-	line := string(f.contents[low:high])
-	if n == len(f.lineOffsets) {
-		line += " " // We treat EOF as a space at the end of the file
-	}
+	line := f.contents[low:high]
 	return line
 }
 

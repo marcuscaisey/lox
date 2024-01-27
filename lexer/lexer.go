@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/marcuscaisey/golox/token"
 )
@@ -25,9 +26,10 @@ type Lexer struct {
 	errHandler ErrorHandler
 
 	// Mutable state
-	ch         rune           // character currently being considered
-	pos        token.Position // position of character currently being considered
-	readOffset int            // position of next character to be read
+	ch           rune           // character currently being considered
+	pos          token.Position // position of character currently being considered
+	readOffset   int            // position of next character to be read
+	lastReadSize int            // size of last rune read
 }
 
 // New constructs a Lexer which will lex the source code read from an io.Reader.
@@ -43,9 +45,8 @@ func New(r io.Reader) (*Lexer, error) {
 		src:        src,
 		errHandler: errHandler,
 		pos: token.Position{
-			File: token.NewFile(filename, src),
-			Line: 1,
-			// BUG: This is not correct for multi-byte (e.g. UTF-8) characters.
+			File:   token.NewFile(filename, src),
+			Line:   1,
 			Column: 0,
 		},
 	}
@@ -278,9 +279,9 @@ func (l *Lexer) next() {
 
 	if l.ch == '\n' {
 		l.pos.Line++
-		l.pos.Column = 1
+		l.pos.Column = 0
 	} else {
-		l.pos.Column++
+		l.pos.Column += l.lastReadSize
 	}
 
 	if l.readOffset == len(l.src) {
@@ -288,8 +289,21 @@ func (l *Lexer) next() {
 		return
 	}
 
-	l.ch = rune(l.src[l.readOffset])
-	l.readOffset++
+	r, size := utf8.DecodeRune(l.src[l.readOffset:])
+	l.lastReadSize = size
+	l.readOffset += size
+
+	if r == utf8.RuneError {
+		tok := token.Token{
+			Position: l.pos,
+			Type:     token.Illegal,
+		}
+		l.errHandler(tok, fmt.Sprintf("invalid UTF-8 byte %#x", l.src[l.readOffset-size]))
+		l.next()
+		return
+	}
+
+	l.ch = r
 }
 
 // peek returns the next character without advancing the lexer.
