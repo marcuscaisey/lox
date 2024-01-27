@@ -1,0 +1,20 @@
+// ? : has higher precedence than ,
+print 1 ? 2 : 3, 4; // prints 4
+
+// == has higher precedence than ? :
+print 1 == 2 ? 3 : 4; // prints 4
+
+// < has higher precedence than ==
+print 1 < 2 == false; // prints false
+
+// + has higher precedence than <
+print 1 < 2 + 3; // prints true
+
+// * has higher precedence than +
+print 1 + 2 * 3; // prints 7
+
+// - has higher precedence than *
+print --1 * "foo"; // prints foo
+
+// () has higher precedence than any operator
+print (1 + 2) * 3; // prints 9
