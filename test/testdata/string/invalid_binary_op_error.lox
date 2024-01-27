@@ -1,5 +1,1 @@
-// errors
-// testdata/string/invalid_binary_op_error.lox:5:5: runtime error: - operator cannot be used with types string and string
-// "a" - "b";
-//     ^
-"a" - "b";
+"a" - "b"; // runtime error: - operator cannot be used with types string and string

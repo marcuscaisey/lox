@@ -1,5 +1,1 @@
-// errors
-// testdata/number/divide_by_zero_error.lox:5:3: runtime error: cannot divide by 0
-// 1 / 0;
-//   ^
-1 / 0;
+1 / 0; // runtime error: cannot divide by 0

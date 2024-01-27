@@ -74,8 +74,11 @@ func snakeToPascalCase(s string) string {
 }
 
 type result struct {
-	Stdout, Stderr []byte
-	ExitCode       int
+	Stdout        []byte
+	Stderr        []byte
+	SyntaxErrors  [][]byte
+	RuntimeErrors [][]byte
+	ExitCode      int
 }
 
 func runTest(t *testing.T, path string) {
@@ -90,8 +93,12 @@ func runTest(t *testing.T, path string) {
 		t.Errorf("incorrect output printed to stdout:\n%s", computeDiff(want.Stdout, got.Stdout))
 	}
 
-	if !bytes.Equal(want.Stderr, got.Stderr) {
-		t.Errorf("incorrect output printed to stderr:\n%s", computeDiff(want.Stderr, got.Stderr))
+	if !cmp.Equal(want.SyntaxErrors, got.SyntaxErrors) {
+		t.Errorf("incorrect syntax errors printed to stderr:\n%s", computeDiff(want.SyntaxErrors, got.SyntaxErrors))
+	}
+
+	if !cmp.Equal(want.RuntimeErrors, got.RuntimeErrors) {
+		t.Errorf("incorrect runtime errors printed to stderr:\n%s", computeDiff(want.RuntimeErrors, got.RuntimeErrors))
 	}
 }
 
@@ -104,20 +111,35 @@ func runInterpreter(t *testing.T, path string) result {
 	t.Logf("running %s %s", *interpreter, absPath)
 
 	stdout, err := cmd.Output()
+
 	exitErr := &exec.ExitError{}
 	if err != nil && !errors.As(err, &exitErr) {
 		t.Fatal(err)
 	}
+	var syntaxErrors, runtimeErrors [][]byte
+	errorRe := regexp.MustCompile(`(?m)^.+:\d+:\d+: (syntax|runtime) error: (.+)$`)
+	for _, match := range errorRe.FindAllSubmatch(exitErr.Stderr, -1) {
+		if bytes.Equal(match[1], []byte("syntax")) {
+			syntaxErrors = append(syntaxErrors, match[2])
+		} else {
+			runtimeErrors = append(runtimeErrors, match[2])
+		}
+	}
+
 	return result{
-		Stdout:   stdout,
-		Stderr:   exitErr.Stderr,
-		ExitCode: cmd.ProcessState.ExitCode(),
+		Stdout:        stdout,
+		Stderr:        exitErr.Stderr,
+		SyntaxErrors:  syntaxErrors,
+		RuntimeErrors: runtimeErrors,
+		ExitCode:      cmd.ProcessState.ExitCode(),
 	}
 }
 
-func computeDiff(want, got []byte) string {
+func computeDiff(want, got any) string {
 	color.NoColor = false
-	diff := cmp.Diff(string(want), string(got))
+	diff := cmp.Diff(want, got, cmp.Transformer("BytesToString", func(b []byte) string {
+		return string(b)
+	}))
 	lines := strings.Split(diff, "\n")
 	for i, line := range lines {
 		if strings.HasPrefix(line, "-") {
@@ -130,18 +152,18 @@ func computeDiff(want, got []byte) string {
 	return fmt.Sprint(color.GreenString("want -\n"), color.RedString("got +\n"), diff)
 }
 
-var printsRegexp = regexp.MustCompile(`// prints (.+)`)
-var errorsRegexp = regexp.MustCompile(`// errors\n((?:// .+\n)*// .+)`)
-
 func parseExpectedResult(t *testing.T, path string) result {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	syntaxErrors, runtimeErrors := parseExpectedErrors(data)
+
 	r := result{
-		Stdout: parseExpectedStdout(data),
-		Stderr: parseExpectedStderr(t, path, data),
+		Stdout:        parseExpectedStdout(data),
+		SyntaxErrors:  syntaxErrors,
+		RuntimeErrors: runtimeErrors,
 	}
 	if len(r.Stderr) > 0 {
 		r.ExitCode = 1
@@ -150,30 +172,29 @@ func parseExpectedResult(t *testing.T, path string) result {
 	return r
 }
 
+var printsRe = regexp.MustCompile(`// prints (.+)`)
+
 func parseExpectedStdout(data []byte) []byte {
 	var b bytes.Buffer
-	for _, match := range printsRegexp.FindAllSubmatch(data, -1) {
+	for _, match := range printsRe.FindAllSubmatch(data, -1) {
 		if !bytes.Equal(match[1], []byte("<empty>")) {
 			b.Write(match[1])
 		}
-		b.WriteByte('\n')
+		b.WriteRune('\n')
 	}
 	return b.Bytes()
 }
 
-func parseExpectedStderr(t *testing.T, path string, data []byte) []byte {
-	var b bytes.Buffer
-	matches := errorsRegexp.FindAllSubmatch(data, -1)
-	if len(matches) > 1 {
-		t.Fatalf(`test files can only contain 1 "// errors" comment, %d found in %s`, len(matches), path)
-	}
-	for _, match := range matches {
-		for _, line := range bytes.Split(match[1], []byte("\n")) {
-			b.Write(bytes.TrimPrefix(line, []byte("// ")))
-			b.WriteByte('\n')
+func parseExpectedErrors(data []byte) (syntaxErrors [][]byte, runtimeErrors [][]byte) {
+	re := regexp.MustCompile(`// (syntax|runtime) error: (.+)`)
+	for _, match := range re.FindAllSubmatch(data, -1) {
+		if bytes.Equal(match[1], []byte("syntax")) {
+			syntaxErrors = append(syntaxErrors, match[2])
+		} else {
+			runtimeErrors = append(runtimeErrors, match[2])
 		}
 	}
-	return b.Bytes()
+	return syntaxErrors, runtimeErrors
 }
 
 func updateExpectedOutput(t *testing.T, path string) {
@@ -188,6 +209,16 @@ func updateExpectedOutput(t *testing.T, path string) {
 	}
 	if len(result.Stderr) > 0 {
 		t.Logf("stderr:\n%s", result.Stderr)
+		if len(result.SyntaxErrors) > 0 {
+			t.Logf("syntax errors:\n%s", bytes.Join(result.SyntaxErrors, []byte("\n")))
+		} else {
+			t.Logf("syntax errors: <empty>")
+		}
+		if len(result.RuntimeErrors) > 0 {
+			t.Logf("runtime errors:\n%s", bytes.Join(result.RuntimeErrors, []byte("\n")))
+		} else {
+			t.Logf("runtime errors: <empty>")
+		}
 	} else {
 		t.Logf("stderr: <empty>")
 	}
@@ -198,7 +229,8 @@ func updateExpectedOutput(t *testing.T, path string) {
 	}
 
 	data = updateExpectedStdout(t, path, data, result.Stdout)
-	data = updateExpectedStderr(t, path, data, result.Stderr)
+	data = updateExpectedSyntaxErrors(t, path, data, result.SyntaxErrors)
+	data = updateExpectedRuntimeErrors(t, path, data, result.RuntimeErrors)
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		t.Fatal(err)
@@ -210,10 +242,10 @@ func updateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte)
 	if len(stdout) > 0 {
 		lines = bytes.Split(bytes.TrimSuffix(stdout, []byte("\n")), []byte("\n"))
 	}
-	locs := printsRegexp.FindAllSubmatchIndex(data, -1)
-	if len(lines) != len(locs) {
+	matches := printsRe.FindAllSubmatchIndex(data, -1)
+	if len(lines) != len(matches) {
 		t.Fatalf(`%d "// prints" %s found in %s but %d %s printed to stdout, these should be equal`,
-			len(locs), pluralise("comment", len(locs)), path, len(lines), pluralise("line", len(lines)))
+			len(matches), pluralise("comment", len(matches)), path, len(lines), pluralise("line", len(lines)))
 	}
 	if len(stdout) == 0 {
 		return data
@@ -221,8 +253,8 @@ func updateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte)
 
 	var b bytes.Buffer
 	lastEnd := 0
-	for i, loc := range locs {
-		start, end := loc[2], loc[3]
+	for i, match := range matches {
+		start, end := match[2], match[3]
 		b.Write(data[lastEnd:start])
 		if bytes.Equal(lines[i], []byte("")) {
 			b.WriteString("<empty>")
@@ -236,33 +268,50 @@ func updateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte)
 	return b.Bytes()
 }
 
-func updateExpectedStderr(t *testing.T, path string, data []byte, stderr []byte) []byte {
-	locs := errorsRegexp.FindAllSubmatchIndex(data, -1)
-
-	switch len(locs) {
-	case 0:
-		if len(stderr) > 0 {
-			t.Fatalf(`stderr not empty but no "// errors" comment found in %s`, path)
-		}
+func updateExpectedSyntaxErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
+	re := regexp.MustCompile(`// syntax error: (.+)`)
+	matches := re.FindAllSubmatchIndex(data, -1)
+	if len(errors) != len(matches) {
+		t.Fatalf(`%d "// syntax error:" %s found in %s but %d %s printed to stderr, these should be equal`,
+			len(matches), pluralise("comment", len(matches)), path, len(errors), pluralise("syntax error", len(errors)))
+	}
+	if len(errors) == 0 {
 		return data
-	case 1:
-		if len(stderr) == 0 {
-			t.Fatalf(`"// errors" comment found in %s but nothing printed to stderr`, path)
-		}
-	default:
-		t.Fatalf(`test files can only contain 1 "// errors" comment, %d found in %s`, len(locs), path)
 	}
 
-	start, end := locs[0][2], locs[0][3]
 	var b bytes.Buffer
-	b.Write(data[:start])
-
-	stderrLines := bytes.SplitAfter(bytes.TrimSuffix(stderr, []byte("\n")), []byte("\n"))
-	for _, line := range stderrLines {
-		b.WriteString("// ")
-		b.Write(line)
+	lastEnd := 0
+	for i, match := range matches {
+		start, end := match[2], match[3]
+		b.Write(data[lastEnd:start])
+		b.Write(errors[i])
+		lastEnd = end
 	}
-	b.Write(data[end:])
+	b.Write(data[lastEnd:])
+
+	return b.Bytes()
+}
+
+func updateExpectedRuntimeErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
+	re := regexp.MustCompile(`// runtime error: (.+)`)
+	matches := re.FindAllSubmatchIndex(data, -1)
+	if len(errors) != len(matches) {
+		t.Fatalf(`%d "// runtime error:" %s found in %s but %d %s printed to stderr, these should be equal`,
+			len(matches), pluralise("comment", len(matches)), path, len(errors), pluralise("runtime error", len(errors)))
+	}
+	if len(errors) == 0 {
+		return data
+	}
+
+	var b bytes.Buffer
+	lastEnd := 0
+	for i, match := range matches {
+		start, end := match[2], match[3]
+		b.Write(data[lastEnd:start])
+		b.Write(errors[i])
+		lastEnd = end
+	}
+	b.Write(data[lastEnd:])
 
 	return b.Bytes()
 }

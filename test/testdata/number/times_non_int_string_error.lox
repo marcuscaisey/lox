@@ -1,5 +1,1 @@
-// errors
-// testdata/number/times_non_int_string_error.lox:5:11: runtime error: cannot multiply string by non-integer
-// print 2.5 * "hello";
-//           ^
-print 2.5 * "hello";
+print 2.5 * "hello"; // runtime error: cannot multiply string by non-integer
