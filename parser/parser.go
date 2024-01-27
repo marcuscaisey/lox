@@ -281,9 +281,18 @@ type syntaxError struct {
 }
 
 func (e *syntaxError) Error() string {
-	// If the token spans multiple lines, only show the first one. I'm not sure what the best way of highlighting and
-	// pointing to a multi-line token is.
-	tok, _, _ := strings.Cut(e.tok.String(), "\n")
+	var tok string
+	switch {
+	case e.tok.Literal != "":
+		// If the literal spans multiple lines, only show the first one. I'm not sure what the best way of pointing to a
+		// multi-line token is.
+		tok, _, _ = strings.Cut(e.tok.Literal, "\n")
+	case e.tok.Type == token.EOF:
+		// We pretend that the EOF token is a space so that we can show the caret pointing to the end of the file.
+		tok = " "
+	default:
+		tok = e.tok.Type.String()
+	}
 	line := e.tok.Position.File.Line(e.tok.Position.Line)
 	data := map[string]any{
 		"pos":    e.tok.Position,

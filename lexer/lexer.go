@@ -76,9 +76,6 @@ func (l *Lexer) Next() token.Token {
 	switch {
 	case l.ch == eof:
 		tok.Type = token.EOF
-		// Treating EOF as a space instead of an empty string makes it easier to display (e.g. in syntax errors) without
-		// having to special case it.
-		tok.Literal = " "
 	case l.ch == ';':
 		tok.Type = token.Semicolon
 	case l.ch == ',':
