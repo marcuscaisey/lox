@@ -5,26 +5,6 @@ Interpreters](https://craftinginterpreters.com/).
 
 Working Lox code examples can be found under [test/testdata](test/testdata).
 
-## Table of Contents
-
-<!--toc:start-->
-- [Golox](#golox)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [Language](#language)
-    - [Types](#types)
-      - [Unary Operations](#unary-operations)
-      - [Binary Operations](#binary-operations)
-      - [Ternary Operation](#ternary-operation)
-      - [Operator Precedence and Associativity](#operator-precedence-and-associativity)
-    - [Comments](#comments)
-    - [Statements](#statements)
-      - [Expression statement](#expression-statement)
-      - [Print statement](#print-statement)
-    - [Grammar](#grammar)
-<!--toc:end-->
-
 ## Installation
 
 ```sh
