@@ -1,4 +1,4 @@
-# Golox
+# Golox [![CI](https://github.com/marcuscaisey/golox/actions/workflows/ci.yml/badge.svg)](https://github.com/marcuscaisey/golox/actions/workflows/ci.yml)
 
 Golox is a Go implementation of the Lox programming language as defined in the book [Crafting
 Interpreters](https://craftinginterpreters.com/).
