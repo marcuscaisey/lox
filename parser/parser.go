@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"slices"
 	"strconv"
 	"strings"
 	"text/template"
@@ -52,7 +51,7 @@ type parser struct {
 // Parse parses the source code and returns the root node of the abstract syntax tree.
 // If an error is returned then an incomplete AST will still be returned along with it.
 func (p *parser) Parse() (ast.Node, error) {
-	p.next() // Read the first token into p.tok
+	p.next() // Advance to the first token
 	program := ast.Program{}
 	for p.tok.Type != token.EOF {
 		program.Stmts = append(program.Stmts, p.safelyParseStmt())
@@ -92,22 +91,24 @@ func (p *parser) sync() {
 }
 
 func (p *parser) parseStmt() ast.Stmt {
-	if p.tok.Type == token.Print {
+	switch {
+	case p.match(token.Print):
 		return p.parsePrintStmt()
+	default:
+		return p.parseExprStmt()
 	}
 	return p.parseExprStmt()
 }
 
 func (p *parser) parsePrintStmt() ast.Stmt {
-	p.expect(token.Print)
 	expr := p.parseExpr()
-	p.expect(token.Semicolon)
+	p.expectSemicolon("print statement")
 	return ast.PrintStmt{Expr: expr}
 }
 
 func (p *parser) parseExprStmt() ast.Stmt {
 	expr := p.parseExpr()
-	p.expect(token.Semicolon)
+	p.expectSemicolon("expression statement")
 	return ast.ExprStmt{Expr: expr}
 }
 
@@ -121,10 +122,9 @@ func (p *parser) parseCommaExpr() ast.Expr {
 
 func (p *parser) parseTernaryExpr() ast.Expr {
 	expr := p.parseEqualityExpr()
-	if p.tok.Type == token.Question {
-		p.next()
+	if p.match(token.Question) {
 		then := p.parseExpr()
-		p.expect(token.Colon)
+		p.expect(token.Colon, "next part of ternary expression should be %h, found %h", token.Colon, p.tok.Type)
 		elseExpr := p.parseTernaryExpr()
 		expr = ast.TernaryExpr{
 			Condition: expr,
@@ -155,9 +155,11 @@ func (p *parser) parseMultiplicativeExpr() ast.Expr {
 // expression of next highest precedence.
 func (p *parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) ast.Expr {
 	expr := next()
-	for slices.Contains(operators, p.tok.Type) {
-		op := p.tok
-		p.next()
+	for {
+		op, ok := p.match2(operators...)
+		if !ok {
+			break
+		}
 		right := next()
 		expr = ast.BinaryExpr{
 			Left:  expr,
@@ -169,9 +171,7 @@ func (p *parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) 
 }
 
 func (p *parser) parseUnaryExpr() ast.Expr {
-	if p.tok.Type == token.Bang || p.tok.Type == token.Minus {
-		op := p.tok
-		p.next()
+	if op, ok := p.match2(token.Bang, token.Minus); ok {
 		right := p.parseUnaryExpr()
 		return ast.UnaryExpr{
 			Op:    op,
@@ -202,7 +202,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 	case token.LeftParen:
 		p.next()
 		innerExpr := p.parseExpr()
-		p.expect(token.RightParen)
+		p.expect(token.RightParen, "expected closing %h after expression, found %h", token.RightParen, p.tok.Type)
 		expr = ast.GroupExpr{Expr: innerExpr}
 		return expr
 	// Error productions
@@ -226,38 +226,47 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			Right: right,
 		}
 	default:
-		p.expect(token.Number, token.String, token.True, token.False, token.Nil, token.LeftParen)
+		p.addSyntaxErrorf("expected expression, found %h", p.tok.Type)
+		panic(unwind{})
 	}
 	p.next()
 	return expr
 }
 
-// expect checks that the current token has the given type and calls next if so. Otherwise, a syntax error is raised.
-func (p *parser) expect(types ...token.Type) {
+// match returns whether the current token is one of the given types and advances the parser if so.
+func (p *parser) match(types ...token.Type) bool {
 	for _, t := range types {
 		if p.tok.Type == t {
 			p.next()
-			return
+			return true
 		}
 	}
+	return false
+}
 
-	var b strings.Builder
-	fmt.Fprintf(&b, "unexpected %h, expected %h", p.tok.Type, types[0])
-	switch len(types) {
-	case 1:
-	case 2:
-		fmt.Fprintf(&b, " or %h", types[1])
-	default:
-		for i := 1; i < len(types)-1; i++ {
-			fmt.Fprintf(&b, ", %h", types[i])
-		}
-		fmt.Fprintf(&b, " or %h", types[len(types)-1])
+// match2 is like match but also returns the matched token.
+func (p *parser) match2(types ...token.Type) (token.Token, bool) {
+	tok := p.tok
+	return tok, p.match(types...)
+}
+
+// expect returns the current token and advances the parser if it has the given type. Otherwise, a syntax error is
+// raised with the given format and arguments.
+func (p *parser) expect(t token.Type, format string, a ...any) token.Token {
+	if p.tok.Type == t {
+		tok := p.tok
+		p.next()
+		return tok
 	}
-	p.addSyntaxErrorf(b.String())
+	p.addSyntaxErrorf(format, a...)
 	panic(unwind{})
 }
 
-// next reads the next token from the lexer into p.tok.
+func (p *parser) expectSemicolon(context string) {
+	p.expect(token.Semicolon, "expected %h after %s, found %h", token.Semicolon, context, p.tok.Type)
+}
+
+// next advances the parser to the next token.
 func (p *parser) next() {
 	p.tok = p.l.Next()
 }
