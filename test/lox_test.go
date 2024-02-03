@@ -87,6 +87,9 @@ func runTest(t *testing.T, path string) {
 
 	if want.ExitCode != got.ExitCode {
 		t.Errorf("exit code = %d, want %d", got.ExitCode, want.ExitCode)
+		t.Logf("stdout:\n%s", got.Stdout)
+		t.Logf("stderr:\n%s", got.Stderr)
+		return
 	}
 
 	if !bytes.Equal(want.Stdout, got.Stdout) {
