@@ -118,7 +118,7 @@ func runInterpreter(t *testing.T, path string) result {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("running %s %s", *interpreter, absPath)
+	t.Logf("%s %s", *interpreter, absPath)
 
 	stdout, err := cmd.Output()
 
