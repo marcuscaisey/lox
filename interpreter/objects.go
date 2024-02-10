@@ -11,12 +11,12 @@ import (
 	"github.com/marcuscaisey/golox/token"
 )
 
-// Type is the string representation of a Lox object's type.
-type Type string
+// loxType is the string representation of a Lox object's type.
+type loxType string
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the
 // type in green.
-func (t Type) Format(f fmt.State, verb rune) {
+func (t loxType) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'h':
 		fmt.Fprint(f, color.GreenString(string(t)))
@@ -27,7 +27,7 @@ func (t Type) Format(f fmt.State, verb rune) {
 
 type loxObject interface {
 	String() string
-	Type() Type
+	Type() loxType
 	IsTruthy() loxBool
 	UnaryOp(op token.Token) loxObject
 	BinaryOp(op token.Token, right loxObject) loxObject
@@ -53,7 +53,7 @@ func (n loxNumber) String() string {
 	return strconv.FormatFloat(float64(n), 'f', -1, 64)
 }
 
-func (n loxNumber) Type() Type {
+func (n loxNumber) Type() loxType {
 	return "number"
 }
 
@@ -126,7 +126,7 @@ func (s loxString) String() string {
 	return string(s)
 }
 
-func (s loxString) Type() Type {
+func (s loxString) Type() loxType {
 	return "string"
 }
 
@@ -171,7 +171,7 @@ func (b loxBool) String() string {
 	return "false"
 }
 
-func (b loxBool) Type() Type {
+func (b loxBool) Type() loxType {
 	return "bool"
 }
 
@@ -193,7 +193,7 @@ func (n loxNil) String() string {
 	return "nil"
 }
 
-func (n loxNil) Type() Type {
+func (n loxNil) Type() loxType {
 	return "nil"
 }
 

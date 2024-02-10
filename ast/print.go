@@ -24,6 +24,12 @@ func sprint(n Node, d int) string {
 			stmts[i] = sprint(stmt, d+1)
 		}
 		return sexpr(n, d, stmts...)
+	case VarDecl:
+		if n.Initialiser == nil {
+			return sexpr(n, d, fmt.Sprintf("%q", n.Name))
+		} else {
+			return sexpr(n, d, fmt.Sprintf("%q", n.Name), sprint(n.Initialiser, d+1))
+		}
 	case ExprStmt:
 		return sexpr(n, d, sprint(n.Expr, d+1))
 	case PrintStmt:
@@ -34,12 +40,16 @@ func sprint(n Node, d int) string {
 		return sexpr(n, d, sprint(n.Expr, d+1))
 	case LiteralExpr:
 		return fmt.Sprintf("%#v", n.Value)
+	case VariableExpr:
+		return fmt.Sprintf("%q", n.Name)
 	case UnaryExpr:
 		return sexpr(n, d, fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
 	case BinaryExpr:
 		return sexpr(n, d, sprint(n.Left, d+1), fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
 	case TernaryExpr:
 		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
+	case AssignmentExpr:
+		return sexpr(n, d, fmt.Sprintf("%q", n.Left), sprint(n.Right, d+1))
 	case IllegalExpr:
 		return sexpr(n, d)
 	default:

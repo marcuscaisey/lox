@@ -54,7 +54,7 @@ func (p *parser) Parse() (ast.Node, error) {
 	p.next() // Advance to the first token
 	program := ast.Program{}
 	for p.tok.Type != token.EOF {
-		program.Stmts = append(program.Stmts, p.safelyParseStmt())
+		program.Stmts = append(program.Stmts, p.safelyParseDecl())
 	}
 	if len(p.errs) > 0 {
 		return program, errors.Join(p.errs...)
@@ -62,7 +62,7 @@ func (p *parser) Parse() (ast.Node, error) {
 	return program, nil
 }
 
-func (p *parser) safelyParseStmt() (stmt ast.Stmt) {
+func (p *parser) safelyParseDecl() (stmt ast.Stmt) {
 	defer func() {
 		if r := recover(); r != nil {
 			if _, ok := r.(unwind); ok {
@@ -73,7 +73,7 @@ func (p *parser) safelyParseStmt() (stmt ast.Stmt) {
 			}
 		}
 	}()
-	return p.parseStmt()
+	return p.parseDecl()
 }
 
 // sync synchronises the parser with the next statement. This is used to recover from a parsing error.
@@ -83,11 +83,30 @@ func (p *parser) sync() {
 		case token.Semicolon:
 			p.next()
 			return
-		case token.Print, token.Var, token.If, token.While, token.For, token.Function, token.Return, token.Class:
+		case token.Print, token.Var:
 			return
 		}
 		p.next()
 	}
+}
+
+func (p *parser) parseDecl() ast.Stmt {
+	switch {
+	case p.match(token.Var):
+		return p.parseVarDecl()
+	default:
+		return p.parseStmt()
+	}
+}
+
+func (p *parser) parseVarDecl() ast.Stmt {
+	name := p.expect(token.Ident, "%h must be followed by a variable name, found %h", token.Var, p.tok.Type)
+	var value ast.Expr
+	if p.match(token.Assign) {
+		value = p.parseExpr()
+	}
+	p.expectSemicolon("variable declaration")
+	return ast.VarDecl{Name: name, Initialiser: value}
 }
 
 func (p *parser) parseStmt() ast.Stmt {
@@ -97,7 +116,6 @@ func (p *parser) parseStmt() ast.Stmt {
 	default:
 		return p.parseExprStmt()
 	}
-	return p.parseExprStmt()
 }
 
 func (p *parser) parsePrintStmt() ast.Stmt {
@@ -117,7 +135,19 @@ func (p *parser) parseExpr() ast.Expr {
 }
 
 func (p *parser) parseCommaExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseTernaryExpr, token.Comma)
+	return p.parseBinaryExpr(p.parseAssignExpr, token.Comma)
+}
+
+func (p *parser) parseAssignExpr() ast.Expr {
+	expr := p.parseTernaryExpr()
+	if left, ok := expr.(ast.VariableExpr); ok && p.match(token.Assign) {
+		right := p.parseAssignExpr()
+		expr = ast.AssignmentExpr{
+			Left:  left.Name,
+			Right: right,
+		}
+	}
+	return expr
 }
 
 func (p *parser) parseTernaryExpr() ast.Expr {
@@ -205,6 +235,8 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 		p.expect(token.RightParen, "expected closing %h after expression, found %h", token.RightParen, p.tok.Type)
 		expr = ast.GroupExpr{Expr: innerExpr}
 		return expr
+	case token.Ident:
+		expr = ast.VariableExpr{Name: p.tok}
 	// Error productions
 	case token.Equal, token.NotEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus:
 		p.addSyntaxErrorf("binary operator %h must have left and right operands", p.tok.Type)

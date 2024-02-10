@@ -35,7 +35,7 @@ func main() {
 	flag.Parse()
 
 	if *cmd != "" {
-		if err := run(strings.NewReader(*cmd)); err != nil {
+		if err := run(strings.NewReader(*cmd), interpreter.New()); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -59,7 +59,7 @@ func main() {
 	}
 }
 
-func run(r io.Reader) error {
+func run(r io.Reader, interpreter *interpreter.Interpreter) error {
 	root, err := parser.Parse(r)
 	if *printAST {
 		ast.Print(root)
@@ -87,7 +87,9 @@ func runREPL() error {
 	if err != nil {
 		return fmt.Errorf("running Lox REPL: %s", err)
 	}
+	defer rl.Close()
 
+	interpreter := interpreter.New()
 	for {
 		line, err := rl.Readline()
 		if err != nil {
@@ -99,7 +101,7 @@ func runREPL() error {
 			}
 			panic(fmt.Sprintf("unexpected error from readline: %s", err))
 		}
-		if err := run(strings.NewReader(line)); err != nil {
+		if err := run(strings.NewReader(line), interpreter); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
@@ -113,5 +115,5 @@ func runFile(name string) error {
 		return err
 	}
 	defer f.Close()
-	return run(f)
+	return run(f, interpreter.New())
 }
