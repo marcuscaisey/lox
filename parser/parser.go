@@ -346,24 +346,24 @@ func (e *syntaxError) Error() string {
 	red := color.New(color.FgRed)
 
 	var b strings.Builder
-	bold.Fprint(&b, e.start, ": ", red.Sprint("syntax error: "), e.msg)
-
-	firstLine := e.start.File.Line(e.start.Line)
-	if !utf8.Valid(firstLine) {
-		return b.String()
+	buildString := func() string {
+		return strings.TrimSuffix(b.String(), "\n")
 	}
 
-	fmt.Fprintln(&b)
-	fmt.Fprint(&b, string(firstLine))
+	bold.Fprintln(&b, e.start, ": ", red.Sprint("syntax error: "), e.msg)
+
+	firstLine := e.start.File.Line(e.start.Line)
+	if !utf8.Valid(firstLine) { // TODO: should check all lines
+		return buildString()
+	}
+	fmt.Fprintln(&b, string(firstLine))
 	if e.start == e.end {
-		return b.String()
-	} else {
-		fmt.Fprintln(&b)
+		return buildString()
 	}
 
 	if e.start.Line == e.end.Line {
 		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(firstLine[:e.start.Column]))))
-		red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:e.end.Column]))))
+		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:e.end.Column]))))
 	} else {
 		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(firstLine[:e.start.Column]))))
 		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:]))))
@@ -373,9 +373,12 @@ func (e *syntaxError) Error() string {
 			red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(line))))
 		}
 		lastLine := e.start.File.Line(e.end.Line)
+		if len(lastLine) == 0 {
+			return buildString()
+		}
 		fmt.Fprintln(&b, string(lastLine))
-		red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
+		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
 	}
 
-	return b.String()
+	return buildString()
 }
