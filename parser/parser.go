@@ -104,7 +104,7 @@ func (p *parser) parseDecl() ast.Stmt {
 }
 
 func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
-	name := p.expect(token.Ident, "%h must be followed by a variable name, found %h", token.Var, p.tok.Type)
+	name := p.expect(token.Ident, "%h must be followed by a variable name", token.Var)
 	var value ast.Expr
 	if p.match(token.Assign) {
 		value = p.parseExpr()
@@ -162,7 +162,7 @@ func (p *parser) parseTernaryExpr() ast.Expr {
 	expr := p.parseEqualityExpr()
 	if p.match(token.Question) {
 		then := p.parseExpr()
-		p.expect(token.Colon, "next part of ternary expression should be %h, found %h", token.Colon, p.tok.Type)
+		p.expect(token.Colon, "next part of ternary expression should be %h", token.Colon)
 		elseExpr := p.parseTernaryExpr()
 		expr = ast.TernaryExpr{
 			Condition: expr,
@@ -228,13 +228,13 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 		leftParen := tok
 		p.next()
 		innerExpr := p.parseExpr()
-		rightParen := p.expect(token.RightParen, "expected closing %h after expression, found %h", token.RightParen, p.tok.Type)
+		rightParen := p.expect(token.RightParen, "expected closing %h after expression", token.RightParen)
 		return ast.GroupExpr{LeftParen: leftParen, Expr: innerExpr, RightParen: rightParen}
 	case token.Ident:
 		expr = ast.VariableExpr{Name: tok}
 	// Error productions
 	case token.Equal, token.NotEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus:
-		p.addTokenErrorf(p.tok, "binary operator %h must have left and right operands", tok.Type)
+		p.addTokenErrorf(tok, "binary operator %h must have left and right operands", tok.Type)
 		p.next()
 		var right ast.Expr
 		switch tok.Type {
@@ -253,7 +253,15 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			Right: right,
 		}
 	default:
-		p.addTokenErrorf(tok, "expected expression, found %h", tok.Type)
+		msg := "expected literal, variable, or parenthesized expression"
+		a := []any{}
+		if tok.Type == token.EOF {
+			msg += " but end of file was reached"
+		} else {
+			msg += ", found %h"
+			a = append(a, tok.Type)
+		}
+		p.addTokenErrorf(tok, msg, a...)
 		panic(unwind{})
 	}
 	p.next()
@@ -285,12 +293,18 @@ func (p *parser) expect(t token.Type, format string, a ...any) token.Token {
 		p.next()
 		return tok
 	}
+	if p.tok.Type == token.EOF {
+		format += " but end of file was reached"
+	} else {
+		format += ", found %h"
+		a = append(a, p.tok.Type)
+	}
 	p.addTokenErrorf(p.tok, format, a...)
 	panic(unwind{})
 }
 
 func (p *parser) expectSemicolon(context string) token.Token {
-	return p.expect(token.Semicolon, "expected %h after %s, found %h", token.Semicolon, context, p.tok.Type)
+	return p.expect(token.Semicolon, "expected %h after %s", token.Semicolon, context)
 }
 
 // next advances the parser to the next token.
@@ -340,13 +354,17 @@ func (e *syntaxError) Error() string {
 	}
 
 	fmt.Fprintln(&b)
+	fmt.Fprint(&b, string(firstLine))
+	if e.start == e.end {
+		return b.String()
+	} else {
+		fmt.Fprintln(&b)
+	}
 
 	if e.start.Line == e.end.Line {
-		fmt.Fprintln(&b, string(firstLine))
 		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(firstLine[:e.start.Column]))))
 		red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:e.end.Column]))))
 	} else {
-		fmt.Fprintln(&b, string(firstLine))
 		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(firstLine[:e.start.Column]))))
 		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:]))))
 		for i := e.start.Line + 1; i < e.end.Line; i++ {
