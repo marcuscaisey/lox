@@ -352,32 +352,36 @@ func (e *syntaxError) Error() string {
 
 	bold.Fprintln(&b, e.start, ": ", red.Sprint("syntax error: "), e.msg)
 
-	firstLine := e.start.File.Line(e.start.Line)
-	if !utf8.Valid(firstLine) { // TODO: should check all lines
-		return buildString()
+	lines := make([]string, e.end.Line-e.start.Line+1)
+	for i := e.start.Line; i <= e.end.Line; i++ {
+		line := e.start.File.Line(i)
+		if !utf8.Valid(line) {
+			// If any of the lines are not valid UTF-8 then we can't display the source code, so just return the error
+			// message on its own. This is a very rare case and it's not worth the effort to handle it any better.
+			return buildString()
+		}
+		lines[i-e.start.Line] = string(line)
 	}
-	fmt.Fprintln(&b, string(firstLine))
+	fmt.Fprintln(&b, string(lines[0]))
 	if e.start == e.end {
+		// There's nothing to highlight
 		return buildString()
 	}
 
-	if e.start.Line == e.end.Line {
-		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(firstLine[:e.start.Column]))))
-		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:e.end.Column]))))
+	if len(lines) == 1 {
+		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.start.Column]))))
+		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:e.end.Column]))))
 	} else {
-		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(firstLine[:e.start.Column]))))
-		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:]))))
-		for i := e.start.Line + 1; i < e.end.Line; i++ {
-			line := e.start.File.Line(i)
+		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.start.Column]))))
+		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:]))))
+		for _, line := range lines[1 : len(lines)-1] {
 			fmt.Fprintln(&b, string(line))
 			red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(line))))
 		}
-		lastLine := e.start.File.Line(e.end.Line)
-		if len(lastLine) == 0 {
-			return buildString()
+		if lastLine := lines[len(lines)-1]; len(lastLine) > 0 {
+			fmt.Fprintln(&b, string(lastLine))
+			red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
 		}
-		fmt.Fprintln(&b, string(lastLine))
-		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
 	}
 
 	return buildString()
