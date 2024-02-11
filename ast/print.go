@@ -39,7 +39,7 @@ func sprint(n Node, d int) string {
 	case GroupExpr:
 		return sexpr(n, d, sprint(n.Expr, d+1))
 	case LiteralExpr:
-		return fmt.Sprintf("%#v", n.Value)
+		return fmt.Sprint(n.Value)
 	case VariableExpr:
 		return fmt.Sprintf("%q", n.Name)
 	case UnaryExpr:

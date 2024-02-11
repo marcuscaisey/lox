@@ -90,24 +90,10 @@ func (t Type) Format(f fmt.State, verb rune) {
 
 // Token is a lexical token of Lox code.
 type Token struct {
-	Position Position
-	Type     Type
-	Literal  string
-}
-
-// IsKeyword returns true if the token is a keyword.
-func (t Token) IsKeyword() bool {
-	return keywordsStart < t.Type && t.Type < keywordsEnd
-}
-
-// IsLiteral returns true if the token is a literal.
-func (t Token) IsLiteral() bool {
-	return literalsStart < t.Type && t.Type < literalsEnd
-}
-
-// IsSymbol returns true if the token is a symbol.
-func (t Token) IsSymbol() bool {
-	return symbolsStart < t.Type && t.Type < symbolsEnd
+	Start   Position // Position of the first character of the token
+	End     Position // Position of the character immediately after the token
+	Type    Type
+	Literal string
 }
 
 func (t Token) String() string {

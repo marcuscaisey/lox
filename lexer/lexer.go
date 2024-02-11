@@ -72,7 +72,7 @@ func (l *Lexer) SetErrorHandler(errHandler ErrorHandler) {
 func (l *Lexer) Next() token.Token {
 	l.skipWhitespace()
 
-	tok := token.Token{Position: l.pos}
+	tok := token.Token{Start: l.pos}
 
 	switch {
 	case l.ch == eof:
@@ -107,6 +107,7 @@ func (l *Lexer) Next() token.Token {
 			l.next()
 			l.next()
 			if comment, terminated := l.consumeMultiLineComment(); !terminated {
+				tok.End = l.pos
 				tok.Type = token.Illegal
 				tok.Literal = comment
 				l.errHandler(tok, "unterminated multi-line comment")
@@ -144,10 +145,12 @@ func (l *Lexer) Next() token.Token {
 	case l.ch == '}':
 		tok.Type = token.RightBrace
 	case l.ch == '"':
-		tok.Type = token.String
 		lit, terminated := l.consumeString()
+		tok.End = l.pos
 		tok.Literal = lit
-		if !terminated {
+		if terminated {
+			tok.Type = token.String
+		} else {
 			tok.Type = token.Illegal
 			l.errHandler(tok, "unterminated string literal")
 		}
@@ -155,20 +158,28 @@ func (l *Lexer) Next() token.Token {
 	case isDigit(l.ch):
 		tok.Type = token.Number
 		tok.Literal = l.consumeNumber()
+		tok.End = l.pos
 		return tok
 	case isAlpha(l.ch):
 		ident := l.consumeIdent()
+		tok.End = l.pos
 		tok.Type = token.LookupIdent(ident)
 		if tok.Type == token.Ident {
 			tok.Literal = ident
 		}
 		return tok
 	default:
+		ch := l.ch
+		l.next()
+		tok.End = l.pos
 		tok.Type = token.Illegal
-		tok.Literal = string(l.ch)
-		l.errHandler(tok, fmt.Sprintf("illegal character %#U", l.ch))
+		tok.Literal = string(ch)
+		l.errHandler(tok, fmt.Sprintf("illegal character %#U", ch))
+		return tok
 	}
+
 	l.next()
+	tok.End = l.pos
 
 	return tok
 }
@@ -295,10 +306,13 @@ func (l *Lexer) next() {
 
 	if r == utf8.RuneError {
 		tok := token.Token{
-			Position: l.pos,
-			Type:     token.Illegal,
+			Start:   l.pos,
+			End:     l.pos,
+			Type:    token.Illegal,
+			Literal: string(l.src[l.readOffset-1 : l.readOffset]),
 		}
-		l.errHandler(tok, fmt.Sprintf("invalid UTF-8 byte %#x", l.src[l.readOffset-size]))
+		tok.End.Column++
+		l.errHandler(tok, fmt.Sprintf("invalid UTF-8 byte %#x", l.src[l.readOffset-1]))
 		l.next()
 		return
 	}

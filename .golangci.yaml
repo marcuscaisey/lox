@@ -14,6 +14,10 @@ issues:
     - text: "indent-error-flow: if block ends with a return statement, so drop this else and outdent its block"
       linters:
         - revive
+    - path: ast/ast.go
+      text: "exported: exported method \\w+\\.(Start|End) should have comment or be unexported"
+      linters:
+        - revive
   include:
     - EXC0012 # revive: exported (.+) should have comment( \(or a comment on this block\))? or be unexported
     - EXC0013 # revive: package comment should be of the form "(.+)...

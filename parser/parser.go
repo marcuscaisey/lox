@@ -5,12 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
 	"strings"
-	"text/template"
+	"unicode/utf8"
 
 	"github.com/fatih/color"
-	"github.com/lithammer/dedent"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/marcuscaisey/golox/ast"
@@ -28,10 +26,11 @@ func Parse(r io.Reader) (ast.Node, error) {
 
 	p := &parser{l: l}
 	errHandler := func(tok token.Token, msg string) {
-		p.lastErrPos = tok.Position
+		p.lastErrPos = tok.Start
 		err := &syntaxError{
-			tok: tok,
-			msg: msg,
+			start: tok.Start,
+			end:   tok.End,
+			msg:   msg,
 		}
 		p.errs = append(p.errs, err)
 	}
@@ -63,11 +62,12 @@ func (p *parser) Parse() (ast.Node, error) {
 }
 
 func (p *parser) safelyParseDecl() (stmt ast.Stmt) {
+	from := p.tok
 	defer func() {
 		if r := recover(); r != nil {
 			if _, ok := r.(unwind); ok {
-				p.sync()
-				stmt = ast.IllegalStmt{}
+				to := p.sync()
+				stmt = ast.IllegalStmt{From: from, To: to}
 			} else {
 				panic(r)
 			}
@@ -77,57 +77,61 @@ func (p *parser) safelyParseDecl() (stmt ast.Stmt) {
 }
 
 // sync synchronises the parser with the next statement. This is used to recover from a parsing error.
-func (p *parser) sync() {
-	for p.tok.Type != token.EOF {
+// The final token before the next statement is returned.
+func (p *parser) sync() token.Token {
+	finalTok := p.tok
+	for {
 		switch p.tok.Type {
 		case token.Semicolon:
+			finalTok := p.tok
 			p.next()
-			return
-		case token.Print, token.Var:
-			return
+			return finalTok
+		case token.Print, token.Var, token.EOF:
+			return finalTok
 		}
+		finalTok = p.tok
 		p.next()
 	}
 }
 
 func (p *parser) parseDecl() ast.Stmt {
-	switch {
+	switch tok := p.tok; {
 	case p.match(token.Var):
-		return p.parseVarDecl()
+		return p.parseVarDecl(tok)
 	default:
 		return p.parseStmt()
 	}
 }
 
-func (p *parser) parseVarDecl() ast.Stmt {
+func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
 	name := p.expect(token.Ident, "%h must be followed by a variable name, found %h", token.Var, p.tok.Type)
 	var value ast.Expr
 	if p.match(token.Assign) {
 		value = p.parseExpr()
 	}
-	p.expectSemicolon("variable declaration")
-	return ast.VarDecl{Name: name, Initialiser: value}
+	semicolon := p.expectSemicolon("variable declaration")
+	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
 }
 
 func (p *parser) parseStmt() ast.Stmt {
-	switch {
+	switch tok := p.tok; {
 	case p.match(token.Print):
-		return p.parsePrintStmt()
+		return p.parsePrintStmt(tok)
 	default:
 		return p.parseExprStmt()
 	}
 }
 
-func (p *parser) parsePrintStmt() ast.Stmt {
+func (p *parser) parsePrintStmt(printTok token.Token) ast.Stmt {
 	expr := p.parseExpr()
-	p.expectSemicolon("print statement")
-	return ast.PrintStmt{Expr: expr}
+	semicolon := p.expectSemicolon("print statement")
+	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
 }
 
 func (p *parser) parseExprStmt() ast.Stmt {
 	expr := p.parseExpr()
-	p.expectSemicolon("expression statement")
-	return ast.ExprStmt{Expr: expr}
+	semicolon := p.expectSemicolon("expression statement")
+	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
 }
 
 func (p *parser) parseExpr() ast.Expr {
@@ -214,32 +218,19 @@ func (p *parser) parseUnaryExpr() ast.Expr {
 func (p *parser) parsePrimaryExpr() ast.Expr {
 	var expr ast.Expr
 	switch tok := p.tok; tok.Type {
-	case token.Number:
-		value, err := strconv.ParseFloat(p.tok.Literal, 64)
-		if err != nil {
-			panic(fmt.Sprintf("unexpected error parsing number literal: %s", err))
-		}
-		expr = ast.LiteralExpr{Value: value}
-	case token.String:
-		value := p.tok.Literal[1 : len(p.tok.Literal)-1] // Remove surrounding quotes
-		expr = ast.LiteralExpr{Value: value}
-	case token.True:
-		expr = ast.LiteralExpr{Value: true}
-	case token.False:
-		expr = ast.LiteralExpr{Value: false}
-	case token.Nil:
-		expr = ast.LiteralExpr{Value: nil}
+	case token.Number, token.String, token.True, token.False, token.Nil:
+		expr = ast.LiteralExpr{Value: tok}
 	case token.LeftParen:
+		leftParen := tok
 		p.next()
 		innerExpr := p.parseExpr()
-		p.expect(token.RightParen, "expected closing %h after expression, found %h", token.RightParen, p.tok.Type)
-		expr = ast.GroupExpr{Expr: innerExpr}
-		return expr
+		rightParen := p.expect(token.RightParen, "expected closing %h after expression, found %h", token.RightParen, p.tok.Type)
+		return ast.GroupExpr{LeftParen: leftParen, Expr: innerExpr, RightParen: rightParen}
 	case token.Ident:
-		expr = ast.VariableExpr{Name: p.tok}
+		expr = ast.VariableExpr{Name: tok}
 	// Error productions
 	case token.Equal, token.NotEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus:
-		p.addSyntaxErrorf("binary operator %h must have left and right operands", p.tok.Type)
+		p.addTokenErrorf(p.tok, "binary operator %h must have left and right operands", tok.Type)
 		p.next()
 		var right ast.Expr
 		switch tok.Type {
@@ -258,7 +249,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			Right: right,
 		}
 	default:
-		p.addSyntaxErrorf("expected expression, found %h", p.tok.Type)
+		p.addTokenErrorf(tok, "expected expression, found %h", tok.Type)
 		panic(unwind{})
 	}
 	p.next()
@@ -290,12 +281,12 @@ func (p *parser) expect(t token.Type, format string, a ...any) token.Token {
 		p.next()
 		return tok
 	}
-	p.addSyntaxErrorf(format, a...)
+	p.addTokenErrorf(p.tok, format, a...)
 	panic(unwind{})
 }
 
-func (p *parser) expectSemicolon(context string) {
-	p.expect(token.Semicolon, "expected %h after %s, found %h", token.Semicolon, context, p.tok.Type)
+func (p *parser) expectSemicolon(context string) token.Token {
+	return p.expect(token.Semicolon, "expected %h after %s, found %h", token.Semicolon, context, p.tok.Type)
 }
 
 // next advances the parser to the next token.
@@ -303,14 +294,23 @@ func (p *parser) next() {
 	p.tok = p.l.Next()
 }
 
-func (p *parser) addSyntaxErrorf(format string, a ...any) {
-	if len(p.errs) > 0 && p.tok.Position == p.lastErrPos {
+func (p *parser) addSyntaxErrorf(start, end token.Position, format string, a ...any) {
+	if len(p.errs) > 0 && start == p.lastErrPos {
 		return
 	}
 	p.errs = append(p.errs, &syntaxError{
-		tok: p.tok,
-		msg: fmt.Sprintf(format, a...),
+		start: start,
+		end:   end,
+		msg:   fmt.Sprintf(format, a...),
 	})
+}
+
+func (p *parser) addTokenErrorf(tok token.Token, format string, a ...any) {
+	p.addSyntaxErrorf(tok.Start, tok.End, format, a...)
+}
+
+func (p *parser) addNodeErrorf(node ast.Node, format string, a ...any) {
+	p.addSyntaxErrorf(node.Start(), node.End(), format, a...)
 }
 
 // unwind is used as a panic value so that we can unwind the stack and recover from a parsing error without having to
@@ -318,59 +318,42 @@ func (p *parser) addSyntaxErrorf(format string, a ...any) {
 type unwind struct{}
 
 type syntaxError struct {
-	tok token.Token
-	msg string
+	start token.Position
+	end   token.Position
+	msg   string
 }
 
 func (e *syntaxError) Error() string {
-	line := e.tok.Position.File.Line(e.tok.Position.Line)
+	bold := color.New(color.Bold)
+	red := color.New(color.FgRed)
 
-	var tok string
-	switch {
-	case e.tok.IsKeyword(), e.tok.IsSymbol():
-		tok = e.tok.Type.String()
-	case e.tok.IsLiteral():
-		tok = e.tok.Literal
-	case e.tok.Type == token.Illegal:
-		if e.tok.Literal == "" {
-			// If the token has no literal, then we don't have anything to point to.
-			return fmt.Sprintf("%s: syntax error: %s", e.tok.Position, e.msg)
-		}
-		tok = e.tok.Literal
-	case e.tok.Type == token.EOF:
-		// We pretend that the EOF token is a space so that we have something to point to.
-		tok = " "
-		line = append(line, ' ')
-	}
-	// If the token spans multiple lines, only show the first one. I'm not sure what the best way of pointing to a
-	// multi-line token is.
-	tok, _, _ = strings.Cut(tok, "\n")
-
-	data := map[string]any{
-		"pos":    e.tok.Position,
-		"msg":    e.msg,
-		"before": string(line[:e.tok.Position.Column]),
-		"tok":    tok,
-		"after":  string(line[e.tok.Position.Column+len(tok):]),
-	}
-	funcs := template.FuncMap{
-		"red":    color.New(color.FgRed).SprintFunc(),
-		"bold":   color.New(color.Bold).SprintFunc(),
-		"repeat": strings.Repeat,
-		"stringWidth": func(s string) int {
-			return runewidth.StringWidth(s)
-		},
-	}
-	text := strings.TrimSpace(dedent.Dedent(`
-		{{ .pos }}: syntax error: {{ .msg }}
-		{{ .before }}{{ .tok | bold | red }}{{ .after }}
-		{{ repeat " " (stringWidth .before) }}{{ repeat "^" (stringWidth .tok) | red | bold }}
-	`))
-
-	tmpl := template.Must(template.New("").Funcs(funcs).Parse(text))
 	var b strings.Builder
-	if err := tmpl.Execute(&b, data); err != nil {
-		panic(err)
+	bold.Fprint(&b, e.start, ": ", red.Sprint("syntax error: "), e.msg)
+
+	firstLine := e.start.File.Line(e.start.Line)
+	if !utf8.Valid(firstLine) {
+		return b.String()
 	}
+
+	fmt.Fprintln(&b)
+
+	if e.start.Line == e.end.Line {
+		fmt.Fprintln(&b, string(firstLine))
+		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(firstLine[:e.start.Column]))))
+		red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:e.end.Column]))))
+	} else {
+		fmt.Fprintln(&b, string(firstLine))
+		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(firstLine[:e.start.Column]))))
+		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(firstLine[e.start.Column:]))))
+		for i := e.start.Line + 1; i < e.end.Line; i++ {
+			line := e.start.File.Line(i)
+			fmt.Fprintln(&b, string(line))
+			red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(line))))
+		}
+		lastLine := e.start.File.Line(e.end.Line)
+		fmt.Fprintln(&b, string(lastLine))
+		red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
+	}
+
 	return b.String()
 }

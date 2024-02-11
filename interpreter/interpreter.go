@@ -3,6 +3,7 @@ package interpreter
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -100,17 +101,21 @@ func (i *Interpreter) interpretExprStmt(stmt ast.ExprStmt) loxObject {
 }
 
 func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
-	switch value := expr.Value.(type) {
-	case float64:
+	switch tok := expr.Value; tok.Type {
+	case token.Number:
+		value, err := strconv.ParseFloat(tok.Literal, 64)
+		if err != nil {
+			panic(fmt.Sprintf("unexpected error parsing number literal: %s", err))
+		}
 		return loxNumber(value)
-	case string:
-		return loxString(value)
-	case bool:
-		return loxBool(value)
-	case nil:
+	case token.String:
+		return loxString(tok.Literal[1 : len(tok.Literal)-1]) // Remove surrounding quotes
+	case token.True, token.False:
+		return loxBool(tok.Type == token.True)
+	case token.Nil:
 		return loxNil{}
 	default:
-		panic(fmt.Sprintf("unexpected literal type: %T", value))
+		panic(fmt.Sprintf("unexpected literal type: %h", tok.Type))
 	}
 }
 
@@ -165,17 +170,18 @@ type runtimeError struct {
 	msg string
 }
 
+// TODO: Rewrite this in a similar way to syntaxError
 func (e *runtimeError) Error() string {
 	// If the token spans multiple lines, only show the first one. I'm not sure what the best way of pointing to a
 	// multi-line token is.
 	tok, _, _ := strings.Cut(e.tok.String(), "\n")
-	line := e.tok.Position.File.Line(e.tok.Position.Line)
+	line := e.tok.Start.File.Line(e.tok.Start.Line)
 	data := map[string]any{
-		"pos":    e.tok.Position,
+		"pos":    e.tok.Start,
 		"msg":    e.msg,
-		"before": string(line[:e.tok.Position.Column]),
+		"before": string(line[:e.tok.Start.Column]),
 		"tok":    tok,
-		"after":  string(line[e.tok.Position.Column+len(tok):]),
+		"after":  string(line[e.tok.Start.Column+len(tok):]),
 	}
 	funcs := template.FuncMap{
 		"red":    color.New(color.FgRed).SprintFunc(),
