@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"text/template"
 
 	"github.com/fatih/color"
-	"github.com/lithammer/dedent"
 	"github.com/mattn/go-runewidth"
 
 	"github.com/marcuscaisey/golox/ast"
@@ -170,37 +168,17 @@ type runtimeError struct {
 	msg string
 }
 
-// TODO: Rewrite this in a similar way to syntaxError
 func (e *runtimeError) Error() string {
-	// If the token spans multiple lines, only show the first one. I'm not sure what the best way of pointing to a
-	// multi-line token is.
-	tok, _, _ := strings.Cut(e.tok.String(), "\n")
-	line := e.tok.Start.File.Line(e.tok.Start.Line)
-	data := map[string]any{
-		"pos":    e.tok.Start,
-		"msg":    e.msg,
-		"before": string(line[:e.tok.Start.Column]),
-		"tok":    tok,
-		"after":  string(line[e.tok.Start.Column+len(tok):]),
-	}
-	funcs := template.FuncMap{
-		"red":    color.New(color.FgRed).SprintFunc(),
-		"bold":   color.New(color.Bold).SprintFunc(),
-		"repeat": strings.Repeat,
-		"stringWidth": func(s string) int {
-			return runewidth.StringWidth(s)
-		},
-	}
-	text := strings.TrimSpace(dedent.Dedent(`
-		{{ .pos }}: runtime error: {{ .msg }}
-		{{ .before }}{{ .tok | bold | red }}{{ .after }}
-		{{ repeat " " (stringWidth .before) }}{{ repeat "^" (stringWidth .tok) | red | bold }}
-	`))
+	bold := color.New(color.Bold)
+	red := color.New(color.FgRed)
 
-	tmpl := template.Must(template.New("").Funcs(funcs).Parse(strings.TrimSpace(dedent.Dedent(text))))
+	line := e.tok.Start.File.Line(e.tok.Start.Line)
+
 	var b strings.Builder
-	if err := tmpl.Execute(&b, data); err != nil {
-		panic(err)
-	}
+	bold.Fprintln(&b, e.tok.Start, ": ", red.Sprint("runtime error: "), e.msg)
+	fmt.Fprintln(&b, string(line))
+	fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(line[:e.tok.Start.Column]))))
+	red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(line[e.tok.Start.Column:e.tok.End.Column]))))
+
 	return b.String()
 }
