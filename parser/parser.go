@@ -139,13 +139,17 @@ func (p *parser) parseExpr() ast.Expr {
 }
 
 func (p *parser) parseCommaExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseAssignExpr, token.Comma)
+	return p.parseBinaryExpr(p.parseAssignmentExpr, token.Comma)
 }
 
-func (p *parser) parseAssignExpr() ast.Expr {
+func (p *parser) parseAssignmentExpr() ast.Expr {
 	expr := p.parseTernaryExpr()
-	if left, ok := expr.(ast.VariableExpr); ok && p.match(token.Assign) {
-		right := p.parseAssignExpr()
+	if p.match(token.Assign) {
+		left, ok := expr.(ast.VariableExpr)
+		if !ok {
+			p.addNodeErrorf(expr, "left-hand side of assignment must be a variable")
+		}
+		right := p.parseAssignmentExpr()
 		expr = ast.AssignmentExpr{
 			Left:  left.Name,
 			Right: right,
