@@ -37,29 +37,87 @@ Lox has four primitive types:
 | bool   | Boolean value                | `true` `false` | `false` if `false`, `true` otherwise |
 | nil    | Absence of a value           | `nil`          | `false`                              |
 
-#### Unary Operations
+### Expressions
 
-| Operator | Operand type | Result type | Description                           |
-| -------- | ------------ | ----------- | ------------------------------------- |
-| !        | All          | `bool`      | Negates the truthiness of the operand |
-| -        | `number`     | `number`    | Negates the operand                   |
+Expressions are constructs that produce a value.
 
-#### Binary Operations
+#### Literal Expression
 
-| Operator  | Operand 1 type | Operand 2 type | Result type               | Description                                                        |
-| --------- | -------------- | -------------- | ------------------------- | ------------------------------------------------------------------ |
-| \*        | `number`       | `number`       | `number`                  | Multiplies the operands                                            |
-| \*        | `number`       | `string`       | `string`                  | Repeats the string                                                 |
-| /         | `number`       | `number`       | `number`                  | Divides the operands                                               |
-| +         | `number`       | `number`       | `number`                  | Adds the operands                                                  |
-| +         | `string`       | `string`       | `string`                  | Concatenates the operands                                          |
-| -         | `number`       | `number`       | `number`                  | Subtracts the operands                                             |
-| < <= > >= | `number`       | `number`       | `bool`                    | Compares the operands                                              |
-| < <= > >= | `string`       | `string`       | `bool`                    | Compares the operands lexicographically                            |
-| == !=     | All            | All            | `bool`                    | Compares the operands and their types                              |
-| ,         | All            | All            | Type of the right operand | Evaluates the left then right operand<br>Returns the second result |
+A literal expression produces a value directly.
 
-#### Ternary Operation
+```lox
+print 123.4; // prints 123.4
+print "hello"; // prints hello
+print false; // prints false
+print nil; // prints nil
+```
+
+#### Variable Expression
+
+A variable expression produces the value of a variable.
+
+```lox
+var a = 1;
+print a; // prints 1
+```
+
+#### Assignment Expression
+
+An assignment expression assigns a value to a variable and produces the value.
+
+```lox
+var a;
+a = 1;
+print a; // prints 1
+print a = 2; // prints 2
+print a; // prints 2
+```
+
+#### Unary Expression
+
+A unary expression is an operator followed by a single operand.
+
+| Operator | Operand  | Result   | Description                           |
+| -------- | -------- | -------- | ------------------------------------- |
+| !        | All      | `bool`   | Negates the truthiness of the operand |
+| -        | `number` | `number` | Negates the operand                   |
+
+```lox
+print !""; // prints true
+print -1; // prints -1
+```
+
+#### Binary Expression
+
+A binary expression is an operator surrounded by two operands.
+
+| Operator  | Operand 1 | Operand 2 | Result                    | Description                                                        |
+| --------- | --------- | --------- | ------------------------- | ------------------------------------------------------------------ |
+| \*        | `number`  | `number`  | `number`                  | Multiplies the operands                                            |
+| \*        | `number`  | `string`  | `string`                  | Repeats the string                                                 |
+| /         | `number`  | `number`  | `number`                  | Divides the operands                                               |
+| +         | `number`  | `number`  | `number`                  | Adds the operands                                                  |
+| +         | `string`  | `string`  | `string`                  | Concatenates the operands                                          |
+| -         | `number`  | `number`  | `number`                  | Subtracts the operands                                             |
+| < <= > >= | `number`  | `number`  | `bool`                    | Compares the operands                                              |
+| < <= > >= | `string`  | `string`  | `bool`                    | Compares the operands lexicographically                            |
+| == !=     | All       | All       | `bool`                    | Compares the operands and their types                              |
+| ,         | All       | All       | Type of the right operand | Evaluates the left then right operand<br>Returns the second result |
+
+```lox
+print 2 * 3.5; // prints 7
+print 3 * "ab"; // prints "ababab"
+print 10 / 2; // prints 5
+print 1 + 2; // prints 3
+print "a" + "b"; // prints "ab"
+print 3 - 1; // prints 2
+print 1 < 2; // prints true
+print "a" > "b"; // prints false
+print 1 == "1"; // prints false
+print 1, 2; // prints 2
+```
+
+#### Ternary Expression
 
 The ternary operator `?:` is a special operator that takes three operands. It evaluates the first
 operand, and if it is truthy, it evaluates and returns the second operand. Otherwise, it evaluates
@@ -82,13 +140,51 @@ From highest to lowest:
 | < <= > >= | left-to-right |
 | == !=     | left-to-right |
 | ?:        | right-to-left |
+| =         | right-to-left |
 | ,         | left-to-right |
 
 Any expression can be wrapped in `()` to override the default precedence.
 
+### Statements
+
+Statements are constructs that perform some action.
+
+#### Expression Statement
+
+An expression statement evaluates an expression and discards the result.
+
+```lox
+1 + 2;
+```
+
+#### Print Statement
+
+A print statement evaluates an expression and prints the result.
+
+```lox
+print 1 + 2; // prints 3
+```
+
+### Declarations
+
+Declarations are constructs that bind a name to a value.
+
+#### Variable Declaration
+
+A variable declaration declares a name which can be assigned a value. You can optionally assign an
+initial value to the variable, otherwise it defaults to `nil`.
+
+```lox
+var a;
+print a; // prints nil
+var b = 1;
+print b; // prints 1
+```
+
 ### Comments
 
-Both single line and multi line comments are supported.
+Comments are bits of text in the source code that are ignored when evaluating the program. Both
+single line and multi line comments are supported.
 
 ```lox
 // This is a single line comment
@@ -103,26 +199,6 @@ This is a multi line comment
  */
 
 print 1 /* Multi line comments can be used anywhere */ + 2;
-```
-
-### Statements
-
-#### Expression statement
-
-An expression statement is an expression followed by a semicolon. It evaluates the expression and
-then discards the result.
-
-```lox
-1 + 2;
-```
-
-#### Print statement
-
-A print statement is the keyword `print` followed by an expression followed by a semicolon. It
-evaluates the expression and prints the result to stdout.
-
-```lox
-print 1 + 2; // prints 3
 ```
 
 ### Grammar
