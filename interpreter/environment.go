@@ -6,19 +6,20 @@ import (
 	"github.com/marcuscaisey/golox/token"
 )
 
-// environment contains the values of all variables in scope.
 type environment struct {
+	parent *environment
 	values map[string]loxObject
 }
 
-func newEnvironment() *environment {
+func newEnvironment(parent *environment) *environment {
 	return &environment{
+		parent: parent,
 		values: make(map[string]loxObject),
 	}
 }
 
-// Define defines a variable and assigns it an initial value.
-// If the variable is already defined then a runtime error is raised.
+// Define defines a variable in this environment and assigns it an initial value.
+// If the variable is already defined in this environment then a runtime error is raised.
 func (e *environment) Define(tok token.Token, value loxObject) {
 	if _, ok := e.values[tok.Literal]; ok {
 		panic(&runtimeError{
@@ -29,27 +30,37 @@ func (e *environment) Define(tok token.Token, value loxObject) {
 	e.values[tok.Literal] = value
 }
 
-// Assign assigns a new value to a variable.
+// Assign assigns a value to a variable.
 // If the variable has not been defined then a runtime error is raised.
 func (e *environment) Assign(tok token.Token, value loxObject) {
-	if _, ok := e.values[tok.Literal]; !ok {
+	if e == nil {
 		panic(&runtimeError{
 			tok: tok,
 			msg: fmt.Sprintf("%s has not been defined", tok.Literal),
 		})
 	}
-	e.values[tok.Literal] = value
+
+	if _, ok := e.values[tok.Literal]; ok {
+		e.values[tok.Literal] = value
+		return
+	}
+
+	e.parent.Assign(tok, value)
 }
 
 // Get returns the value of a variable.
 // If the variable has not been defined then a runtime error is raised.
 func (e *environment) Get(tok token.Token) loxObject {
-	value, ok := e.values[tok.Literal]
-	if !ok {
+	if e == nil {
 		panic(&runtimeError{
 			tok: tok,
 			msg: fmt.Sprintf("%s has not been defined", tok.Literal),
 		})
 	}
-	return value
+
+	if value, ok := e.values[tok.Literal]; ok {
+		return value
+	}
+
+	return e.parent.Get(tok)
 }

@@ -39,6 +39,17 @@ type VarDecl struct {
 func (d VarDecl) Start() token.Position { return d.Name.Start }
 func (d VarDecl) End() token.Position   { return d.Semicolon.End }
 
+// BlockStmt is a block statement, such as { var a = 123; var b = 456; }.
+type BlockStmt struct {
+	LeftBrace  token.Token
+	Stmts      []Stmt
+	RightBrace token.Token
+	stmt
+}
+
+func (b BlockStmt) Start() token.Position { return b.LeftBrace.Start }
+func (b BlockStmt) End() token.Position   { return b.RightBrace.End }
+
 // ExprStmt is an expression statement, such as a function call.
 type ExprStmt struct {
 	Expr      Expr

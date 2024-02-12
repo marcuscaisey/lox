@@ -30,6 +30,12 @@ func sprint(n Node, d int) string {
 		} else {
 			return sexpr(n, d, fmt.Sprintf("%q", n.Name), sprint(n.Initialiser, d+1))
 		}
+	case BlockStmt:
+		stmtSexprs := make([]string, len(n.Stmts))
+		for i, stmt := range n.Stmts {
+			stmtSexprs[i] = sprint(stmt, d+1)
+		}
+		return sexpr(n, d, stmtSexprs...)
 	case ExprStmt:
 		return sexpr(n, d, sprint(n.Expr, d+1))
 	case PrintStmt:

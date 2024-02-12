@@ -149,6 +149,23 @@ Any expression can be wrapped in `()` to override the default precedence.
 
 Statements are constructs that perform some action.
 
+#### Block Statement
+
+A block statement groups multiple statements into a single statement. It is used to create a new
+lexical scope.
+
+```lox
+var a = "global a";
+var b = "global b";
+{
+    var a = "outer a";
+    print a; // prints outer a
+    print b; // prints global b
+}
+print a; // prints global a
+print b; // prints global b
+```
+
 #### Expression Statement
 
 An expression statement evaluates an expression and discards the result.
@@ -213,9 +230,10 @@ program = decl* EOF ;
 decl     = var_decl | stmt ;
 var_decl = "var" IDENT ( "=" expr )? ";" ;
 
-stmt       = expr_stmt | print_stmt ;
+stmt       = block_stmt | expr_stmt | print_stmt ;
 expr_stmt  = expr ";" ;
 print_stmt = "print" expr ";" ;
+block_stmt = "{" decl* "}" ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr ( "," assignment_expr )* ;

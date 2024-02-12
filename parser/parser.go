@@ -98,6 +98,8 @@ func (p *parser) parseDecl() ast.Stmt {
 	switch tok := p.tok; {
 	case p.match(token.Var):
 		return p.parseVarDecl(tok)
+	case p.match(token.LeftBrace):
+		return p.parseBlock(tok)
 	default:
 		return p.parseStmt()
 	}
@@ -111,6 +113,15 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
 	}
 	semicolon := p.expectSemicolon("variable declaration")
 	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
+}
+
+func (p *parser) parseBlock(leftBrace token.Token) ast.Stmt {
+	var stmts []ast.Stmt
+	for p.tok.Type != token.RightBrace && p.tok.Type != token.EOF {
+		stmts = append(stmts, p.safelyParseDecl())
+	}
+	rightBrace := p.expect(token.RightBrace, "expected closing %h after block", token.RightBrace)
+	return ast.BlockStmt{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
 }
 
 func (p *parser) parseStmt() ast.Stmt {
