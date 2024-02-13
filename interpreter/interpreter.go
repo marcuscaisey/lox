@@ -97,7 +97,7 @@ func (i *Interpreter) interpretProgram(env *environment, node ast.Program) loxOb
 }
 
 func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) loxObject {
-	var value loxObject = loxNil{}
+	var value loxObject
 	if stmt.Initialiser != nil {
 		value = i.interpret(env, stmt.Initialiser)
 	}

@@ -59,6 +59,12 @@ func (e *environment) Get(tok token.Token) loxObject {
 	}
 
 	if value, ok := e.values[tok.Literal]; ok {
+		if value == nil {
+			panic(&runtimeError{
+				tok: tok,
+				msg: fmt.Sprintf("%s has not been initialised", tok.Literal),
+			})
+		}
 		return value
 	}
 

@@ -1,6 +1,3 @@
 var a = 2;
 var b = a + 3;
 print b; // prints 5
-
-var c;
-print c; // prints nil

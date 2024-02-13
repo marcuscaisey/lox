@@ -54,7 +54,8 @@ print nil; // prints nil
 
 #### Variable Expression
 
-A variable expression produces the value of a variable.
+A variable expression produces the value of a variable. It is not valid to access an uninitialised
+variable.
 
 ```lox
 var a = 1;
@@ -189,7 +190,7 @@ Declarations are constructs that bind a name to a value.
 #### Variable Declaration
 
 A variable declaration declares a name which can be assigned a value. You can optionally assign an
-initial value to the variable, otherwise it defaults to `nil`.
+initial value to the variable.
 
 ```lox
 var a;
