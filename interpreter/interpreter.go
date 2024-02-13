@@ -16,13 +16,29 @@ import (
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
 	globalEnv *environment
+	replMode  bool
 }
 
-// New constructs a new Interpreter.
-func New() *Interpreter {
-	return &Interpreter{
+// Option can be passed to New to configure the interpreter.
+type Option func(*Interpreter)
+
+// REPLMode sets the interpreter to REPL mode.
+// In REPL mode, the interpreter will print the result of expression statements.
+func REPLMode() Option {
+	return func(i *Interpreter) {
+		i.replMode = true
+	}
+}
+
+// New constructs a new Interpreter with the given options.
+func New(opts ...Option) *Interpreter {
+	interpreter := &Interpreter{
 		globalEnv: newEnvironment(nil),
 	}
+	for _, opt := range opts {
+		opt(interpreter)
+	}
+	return interpreter
 }
 
 // Interpret interprets an AST and returns the result.
@@ -98,7 +114,10 @@ func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) l
 }
 
 func (i *Interpreter) interpretExprStmt(env *environment, stmt ast.ExprStmt) loxObject {
-	i.interpret(env, stmt.Expr)
+	result := i.interpret(env, stmt.Expr)
+	if i.replMode {
+		fmt.Println(result.String())
+	}
 	return loxNil{}
 }
 

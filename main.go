@@ -89,7 +89,7 @@ func runREPL() error {
 	}
 	defer rl.Close()
 
-	interpreter := interpreter.New()
+	interpreter := interpreter.New(interpreter.REPLMode())
 	for {
 		line, err := rl.Readline()
 		if err != nil {
