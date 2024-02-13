@@ -14,11 +14,15 @@ import (
 )
 
 // Interpreter is the interpreter for the language.
-type Interpreter struct{}
+type Interpreter struct {
+	globalEnv *environment
+}
 
 // New constructs a new Interpreter.
 func New() *Interpreter {
-	return &Interpreter{}
+	return &Interpreter{
+		globalEnv: newEnvironment(nil),
+	}
 }
 
 // Interpret interprets an AST and returns the result.
@@ -33,8 +37,7 @@ func (i *Interpreter) Interpret(node ast.Node) (err error) {
 			}
 		}
 	}()
-	globalEnv := newEnvironment(nil)
-	i.interpret(globalEnv, node)
+	i.interpret(i.globalEnv, node)
 	return nil
 }
 
