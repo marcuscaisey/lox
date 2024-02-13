@@ -4,7 +4,7 @@ golox:
 	go build -o ${BUILD_DIR}/golox .
 
 test: golox
-	go test ./test -interpreter ${BUILD_DIR}/golox
+	go run github.com/rakyll/gotest ./test -interpreter ${BUILD_DIR}/golox
 
 update_tests: golox
-	go test ./test -interpreter ${BUILD_DIR}/golox -update
+	go run github.com/rakyll/gotest ./test -interpreter ${BUILD_DIR}/golox -update
