@@ -150,6 +150,22 @@ Any expression can be wrapped in `()` to override the default precedence.
 
 Statements are constructs that perform some action.
 
+#### Expression Statement
+
+An expression statement evaluates an expression and discards the result.
+
+```lox
+1 + 2;
+```
+
+#### Print Statement
+
+A print statement evaluates an expression and prints the result.
+
+```lox
+print 1 + 2; // prints 3
+```
+
 #### Block Statement
 
 A block statement groups multiple statements into a single statement. It is used to create a new
@@ -167,20 +183,28 @@ print a; // prints global a
 print b; // prints global b
 ```
 
-#### Expression Statement
+#### If Statement
 
-An expression statement evaluates an expression and discards the result.
-
-```lox
-1 + 2;
-```
-
-#### Print Statement
-
-A print statement evaluates an expression and prints the result.
+An if statement evaluates an expression and executes a statement if the expression is truthy. An optional
+else statement can be provided to execute a statement if the expression is falsy.
 
 ```lox
-print 1 + 2; // prints 3
+if (1 < 2) {
+    print "1 is less than 2"; // prints 1 is less than 2
+}
+
+
+if (1 > 2) {
+    print "1 is greater than 2";
+} else {
+    print "1 is not greater than 2"; // prints 1 is not greater than 2
+}
+
+if (1 > 2) {
+    print "1 is greater than 2";
+} else if (3 < 4) {
+    print "3 is less than 4"; // prints 3 is less than 4
+}
 ```
 
 ### Declarations
@@ -231,10 +255,11 @@ program = decl* EOF ;
 decl     = var_decl | stmt ;
 var_decl = "var" IDENT ( "=" expr )? ";" ;
 
-stmt       = block_stmt | expr_stmt | print_stmt ;
+stmt       = expr_stmt | print_stmt | block_stmt | if_stmt ;
 expr_stmt  = expr ";" ;
 print_stmt = "print" expr ";" ;
 block_stmt = "{" decl* "}" ;
+if_stmt    = "if" "(" expr ") stmt ( "else" stmt )? ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr ( "," assignment_expr )* ;

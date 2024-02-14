@@ -18,7 +18,7 @@ import (
 
 // Parse parses the source code read from r.
 // If an error is returned then an incomplete AST will still be returned along with it.
-func Parse(r io.Reader) (ast.Node, error) {
+func Parse(r io.Reader) (ast.Program, error) {
 	l, err := lexer.New(r)
 	if err != nil {
 		return ast.Program{}, fmt.Errorf("constructing parser: %s", err)
@@ -49,7 +49,7 @@ type parser struct {
 
 // Parse parses the source code and returns the root node of the abstract syntax tree.
 // If an error is returned then an incomplete AST will still be returned along with it.
-func (p *parser) Parse() (ast.Node, error) {
+func (p *parser) Parse() (ast.Program, error) {
 	p.next() // Advance to the first token
 	program := ast.Program{}
 	for p.tok.Type != token.EOF {
@@ -98,8 +98,6 @@ func (p *parser) parseDecl() ast.Stmt {
 	switch tok := p.tok; {
 	case p.match(token.Var):
 		return p.parseVarDecl(tok)
-	case p.match(token.LeftBrace):
-		return p.parseBlock(tok)
 	default:
 		return p.parseStmt()
 	}
@@ -115,6 +113,31 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
 	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
 }
 
+func (p *parser) parseStmt() ast.Stmt {
+	switch tok := p.tok; {
+	case p.match(token.Print):
+		return p.parsePrintStmt(tok)
+	case p.match(token.LeftBrace):
+		return p.parseBlock(tok)
+	case p.match(token.If):
+		return p.parseIfStmt(tok)
+	default:
+		return p.parseExprStmt()
+	}
+}
+
+func (p *parser) parseExprStmt() ast.Stmt {
+	expr := p.parseExpr()
+	semicolon := p.expectSemicolon("expression statement")
+	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
+}
+
+func (p *parser) parsePrintStmt(printTok token.Token) ast.Stmt {
+	expr := p.parseExpr()
+	semicolon := p.expectSemicolon("print statement")
+	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
+}
+
 func (p *parser) parseBlock(leftBrace token.Token) ast.Stmt {
 	var stmts []ast.Stmt
 	for p.tok.Type != token.RightBrace && p.tok.Type != token.EOF {
@@ -124,25 +147,16 @@ func (p *parser) parseBlock(leftBrace token.Token) ast.Stmt {
 	return ast.BlockStmt{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
 }
 
-func (p *parser) parseStmt() ast.Stmt {
-	switch tok := p.tok; {
-	case p.match(token.Print):
-		return p.parsePrintStmt(tok)
-	default:
-		return p.parseExprStmt()
+func (p *parser) parseIfStmt(ifTok token.Token) ast.Stmt {
+	p.expect(token.LeftParen, "%h should be followed by condition inside %h%h", token.If, token.LeftParen, token.RightParen)
+	condition := p.parseExpr()
+	p.expect(token.RightParen, "%h should be followed by condition inside %h%h", token.If, token.LeftParen, token.RightParen)
+	thenBranch := p.parseStmt()
+	var elseBranch ast.Stmt
+	if p.match(token.Else) {
+		elseBranch = p.parseStmt()
 	}
-}
-
-func (p *parser) parsePrintStmt(printTok token.Token) ast.Stmt {
-	expr := p.parseExpr()
-	semicolon := p.expectSemicolon("print statement")
-	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
-}
-
-func (p *parser) parseExprStmt() ast.Stmt {
-	expr := p.parseExpr()
-	semicolon := p.expectSemicolon("expression statement")
-	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
+	return ast.IfStmt{If: ifTok, Condition: condition, Then: thenBranch, Else: elseBranch}
 }
 
 func (p *parser) parseExpr() ast.Expr {

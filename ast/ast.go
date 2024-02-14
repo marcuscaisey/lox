@@ -39,17 +39,6 @@ type VarDecl struct {
 func (d VarDecl) Start() token.Position { return d.Name.Start }
 func (d VarDecl) End() token.Position   { return d.Semicolon.End }
 
-// BlockStmt is a block statement, such as { var a = 123; var b = 456; }.
-type BlockStmt struct {
-	LeftBrace  token.Token
-	Stmts      []Stmt
-	RightBrace token.Token
-	stmt
-}
-
-func (b BlockStmt) Start() token.Position { return b.LeftBrace.Start }
-func (b BlockStmt) End() token.Position   { return b.RightBrace.End }
-
 // ExprStmt is an expression statement, such as a function call.
 type ExprStmt struct {
 	Expr      Expr
@@ -70,6 +59,41 @@ type PrintStmt struct {
 
 func (p PrintStmt) Start() token.Position { return p.Print.Start }
 func (p PrintStmt) End() token.Position   { return p.Semicolon.End }
+
+// BlockStmt is a block statement, such as
+//
+//	{
+//	    var a = 123;
+//	    var b = 456;
+//	}
+type BlockStmt struct {
+	LeftBrace  token.Token
+	Stmts      []Stmt
+	RightBrace token.Token
+	stmt
+}
+
+func (b BlockStmt) Start() token.Position { return b.LeftBrace.Start }
+func (b BlockStmt) End() token.Position   { return b.RightBrace.End }
+
+// IfStmt is an if statement, such as
+//
+//	if (a == 123) {
+//	    print "abc";
+//	} else {
+//
+//	    print "def";
+//	}
+type IfStmt struct {
+	If        token.Token
+	Condition Expr
+	Then      Stmt
+	Else      Stmt
+	stmt
+}
+
+func (i IfStmt) Start() token.Position { return i.If.Start }
+func (i IfStmt) End() token.Position   { return i.Else.End() }
 
 // IllegalStmt is an illegal statement, used as a placeholder when parsing fails.
 type IllegalStmt struct {

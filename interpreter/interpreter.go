@@ -41,9 +41,9 @@ func New(opts ...Option) *Interpreter {
 	return interpreter
 }
 
-// Interpret interprets an AST and returns the result.
+// Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
-func (i *Interpreter) Interpret(node ast.Node) (err error) {
+func (i *Interpreter) Interpret(program ast.Program) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if runtimeErr, ok := r.(*runtimeError); ok {
@@ -53,78 +53,90 @@ func (i *Interpreter) Interpret(node ast.Node) (err error) {
 			}
 		}
 	}()
-	i.interpret(i.globalEnv, node)
+	i.interpretProgram(i.globalEnv, program)
 	return nil
 }
 
-func (i *Interpreter) interpret(env *environment, node ast.Node) loxObject {
-	switch node := node.(type) {
-	case ast.Program:
-		return i.interpretProgram(env, node)
-	case ast.VarDecl:
-		return i.interpretVarDecl(env, node)
-	case ast.BlockStmt:
-		return i.interpretBlockStmt(env, node)
-	case ast.ExprStmt:
-		return i.interpretExprStmt(env, node)
-	case ast.PrintStmt:
-		return i.interpretPrintStmt(env, node)
-	case ast.GroupExpr:
-		return i.interpret(env, node.Expr)
-	case ast.LiteralExpr:
-		return i.interpretLiteralExpr(node)
-	case ast.VariableExpr:
-		return i.interpretVariableExpr(env, node)
-	case ast.UnaryExpr:
-		return i.interpretUnaryExpr(env, node)
-	case ast.BinaryExpr:
-		return i.interpretBinaryExpr(env, node)
-	case ast.TernaryExpr:
-		return i.interpretTernaryExpr(env, node)
-	case ast.AssignmentExpr:
-		return i.interpretAssignmentExpr(env, node)
-	default:
-		panic(fmt.Sprintf("unexpected node type: %T", node))
-	}
-}
-
-func (i *Interpreter) interpretProgram(env *environment, node ast.Program) loxObject {
-	var result loxObject = loxNil{}
+func (i *Interpreter) interpretProgram(env *environment, node ast.Program) {
 	for _, stmt := range node.Stmts {
-		result = i.interpret(env, stmt)
+		i.interpretStmt(env, stmt)
 	}
-	return result
 }
 
-func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) loxObject {
+func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) {
+	switch stmt := stmt.(type) {
+	case ast.VarDecl:
+		i.interpretVarDecl(env, stmt)
+	case ast.ExprStmt:
+		i.interpretExprStmt(env, stmt)
+	case ast.PrintStmt:
+		i.interpretPrintStmt(env, stmt)
+	case ast.BlockStmt:
+		i.interpretBlockStmt(env, stmt)
+	case ast.IfStmt:
+		i.interpretIfStmt(env, stmt)
+	default:
+		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
+	}
+}
+
+func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
 	var value loxObject
 	if stmt.Initialiser != nil {
-		value = i.interpret(env, stmt.Initialiser)
+		value = i.interpretExpr(env, stmt.Initialiser)
 	}
 	env.Define(stmt.Name, value)
-	return loxNil{}
 }
 
-func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) loxObject {
+func (i *Interpreter) interpretExprStmt(env *environment, stmt ast.ExprStmt) {
+	value := i.interpretExpr(env, stmt.Expr)
+	if i.replMode {
+		fmt.Println(value.String())
+	}
+}
+
+func (i *Interpreter) interpretPrintStmt(env *environment, stmt ast.PrintStmt) {
+	value := i.interpretExpr(env, stmt.Expr)
+	fmt.Println(value.String())
+}
+
+func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) {
 	blockEnv := newEnvironment(env)
 	for _, stmt := range stmt.Stmts {
-		i.interpret(blockEnv, stmt)
+		i.interpretStmt(blockEnv, stmt)
 	}
-	return loxNil{}
 }
 
-func (i *Interpreter) interpretExprStmt(env *environment, stmt ast.ExprStmt) loxObject {
-	result := i.interpret(env, stmt.Expr)
-	if i.replMode {
-		fmt.Println(result.String())
+func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) {
+	condition := i.interpretExpr(env, stmt.Condition)
+	if condition.IsTruthy() {
+		i.interpretStmt(env, stmt.Then)
+		return
 	}
-	return loxNil{}
+	if stmt.Else != nil {
+		i.interpretStmt(env, stmt.Else)
+	}
 }
 
-func (i *Interpreter) interpretPrintStmt(env *environment, stmt ast.PrintStmt) loxObject {
-	value := i.interpret(env, stmt.Expr)
-	fmt.Println(value.String())
-	return loxNil{}
+func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
+	switch expr := expr.(type) {
+	case ast.GroupExpr:
+		return i.interpretExpr(env, expr.Expr)
+	case ast.LiteralExpr:
+		return i.interpretLiteralExpr(expr)
+	case ast.VariableExpr:
+		return i.interpretVariableExpr(env, expr)
+	case ast.UnaryExpr:
+		return i.interpretUnaryExpr(env, expr)
+	case ast.BinaryExpr:
+		return i.interpretBinaryExpr(env, expr)
+	case ast.TernaryExpr:
+		return i.interpretTernaryExpr(env, expr)
+	case ast.AssignmentExpr:
+		return i.interpretAssignmentExpr(env, expr)
+	default:
+		panic(fmt.Sprintf("unexpected expression type: %T", expr))
+	}
 }
 
 func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
@@ -151,7 +163,7 @@ func (i *Interpreter) interpretVariableExpr(env *environment, expr ast.VariableE
 }
 
 func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
-	right := i.interpret(env, expr.Right)
+	right := i.interpretExpr(env, expr.Right)
 	if expr.Op.Type == token.Bang {
 		// The behaviour of ! is independent of the type of the operand, so we can implement it here.
 		return !right.IsTruthy()
@@ -160,8 +172,8 @@ func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) l
 }
 
 func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
-	left := i.interpret(env, expr.Left)
-	right := i.interpret(env, expr.Right)
+	left := i.interpretExpr(env, expr.Left)
+	right := i.interpretExpr(env, expr.Right)
 	switch expr.Op.Type {
 	case token.Comma:
 		// The , operator evaluates both operands and returns the value of the right operand.
@@ -179,15 +191,15 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 }
 
 func (i *Interpreter) interpretTernaryExpr(env *environment, expr ast.TernaryExpr) loxObject {
-	condition := i.interpret(env, expr.Condition)
+	condition := i.interpretExpr(env, expr.Condition)
 	if condition.IsTruthy() {
-		return i.interpret(env, expr.Then)
+		return i.interpretExpr(env, expr.Then)
 	}
-	return i.interpret(env, expr.Else)
+	return i.interpretExpr(env, expr.Else)
 }
 
 func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.AssignmentExpr) loxObject {
-	value := i.interpret(env, expr.Right)
+	value := i.interpretExpr(env, expr.Right)
 	env.Assign(expr.Left, value)
 	return value
 }

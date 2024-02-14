@@ -1,0 +1,17 @@
+if (1 < 2) {
+    print "1 is less than 2"; // prints 1 is less than 2
+} else if (3 < 4) {
+    print "3 is less than 4";
+}
+
+if (1 > 2) {
+    print "1 is greater than 2";
+} else if (3 < 4) {
+    print "3 is less than 4"; // prints 3 is less than 4
+}
+
+if (1 > 2) {
+    print "1 is greater than 2";
+} else if (3 > 4) {
+    print "3 is greater than 4";
+}
