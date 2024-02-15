@@ -173,6 +173,25 @@ func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) l
 
 func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
 	left := i.interpretExpr(env, expr.Left)
+
+	// We check for short-circuiting operators first.
+	switch expr.Op.Type {
+	case token.Or:
+		// The behaviour of or is independent of the types of the operands, so we can implement it here.
+		if left.IsTruthy() {
+			return left
+		} else {
+			return i.interpretExpr(env, expr.Right)
+		}
+	case token.And:
+		// The behaviour of and is independent of the types of the operands, so we can implement it here.
+		if !left.IsTruthy() {
+			return left
+		} else {
+			return i.interpretExpr(env, expr.Right)
+		}
+	}
+
 	right := i.interpretExpr(env, expr.Right)
 	switch expr.Op.Type {
 	case token.Comma:

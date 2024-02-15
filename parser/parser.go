@@ -184,7 +184,7 @@ func (p *parser) parseAssignmentExpr() ast.Expr {
 }
 
 func (p *parser) parseTernaryExpr() ast.Expr {
-	expr := p.parseEqualityExpr()
+	expr := p.parseLogicalOrExpr()
 	if p.match(token.Question) {
 		then := p.parseExpr()
 		p.expect(token.Colon, "next part of ternary expression should be %h", token.Colon)
@@ -196,6 +196,14 @@ func (p *parser) parseTernaryExpr() ast.Expr {
 		}
 	}
 	return expr
+}
+
+func (p *parser) parseLogicalOrExpr() ast.Expr {
+	return p.parseBinaryExpr(p.parseLogicalAndExpr, token.Or)
+}
+
+func (p *parser) parseLogicalAndExpr() ast.Expr {
+	return p.parseBinaryExpr(p.parseEqualityExpr, token.And)
 }
 
 func (p *parser) parseEqualityExpr() ast.Expr {

@@ -92,18 +92,20 @@ print -1; // prints -1
 
 A binary expression is an operator surrounded by two operands.
 
-| Operator  | Operand 1 | Operand 2 | Result                    | Description                                                        |
-| --------- | --------- | --------- | ------------------------- | ------------------------------------------------------------------ |
-| \*        | `number`  | `number`  | `number`                  | Multiplies the operands                                            |
-| \*        | `number`  | `string`  | `string`                  | Repeats the string                                                 |
-| /         | `number`  | `number`  | `number`                  | Divides the operands                                               |
-| +         | `number`  | `number`  | `number`                  | Adds the operands                                                  |
-| +         | `string`  | `string`  | `string`                  | Concatenates the operands                                          |
-| -         | `number`  | `number`  | `number`                  | Subtracts the operands                                             |
-| < <= > >= | `number`  | `number`  | `bool`                    | Compares the operands                                              |
-| < <= > >= | `string`  | `string`  | `bool`                    | Compares the operands lexicographically                            |
-| == !=     | All       | All       | `bool`                    | Compares the operands and their types                              |
-| ,         | All       | All       | Type of the right operand | Evaluates the left then right operand<br>Returns the second result |
+| Operator  | Operand 1 | Operand 2 | Result                    | Description                                                            |
+| --------- | --------- | --------- | ------------------------- | ---------------------------------------------------------------------- |
+| \*        | `number`  | `number`  | `number`                  | Multiplies the operands                                                |
+| \*        | `number`  | `string`  | `string`                  | Repeats the string                                                     |
+| /         | `number`  | `number`  | `number`                  | Divides the operands                                                   |
+| +         | `number`  | `number`  | `number`                  | Adds the operands                                                      |
+| +         | `string`  | `string`  | `string`                  | Concatenates the operands                                              |
+| -         | `number`  | `number`  | `number`                  | Subtracts the operands                                                 |
+| < <= > >= | `number`  | `number`  | `bool`                    | Compares the operands                                                  |
+| < <= > >= | `string`  | `string`  | `bool`                    | Compares the operands lexicographically                                |
+| == !=     | All       | All       | `bool`                    | Compares the operands and their types                                  |
+| and       | `bool`    | `bool`    | `bool`                    | Returns the second operand if the first is truthy, otherwise the first |
+| or        | `bool`    | `bool`    | `bool`                    | Returns the first operand if it is truthy, otherwise the second        |
+| ,         | All       | All       | Type of the right operand | Evaluates the left then right operand<br>Returns the second result     |
 
 ```lox
 print 2 * 3.5; // prints 7
@@ -115,6 +117,8 @@ print 3 - 1; // prints 2
 print 1 < 2; // prints true
 print "a" > "b"; // prints false
 print 1 == "1"; // prints false
+print 1 and "a"; // prints a
+print 1 or 2; // prints 1
 print 1, 2; // prints 2
 ```
 
@@ -264,7 +268,9 @@ if_stmt    = "if" "(" expr ") stmt ( "else" stmt )? ;
 expr                = comma_expr ;
 comma_expr          = assignment_expr ( "," assignment_expr )* ;
 assignment_expr     = IDENT "=" assignment_expr | ternary_expr ;
-ternary_expr        = equality_expr ( "?" expr ":" ternary_expr )? ;
+ternary_expr        = logical_or_expr ( "?" expr ":" ternary_expr )? ;
+logical_or_expr     = logical_and_expr ( "or" logical_and_expr )* ;
+logical_and_expr    = equality_expr ( "and" equality_expr )* ;
 equality_expr       = relational_expr ( ( "==" | "!=" ) relational_expr )* ;
 relational_expr     = additive_expr ( ( "<" | "<=" | ">" | ">=" ) additive_expr )* ;
 additive_expr       = multiplicative_expr ( ( "+" | "-" ) multiplicative_expr )* ;
