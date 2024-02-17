@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/marcuscaisey/golox/token"
 )
 
 // Print prints an AST Node to stdout as an indented s-expression.
@@ -17,61 +19,62 @@ func Sprint(n Node) string {
 }
 
 func sprint(n Node, d int) string {
-	switch n := n.(type) {
-	case Program:
-		stmts := make([]string, len(n.Stmts))
-		for i, stmt := range n.Stmts {
-			stmts[i] = sprint(stmt, d+1)
-		}
-		return sexpr(n, d, stmts...)
-	case VarDecl:
-		if n.Initialiser == nil {
-			return sexpr(n, d, fmt.Sprintf("%q", n.Name))
-		} else {
-			return sexpr(n, d, fmt.Sprintf("%q", n.Name), sprint(n.Initialiser, d+1))
-		}
-	case ExprStmt:
-		return sexpr(n, d, sprint(n.Expr, d+1))
-	case PrintStmt:
-		return sexpr(n, d, sprint(n.Expr, d+1))
-	case BlockStmt:
-		stmtSexprs := make([]string, len(n.Stmts))
-		for i, stmt := range n.Stmts {
-			stmtSexprs[i] = sprint(stmt, d+1)
-		}
-		return sexpr(n, d, stmtSexprs...)
-	case IfStmt:
-		if n.Else == nil {
-			return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1))
-		} else {
-			return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
-		}
-	case IllegalStmt:
-		return sexpr(n, d)
-	case GroupExpr:
-		return sexpr(n, d, sprint(n.Expr, d+1))
-	case LiteralExpr:
-		return fmt.Sprint(n.Value)
-	case VariableExpr:
-		return fmt.Sprintf("%q", n.Name)
-	case UnaryExpr:
-		return sexpr(n, d, fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
-	case BinaryExpr:
-		return sexpr(n, d, sprint(n.Left, d+1), fmt.Sprintf("%q", n.Op), sprint(n.Right, d+1))
-	case TernaryExpr:
-		return sexpr(n, d, sprint(n.Condition, d+1), sprint(n.Then, d+1), sprint(n.Else, d+1))
-	case AssignmentExpr:
-		return sexpr(n, d, fmt.Sprintf("%q", n.Left), sprint(n.Right, d+1))
-	case IllegalExpr:
-		return sexpr(n, d)
-	default:
-		panic(fmt.Sprintf("unexpected node type: %T", n))
+	if literalExpr, ok := n.(LiteralExpr); ok {
+		return fmt.Sprint(literalExpr.Value)
 	}
+
+	nType := reflect.TypeOf(n)
+	nValue := reflect.ValueOf(n)
+
+	var children []string
+	for i := 0; i < nType.NumField(); i++ {
+		field := nType.Field(i)
+		value := nValue.Field(i)
+		tag, ok := field.Tag.Lookup("print")
+		if !ok {
+			continue
+		}
+
+		if tag == "repeat" {
+			if value.Kind() != reflect.Slice {
+				panic(fmt.Sprintf("%s field %s has repeat tag but is not a slice", nType.Name(), field.Name))
+			}
+			for j := 0; j < value.Len(); j++ {
+				element := value.Index(j).Interface().(Node)
+				child := sprint(element, d+1)
+				children = append(children, child)
+			}
+			continue
+		}
+
+		prefix := ""
+		switch tag {
+		case "named":
+			prefix = field.Name + ": "
+		case "unnamed":
+		default:
+			panic(fmt.Sprintf("%s field %s has invalid print tag: %q", nType.Name(), field.Name, tag))
+		}
+
+		var child string
+		switch value := value.Interface().(type) {
+		case Node:
+			child = sprint(value, d+1)
+		case nil:
+			continue
+		case token.Token:
+			child = fmt.Sprintf("%q", value)
+		default:
+			panic(fmt.Sprintf("%s field %s has unsupported type: %T", nType.Name(), field.Name, value))
+		}
+		children = append(children, prefix+child)
+	}
+	return sexpr(nType.Name(), d, children...)
 }
 
-func sexpr(n Node, d int, children ...string) string {
+func sexpr(name string, d int, children ...string) string {
 	var b strings.Builder
-	fmt.Fprint(&b, "(", reflect.TypeOf(n).Name())
+	fmt.Fprint(&b, "(", name)
 	for _, child := range children {
 		fmt.Fprint(&b, "\n", strings.Repeat("  ", d+1), child)
 	}

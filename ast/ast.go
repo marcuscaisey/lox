@@ -11,7 +11,7 @@ type Node interface {
 
 // Program is the root node of the AST.
 type Program struct {
-	Stmts []Stmt
+	Stmts []Stmt `print:"repeat"`
 }
 
 func (p Program) Start() token.Position { return p.Stmts[0].Start() }
@@ -30,8 +30,8 @@ func (stmt) isStmt() {}
 // VarDecl is a variable declaration, such as var a = 123 or var b.
 type VarDecl struct {
 	Var         token.Token
-	Name        token.Token
-	Initialiser Expr
+	Name        token.Token `print:"named"`
+	Initialiser Expr        `print:"named"`
 	Semicolon   token.Token
 	stmt
 }
@@ -41,7 +41,7 @@ func (d VarDecl) End() token.Position   { return d.Semicolon.End }
 
 // ExprStmt is an expression statement, such as a function call.
 type ExprStmt struct {
-	Expr      Expr
+	Expr      Expr `print:"unnamed"`
 	Semicolon token.Token
 	stmt
 }
@@ -52,7 +52,7 @@ func (s ExprStmt) End() token.Position   { return s.Semicolon.End }
 // PrintStmt is a print statement, such as print "abc".
 type PrintStmt struct {
 	Print     token.Token
-	Expr      Expr
+	Expr      Expr `print:"unnamed"`
 	Semicolon token.Token
 	stmt
 }
@@ -68,7 +68,7 @@ func (p PrintStmt) End() token.Position   { return p.Semicolon.End }
 //	}
 type BlockStmt struct {
 	LeftBrace  token.Token
-	Stmts      []Stmt
+	Stmts      []Stmt `print:"repeat"`
 	RightBrace token.Token
 	stmt
 }
@@ -86,9 +86,9 @@ func (b BlockStmt) End() token.Position   { return b.RightBrace.End }
 //	}
 type IfStmt struct {
 	If        token.Token
-	Condition Expr
-	Then      Stmt
-	Else      Stmt
+	Condition Expr `print:"named"`
+	Then      Stmt `print:"named"`
+	Else      Stmt `print:"named"`
 	stmt
 }
 
@@ -117,7 +117,7 @@ func (expr) isExpr() {}
 // GroupExpr is a group expression, such as (a + b).
 type GroupExpr struct {
 	LeftParen  token.Token
-	Expr       Expr
+	Expr       Expr `print:"unnamed"`
 	RightParen token.Token
 	expr
 }
@@ -127,7 +127,7 @@ func (g GroupExpr) End() token.Position   { return g.RightParen.End }
 
 // LiteralExpr is a literal expression, such as 123 or "abc".
 type LiteralExpr struct {
-	Value token.Token
+	Value token.Token `print:"unnamed"`
 	expr
 }
 
@@ -136,7 +136,7 @@ func (l LiteralExpr) End() token.Position   { return l.Value.End }
 
 // VariableExpr is a variable expression, such as a or b.
 type VariableExpr struct {
-	Name token.Token
+	Name token.Token `print:"named"`
 	expr
 }
 
@@ -145,8 +145,8 @@ func (v VariableExpr) End() token.Position   { return v.Name.End }
 
 // UnaryExpr is a unary operator expression, such as !a.
 type UnaryExpr struct {
-	Op    token.Token
-	Right Expr
+	Op    token.Token `print:"named"`
+	Right Expr        `print:"named"`
 	expr
 }
 
@@ -155,9 +155,9 @@ func (u UnaryExpr) End() token.Position   { return u.Right.End() }
 
 // BinaryExpr is a binary operator expression, such as a + b.
 type BinaryExpr struct {
-	Left  Expr
-	Op    token.Token
-	Right Expr
+	Left  Expr        `print:"named"`
+	Op    token.Token `print:"named"`
+	Right Expr        `print:"named"`
 	expr
 }
 
@@ -166,9 +166,9 @@ func (b BinaryExpr) End() token.Position   { return b.Right.End() }
 
 // TernaryExpr is a ternary operator expression, such as a ? b : c.
 type TernaryExpr struct {
-	Condition Expr
-	Then      Expr
-	Else      Expr
+	Condition Expr `print:"named"`
+	Then      Expr `print:"named"`
+	Else      Expr `print:"named"`
 	expr
 }
 
@@ -177,8 +177,8 @@ func (t TernaryExpr) End() token.Position   { return t.Else.End() }
 
 // AssignmentExpr is an assignment expression, such as a = 2.
 type AssignmentExpr struct {
-	Left  token.Token
-	Right Expr
+	Left  token.Token `print:"named"`
+	Right Expr        `print:"named"`
 	expr
 }
 
