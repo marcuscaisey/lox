@@ -82,6 +82,14 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 				})
 			}
 			return n / right
+		case token.Percent:
+			if right == 0 {
+				panic(&runtimeError{
+					tok: op,
+					msg: "cannot modulo by 0",
+				})
+			}
+			return loxNumber(math.Mod(float64(n), float64(right)))
 		case token.Plus:
 			return n + right
 		case token.Minus:

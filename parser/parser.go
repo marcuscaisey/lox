@@ -229,7 +229,7 @@ func (p *parser) parseAdditiveExpr() ast.Expr {
 }
 
 func (p *parser) parseMultiplicativeExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseUnaryExpr, token.Asterisk, token.Slash)
+	return p.parseBinaryExpr(p.parseUnaryExpr, token.Asterisk, token.Slash, token.Percent)
 }
 
 // parseBinaryExpr parses a binary expression which uses the given operators. next is a function which parses an

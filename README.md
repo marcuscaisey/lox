@@ -97,6 +97,7 @@ A binary expression is an operator surrounded by two operands.
 | \*        | `number`  | `number`  | `number`                  | Multiplies the operands                                                |
 | \*        | `number`  | `string`  | `string`                  | Repeats the string                                                     |
 | /         | `number`  | `number`  | `number`                  | Divides the operands                                                   |
+| %         | `number`  | `number`  | `number`                  | Returns the remainder of the division of the operands                  |
 | +         | `number`  | `number`  | `number`                  | Adds the operands                                                      |
 | +         | `string`  | `string`  | `string`                  | Concatenates the operands                                              |
 | -         | `number`  | `number`  | `number`                  | Subtracts the operands                                                 |
@@ -111,6 +112,7 @@ A binary expression is an operator surrounded by two operands.
 print 2 * 3.5; // prints 7
 print 3 * "ab"; // prints "ababab"
 print 10 / 2; // prints 5
+print 3.5 % 2; // prints 1.5
 print 1 + 2; // prints 3
 print "a" + "b"; // prints "ab"
 print 3 - 1; // prints 2
@@ -140,7 +142,7 @@ From highest to lowest:
 | Operators | Associativity |
 | --------- | ------------- |
 | ! -       | right-to-left |
-| \* /      | left-to-right |
+| \* / %    | left-to-right |
 | + -       | left-to-right |
 | < <= > >= | left-to-right |
 | == !=     | left-to-right |
@@ -290,7 +292,7 @@ logical_and_expr    = equality_expr ( "and" equality_expr )* ;
 equality_expr       = relational_expr ( ( "==" | "!=" ) relational_expr )* ;
 relational_expr     = additive_expr ( ( "<" | "<=" | ">" | ">=" ) additive_expr )* ;
 additive_expr       = multiplicative_expr ( ( "+" | "-" ) multiplicative_expr )* ;
-multiplicative_expr = unary_expr ( ( "*" | "/" ) unary_expr )* ;
+multiplicative_expr = unary_expr ( ( "*" | "/" | "%" ) unary_expr )* ;
 unary_expr          = ( "!" | "-" ) unary_expr | primary_expr ;
 primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | "(" expr ")" | IDENT
                     /* Error productions */

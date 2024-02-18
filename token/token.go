@@ -39,14 +39,11 @@ const (
 	keywordsEnd
 
 	// Literals
-	literalsStart
 	Ident  // identifier
 	String // string
 	Number // number
-	literalsEnd
 
 	// Symbols
-	symbolsStart
 	Semicolon    // ;
 	Comma        // ,
 	Dot          // .
@@ -55,6 +52,7 @@ const (
 	Minus        // -
 	Asterisk     // *
 	Slash        // /
+	Percent      // %
 	Less         // <
 	LessEqual    // <=
 	Greater      // >
@@ -68,7 +66,6 @@ const (
 	RightParen   // )
 	LeftBrace    // {
 	RightBrace   // }
-	symbolsEnd
 )
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the

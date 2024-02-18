@@ -114,6 +114,8 @@ func (l *Lexer) Next() token.Token {
 			}
 			return l.Next()
 		}
+	case l.ch == '%':
+		tok.Type = token.Percent
 	case l.ch == '<':
 		tok.Type = token.Less
 		if l.peek() == '=' {
