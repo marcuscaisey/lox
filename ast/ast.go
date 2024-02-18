@@ -95,6 +95,21 @@ type IfStmt struct {
 func (i IfStmt) Start() token.Position { return i.If.Start }
 func (i IfStmt) End() token.Position   { return i.Else.End() }
 
+// WhileStmt is a while statement, such as
+//
+//	while (a < 10) {
+//	    print a;
+//	}
+type WhileStmt struct {
+	While     token.Token
+	Condition Expr `print:"named"`
+	Body      Stmt `print:"named"`
+	stmt
+}
+
+func (w WhileStmt) Start() token.Position { return w.While.Start }
+func (w WhileStmt) End() token.Position   { return w.Body.End() }
+
 // IllegalStmt is an illegal statement, used as a placeholder when parsing fails.
 type IllegalStmt struct {
 	From, To token.Token

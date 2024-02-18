@@ -75,6 +75,8 @@ func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) {
 		i.interpretBlockStmt(env, stmt)
 	case ast.IfStmt:
 		i.interpretIfStmt(env, stmt)
+	case ast.WhileStmt:
+		i.interpretWhileStmt(env, stmt)
 	default:
 		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
 	}
@@ -115,6 +117,12 @@ func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) {
 	}
 	if stmt.Else != nil {
 		i.interpretStmt(env, stmt.Else)
+	}
+}
+
+func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) {
+	for i.interpretExpr(env, stmt.Condition).IsTruthy() {
+		i.interpretStmt(env, stmt.Body)
 	}
 }
 

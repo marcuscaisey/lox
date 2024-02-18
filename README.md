@@ -189,8 +189,8 @@ print b; // prints global b
 
 #### If Statement
 
-An if statement evaluates an expression and executes a statement if the expression is truthy. An optional
-else statement can be provided to execute a statement if the expression is falsy.
+An if statement evaluates an expression and executes a statement if the expression is truthy. An
+optional else statement can be provided to execute a statement if the expression is falsy.
 
 ```lox
 if (1 < 2) {
@@ -208,6 +208,21 @@ if (1 > 2) {
     print "1 is greater than 2";
 } else if (3 < 4) {
     print "3 is less than 4"; // prints 3 is less than 4
+}
+```
+
+#### While Statement
+
+A while statement repeatedly executes a statement while the provided expression is truthy.
+
+```lox
+var i = 0;
+while (i < 3) {
+    // prints 0
+    // prints 1
+    // prints 2
+    print i;
+    i = i + 1;
 }
 ```
 
@@ -259,11 +274,12 @@ program = decl* EOF ;
 decl     = var_decl | stmt ;
 var_decl = "var" IDENT ( "=" expr )? ";" ;
 
-stmt       = expr_stmt | print_stmt | block_stmt | if_stmt ;
+stmt       = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt;
 expr_stmt  = expr ";" ;
 print_stmt = "print" expr ";" ;
 block_stmt = "{" decl* "}" ;
-if_stmt    = "if" "(" expr ") stmt ( "else" stmt )? ;
+if_stmt    = "if" "(" expr ")" stmt ( "else" stmt )? ;
+while_stmt = "while" "(" expr ")" stmt ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr ( "," assignment_expr )* ;

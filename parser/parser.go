@@ -121,6 +121,8 @@ func (p *parser) parseStmt() ast.Stmt {
 		return p.parseBlock(tok)
 	case p.match(token.If):
 		return p.parseIfStmt(tok)
+	case p.match(token.While):
+		return p.parseWhileStmt(tok)
 	default:
 		return p.parseExprStmt()
 	}
@@ -157,6 +159,14 @@ func (p *parser) parseIfStmt(ifTok token.Token) ast.Stmt {
 		elseBranch = p.parseStmt()
 	}
 	return ast.IfStmt{If: ifTok, Condition: condition, Then: thenBranch, Else: elseBranch}
+}
+
+func (p *parser) parseWhileStmt(whileTok token.Token) ast.Stmt {
+	p.expect(token.LeftParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
+	condition := p.parseExpr()
+	p.expect(token.RightParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
+	body := p.parseStmt()
+	return ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
 }
 
 func (p *parser) parseExpr() ast.Expr {
