@@ -84,10 +84,10 @@ func (l *Lexer) Next() token.Token {
 	case l.ch == '.':
 		tok.Type = token.Dot
 	case l.ch == '=':
-		tok.Type = token.Assign
+		tok.Type = token.Equal
 		if l.peek() == '=' {
 			l.next()
-			tok.Type = token.Equal
+			tok.Type = token.EqualEqual
 		}
 	case l.ch == '+':
 		tok.Type = token.Plus
@@ -132,7 +132,7 @@ func (l *Lexer) Next() token.Token {
 		tok.Type = token.Bang
 		if l.peek() == '=' {
 			l.next()
-			tok.Type = token.NotEqual
+			tok.Type = token.BangEqual
 		}
 	case l.ch == '?':
 		tok.Type = token.Question

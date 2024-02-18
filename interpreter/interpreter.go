@@ -206,10 +206,10 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 		// The , operator evaluates both operands and returns the value of the right operand.
 		// It's behavior is independent of the types of the operands, so we can implement it here.
 		return right
-	case token.Equal:
+	case token.EqualEqual:
 		// The behaviour of == is independent of the types of the operands, so we can implement it here.
 		return loxBool(left == right)
-	case token.NotEqual:
+	case token.BangEqual:
 		// The behaviour of != is independent of the types of the operands, so we can implement it here.
 		return loxBool(left != right)
 	default:

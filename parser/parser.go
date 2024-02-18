@@ -106,7 +106,7 @@ func (p *parser) parseDecl() ast.Stmt {
 func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
 	name := p.expect(token.Ident, "%h must be followed by a variable name", token.Var)
 	var value ast.Expr
-	if p.match(token.Assign) {
+	if p.match(token.Equal) {
 		value = p.parseExpr()
 	}
 	semicolon := p.expectSemicolon("variable declaration")
@@ -179,7 +179,7 @@ func (p *parser) parseCommaExpr() ast.Expr {
 
 func (p *parser) parseAssignmentExpr() ast.Expr {
 	expr := p.parseTernaryExpr()
-	if p.match(token.Assign) {
+	if p.match(token.Equal) {
 		left, ok := expr.(ast.VariableExpr)
 		if !ok {
 			p.addNodeErrorf(expr, "left-hand side of assignment must be a variable")
@@ -217,7 +217,7 @@ func (p *parser) parseLogicalAndExpr() ast.Expr {
 }
 
 func (p *parser) parseEqualityExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseRelationalExpr, token.Equal, token.NotEqual)
+	return p.parseBinaryExpr(p.parseRelationalExpr, token.EqualEqual, token.BangEqual)
 }
 
 func (p *parser) parseRelationalExpr() ast.Expr {
@@ -276,12 +276,12 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 	case token.Ident:
 		expr = ast.VariableExpr{Name: tok}
 	// Error productions
-	case token.Equal, token.NotEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus:
+	case token.EqualEqual, token.BangEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus:
 		p.addTokenErrorf(tok, "binary operator %h must have left and right operands", tok.Type)
 		p.next()
 		var right ast.Expr
 		switch tok.Type {
-		case token.Equal, token.NotEqual:
+		case token.EqualEqual, token.BangEqual:
 			right = p.parseEqualityExpr()
 		case token.Less, token.LessEqual, token.Greater, token.GreaterEqual:
 			right = p.parseRelationalExpr()

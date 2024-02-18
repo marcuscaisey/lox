@@ -47,7 +47,7 @@ const (
 	Semicolon    // ;
 	Comma        // ,
 	Dot          // .
-	Assign       // =
+	Equal        // =
 	Plus         // +
 	Minus        // -
 	Asterisk     // *
@@ -57,8 +57,8 @@ const (
 	LessEqual    // <=
 	Greater      // >
 	GreaterEqual // >=
-	Equal        // ==
-	NotEqual     // !=
+	EqualEqual   // ==
+	BangEqual    // !=
 	Bang         // !
 	Question     // ?
 	Colon        // :
