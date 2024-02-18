@@ -1,0 +1,18 @@
+var i = 0;
+while (i < 3) {
+    var j = 0;
+    while (j < 3) {
+        // prints 0
+        // prints 1
+        // prints 2
+        // prints 3
+        // prints 4
+        // prints 5
+        // prints 6
+        // prints 7
+        // prints 8
+        print j + 3 * i;
+        j = j + 1;
+    }
+    i = i + 1;
+}
