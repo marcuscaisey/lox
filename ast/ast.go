@@ -116,6 +116,26 @@ type IllegalStmt struct {
 	stmt
 }
 
+// BreakStmt is a break statement
+type BreakStmt struct {
+	Break     token.Token
+	Semicolon token.Token
+	stmt
+}
+
+func (b BreakStmt) Start() token.Position { return b.Break.Start }
+func (b BreakStmt) End() token.Position   { return b.Semicolon.End }
+
+// ContinueStmt is a continue statement
+type ContinueStmt struct {
+	Continue  token.Token
+	Semicolon token.Token
+	stmt
+}
+
+func (c ContinueStmt) Start() token.Position { return c.Continue.Start }
+func (c ContinueStmt) End() token.Position   { return c.Semicolon.End }
+
 func (i IllegalStmt) Start() token.Position { return i.From.Start }
 func (i IllegalStmt) End() token.Position   { return i.To.End }
 

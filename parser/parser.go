@@ -41,8 +41,10 @@ func Parse(r io.Reader) (ast.Program, error) {
 
 // parser parses Lox source code into an abstract syntax tree.
 type parser struct {
-	l          *lexer.Lexer
-	tok        token.Token // token currently being considered
+	l         *lexer.Lexer
+	tok       token.Token // token currently being considered
+	loopDepth int
+
 	errs       []error
 	lastErrPos token.Position
 }
@@ -109,7 +111,7 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
 	if p.match(token.Equal) {
 		value = p.parseExpr()
 	}
-	semicolon := p.expectSemicolon("variable declaration")
+	semicolon := p.expectTrailingSemicolon("variable declaration")
 	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
 }
 
@@ -123,6 +125,10 @@ func (p *parser) parseStmt() ast.Stmt {
 		return p.parseIfStmt(tok)
 	case p.match(token.While):
 		return p.parseWhileStmt(tok)
+	case p.match(token.Break):
+		return p.parseBreakStmt(tok)
+	case p.match(token.Continue):
+		return p.parseContinueStmt(tok)
 	default:
 		return p.parseExprStmt()
 	}
@@ -130,13 +136,13 @@ func (p *parser) parseStmt() ast.Stmt {
 
 func (p *parser) parseExprStmt() ast.Stmt {
 	expr := p.parseExpr()
-	semicolon := p.expectSemicolon("expression statement")
+	semicolon := p.expectTrailingSemicolon("expression statement")
 	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
 }
 
 func (p *parser) parsePrintStmt(printTok token.Token) ast.Stmt {
 	expr := p.parseExpr()
-	semicolon := p.expectSemicolon("print statement")
+	semicolon := p.expectTrailingSemicolon("print statement")
 	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
 }
 
@@ -162,11 +168,31 @@ func (p *parser) parseIfStmt(ifTok token.Token) ast.Stmt {
 }
 
 func (p *parser) parseWhileStmt(whileTok token.Token) ast.Stmt {
+	p.loopDepth++
+	defer func() { p.loopDepth-- }()
 	p.expect(token.LeftParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
 	condition := p.parseExpr()
 	p.expect(token.RightParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
 	body := p.parseStmt()
 	return ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
+}
+
+func (p *parser) parseBreakStmt(breakTok token.Token) ast.Stmt {
+	semicolon := p.expectTrailingSemicolon("break statement")
+	stmt := ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
+	if p.loopDepth == 0 {
+		p.addNodeErrorf(stmt, "break statement must be inside a loop")
+	}
+	return stmt
+}
+
+func (p *parser) parseContinueStmt(continueTok token.Token) ast.Stmt {
+	semicolon := p.expectTrailingSemicolon("continue statement")
+	stmt := ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
+	if p.loopDepth == 0 {
+		p.addNodeErrorf(stmt, "continue statement must be inside a loop")
+	}
+	return stmt
 }
 
 func (p *parser) parseExpr() ast.Expr {
@@ -346,7 +372,7 @@ func (p *parser) expect(t token.Type, format string, a ...any) token.Token {
 	panic(unwind{})
 }
 
-func (p *parser) expectSemicolon(context string) token.Token {
+func (p *parser) expectTrailingSemicolon(context string) token.Token {
 	return p.expect(token.Semicolon, "expected %h after %s", token.Semicolon, context)
 }
 

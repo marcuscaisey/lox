@@ -63,7 +63,15 @@ func (i *Interpreter) interpretProgram(env *environment, node ast.Program) {
 	}
 }
 
-func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) {
+type stmtResult int
+
+const (
+	stmtResultNone stmtResult = iota
+	stmtResultBreak
+	stmtResultContinue
+)
+
+func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) stmtResult {
 	switch stmt := stmt.(type) {
 	case ast.VarDecl:
 		i.interpretVarDecl(env, stmt)
@@ -72,14 +80,19 @@ func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) {
 	case ast.PrintStmt:
 		i.interpretPrintStmt(env, stmt)
 	case ast.BlockStmt:
-		i.interpretBlockStmt(env, stmt)
+		return i.interpretBlockStmt(env, stmt)
 	case ast.IfStmt:
-		i.interpretIfStmt(env, stmt)
+		return i.interpretIfStmt(env, stmt)
 	case ast.WhileStmt:
-		i.interpretWhileStmt(env, stmt)
+		return i.interpretWhileStmt(env, stmt)
+	case ast.BreakStmt:
+		return i.interpretBreakStmt()
+	case ast.ContinueStmt:
+		return i.interpretContinueStmt()
 	default:
 		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
 	}
+	return stmtResultNone
 }
 
 func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
@@ -102,28 +115,47 @@ func (i *Interpreter) interpretPrintStmt(env *environment, stmt ast.PrintStmt) {
 	fmt.Println(value.String())
 }
 
-func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) {
+func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) stmtResult {
 	blockEnv := newEnvironment(env)
 	for _, stmt := range stmt.Stmts {
-		i.interpretStmt(blockEnv, stmt)
+		if result := i.interpretStmt(blockEnv, stmt); result != stmtResultNone {
+			return result
+		}
 	}
+	return stmtResultNone
 }
 
-func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) {
+func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) stmtResult {
 	condition := i.interpretExpr(env, stmt.Condition)
 	if condition.IsTruthy() {
-		i.interpretStmt(env, stmt.Then)
-		return
+		if result := i.interpretStmt(env, stmt.Then); result != stmtResultNone {
+			return result
+		}
 	}
 	if stmt.Else != nil {
-		i.interpretStmt(env, stmt.Else)
+		if result := i.interpretStmt(env, stmt.Else); result != stmtResultNone {
+			return result
+		}
 	}
+	return stmtResultNone
 }
 
-func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) {
+func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) stmtResult {
 	for i.interpretExpr(env, stmt.Condition).IsTruthy() {
-		i.interpretStmt(env, stmt.Body)
+		switch i.interpretStmt(env, stmt.Body) {
+		case stmtResultBreak:
+			return stmtResultNone
+		}
 	}
+	return stmtResultNone
+}
+
+func (i *Interpreter) interpretBreakStmt() stmtResult {
+	return stmtResultBreak
+}
+
+func (i *Interpreter) interpretContinueStmt() stmtResult {
+	return stmtResultContinue
 }
 
 func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {

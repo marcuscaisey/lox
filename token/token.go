@@ -31,6 +31,8 @@ const (
 	Or       // or
 	While    // while
 	For      // for
+	Break    // break
+	Continue // continue
 	Function // fun
 	Return   // return
 	Class    // class

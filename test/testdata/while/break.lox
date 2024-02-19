@@ -1,0 +1,27 @@
+var i = 0;
+while (true) {
+    if (i >= 3) {
+        break;
+    }
+    // prints 0
+    // prints 1
+    // prints 2
+    print i;
+    i = i + 1;
+}
+
+var j = 0;
+while (j < 3) {
+    var k = 0;
+    while (true) {
+        if (k == 1) {
+            break;
+        }
+        // prints 0
+        // prints 1
+        // prints 2
+        print j;
+        k = k + 1;
+    }
+    j = j + 1;
+}

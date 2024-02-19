@@ -228,6 +228,39 @@ while (i < 3) {
 }
 ```
 
+#### Break Statement
+
+A break statement immediately exits the innermost enclosing loop.
+
+```lox
+var i = 0;
+while (i < 3) {
+    if (i == 1) {
+        break;
+    }
+    print i; // prints 0
+    i = i + 1;
+}
+```
+
+#### Continue Statement
+
+A continue statement immediately jumps to the end of the innermost enclosing while loop.
+
+```lox
+var i = 0;
+while (i < 5) {
+    if (i % 2 == 1) {
+        continue;
+    }
+    // prints 0
+    // prints 2
+    // prints 4
+    print i;
+    i = i + 1;
+}
+```
+
 ### Declarations
 
 Declarations are constructs that bind a name to a value.
@@ -276,12 +309,14 @@ program = decl* EOF ;
 decl     = var_decl | stmt ;
 var_decl = "var" IDENT ( "=" expr )? ";" ;
 
-stmt       = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt;
+stmt       = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | break_stmt | continue_stmt ;
 expr_stmt  = expr ";" ;
 print_stmt = "print" expr ";" ;
 block_stmt = "{" decl* "}" ;
 if_stmt    = "if" "(" expr ")" stmt ( "else" stmt )? ;
 while_stmt = "while" "(" expr ")" stmt ;
+break_stmt = "break" ";" ;
+continue_stmt = "continue" ";" ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr ( "," assignment_expr )* ;
