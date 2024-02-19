@@ -128,16 +128,12 @@ func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) s
 func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) stmtResult {
 	condition := i.interpretExpr(env, stmt.Condition)
 	if condition.IsTruthy() {
-		if result := i.interpretStmt(env, stmt.Then); result != stmtResultNone {
-			return result
-		}
+		return i.interpretStmt(env, stmt.Then)
+	} else if stmt.Else != nil {
+		return i.interpretStmt(env, stmt.Else)
+	} else {
+		return stmtResultNone
 	}
-	if stmt.Else != nil {
-		if result := i.interpretStmt(env, stmt.Else); result != stmtResultNone {
-			return result
-		}
-	}
-	return stmtResultNone
 }
 
 func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) stmtResult {
