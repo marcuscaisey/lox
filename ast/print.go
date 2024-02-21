@@ -19,8 +19,11 @@ func Sprint(n Node) string {
 }
 
 func sprint(n Node, d int) string {
-	if literalExpr, ok := n.(LiteralExpr); ok {
-		return fmt.Sprint(literalExpr.Value)
+	switch n := n.(type) {
+	case LiteralExpr:
+		return n.Value.String()
+	case VariableExpr:
+		return n.Name.String()
 	}
 
 	nType := reflect.TypeOf(n)
@@ -63,7 +66,7 @@ func sprint(n Node, d int) string {
 		case nil:
 			continue
 		case token.Token:
-			child = fmt.Sprintf("%q", value)
+			child = value.String()
 		default:
 			panic(fmt.Sprintf("%s field %s has unsupported type: %T", nType.Name(), field.Name, value))
 		}

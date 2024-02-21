@@ -162,7 +162,7 @@ func (g GroupExpr) End() token.Position   { return g.RightParen.End }
 
 // LiteralExpr is a literal expression, such as 123 or "abc".
 type LiteralExpr struct {
-	Value token.Token `print:"unnamed"`
+	Value token.Token
 	expr
 }
 
@@ -171,7 +171,7 @@ func (l LiteralExpr) End() token.Position   { return l.Value.End }
 
 // VariableExpr is a variable expression, such as a or b.
 type VariableExpr struct {
-	Name token.Token `print:"named"`
+	Name token.Token
 	expr
 }
 
