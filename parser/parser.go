@@ -111,7 +111,7 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
 	if p.match(token.Equal) {
 		value = p.parseExpr()
 	}
-	semicolon := p.expectTrailingSemicolon("variable declaration")
+	semicolon := p.expectSemicolon("variable declaration")
 	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
 }
 
@@ -125,6 +125,8 @@ func (p *parser) parseStmt() ast.Stmt {
 		return p.parseIfStmt(tok)
 	case p.match(token.While):
 		return p.parseWhileStmt(tok)
+	case p.match(token.For):
+		return p.parseForStmt(tok)
 	case p.match(token.Break):
 		return p.parseBreakStmt(tok)
 	case p.match(token.Continue):
@@ -136,13 +138,13 @@ func (p *parser) parseStmt() ast.Stmt {
 
 func (p *parser) parseExprStmt() ast.Stmt {
 	expr := p.parseExpr()
-	semicolon := p.expectTrailingSemicolon("expression statement")
+	semicolon := p.expectSemicolon("expression statement")
 	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
 }
 
 func (p *parser) parsePrintStmt(printTok token.Token) ast.Stmt {
 	expr := p.parseExpr()
-	semicolon := p.expectTrailingSemicolon("print statement")
+	semicolon := p.expectSemicolon("print statement")
 	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
 }
 
@@ -177,8 +179,34 @@ func (p *parser) parseWhileStmt(whileTok token.Token) ast.Stmt {
 	return ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
 }
 
+func (p *parser) parseForStmt(forTok token.Token) ast.Stmt {
+	p.loopDepth++
+	defer func() { p.loopDepth-- }()
+	p.expect(token.LeftParen, "%h should be followed by initialise statement, condition expression, and update expression inside %h%h", token.For, token.LeftParen, token.RightParen)
+	var initialise ast.Stmt
+	switch tok := p.tok; {
+	case p.match(token.Var):
+		initialise = p.parseVarDecl(tok)
+	case p.match(token.Semicolon):
+	default:
+		initialise = p.parseExprStmt()
+	}
+	var condition ast.Expr
+	if !p.match(token.Semicolon) {
+		condition = p.parseExpr()
+		p.expectSemicolon("for loop condition")
+	}
+	var update ast.Expr
+	if !p.match(token.RightParen) {
+		update = p.parseExpr()
+		p.expect(token.RightParen, "%h should be followed by initialise statement, condition expression, and update expression inside %h%h", token.For, token.LeftParen, token.RightParen)
+	}
+	body := p.parseStmt()
+	return ast.ForStmt{For: forTok, Initialise: initialise, Condition: condition, Update: update, Body: body}
+}
+
 func (p *parser) parseBreakStmt(breakTok token.Token) ast.Stmt {
-	semicolon := p.expectTrailingSemicolon("break statement")
+	semicolon := p.expectSemicolon("break statement")
 	stmt := ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
 		p.addNodeErrorf(stmt, "break statement must be inside a loop")
@@ -187,7 +215,7 @@ func (p *parser) parseBreakStmt(breakTok token.Token) ast.Stmt {
 }
 
 func (p *parser) parseContinueStmt(continueTok token.Token) ast.Stmt {
-	semicolon := p.expectTrailingSemicolon("continue statement")
+	semicolon := p.expectSemicolon("continue statement")
 	stmt := ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
 		p.addNodeErrorf(stmt, "continue statement must be inside a loop")
@@ -372,7 +400,7 @@ func (p *parser) expect(t token.Type, format string, a ...any) token.Token {
 	panic(unwind{})
 }
 
-func (p *parser) expectTrailingSemicolon(context string) token.Token {
+func (p *parser) expectSemicolon(context string) token.Token {
 	return p.expect(token.Semicolon, "expected %h after %s", token.Semicolon, context)
 }
 

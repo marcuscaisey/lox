@@ -1,0 +1,10 @@
+for (var i = 0; i < 3; i = i + 1) {
+    // prints 0
+    // prints 1
+    // prints 2
+    print i;
+}
+
+for (var i = 0; ""; i = i + 1) {
+    print "this should not be printed";
+}

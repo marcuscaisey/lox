@@ -85,6 +85,8 @@ func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) stmtResult 
 		return i.interpretIfStmt(env, stmt)
 	case ast.WhileStmt:
 		return i.interpretWhileStmt(env, stmt)
+	case ast.ForStmt:
+		return i.interpretForStmt(env, stmt)
 	case ast.BreakStmt:
 		return i.interpretBreakStmt()
 	case ast.ContinueStmt:
@@ -116,9 +118,9 @@ func (i *Interpreter) interpretPrintStmt(env *environment, stmt ast.PrintStmt) {
 }
 
 func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) stmtResult {
-	blockEnv := newEnvironment(env)
+	env = newEnvironment(env)
 	for _, stmt := range stmt.Stmts {
-		if result := i.interpretStmt(blockEnv, stmt); result != stmtResultNone {
+		if result := i.interpretStmt(env, stmt); result != stmtResultNone {
 			return result
 		}
 	}
@@ -141,6 +143,23 @@ func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) s
 		switch i.interpretStmt(env, stmt.Body) {
 		case stmtResultBreak:
 			return stmtResultNone
+		}
+	}
+	return stmtResultNone
+}
+
+func (i *Interpreter) interpretForStmt(env *environment, stmt ast.ForStmt) stmtResult {
+	env = newEnvironment(env)
+	if stmt.Initialise != nil {
+		i.interpretStmt(env, stmt.Initialise)
+	}
+	for stmt.Condition == nil || i.interpretExpr(env, stmt.Condition).IsTruthy() {
+		switch i.interpretStmt(env, stmt.Body) {
+		case stmtResultBreak:
+			return stmtResultNone
+		}
+		if stmt.Update != nil {
+			i.interpretExpr(env, stmt.Update)
 		}
 	}
 	return stmtResultNone

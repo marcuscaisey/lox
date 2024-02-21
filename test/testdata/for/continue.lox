@@ -1,0 +1,22 @@
+for (var i = 0; i < 5; i = i + 1) {
+    if (i % 2 == 1) {
+        continue;
+    }
+    // prints 0
+    // prints 2
+    // prints 4
+    print i;
+}
+
+for (var j = 0; j < 3; j = j + 1) {
+    for (var k = 0; k < 2;) {
+        k = k + 1;
+        if (k == 2) {
+            continue;
+        }
+        // prints 0
+        // prints 1
+        // prints 2
+        print j;
+    }
+}

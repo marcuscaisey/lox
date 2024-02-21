@@ -1,0 +1,7 @@
+var i;
+for (i = 0; i < 3; i = i + 1) {
+    // prints 0
+    // prints 1
+    // prints 2
+    print i;
+}

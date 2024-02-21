@@ -233,23 +233,20 @@ while (i < 3) {
 A break statement immediately exits the innermost enclosing loop.
 
 ```lox
-var i = 0;
-while (i < 3) {
+for (var i = 0; i < 3; i++) {
     if (i == 1) {
         break;
     }
     print i; // prints 0
-    i = i + 1;
 }
 ```
 
 #### Continue Statement
 
-A continue statement immediately jumps to the end of the innermost enclosing while loop.
+A continue statement immediately jumps to the end of the innermost enclosing for or while loop.
 
 ```lox
-var i = 0;
-while (i < 5) {
+for (var i = 0; i < 5; i++) {
     if (i % 2 == 1) {
         continue;
     }
@@ -257,7 +254,55 @@ while (i < 5) {
     // prints 2
     // prints 4
     print i;
+}
+```
+
+#### For Statement
+
+A for statement is syntactic sugar for a while statement which initialises a variable before the
+loop and modifies it at the end of each iteration.
+
+The following while statement:
+
+```lox
+var i = 0;
+while (i < 3) {
+    // prints 0
+    // prints 1
+    // prints 2
+    print i;
     i = i + 1;
+}
+```
+
+is equivalent to the following for statement:
+
+```lox
+for (var i = 0; i < 3; i = i + 1) {
+    // prints 0
+    // prints 1
+    // prints 2
+    print i;
+}
+```
+
+All three sections of the for statement are optional. The following is an infinite loop:
+
+```lox
+for (;;) {
+    print "infinite loop";
+}
+```
+
+The initialisation section can either be a variable declaration or an expression.
+
+```lox
+var i;
+for (i = 0; i < 3; i = i + 1) {
+    // prints 0
+    // prints 1
+    // prints 2
+    print i;
 }
 ```
 
@@ -309,13 +354,15 @@ program = decl* EOF ;
 decl     = var_decl | stmt ;
 var_decl = "var" IDENT ( "=" expr )? ";" ;
 
-stmt       = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | break_stmt | continue_stmt ;
-expr_stmt  = expr ";" ;
-print_stmt = "print" expr ";" ;
-block_stmt = "{" decl* "}" ;
-if_stmt    = "if" "(" expr ")" stmt ( "else" stmt )? ;
-while_stmt = "while" "(" expr ")" stmt ;
-break_stmt = "break" ";" ;
+stmt          = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | for_stmt | break_stmt
+              | continue_stmt ;
+expr_stmt     = expr ";" ;
+print_stmt    = "print" expr ";" ;
+block_stmt    = "{" decl* "}" ;
+if_stmt       = "if" "(" expr ")" stmt ( "else" stmt )? ;
+while_stmt    = "while" "(" expr ")" stmt ;
+for_stmt      = "for" "(" ( var_decl | expr_stmt | ";" ) expr? ";" expr? ")" stmt ;
+break_stmt    = "break" ";" ;
 continue_stmt = "continue" ";" ;
 
 expr                = comma_expr ;

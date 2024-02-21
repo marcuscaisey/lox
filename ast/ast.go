@@ -110,6 +110,23 @@ type WhileStmt struct {
 func (w WhileStmt) Start() token.Position { return w.While.Start }
 func (w WhileStmt) End() token.Position   { return w.Body.End() }
 
+// ForStmt is a for statement, such as
+//
+//	for (var i = 0; i < 10; i = i + 1) {
+//	    print i;
+//	}
+type ForStmt struct {
+	For        token.Token
+	Initialise Stmt `print:"named"`
+	Condition  Expr `print:"named"`
+	Update     Expr `print:"named"`
+	Body       Stmt `print:"named"`
+	stmt
+}
+
+func (f ForStmt) Start() token.Position { return f.For.Start }
+func (f ForStmt) End() token.Position   { return f.Body.End() }
+
 // IllegalStmt is an illegal statement, used as a placeholder when parsing fails.
 type IllegalStmt struct {
 	From, To token.Token
