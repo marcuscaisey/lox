@@ -345,7 +345,7 @@ func (p *parser) parsePrimaryExpr(context string) ast.Expr {
 			right = p.parseUnaryExpr("on right-hand side of binary expression")
 		}
 		return ast.BinaryExpr{
-			Left:  ast.IllegalExpr{},
+			Left:  ast.IllegalExpr{From: tok, To: tok},
 			Op:    tok,
 			Right: right,
 		}
