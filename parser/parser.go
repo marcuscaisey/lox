@@ -88,7 +88,7 @@ func (p *parser) sync() token.Token {
 			finalTok := p.tok
 			p.next()
 			return finalTok
-		case token.Print, token.Var, token.EOF:
+		case token.Print, token.Var, token.If, token.LeftBrace, token.While, token.For, token.Break, token.Continue, token.EOF:
 			return finalTok
 		}
 		finalTok = p.tok
