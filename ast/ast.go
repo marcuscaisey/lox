@@ -236,12 +236,3 @@ type AssignmentExpr struct {
 
 func (a AssignmentExpr) Start() token.Position { return a.Left.Start }
 func (a AssignmentExpr) End() token.Position   { return a.Right.End() }
-
-// IllegalExpr is an illegal expression, used as a placeholder when parsing fails.
-type IllegalExpr struct {
-	From, To token.Token
-	expr
-}
-
-func (i IllegalExpr) Start() token.Position { return i.From.Start }
-func (i IllegalExpr) End() token.Position   { return i.To.End }
