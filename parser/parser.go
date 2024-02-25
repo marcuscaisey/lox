@@ -109,9 +109,9 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
 	name := p.expect(token.Ident, "%h must be followed by a variable name", token.Var)
 	var value ast.Expr
 	if p.match(token.Equal) {
-		value = p.parseExpr()
+		value = p.parseExpr("on right-hand side of variable declaration")
 	}
-	semicolon := p.expectSemicolon("variable declaration")
+	semicolon := p.expectSemicolon("after variable declaration")
 	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
 }
 
@@ -137,14 +137,14 @@ func (p *parser) parseStmt() ast.Stmt {
 }
 
 func (p *parser) parseExprStmt() ast.Stmt {
-	expr := p.parseExpr()
-	semicolon := p.expectSemicolon("expression statement")
+	expr := p.parseExpr("in expression statement")
+	semicolon := p.expectSemicolon("after expression statement")
 	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
 }
 
 func (p *parser) parsePrintStmt(printTok token.Token) ast.Stmt {
-	expr := p.parseExpr()
-	semicolon := p.expectSemicolon("print statement")
+	expr := p.parseExpr("in print statement")
+	semicolon := p.expectSemicolon("after print statement")
 	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
 }
 
@@ -159,7 +159,7 @@ func (p *parser) parseBlock(leftBrace token.Token) ast.Stmt {
 
 func (p *parser) parseIfStmt(ifTok token.Token) ast.Stmt {
 	p.expect(token.LeftParen, "%h should be followed by condition inside %h%h", token.If, token.LeftParen, token.RightParen)
-	condition := p.parseExpr()
+	condition := p.parseExpr("as condition in if statement")
 	p.expect(token.RightParen, "%h should be followed by condition inside %h%h", token.If, token.LeftParen, token.RightParen)
 	thenBranch := p.parseStmt()
 	var elseBranch ast.Stmt
@@ -173,7 +173,7 @@ func (p *parser) parseWhileStmt(whileTok token.Token) ast.Stmt {
 	p.loopDepth++
 	defer func() { p.loopDepth-- }()
 	p.expect(token.LeftParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
-	condition := p.parseExpr()
+	condition := p.parseExpr("as condition in while statement")
 	p.expect(token.RightParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
 	body := p.parseStmt()
 	return ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
@@ -193,12 +193,12 @@ func (p *parser) parseForStmt(forTok token.Token) ast.Stmt {
 	}
 	var condition ast.Expr
 	if !p.match(token.Semicolon) {
-		condition = p.parseExpr()
-		p.expectSemicolon("for loop condition")
+		condition = p.parseExpr("as condition in for loop")
+		p.expectSemicolon("after for loop condition")
 	}
 	var update ast.Expr
 	if !p.match(token.RightParen) {
-		update = p.parseExpr()
+		update = p.parseExpr("as update expression in for loop")
 		p.expect(token.RightParen, "%h should be followed by initialise statement, condition expression, and update expression inside %h%h", token.For, token.LeftParen, token.RightParen)
 	}
 	body := p.parseStmt()
@@ -206,7 +206,7 @@ func (p *parser) parseForStmt(forTok token.Token) ast.Stmt {
 }
 
 func (p *parser) parseBreakStmt(breakTok token.Token) ast.Stmt {
-	semicolon := p.expectSemicolon("break statement")
+	semicolon := p.expectSemicolon("after break statement")
 	stmt := ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
 		p.addNodeErrorf(stmt, "break statement must be inside a loop")
@@ -215,7 +215,7 @@ func (p *parser) parseBreakStmt(breakTok token.Token) ast.Stmt {
 }
 
 func (p *parser) parseContinueStmt(continueTok token.Token) ast.Stmt {
-	semicolon := p.expectSemicolon("continue statement")
+	semicolon := p.expectSemicolon("after continue statement")
 	stmt := ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
 		p.addNodeErrorf(stmt, "continue statement must be inside a loop")
@@ -223,22 +223,22 @@ func (p *parser) parseContinueStmt(continueTok token.Token) ast.Stmt {
 	return stmt
 }
 
-func (p *parser) parseExpr() ast.Expr {
-	return p.parseCommaExpr()
+func (p *parser) parseExpr(context string) ast.Expr {
+	return p.parseCommaExpr(context)
 }
 
-func (p *parser) parseCommaExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseAssignmentExpr, token.Comma)
+func (p *parser) parseCommaExpr(context string) ast.Expr {
+	return p.parseBinaryExpr(context, p.parseAssignmentExpr, token.Comma)
 }
 
-func (p *parser) parseAssignmentExpr() ast.Expr {
-	expr := p.parseTernaryExpr()
+func (p *parser) parseAssignmentExpr(context string) ast.Expr {
+	expr := p.parseTernaryExpr(context)
 	if p.match(token.Equal) {
 		left, ok := expr.(ast.VariableExpr)
 		if !ok {
 			p.addNodeErrorf(expr, "left-hand side of assignment must be a variable")
 		}
-		right := p.parseAssignmentExpr()
+		right := p.parseAssignmentExpr("on right-hand side of assignment")
 		expr = ast.AssignmentExpr{
 			Left:  left.Name,
 			Right: right,
@@ -247,12 +247,12 @@ func (p *parser) parseAssignmentExpr() ast.Expr {
 	return expr
 }
 
-func (p *parser) parseTernaryExpr() ast.Expr {
-	expr := p.parseLogicalOrExpr()
+func (p *parser) parseTernaryExpr(context string) ast.Expr {
+	expr := p.parseLogicalOrExpr(context)
 	if p.match(token.Question) {
-		then := p.parseExpr()
+		then := p.parseExpr("for then part of ternary expression")
 		p.expect(token.Colon, "next part of ternary expression should be %h", token.Colon)
-		elseExpr := p.parseTernaryExpr()
+		elseExpr := p.parseTernaryExpr("for else part of ternary expression")
 		expr = ast.TernaryExpr{
 			Condition: expr,
 			Then:      then,
@@ -262,40 +262,40 @@ func (p *parser) parseTernaryExpr() ast.Expr {
 	return expr
 }
 
-func (p *parser) parseLogicalOrExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseLogicalAndExpr, token.Or)
+func (p *parser) parseLogicalOrExpr(context string) ast.Expr {
+	return p.parseBinaryExpr(context, p.parseLogicalAndExpr, token.Or)
 }
 
-func (p *parser) parseLogicalAndExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseEqualityExpr, token.And)
+func (p *parser) parseLogicalAndExpr(context string) ast.Expr {
+	return p.parseBinaryExpr(context, p.parseEqualityExpr, token.And)
 }
 
-func (p *parser) parseEqualityExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseRelationalExpr, token.EqualEqual, token.BangEqual)
+func (p *parser) parseEqualityExpr(context string) ast.Expr {
+	return p.parseBinaryExpr(context, p.parseRelationalExpr, token.EqualEqual, token.BangEqual)
 }
 
-func (p *parser) parseRelationalExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseAdditiveExpr, token.Less, token.LessEqual, token.Greater, token.GreaterEqual)
+func (p *parser) parseRelationalExpr(context string) ast.Expr {
+	return p.parseBinaryExpr(context, p.parseAdditiveExpr, token.Less, token.LessEqual, token.Greater, token.GreaterEqual)
 }
 
-func (p *parser) parseAdditiveExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseMultiplicativeExpr, token.Plus, token.Minus)
+func (p *parser) parseAdditiveExpr(context string) ast.Expr {
+	return p.parseBinaryExpr(context, p.parseMultiplicativeExpr, token.Plus, token.Minus)
 }
 
-func (p *parser) parseMultiplicativeExpr() ast.Expr {
-	return p.parseBinaryExpr(p.parseUnaryExpr, token.Asterisk, token.Slash, token.Percent)
+func (p *parser) parseMultiplicativeExpr(context string) ast.Expr {
+	return p.parseBinaryExpr(context, p.parseUnaryExpr, token.Asterisk, token.Slash, token.Percent)
 }
 
 // parseBinaryExpr parses a binary expression which uses the given operators. next is a function which parses an
 // expression of next highest precedence.
-func (p *parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) ast.Expr {
-	expr := next()
+func (p *parser) parseBinaryExpr(context string, next func(context string) ast.Expr, operators ...token.Type) ast.Expr {
+	expr := next(context)
 	for {
 		op, ok := p.match2(operators...)
 		if !ok {
 			break
 		}
-		right := next()
+		right := next("on right-hand side of binary expression")
 		expr = ast.BinaryExpr{
 			Left:  expr,
 			Op:    op,
@@ -305,18 +305,18 @@ func (p *parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) 
 	return expr
 }
 
-func (p *parser) parseUnaryExpr() ast.Expr {
+func (p *parser) parseUnaryExpr(context string) ast.Expr {
 	if op, ok := p.match2(token.Bang, token.Minus); ok {
-		right := p.parseUnaryExpr()
+		right := p.parseUnaryExpr("after unary operator")
 		return ast.UnaryExpr{
 			Op:    op,
 			Right: right,
 		}
 	}
-	return p.parsePrimaryExpr()
+	return p.parsePrimaryExpr(context)
 }
 
-func (p *parser) parsePrimaryExpr() ast.Expr {
+func (p *parser) parsePrimaryExpr(context string) ast.Expr {
 	var expr ast.Expr
 	switch tok := p.tok; tok.Type {
 	case token.Number, token.String, token.True, token.False, token.Nil:
@@ -324,8 +324,8 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 	case token.LeftParen:
 		leftParen := tok
 		p.next()
-		innerExpr := p.parseExpr()
-		rightParen := p.expect(token.RightParen, "expected closing %h after expression", token.RightParen)
+		innerExpr := p.parseExpr("inside parentheses")
+		rightParen := p.expect(token.RightParen, "expected closing %h after opening %h at %s", token.RightParen, token.LeftParen, leftParen.Start)
 		return ast.GroupExpr{LeftParen: leftParen, Expr: innerExpr, RightParen: rightParen}
 	case token.Ident:
 		expr = ast.VariableExpr{Name: tok}
@@ -336,13 +336,13 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 		var right ast.Expr
 		switch tok.Type {
 		case token.EqualEqual, token.BangEqual:
-			right = p.parseEqualityExpr()
+			right = p.parseEqualityExpr("on right-hand side of binary expression")
 		case token.Less, token.LessEqual, token.Greater, token.GreaterEqual:
-			right = p.parseRelationalExpr()
+			right = p.parseRelationalExpr("on right-hand side of binary expression")
 		case token.Plus:
-			right = p.parseMultiplicativeExpr()
+			right = p.parseMultiplicativeExpr("on right-hand side of binary expression")
 		case token.Asterisk, token.Slash:
-			right = p.parseUnaryExpr()
+			right = p.parseUnaryExpr("on right-hand side of binary expression")
 		}
 		return ast.BinaryExpr{
 			Left:  ast.IllegalExpr{},
@@ -350,15 +350,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			Right: right,
 		}
 	default:
-		msg := "expected literal, variable, or parenthesized expression"
-		a := []any{}
-		if tok.Type == token.EOF {
-			msg += " but end of file was reached"
-		} else {
-			msg += ", found %h"
-			a = append(a, tok.Type)
-		}
-		p.addTokenErrorf(tok, msg, a...)
+		p.addTokenErrorf(tok, "expected expression "+context)
 		panic(unwind{})
 	}
 	p.next()
@@ -401,7 +393,7 @@ func (p *parser) expect(t token.Type, format string, a ...any) token.Token {
 }
 
 func (p *parser) expectSemicolon(context string) token.Token {
-	return p.expect(token.Semicolon, "expected %h after %s", token.Semicolon, context)
+	return p.expect(token.Semicolon, "expected %h %s", token.Semicolon, context)
 }
 
 // next advances the parser to the next token.
