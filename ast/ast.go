@@ -133,6 +133,9 @@ type IllegalStmt struct {
 	stmt
 }
 
+func (i IllegalStmt) Start() token.Position { return i.From.Start }
+func (i IllegalStmt) End() token.Position   { return i.To.End }
+
 // BreakStmt is a break statement
 type BreakStmt struct {
 	Break     token.Token
@@ -152,9 +155,6 @@ type ContinueStmt struct {
 
 func (c ContinueStmt) Start() token.Position { return c.Continue.Start }
 func (c ContinueStmt) End() token.Position   { return c.Semicolon.End }
-
-func (i IllegalStmt) Start() token.Position { return i.From.Start }
-func (i IllegalStmt) End() token.Position   { return i.To.End }
 
 // Expr is the interface which all expression nodes implement.
 type Expr interface {
