@@ -11,7 +11,7 @@ type Node interface {
 
 // Program is the root node of the AST.
 type Program struct {
-	Stmts []Stmt `print:"repeat"`
+	Stmts []Stmt `print:"unnamed"`
 }
 
 func (p Program) Start() token.Position { return p.Stmts[0].Start() }
@@ -68,7 +68,7 @@ func (p PrintStmt) End() token.Position   { return p.Semicolon.End }
 //	}
 type BlockStmt struct {
 	LeftBrace  token.Token
-	Stmts      []Stmt `print:"repeat"`
+	Stmts      []Stmt `print:"unnamed"`
 	RightBrace token.Token
 	stmt
 }
@@ -155,6 +155,9 @@ type ContinueStmt struct {
 
 func (c ContinueStmt) Start() token.Position { return c.Continue.Start }
 func (c ContinueStmt) End() token.Position   { return c.Semicolon.End }
+
+func (i IllegalStmt) Start() token.Position { return i.From.Start }
+func (i IllegalStmt) End() token.Position   { return i.To.End }
 
 // Expr is the interface which all expression nodes implement.
 type Expr interface {
