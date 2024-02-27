@@ -381,12 +381,6 @@ func (p *parser) expect(t token.Type, format string, a ...any) token.Token {
 		p.next()
 		return tok
 	}
-	if p.tok.Type == token.EOF {
-		format += " but end of file was reached"
-	} else {
-		format += ", found %h"
-		a = append(a, p.tok.Type)
-	}
 	p.addTokenErrorf(p.tok, format, a...)
 	panic(unwind{})
 }
