@@ -33,7 +33,7 @@ func REPLMode() Option {
 // New constructs a new Interpreter with the given options.
 func New(opts ...Option) *Interpreter {
 	interpreter := &Interpreter{
-		globalEnv: newEnvironment(nil),
+		globalEnv: newEnvironment(),
 	}
 	for _, opt := range opts {
 		opt(interpreter)
@@ -118,9 +118,9 @@ func (i *Interpreter) interpretPrintStmt(env *environment, stmt ast.PrintStmt) {
 }
 
 func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) stmtResult {
-	env = newEnvironment(env)
+	childEnv := env.Child()
 	for _, stmt := range stmt.Stmts {
-		if result := i.interpretStmt(env, stmt); result != stmtResultNone {
+		if result := i.interpretStmt(childEnv, stmt); result != stmtResultNone {
 			return result
 		}
 	}
@@ -149,17 +149,17 @@ func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) s
 }
 
 func (i *Interpreter) interpretForStmt(env *environment, stmt ast.ForStmt) stmtResult {
-	env = newEnvironment(env)
+	childEnv := env.Child()
 	if stmt.Initialise != nil {
-		i.interpretStmt(env, stmt.Initialise)
+		i.interpretStmt(childEnv, stmt.Initialise)
 	}
-	for stmt.Condition == nil || i.interpretExpr(env, stmt.Condition).IsTruthy() {
-		switch i.interpretStmt(env, stmt.Body) {
+	for stmt.Condition == nil || i.interpretExpr(childEnv, stmt.Condition).IsTruthy() {
+		switch i.interpretStmt(childEnv, stmt.Body) {
 		case stmtResultBreak:
 			return stmtResultNone
 		}
 		if stmt.Update != nil {
-			i.interpretExpr(env, stmt.Update)
+			i.interpretExpr(childEnv, stmt.Update)
 		}
 	}
 	return stmtResultNone
