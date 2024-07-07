@@ -209,7 +209,7 @@ func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
 	case token.Nil:
 		return loxNil{}
 	default:
-		panic(fmt.Sprintf("unexpected literal type: %h", tok.Type))
+		panic(fmt.Sprintf("unexpected literal type: %s", tok.Type))
 	}
 }
 
