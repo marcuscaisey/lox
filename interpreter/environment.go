@@ -1,8 +1,6 @@
 package interpreter
 
 import (
-	"fmt"
-
 	"github.com/marcuscaisey/golox/token"
 )
 
@@ -28,10 +26,7 @@ func (e *environment) Child() *environment {
 // If the variable is already defined in this environment then a runtime error is raised.
 func (e *environment) Define(tok token.Token, value loxObject) {
 	if _, ok := e.valuesByIdent[tok.Literal]; ok {
-		panic(&runtimeError{
-			tok: tok,
-			msg: fmt.Sprintf("%s has already been defined", tok.Literal),
-		})
+		panic(newTokenRuntimeErrorf(tok, "%s has already been defined", tok.Literal))
 	}
 	e.valuesByIdent[tok.Literal] = value
 }
@@ -40,10 +35,7 @@ func (e *environment) Define(tok token.Token, value loxObject) {
 // If the variable has not been defined then a runtime error is raised.
 func (e *environment) Assign(tok token.Token, value loxObject) {
 	if e == nil {
-		panic(&runtimeError{
-			tok: tok,
-			msg: fmt.Sprintf("%s has not been defined", tok.Literal),
-		})
+		panic(newTokenRuntimeErrorf(tok, "%s has not been defined", tok.Literal))
 	}
 
 	if _, ok := e.valuesByIdent[tok.Literal]; ok {
@@ -58,18 +50,12 @@ func (e *environment) Assign(tok token.Token, value loxObject) {
 // If the variable has not been defined then a runtime error is raised.
 func (e *environment) Get(tok token.Token) loxObject {
 	if e == nil {
-		panic(&runtimeError{
-			tok: tok,
-			msg: fmt.Sprintf("%s has not been defined", tok.Literal),
-		})
+		panic(newTokenRuntimeErrorf(tok, "%s has not been defined", tok.Literal))
 	}
 
 	if value, ok := e.valuesByIdent[tok.Literal]; ok {
 		if value == nil {
-			panic(&runtimeError{
-				tok: tok,
-				msg: fmt.Sprintf("%s has not been initialised", tok.Literal),
-			})
+			panic(newTokenRuntimeErrorf(tok, "%s has not been initialised", tok.Literal))
 		}
 		return value
 	}

@@ -62,6 +62,18 @@ var a = 1;
 print a; // prints 1
 ```
 
+#### Call Expression
+
+A call expression calls a function with arguments.
+
+```lox
+fun add(a, b) {
+    return a + b;
+}
+
+print add(1, 2); // prints 3
+```
+
 #### Assignment Expression
 
 An assignment expression assigns a value to a variable and produces the value.
@@ -342,6 +354,14 @@ This is a multi line comment
 print 1 /* Multi line comments can be used anywhere */ + 2;
 ```
 
+### Built-in Functions
+
+Lox has the following built-in functions.
+
+| Name      | Returns  | Description                                         |
+| --------- | -------- | --------------------------------------------------- |
+| `clock()` | `number` | Returns the number of seconds since the Unix epoch. |
+
 ### Grammar
 
 Below is the grammar of Lox defined using the flavour of [Extended Backus–Naur
@@ -375,7 +395,9 @@ equality_expr       = relational_expr ( ( "==" | "!=" ) relational_expr )* ;
 relational_expr     = additive_expr ( ( "<" | "<=" | ">" | ">=" ) additive_expr )* ;
 additive_expr       = multiplicative_expr ( ( "+" | "-" ) multiplicative_expr )* ;
 multiplicative_expr = unary_expr ( ( "*" | "/" | "%" ) unary_expr )* ;
-unary_expr          = ( "!" | "-" ) unary_expr | primary_expr ;
+unary_expr          = ( "!" | "-" ) unary_expr | call_expr ;
+call_expr           = primary_expr ( "(" arguments? ")" )* ;
+arguments           = assignment_expr ( "," assignment_expr )* ;
 primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | "(" expr ")" | IDENT
                     /* Error productions */
                     | ( "==" | "!=" ) relational_expr

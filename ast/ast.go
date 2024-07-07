@@ -195,6 +195,17 @@ type VariableExpr struct {
 func (v VariableExpr) Start() token.Position { return v.Name.Start }
 func (v VariableExpr) End() token.Position   { return v.Name.End }
 
+// CallExpr is a call expression, such as add(x, 1).
+type CallExpr struct {
+	Callee     Expr   `print:"named"`
+	Args       []Expr `print:"named"`
+	RightParen token.Token
+	expr
+}
+
+func (c CallExpr) Start() token.Position { return c.Callee.Start() }
+func (c CallExpr) End() token.Position   { return c.RightParen.End }
+
 // UnaryExpr is a unary operator expression, such as !a.
 type UnaryExpr struct {
 	Op    token.Token `print:"named"`

@@ -14,6 +14,14 @@ import (
 // loxType is the string representation of a Lox object's type.
 type loxType string
 
+const (
+	loxTypeNumber   loxType = "number"
+	loxTypeString   loxType = "string"
+	loxTypeBool     loxType = "bool"
+	loxTypeNil      loxType = "nil"
+	loxTypeFunction loxType = "function"
+)
+
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the
 // type in green.
 func (t loxType) Format(f fmt.State, verb rune) {
@@ -33,28 +41,31 @@ type loxObject interface {
 	BinaryOp(op token.Token, right loxObject) loxObject
 }
 
+type loxCallable interface {
+	loxObject
+	Name() string
+	Params() []string
+	Call(i *Interpreter, args []loxObject) loxObject
+}
+
 func invalidUnaryOpError(op token.Token, object loxObject) error {
-	return &runtimeError{
-		tok: op,
-		msg: fmt.Sprintf("%h operator cannot be used with type %h", op.Type, object.Type()),
-	}
+	return newTokenRuntimeErrorf(op, "%h operator cannot be used with type %h", op.Type, object.Type())
 }
 
 func invalidBinaryOpError(op token.Token, left, right loxObject) error {
-	return &runtimeError{
-		tok: op,
-		msg: fmt.Sprintf("%h operator cannot be used with types %h and %h", op.Type, left.Type(), right.Type()),
-	}
+	return newTokenRuntimeErrorf(op, "%h operator cannot be used with types %h and %h", op.Type, left.Type(), right.Type())
 }
 
 type loxNumber float64
+
+var _ loxObject = loxNumber(0)
 
 func (n loxNumber) String() string {
 	return strconv.FormatFloat(float64(n), 'f', -1, 64)
 }
 
 func (n loxNumber) Type() loxType {
-	return "number"
+	return loxTypeNumber
 }
 
 func (n loxNumber) IsTruthy() loxBool {
@@ -76,18 +87,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 			return n * right
 		case token.Slash:
 			if right == 0 {
-				panic(&runtimeError{
-					tok: op,
-					msg: "cannot divide by 0",
-				})
+				panic(newTokenRuntimeErrorf(op, "cannot divide by 0"))
 			}
 			return n / right
 		case token.Percent:
 			if right == 0 {
-				panic(&runtimeError{
-					tok: op,
-					msg: "cannot modulo by 0",
-				})
+				panic(newTokenRuntimeErrorf(op, "cannot modulo by 0"))
 			}
 			return loxNumber(math.Mod(float64(n), float64(right)))
 		case token.Plus:
@@ -114,28 +119,24 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
 	if math.Floor(float64(n)) != float64(n) {
-		panic(&runtimeError{
-			tok: op,
-			msg: "cannot multiply string by non-integer",
-		})
+		panic(newTokenRuntimeErrorf(op, "cannot multiply %h by non-integer %h", loxTypeString, loxTypeNumber))
 	}
 	if n < 0 {
-		panic(&runtimeError{
-			tok: op,
-			msg: "cannot multiply string by negative integer",
-		})
+		panic(newTokenRuntimeErrorf(op, "cannot multiply %h by negative %h", loxTypeString, loxTypeNumber))
 	}
 	return loxString(strings.Repeat(string(s), int(n)))
 }
 
 type loxString string
 
+var _ loxObject = loxString("")
+
 func (s loxString) String() string {
 	return string(s)
 }
 
 func (s loxString) Type() loxType {
-	return "string"
+	return loxTypeString
 }
 
 func (s loxString) IsTruthy() loxBool {
@@ -172,6 +173,8 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 
 type loxBool bool
 
+var _ loxObject = loxBool(false)
+
 func (b loxBool) String() string {
 	if b {
 		return "true"
@@ -180,7 +183,7 @@ func (b loxBool) String() string {
 }
 
 func (b loxBool) Type() loxType {
-	return "bool"
+	return loxTypeBool
 }
 
 func (b loxBool) IsTruthy() loxBool {
@@ -197,12 +200,14 @@ func (b loxBool) BinaryOp(op token.Token, right loxObject) loxObject {
 
 type loxNil struct{}
 
+var _ loxObject = loxNil{}
+
 func (n loxNil) String() string {
 	return "nil"
 }
 
 func (n loxNil) Type() loxType {
-	return "nil"
+	return loxTypeNil
 }
 
 func (n loxNil) IsTruthy() loxBool {
@@ -215,4 +220,44 @@ func (n loxNil) UnaryOp(op token.Token) loxObject {
 
 func (n loxNil) BinaryOp(op token.Token, right loxObject) loxObject {
 	panic(invalidBinaryOpError(op, n, right))
+}
+
+type loxBuiltinFunction struct {
+	name   string
+	params []string
+	fn     func(args []loxObject) loxObject
+}
+
+var _ loxCallable = loxBuiltinFunction{}
+
+func (f loxBuiltinFunction) String() string {
+	return fmt.Sprintf("<builtin function %s>", f.name)
+}
+
+func (f loxBuiltinFunction) Type() loxType {
+	return loxTypeFunction
+}
+
+func (f loxBuiltinFunction) IsTruthy() loxBool {
+	return true
+}
+
+func (f loxBuiltinFunction) UnaryOp(op token.Token) loxObject {
+	panic(invalidUnaryOpError(op, f))
+}
+
+func (f loxBuiltinFunction) BinaryOp(op token.Token, right loxObject) loxObject {
+	panic(invalidBinaryOpError(op, f, right))
+}
+
+func (f loxBuiltinFunction) Name() string {
+	return f.name
+}
+
+func (f loxBuiltinFunction) Params() []string {
+	return f.params
+}
+
+func (f loxBuiltinFunction) Call(i *Interpreter, args []loxObject) loxObject {
+	return f.fn(args)
 }

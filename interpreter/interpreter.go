@@ -3,6 +3,7 @@ package interpreter
 
 import (
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 
@@ -15,8 +16,8 @@ import (
 
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
-	globalEnv *environment
-	replMode  bool
+	globals  *environment
+	replMode bool
 }
 
 // Option can be passed to New to configure the interpreter.
@@ -32,8 +33,10 @@ func REPLMode() Option {
 
 // New constructs a new Interpreter with the given options.
 func New(opts ...Option) *Interpreter {
+	globals := newEnvironment()
+	maps.Copy(globals.valuesByIdent, builtins)
 	interpreter := &Interpreter{
-		globalEnv: newEnvironment(),
+		globals: globals,
 	}
 	for _, opt := range opts {
 		opt(interpreter)
@@ -53,13 +56,13 @@ func (i *Interpreter) Interpret(program ast.Program) (err error) {
 			}
 		}
 	}()
-	i.interpretProgram(i.globalEnv, program)
+	i.interpretProgram(program)
 	return nil
 }
 
-func (i *Interpreter) interpretProgram(env *environment, node ast.Program) {
+func (i *Interpreter) interpretProgram(node ast.Program) {
 	for _, stmt := range node.Stmts {
-		i.interpretStmt(env, stmt)
+		i.interpretStmt(i.globals, stmt)
 	}
 }
 
@@ -181,6 +184,8 @@ func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
 		return i.interpretLiteralExpr(expr)
 	case ast.VariableExpr:
 		return i.interpretVariableExpr(env, expr)
+	case ast.CallExpr:
+		return i.interpretCallExpr(env, expr)
 	case ast.UnaryExpr:
 		return i.interpretUnaryExpr(env, expr)
 	case ast.BinaryExpr:
@@ -215,6 +220,51 @@ func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
 
 func (i *Interpreter) interpretVariableExpr(env *environment, expr ast.VariableExpr) loxObject {
 	return env.Get(expr.Name)
+}
+
+func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) loxObject {
+	callee := i.interpretExpr(env, expr.Callee)
+	args := make([]loxObject, len(expr.Args))
+	for j, arg := range expr.Args {
+		args[j] = i.interpretExpr(env, arg)
+	}
+
+	callable, ok := callee.(loxCallable)
+	if !ok {
+		panic(newNodeRuntimeErrorf(expr.Callee, "%h object is not callable", callee.Type()))
+	}
+
+	params := callable.Params()
+	arity := len(params)
+	switch {
+	case len(args) < arity:
+		argumentSuffix := ""
+		if arity-len(args) > 1 {
+			argumentSuffix = "s"
+		}
+		missingArgs := params[len(args):]
+		var missingArgsStr string
+		switch len(missingArgs) {
+		case 1:
+			missingArgsStr = missingArgs[0]
+		case 2:
+			missingArgsStr = missingArgs[0] + " and " + missingArgs[1]
+		default:
+			missingArgsStr = strings.Join(missingArgs[:len(missingArgs)-1], ", ") + ", and " + missingArgs[len(missingArgs)-1]
+		}
+		panic(newNodeRuntimeErrorf(
+			expr,
+			"%s() missing %d argument%s: %s", callable.Name(), arity-len(args), argumentSuffix, missingArgsStr,
+		))
+	case len(args) > arity:
+		panic(newNodeRangeRuntimeErrorf(
+			expr.Args[arity],
+			expr.Args[len(args)-1],
+			"%s() accepts %d arguments but %d were given", callable.Name(), arity, len(args),
+		))
+	}
+
+	return callable.Call(i, args)
 }
 
 func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
@@ -279,21 +329,42 @@ func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.Assignm
 }
 
 type runtimeError struct {
-	tok token.Token
-	msg string
+	start token.Position
+	end   token.Position
+	msg   string
 }
 
 func (e *runtimeError) Error() string {
 	bold := color.New(color.Bold)
 	red := color.New(color.FgRed)
 
-	line := e.tok.Start.File.Line(e.tok.Start.Line)
+	line := e.start.File.Line(e.start.Line)
 
 	var b strings.Builder
-	bold.Fprintln(&b, e.tok.Start, ": ", red.Sprint("runtime error: "), e.msg)
+	bold.Fprintln(&b, e.start, ": ", red.Sprint("runtime error: "), e.msg)
 	fmt.Fprintln(&b, string(line))
-	fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(line[:e.tok.Start.Column]))))
-	red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(line[e.tok.Start.Column:e.tok.End.Column]))))
+	fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(line[:e.start.Column]))))
+	red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(line[e.start.Column:e.end.Column]))))
 
 	return b.String()
+}
+
+func newRuntimeErrorf(start token.Position, end token.Position, format string, args ...interface{}) *runtimeError {
+	return &runtimeError{
+		start: start,
+		end:   end,
+		msg:   fmt.Sprintf(format, args...),
+	}
+}
+
+func newTokenRuntimeErrorf(tok token.Token, format string, args ...interface{}) *runtimeError {
+	return newRuntimeErrorf(tok.Start, tok.End, format, args...)
+}
+
+func newNodeRuntimeErrorf(node ast.Node, format string, args ...interface{}) *runtimeError {
+	return newRuntimeErrorf(node.Start(), node.End(), format, args...)
+}
+
+func newNodeRangeRuntimeErrorf(start, end ast.Node, format string, args ...interface{}) *runtimeError {
+	return newRuntimeErrorf(start.Start(), end.End(), format, args...)
 }

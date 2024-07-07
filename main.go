@@ -22,7 +22,7 @@ var (
 	printAST = flag.Bool("p", false, "Print the AST only")
 )
 
-//nolint:revive
+// nolint:revive
 func Usage() {
 	fmt.Fprintf(os.Stderr, "Usage: golox [options] [script]\n")
 	fmt.Fprintf(os.Stderr, "\n")

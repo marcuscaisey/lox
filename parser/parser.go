@@ -16,6 +16,8 @@ import (
 	"github.com/marcuscaisey/golox/token"
 )
 
+const maxArgs = 255
+
 // Parse parses the source code read from r.
 // If an error is returned then an incomplete AST will still be returned along with it.
 func Parse(r io.Reader) (ast.Program, error) {
@@ -313,7 +315,40 @@ func (p *parser) parseUnaryExpr(context string) ast.Expr {
 			Right: right,
 		}
 	}
-	return p.parsePrimaryExpr(context)
+	return p.parseCallExpr(context)
+}
+
+func (p *parser) parseCallExpr(context string) ast.Expr {
+	expr := p.parsePrimaryExpr(context)
+	for {
+		leftParen, ok := p.match2(token.LeftParen)
+		if !ok {
+			return expr
+		}
+		var args []ast.Expr
+		rightParen, ok := p.match2(token.RightParen)
+		if !ok {
+			args = p.parseArgs("for function argument")
+			rightParen = p.expect(token.RightParen, "expected closing %h after opening %h at %s", token.RightParen, token.LeftParen, leftParen.Start)
+		}
+		expr = ast.CallExpr{
+			Callee:     expr,
+			Args:       args,
+			RightParen: rightParen,
+		}
+	}
+}
+
+func (p *parser) parseArgs(context string) []ast.Expr {
+	var args []ast.Expr
+	args = append(args, p.parseAssignmentExpr(context))
+	for p.match(token.Comma) {
+		args = append(args, p.parseAssignmentExpr(context))
+	}
+	if len(args) > maxArgs {
+		p.addNodeErrorf(args[maxArgs], "cannot pass more than %d arguments to function", maxArgs)
+	}
+	return args
 }
 
 func (p *parser) parsePrimaryExpr(context string) ast.Expr {
