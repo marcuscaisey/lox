@@ -36,7 +36,7 @@ func (t loxType) Format(f fmt.State, verb rune) {
 type loxObject interface {
 	String() string
 	Type() loxType
-	IsTruthy() loxBool
+	Truthy() loxBool
 	UnaryOp(op token.Token) loxObject
 	BinaryOp(op token.Token, right loxObject) loxObject
 }
@@ -68,7 +68,7 @@ func (n loxNumber) Type() loxType {
 	return loxTypeNumber
 }
 
-func (n loxNumber) IsTruthy() loxBool {
+func (n loxNumber) Truthy() loxBool {
 	return n != 0
 }
 
@@ -139,7 +139,7 @@ func (s loxString) Type() loxType {
 	return loxTypeString
 }
 
-func (s loxString) IsTruthy() loxBool {
+func (s loxString) Truthy() loxBool {
 	return s != ""
 }
 
@@ -186,7 +186,7 @@ func (b loxBool) Type() loxType {
 	return loxTypeBool
 }
 
-func (b loxBool) IsTruthy() loxBool {
+func (b loxBool) Truthy() loxBool {
 	return b
 }
 
@@ -210,7 +210,7 @@ func (n loxNil) Type() loxType {
 	return loxTypeNil
 }
 
-func (n loxNil) IsTruthy() loxBool {
+func (n loxNil) Truthy() loxBool {
 	return false
 }
 
@@ -238,7 +238,7 @@ func (f loxBuiltinFunction) Type() loxType {
 	return loxTypeFunction
 }
 
-func (f loxBuiltinFunction) IsTruthy() loxBool {
+func (f loxBuiltinFunction) Truthy() loxBool {
 	return true
 }
 
