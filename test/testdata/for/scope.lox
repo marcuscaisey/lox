@@ -1,0 +1,10 @@
+var x = "global x";
+var y = "global y";
+
+for (;;) {
+  print x; // prints global x
+  var y = "local y";
+  break;
+}
+
+print y; // prints global y
