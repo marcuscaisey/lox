@@ -1,7 +1,9 @@
 // Package ast defines the types which are used to represent the abstract syntax tree of the Lox programming language.
 package ast
 
-import "github.com/marcuscaisey/golox/token"
+import (
+	"github.com/marcuscaisey/golox/token"
+)
 
 // Node is the interface which all AST nodes implement.
 type Node interface {
@@ -38,6 +40,18 @@ type VarDecl struct {
 
 func (d VarDecl) Start() token.Position { return d.Name.Start }
 func (d VarDecl) End() token.Position   { return d.Semicolon.End }
+
+// FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
+type FunDecl struct {
+	Fun    token.Token
+	Name   token.Token   `print:"named"`
+	Params []token.Token `print:"named"`
+	Body   BlockStmt     `print:"named"`
+	stmt
+}
+
+func (d FunDecl) Start() token.Position { return d.Fun.Start }
+func (d FunDecl) End() token.Position   { return d.Body.End() }
 
 // ExprStmt is an expression statement, such as a function call.
 type ExprStmt struct {
@@ -155,6 +169,17 @@ type ContinueStmt struct {
 
 func (c ContinueStmt) Start() token.Position { return c.Continue.Start }
 func (c ContinueStmt) End() token.Position   { return c.Semicolon.End }
+
+// ReturnStmt is a return statement
+type ReturnStmt struct {
+	Return    token.Token
+	Value     Expr `print:"unnamed"`
+	Semicolon token.Token
+	stmt
+}
+
+func (c ReturnStmt) Start() token.Position { return c.Return.Start }
+func (c ReturnStmt) End() token.Position   { return c.Semicolon.End }
 
 // Expr is the interface which all expression nodes implement.
 type Expr interface {

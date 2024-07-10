@@ -1,0 +1,3 @@
+// syntax error: duplicate parameter x
+// syntax error: duplicate parameter y
+fun f(x, y, z, x, y) {}

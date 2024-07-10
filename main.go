@@ -6,8 +6,12 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
+	"runtime"
+	"runtime/pprof"
+	"runtime/trace"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -20,6 +24,10 @@ import (
 var (
 	cmd      = flag.String("c", "", "Program passed in as string")
 	printAST = flag.Bool("p", false, "Print the AST only")
+
+	cpuProfile = flag.String("cpuprofile", "", "Write a CPU profile to the specified file before exiting.")
+	memProfile = flag.String("memprofile", "", "Write an allocation profile to the file before exiting.")
+	traceFile  = flag.String("trace", "", " Write an execution trace to the specified file before exiting.")
 )
 
 // nolint:revive
@@ -33,6 +41,55 @@ func Usage() {
 func main() {
 	flag.Usage = Usage
 	flag.Parse()
+
+	if *cpuProfile != "" {
+		f, err := os.Create(*cpuProfile)
+		if err != nil {
+			log.Fatalf("failed to create CPU profile: %s", err)
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Fatalf("failed to close CPU profile: %s", err)
+			}
+		}()
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Fatalf("failed to start CPU profile: %s", err)
+		}
+		defer pprof.StopCPUProfile()
+	}
+	if *memProfile != "" {
+		defer func() {
+			f, err := os.Create(*memProfile)
+			if err != nil {
+				log.Fatalf("failed to create memory profile: %s", err)
+			}
+			defer func() {
+				if err := f.Close(); err != nil {
+					log.Fatalf("failed to close memory profile: %s", err)
+				}
+			}()
+			runtime.GC()
+			if err := pprof.WriteHeapProfile(f); err != nil {
+				log.Fatalf("failed to start memory profile: %s", err)
+			}
+		}()
+	}
+	if *traceFile != "" {
+		f, err := os.Create(*traceFile)
+		if err != nil {
+			log.Fatalf("failed to create trace output file: %s", err)
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Fatalf("failed to close trace file: %s", err)
+			}
+		}()
+
+		if err := trace.Start(f); err != nil {
+			log.Fatalf("failed to start trace: %s", err)
+		}
+		defer trace.Stop()
+	}
 
 	if *cmd != "" {
 		if err := run(strings.NewReader(*cmd), interpreter.New()); err != nil {
@@ -88,6 +145,8 @@ func runREPL() error {
 		return fmt.Errorf("running Lox REPL: %s", err)
 	}
 	defer rl.Close()
+
+	fmt.Fprintln(os.Stderr, "Welcome to Lox!")
 
 	interpreter := interpreter.New(interpreter.REPLMode())
 	for {

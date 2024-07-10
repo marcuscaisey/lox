@@ -53,9 +53,11 @@ func sprint(node Node, depth int) string {
 				extraDepth = 1
 			}
 			for j := 0; j < value.Len(); j++ {
-				element := value.Index(j).Interface().(Node)
-				child := prefix + sprint(element, depth+1+extraDepth)
-				children = append(children, child)
+				child, ok := childString(value.Index(j), depth+1+extraDepth)
+				if !ok {
+					panic(fmt.Sprintf("%s field %s element %d has unsupported type: %T", nodeType.Name(), field.Name, j, value.Index(j).Interface()))
+				}
+				children = append(children, prefix+child)
 			}
 			if named {
 				children = append(children, "]")
@@ -68,21 +70,31 @@ func sprint(node Node, depth int) string {
 			prefix = field.Name + ": "
 		}
 
-		var child string
-		switch value := value.Interface().(type) {
-		case Node:
-			child = sprint(value, depth+1)
-		case nil:
+		if value.Kind() == reflect.Interface && value.IsNil() {
 			continue
-		case token.Token:
-			child = value.String()
-		default:
-			panic(fmt.Sprintf("%s field %s has unsupported type: %T", nodeType.Name(), field.Name, value))
+		}
+
+		child, ok := childString(value, depth+1)
+		if !ok {
+			panic(fmt.Sprintf("%s field %s has unsupported type: %T", nodeType.Name(), field.Name, value.Interface()))
 		}
 		children = append(children, prefix+child)
 	}
 
 	return sexpr(nodeType.Name(), depth, children...)
+}
+
+func childString(value reflect.Value, depth int) (string, bool) {
+	var child string
+	switch value := value.Interface().(type) {
+	case Node:
+		child = sprint(value, depth)
+	case token.Token:
+		child = value.String()
+	default:
+		return "", false
+	}
+	return child, true
 }
 
 func sexpr(name string, depth int, children ...string) string {

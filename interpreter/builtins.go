@@ -2,7 +2,7 @@ package interpreter
 
 import "time"
 
-var builtins = map[string]loxObject{
+var builtinFns = map[string]loxObject{
 	"clock": loxBuiltinFunction{
 		name: "clock",
 		fn: func(args []loxObject) loxObject {

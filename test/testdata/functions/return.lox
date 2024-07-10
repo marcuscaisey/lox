@@ -1,0 +1,14 @@
+fun returnsValue() {
+    return "return value";
+}
+
+fun returnsNoValue() {
+    return;
+    print "should not print";
+}
+
+fun noReturn() {}
+
+print returnsValue(); // prints return value
+print returnsNoValue(); // prints nil
+print noReturn(); // prints nil

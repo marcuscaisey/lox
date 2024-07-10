@@ -16,7 +16,10 @@ import (
 	"github.com/marcuscaisey/golox/token"
 )
 
-const maxArgs = 255
+const (
+	maxParams = 255
+	maxArgs   = maxParams
+)
 
 // Parse parses the source code read from r.
 // If an error is returned then an incomplete AST will still be returned along with it.
@@ -43,9 +46,10 @@ func Parse(r io.Reader) (ast.Program, error) {
 
 // parser parses Lox source code into an abstract syntax tree.
 type parser struct {
-	l         *lexer.Lexer
-	tok       token.Token // token currently being considered
-	loopDepth int
+	l            *lexer.Lexer
+	tok          token.Token // token currently being considered
+	loopDepth    int
+	funDeclDepth int
 
 	errs       []error
 	lastErrPos token.Position
@@ -102,12 +106,14 @@ func (p *parser) parseDecl() ast.Stmt {
 	switch tok := p.tok; {
 	case p.match(token.Var):
 		return p.parseVarDecl(tok)
+	case p.match(token.Fun):
+		return p.parseFunDecl(tok)
 	default:
 		return p.parseStmt()
 	}
 }
 
-func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
+func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
 	name := p.expect(token.Ident, "%h must be followed by a variable name", token.Var)
 	var value ast.Expr
 	if p.match(token.Equal) {
@@ -115,6 +121,45 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.Stmt {
 	}
 	semicolon := p.expectSemicolon("after variable declaration")
 	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
+}
+
+func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
+	p.funDeclDepth++
+	defer func() { p.funDeclDepth-- }()
+	name := p.expect(token.Ident, "%h must be followed by a function name", token.Fun)
+	leftParen := p.expect(token.LeftParen, "%h must be followed by parameter list inside %h%h", token.Fun, token.LeftParen, token.RightParen)
+	var params []token.Token
+	if !p.match(token.RightParen) {
+		params = p.parseParams("for function parameter")
+		p.expect(token.RightParen, "expected closing %h after opening %h at %s", token.RightParen, token.LeftParen, leftParen.Start)
+	}
+	leftBrace := p.expect(token.LeftBrace, "expected opening %h after function declaration", token.LeftBrace)
+	body := p.parseBlock(leftBrace)
+	return ast.FunDecl{
+		Fun:    funTok,
+		Name:   name,
+		Params: params,
+		Body:   body,
+	}
+}
+
+func (p *parser) parseParams(context string) []token.Token {
+	var params []token.Token
+	seen := map[string]bool{}
+	params = append(params, p.expect(token.Ident, "expected identifier %s", context))
+	seen[params[0].Literal] = true
+	for p.match(token.Comma) {
+		param := p.expect(token.Ident, "expected identifier %s", context)
+		if seen[param.Literal] {
+			p.addTokenErrorf(param, "duplicate parameter %s", param.Literal)
+		}
+		params = append(params, param)
+		seen[param.Literal] = true
+	}
+	if len(params) > maxParams {
+		p.addTokenErrorf(params[maxParams], "cannot define more than %d function parameters", maxParams)
+	}
+	return params
 }
 
 func (p *parser) parseStmt() ast.Stmt {
@@ -133,24 +178,26 @@ func (p *parser) parseStmt() ast.Stmt {
 		return p.parseBreakStmt(tok)
 	case p.match(token.Continue):
 		return p.parseContinueStmt(tok)
+	case p.match(token.Return):
+		return p.parseReturnStmt(tok)
 	default:
 		return p.parseExprStmt()
 	}
 }
 
-func (p *parser) parseExprStmt() ast.Stmt {
+func (p *parser) parseExprStmt() ast.ExprStmt {
 	expr := p.parseExpr("in expression statement")
 	semicolon := p.expectSemicolon("after expression statement")
 	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
 }
 
-func (p *parser) parsePrintStmt(printTok token.Token) ast.Stmt {
+func (p *parser) parsePrintStmt(printTok token.Token) ast.PrintStmt {
 	expr := p.parseExpr("in print statement")
 	semicolon := p.expectSemicolon("after print statement")
 	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
 }
 
-func (p *parser) parseBlock(leftBrace token.Token) ast.Stmt {
+func (p *parser) parseBlock(leftBrace token.Token) ast.BlockStmt {
 	var stmts []ast.Stmt
 	for p.tok.Type != token.RightBrace && p.tok.Type != token.EOF {
 		stmts = append(stmts, p.safelyParseDecl())
@@ -159,7 +206,7 @@ func (p *parser) parseBlock(leftBrace token.Token) ast.Stmt {
 	return ast.BlockStmt{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
 }
 
-func (p *parser) parseIfStmt(ifTok token.Token) ast.Stmt {
+func (p *parser) parseIfStmt(ifTok token.Token) ast.IfStmt {
 	p.expect(token.LeftParen, "%h should be followed by condition inside %h%h", token.If, token.LeftParen, token.RightParen)
 	condition := p.parseExpr("as condition in if statement")
 	p.expect(token.RightParen, "%h should be followed by condition inside %h%h", token.If, token.LeftParen, token.RightParen)
@@ -171,7 +218,7 @@ func (p *parser) parseIfStmt(ifTok token.Token) ast.Stmt {
 	return ast.IfStmt{If: ifTok, Condition: condition, Then: thenBranch, Else: elseBranch}
 }
 
-func (p *parser) parseWhileStmt(whileTok token.Token) ast.Stmt {
+func (p *parser) parseWhileStmt(whileTok token.Token) ast.WhileStmt {
 	p.loopDepth++
 	defer func() { p.loopDepth-- }()
 	p.expect(token.LeftParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
@@ -181,7 +228,7 @@ func (p *parser) parseWhileStmt(whileTok token.Token) ast.Stmt {
 	return ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
 }
 
-func (p *parser) parseForStmt(forTok token.Token) ast.Stmt {
+func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
 	p.loopDepth++
 	defer func() { p.loopDepth-- }()
 	p.expect(token.LeftParen, "%h should be followed by initialise statement, condition expression, and update expression inside %h%h", token.For, token.LeftParen, token.RightParen)
@@ -207,7 +254,7 @@ func (p *parser) parseForStmt(forTok token.Token) ast.Stmt {
 	return ast.ForStmt{For: forTok, Initialise: initialise, Condition: condition, Update: update, Body: body}
 }
 
-func (p *parser) parseBreakStmt(breakTok token.Token) ast.Stmt {
+func (p *parser) parseBreakStmt(breakTok token.Token) ast.BreakStmt {
 	semicolon := p.expectSemicolon("after break statement")
 	stmt := ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
@@ -216,11 +263,25 @@ func (p *parser) parseBreakStmt(breakTok token.Token) ast.Stmt {
 	return stmt
 }
 
-func (p *parser) parseContinueStmt(continueTok token.Token) ast.Stmt {
+func (p *parser) parseContinueStmt(continueTok token.Token) ast.ContinueStmt {
 	semicolon := p.expectSemicolon("after continue statement")
 	stmt := ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
 		p.addNodeErrorf(stmt, "continue statement must be inside a loop")
+	}
+	return stmt
+}
+
+func (p *parser) parseReturnStmt(returnTok token.Token) ast.ReturnStmt {
+	semicolon, ok := p.match2(token.Semicolon)
+	var value ast.Expr
+	if !ok {
+		value = p.parseExpr("after return")
+		semicolon = p.expectSemicolon("after return statement")
+	}
+	stmt := ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
+	if p.funDeclDepth == 0 {
+		p.addNodeErrorf(stmt, "return statement must be inside a function definition")
 	}
 	return stmt
 }

@@ -1,6 +1,8 @@
 package interpreter
 
 import (
+	"fmt"
+
 	"github.com/marcuscaisey/golox/token"
 )
 
@@ -22,8 +24,22 @@ func (e *environment) Child() *environment {
 	return env
 }
 
-// Define defines a variable in this environment and assigns it an initial value.
-// If the variable is already defined in this environment then a runtime error is raised.
+// Set assigns a value to an identifier in this environment.
+// If the identifier has already been defined in this environment, then this method panics.
+// This method should be used for defining values which did not originate from an assignment in code. For example,
+// defining built-in functions or function arguments. Otherwise, use Define.
+func (e *environment) Set(ident string, value loxObject) {
+	if _, ok := e.valuesByIdent[ident]; ok {
+		// It's a bug if we end up here
+		panic(fmt.Sprintf("%s has already been defined", ident))
+	}
+	e.valuesByIdent[ident] = value
+}
+
+// Define defines an identifier in this environment and assigns it an initial value.
+// If the identifier has already been defined in this environment, then a runtime error is raised.
+// This method should be used for defining values which originated from an assignment in code. For example, a variable
+// or function declaration. Otherwise, use Set.
 func (e *environment) Define(tok token.Token, value loxObject) {
 	if _, ok := e.valuesByIdent[tok.Literal]; ok {
 		panic(newTokenRuntimeErrorf(tok, "%s has already been defined", tok.Literal))
@@ -46,8 +62,8 @@ func (e *environment) Assign(tok token.Token, value loxObject) {
 	e.parent.Assign(tok, value)
 }
 
-// Get returns the value of a variable.
-// If the variable has not been defined then a runtime error is raised.
+// Get returns the value of an identifier.
+// If the identifier has not been defined in this environment or any of its parents, then a runtime error is raised.
 func (e *environment) Get(tok token.Token) loxObject {
 	if e == nil {
 		panic(newTokenRuntimeErrorf(tok, "%s has not been defined", tok.Literal))

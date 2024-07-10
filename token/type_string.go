@@ -24,7 +24,7 @@ func _() {
 	_ = x[For-13]
 	_ = x[Break-14]
 	_ = x[Continue-15]
-	_ = x[Function-16]
+	_ = x[Fun-16]
 	_ = x[Return-17]
 	_ = x[Class-18]
 	_ = x[This-19]

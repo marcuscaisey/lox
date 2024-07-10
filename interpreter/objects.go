@@ -8,6 +8,7 @@ import (
 
 	"github.com/fatih/color"
 
+	"github.com/marcuscaisey/golox/ast"
 	"github.com/marcuscaisey/golox/token"
 )
 
@@ -45,7 +46,7 @@ type loxCallable interface {
 	loxObject
 	Name() string
 	Params() []string
-	Call(i *Interpreter, args []loxObject) loxObject
+	Call(i *Interpreter, env *environment, args []loxObject) loxObject
 }
 
 func invalidUnaryOpError(op token.Token, object loxObject) error {
@@ -222,6 +223,59 @@ func (n loxNil) BinaryOp(op token.Token, right loxObject) loxObject {
 	panic(invalidBinaryOpError(op, n, right))
 }
 
+type loxFunction struct {
+	name    string
+	params  []token.Token
+	body    ast.BlockStmt
+	closure *environment
+}
+
+var _ loxCallable = loxFunction{}
+
+func (f loxFunction) String() string {
+	return fmt.Sprintf("<function %s>", f.name)
+}
+
+func (f loxFunction) Type() loxType {
+	return loxTypeFunction
+}
+
+func (f loxFunction) Truthy() loxBool {
+	return true
+}
+
+func (f loxFunction) UnaryOp(op token.Token) loxObject {
+	panic(invalidUnaryOpError(op, f))
+}
+
+func (f loxFunction) BinaryOp(op token.Token, right loxObject) loxObject {
+	panic(invalidBinaryOpError(op, f, right))
+}
+
+func (f loxFunction) Name() string {
+	return f.name
+}
+
+func (f loxFunction) Params() []string {
+	params := make([]string, len(f.params))
+	for i, param := range f.params {
+		params[i] = param.Literal
+	}
+	return params
+}
+
+func (f loxFunction) Call(interpreter *Interpreter, env *environment, args []loxObject) loxObject {
+	childEnv := f.closure.Child()
+	for i, param := range f.Params() {
+		childEnv.Set(param, args[i])
+	}
+	result := interpreter.interpretBlockStmt(childEnv, f.body)
+	if r, ok := result.(stmtResultReturn); ok {
+		return r.Value
+	}
+	return loxNil{}
+}
+
 type loxBuiltinFunction struct {
 	name   string
 	params []string
@@ -258,6 +312,6 @@ func (f loxBuiltinFunction) Params() []string {
 	return f.params
 }
 
-func (f loxBuiltinFunction) Call(i *Interpreter, args []loxObject) loxObject {
+func (f loxBuiltinFunction) Call(_ *Interpreter, _ *environment, args []loxObject) loxObject {
 	return f.fn(args)
 }

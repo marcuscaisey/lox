@@ -1,0 +1,11 @@
+fun f() {
+    print x;
+    var y = "local y";
+}
+
+var x = "global x";
+var y = "global y";
+
+f(); // prints global x
+
+print y; // prints global y

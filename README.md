@@ -269,6 +269,26 @@ for (var i = 0; i < 5; i++) {
 }
 ```
 
+#### Return Statement
+
+A return statement immediately exits the enclosing function and optionally returns a value to the
+caller.
+
+```lox
+fun add(a, b) {
+    return a + b;
+}
+
+fun greet() {
+    print "Hello, World!";
+    return;
+    print "This is unreachable";
+}
+
+print add(1, 2); // prints 3
+greet(); // prints Hello, World!
+```
+
 #### For Statement
 
 A for statement is syntactic sugar for a while statement which initialises a variable before the
@@ -334,6 +354,20 @@ var b = 1;
 print b; // prints 1
 ```
 
+#### Function Declaration
+
+A function declaration declares a name which can be called with arguments. The function body is a
+block statement which can return a value to the caller. A function which does not return a value
+implicitly returns `nil`.
+
+```lox
+fun add(a, b) {
+    return a + b;
+}
+
+print add(1, 2); // prints 3
+```
+
 ### Comments
 
 Comments are bits of text in the source code that are ignored when evaluating the program. Both
@@ -369,10 +403,13 @@ form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) described
 Markup Language (XML) 1.0 (Fifth Edition)](https://www.w3.org/TR/xml/#sec-notation).
 
 ```ebnf
-program = decl* EOF ;
+program =  decl* EOF ;
 
-decl     = var_decl | stmt ;
-var_decl = "var" IDENT ( "=" expr )? ";" ;
+decl       = var_decl | fun_decl | stmt ;
+var_decl   = "var" IDENT ( "=" expr )? ";" ;
+fun_decl   = "fun" function ;
+function   = IDENT "(" parameters? ")" block_stmt ;
+parameters = IDENT ( "," IDENT )* ;
 
 stmt          = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | for_stmt | break_stmt
               | continue_stmt ;
@@ -384,6 +421,7 @@ while_stmt    = "while" "(" expr ")" stmt ;
 for_stmt      = "for" "(" ( var_decl | expr_stmt | ";" ) expr? ";" expr? ")" stmt ;
 break_stmt    = "break" ";" ;
 continue_stmt = "continue" ";" ;
+return_stmt   = "return" expression? ";" ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr ( "," assignment_expr )* ;

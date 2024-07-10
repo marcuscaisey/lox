@@ -3,7 +3,6 @@ package interpreter
 
 import (
 	"fmt"
-	"maps"
 	"strconv"
 	"strings"
 
@@ -13,6 +12,28 @@ import (
 	"github.com/marcuscaisey/golox/ast"
 	"github.com/marcuscaisey/golox/token"
 )
+
+type stmtResult interface {
+	stmtResult()
+}
+
+type stmtResultNone struct{}
+
+func (stmtResultNone) stmtResult() {}
+
+type stmtResultBreak struct{}
+
+func (stmtResultBreak) stmtResult() {}
+
+type stmtResultContinue struct{}
+
+func (stmtResultContinue) stmtResult() {}
+
+type stmtResultReturn struct {
+	Value loxObject
+}
+
+func (stmtResultReturn) stmtResult() {}
 
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
@@ -34,7 +55,9 @@ func REPLMode() Option {
 // New constructs a new Interpreter with the given options.
 func New(opts ...Option) *Interpreter {
 	globals := newEnvironment()
-	maps.Copy(globals.valuesByIdent, builtins)
+	for name, fn := range builtinFns {
+		globals.Set(name, fn)
+	}
 	interpreter := &Interpreter{
 		globals: globals,
 	}
@@ -66,18 +89,12 @@ func (i *Interpreter) interpretProgram(node ast.Program) {
 	}
 }
 
-type stmtResult int
-
-const (
-	stmtResultNone stmtResult = iota
-	stmtResultBreak
-	stmtResultContinue
-)
-
 func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) stmtResult {
 	switch stmt := stmt.(type) {
 	case ast.VarDecl:
 		i.interpretVarDecl(env, stmt)
+	case ast.FunDecl:
+		i.interpretFunDecl(env, stmt)
 	case ast.ExprStmt:
 		i.interpretExprStmt(env, stmt)
 	case ast.PrintStmt:
@@ -94,10 +111,12 @@ func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) stmtResult 
 		return i.interpretBreakStmt()
 	case ast.ContinueStmt:
 		return i.interpretContinueStmt()
+	case ast.ReturnStmt:
+		return i.interpretReturnStmt(env, stmt)
 	default:
 		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
 	}
-	return stmtResultNone
+	return stmtResultNone{}
 }
 
 func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
@@ -106,6 +125,20 @@ func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
 		value = i.interpretExpr(env, stmt.Initialiser)
 	}
 	env.Define(stmt.Name, value)
+}
+
+func (i *Interpreter) interpretFunDecl(env *environment, stmt ast.FunDecl) {
+	params := make([]string, len(stmt.Params))
+	for i, param := range stmt.Params {
+		params[i] = param.Literal
+	}
+	fun := loxFunction{
+		name:    stmt.Name.Literal,
+		params:  stmt.Params,
+		body:    stmt.Body,
+		closure: env,
+	}
+	env.Define(stmt.Name, fun)
 }
 
 func (i *Interpreter) interpretExprStmt(env *environment, stmt ast.ExprStmt) {
@@ -123,11 +156,12 @@ func (i *Interpreter) interpretPrintStmt(env *environment, stmt ast.PrintStmt) {
 func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) stmtResult {
 	childEnv := env.Child()
 	for _, stmt := range stmt.Stmts {
-		if result := i.interpretStmt(childEnv, stmt); result != stmtResultNone {
+		result := i.interpretStmt(childEnv, stmt)
+		if _, ok := result.(stmtResultNone); !ok {
 			return result
 		}
 	}
-	return stmtResultNone
+	return stmtResultNone{}
 }
 
 func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) stmtResult {
@@ -137,18 +171,20 @@ func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) stmtRes
 	} else if stmt.Else != nil {
 		return i.interpretStmt(env, stmt.Else)
 	} else {
-		return stmtResultNone
+		return stmtResultNone{}
 	}
 }
 
 func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) stmtResult {
 	for i.interpretExpr(env, stmt.Condition).Truthy() {
-		switch i.interpretStmt(env, stmt.Body) {
+		switch result := i.interpretStmt(env, stmt.Body).(type) {
 		case stmtResultBreak:
-			return stmtResultNone
+			return stmtResultNone{}
+		case stmtResultReturn:
+			return result
 		}
 	}
-	return stmtResultNone
+	return stmtResultNone{}
 }
 
 func (i *Interpreter) interpretForStmt(env *environment, stmt ast.ForStmt) stmtResult {
@@ -157,23 +193,33 @@ func (i *Interpreter) interpretForStmt(env *environment, stmt ast.ForStmt) stmtR
 		i.interpretStmt(childEnv, stmt.Initialise)
 	}
 	for stmt.Condition == nil || i.interpretExpr(childEnv, stmt.Condition).Truthy() {
-		switch i.interpretStmt(childEnv, stmt.Body) {
+		switch result := i.interpretStmt(childEnv, stmt.Body).(type) {
 		case stmtResultBreak:
-			return stmtResultNone
+			return stmtResultNone{}
+		case stmtResultReturn:
+			return result
 		}
 		if stmt.Update != nil {
 			i.interpretExpr(childEnv, stmt.Update)
 		}
 	}
-	return stmtResultNone
+	return stmtResultNone{}
 }
 
-func (i *Interpreter) interpretBreakStmt() stmtResult {
-	return stmtResultBreak
+func (i *Interpreter) interpretBreakStmt() stmtResultBreak {
+	return stmtResultBreak{}
 }
 
-func (i *Interpreter) interpretContinueStmt() stmtResult {
-	return stmtResultContinue
+func (i *Interpreter) interpretContinueStmt() stmtResultContinue {
+	return stmtResultContinue{}
+}
+
+func (i *Interpreter) interpretReturnStmt(env *environment, stmt ast.ReturnStmt) stmtResultReturn {
+	var value loxObject = loxNil{}
+	if stmt.Value != nil {
+		value = i.interpretExpr(env, stmt.Value)
+	}
+	return stmtResultReturn{Value: value}
 }
 
 func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
@@ -264,7 +310,7 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 		))
 	}
 
-	return callable.Call(i, args)
+	return callable.Call(i, env, args)
 }
 
 func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {

@@ -33,7 +33,7 @@ const (
 	For      // for
 	Break    // break
 	Continue // continue
-	Function // fun
+	Fun      // fun
 	Return   // return
 	Class    // class
 	This     // this
