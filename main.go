@@ -32,13 +32,15 @@ var (
 
 // nolint:revive
 func Usage() {
-	fmt.Fprintf(os.Stderr, "Usage: golox [options] [script]\n")
-	fmt.Fprintf(os.Stderr, "\n")
-	fmt.Fprintf(os.Stderr, "Options:\n")
+	fmt.Fprintf(flag.CommandLine.Output(), "Usage: golox [options] [script]\n")
+	fmt.Fprintf(flag.CommandLine.Output(), "\n")
+	fmt.Fprintf(flag.CommandLine.Output(), "Options:\n")
 	flag.PrintDefaults()
 }
 
 func main() {
+	log.SetFlags(0)
+
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -93,8 +95,7 @@ func main() {
 
 	if *cmd != "" {
 		if err := run(strings.NewReader(*cmd), interpreter.New()); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			log.Fatal(err)
 		}
 		return
 	}
@@ -102,13 +103,11 @@ func main() {
 	switch len(flag.Args()) {
 	case 0:
 		if err := runREPL(); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			log.Fatal(err)
 		}
 	case 1:
 		if err := runFile(flag.Arg(0)); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			log.Fatal(err)
 		}
 	default:
 		flag.Usage()
