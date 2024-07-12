@@ -128,10 +128,6 @@ func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
 }
 
 func (i *Interpreter) interpretFunDecl(env *environment, stmt ast.FunDecl) {
-	params := make([]string, len(stmt.Params))
-	for i, param := range stmt.Params {
-		params[i] = param.Literal
-	}
 	fun := loxFunction{
 		name:    stmt.Name.Literal,
 		params:  stmt.Params,
@@ -224,6 +220,8 @@ func (i *Interpreter) interpretReturnStmt(env *environment, stmt ast.ReturnStmt)
 
 func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
 	switch expr := expr.(type) {
+	case ast.FunExpr:
+		return i.interpretFunExpr(env, expr)
 	case ast.GroupExpr:
 		return i.interpretExpr(env, expr.Expr)
 	case ast.LiteralExpr:
@@ -242,6 +240,15 @@ func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
 		return i.interpretAssignmentExpr(env, expr)
 	default:
 		panic(fmt.Sprintf("unexpected expression type: %T", expr))
+	}
+}
+
+func (i *Interpreter) interpretFunExpr(env *environment, expr ast.FunExpr) loxObject {
+	return loxFunction{
+		name:    fmt.Sprintf("<lambda> at %d:%d", expr.Fun.Start.Line, expr.Fun.Start.Column),
+		params:  expr.Params,
+		body:    expr.Body,
+		closure: env,
 	}
 }
 

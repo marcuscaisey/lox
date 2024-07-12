@@ -1,0 +1,5 @@
+fun named() {}
+var anonymous = fun() {};
+
+print named; // prints <function named>
+print anonymous; // prints <function <lambda> at 2:16>

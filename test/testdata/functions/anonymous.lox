@@ -1,0 +1,14 @@
+fun applyToRange(start, end, f) {
+    for (var i = start; i <= end; i = i + 1) {
+        f(i);
+    }
+}
+
+// prints 2
+// prints 4
+// prints 6
+// prints 8
+// prints 10
+applyToRange(1, 5, fun(i) {
+    print i * 2;
+});

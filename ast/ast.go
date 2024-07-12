@@ -191,6 +191,17 @@ type expr struct{}
 
 func (expr) isExpr() {}
 
+// FunExpr is a function expression, such as fun(x, y) { return x + y; }.
+type FunExpr struct {
+	Fun    token.Token
+	Params []token.Token `print:"named"`
+	Body   BlockStmt     `print:"named"`
+	expr
+}
+
+func (d FunExpr) Start() token.Position { return d.Fun.Start }
+func (d FunExpr) End() token.Position   { return d.Body.End() }
+
 // GroupExpr is a group expression, such as (a + b).
 type GroupExpr struct {
 	LeftParen  token.Token

@@ -52,40 +52,6 @@ print false; // prints false
 print nil; // prints nil
 ```
 
-#### Variable Expression
-
-A variable expression produces the value of a variable. It is not valid to access an uninitialised
-variable.
-
-```lox
-var a = 1;
-print a; // prints 1
-```
-
-#### Call Expression
-
-A call expression calls a function with arguments.
-
-```lox
-fun add(a, b) {
-    return a + b;
-}
-
-print add(1, 2); // prints 3
-```
-
-#### Assignment Expression
-
-An assignment expression assigns a value to a variable and produces the value.
-
-```lox
-var a;
-a = 1;
-print a; // prints 1
-print a = 2; // prints 2
-print a; // prints 2
-```
-
 #### Unary Expression
 
 A unary expression is an operator followed by a single operand.
@@ -147,12 +113,59 @@ print true ? 1 : 2; // prints 1
 print "" ? 1 : 2;   // prints 2
 ```
 
+#### Variable Expression
+
+A variable expression produces the value of a variable. It is not valid to access an uninitialised
+variable.
+
+```lox
+var a = 1;
+print a; // prints 1
+```
+
+#### Assignment Expression
+
+An assignment expression assigns a value to a variable and produces the value.
+
+```lox
+var a;
+a = 1;
+print a; // prints 1
+print a = 2; // prints 2
+print a; // prints 2
+```
+
+#### Call Expression
+
+A call expression calls a function with arguments.
+
+```lox
+fun add(a, b) {
+    return a + b;
+}
+
+print add(1, 2); // prints 3
+```
+
+#### Function Expression
+
+A function expression creates an anonymous function.
+
+```lox
+var add = fun(a, b) {
+    return a + b;
+};
+
+print add(1, 2); // prints 3
+```
+
 #### Operator Precedence and Associativity
 
 From highest to lowest:
 
 | Operators | Associativity |
 | --------- | ------------- |
+| ()        | left-to-right |
 | ! -       | right-to-left |
 | \* / %    | left-to-right |
 | + -       | left-to-right |
@@ -240,55 +253,6 @@ while (i < 3) {
 }
 ```
 
-#### Break Statement
-
-A break statement immediately exits the innermost enclosing loop.
-
-```lox
-for (var i = 0; i < 3; i++) {
-    if (i == 1) {
-        break;
-    }
-    print i; // prints 0
-}
-```
-
-#### Continue Statement
-
-A continue statement immediately jumps to the end of the innermost enclosing for or while loop.
-
-```lox
-for (var i = 0; i < 5; i++) {
-    if (i % 2 == 1) {
-        continue;
-    }
-    // prints 0
-    // prints 2
-    // prints 4
-    print i;
-}
-```
-
-#### Return Statement
-
-A return statement immediately exits the enclosing function and optionally returns a value to the
-caller.
-
-```lox
-fun add(a, b) {
-    return a + b;
-}
-
-fun greet() {
-    print "Hello, World!";
-    return;
-    print "This is unreachable";
-}
-
-print add(1, 2); // prints 3
-greet(); // prints Hello, World!
-```
-
 #### For Statement
 
 A for statement is syntactic sugar for a while statement which initialises a variable before the
@@ -336,6 +300,55 @@ for (i = 0; i < 3; i = i + 1) {
     // prints 2
     print i;
 }
+```
+
+#### Break Statement
+
+A break statement immediately exits the innermost enclosing loop.
+
+```lox
+for (var i = 0; i < 3; i++) {
+    if (i == 1) {
+        break;
+    }
+    print i; // prints 0
+}
+```
+
+#### Continue Statement
+
+A continue statement immediately jumps to the end of the innermost enclosing for or while loop.
+
+```lox
+for (var i = 0; i < 5; i++) {
+    if (i % 2 == 1) {
+        continue;
+    }
+    // prints 0
+    // prints 2
+    // prints 4
+    print i;
+}
+```
+
+#### Return Statement
+
+A return statement immediately exits the enclosing function and optionally returns a value to the
+caller.
+
+```lox
+fun add(a, b) {
+    return a + b;
+}
+
+fun greet() {
+    print "Hello, World!";
+    return;
+    print "This is unreachable";
+}
+
+print add(1, 2); // prints 3
+greet(); // prints Hello, World!
 ```
 
 ### Declarations
@@ -436,10 +449,12 @@ multiplicative_expr = unary_expr ( ( "*" | "/" | "%" ) unary_expr )* ;
 unary_expr          = ( "!" | "-" ) unary_expr | call_expr ;
 call_expr           = primary_expr ( "(" arguments? ")" )* ;
 arguments           = assignment_expr ( "," assignment_expr )* ;
-primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | "(" expr ")" | IDENT
+primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | IDENT | group_expr | fun_expr
                     /* Error productions */
                     | ( "==" | "!=" ) relational_expr
                     | ( "<" | "<=" | ">" | ">=" ) additive_expr
                     | "+" multiplicative_expr
                     | ( "*" | "/" ) unary_expr ;
+group_expr          = "(" expr ")" ;
+fun_expr            = "fun" "(" parameters? ")" block_stmt ;
 ```
