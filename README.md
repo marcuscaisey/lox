@@ -1,28 +1,11 @@
-# Golox [![CI](https://github.com/marcuscaisey/golox/actions/workflows/ci.yml/badge.svg)](https://github.com/marcuscaisey/golox/actions/workflows/ci.yml)
+# Lox [![CI](https://github.com/marcuscaisey/lox/actions/workflows/ci.yml/badge.svg)](https://github.com/marcuscaisey/lox/actions/workflows/ci.yml)
 
-Golox is a Go implementation of the Lox programming language as defined in the book [Crafting
-Interpreters](https://craftinginterpreters.com/).
+Lox is the dynamically typed programming language defined in the book [Crafting
+Interpreters](https://craftinginterpreters.com). This repository contains:
+
+- A Go implementation of the language: [golox](golox)
 
 Working Lox code examples can be found under [test/testdata](test/testdata).
-
-## Installation
-
-```sh
-go install github.com/marcuscaisey/golox@latest
-```
-
-## Usage
-
-```
-Usage: golox [options] [script]
-
-Options:
-  -c string
-        Program passed in as string
-  -p    Print the AST only
-```
-
-If no script is provided, a REPL is started, otherwise the supplied script is executed.
 
 ## Language
 

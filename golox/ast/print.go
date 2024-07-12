@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/marcuscaisey/golox/token"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 // Print prints an AST Node to stdout as an indented s-expression.

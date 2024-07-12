@@ -9,8 +9,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 
-	"github.com/marcuscaisey/golox/ast"
-	"github.com/marcuscaisey/golox/token"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 type stmtResult interface {

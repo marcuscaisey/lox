@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/marcuscaisey/golox/token"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 const eof = -1

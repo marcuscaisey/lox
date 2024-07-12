@@ -1,14 +1,18 @@
+.PHONY: golox test update_tests
+
 BUILD_DIR = ${PWD}/build
+GOLOX_BUILD_PATH = ${BUILD_DIR}/golox
 
 golox:
-	go build -o ${BUILD_DIR}/golox .
+	go build -o ${GOLOX_BUILD_PATH} github.com/marcuscaisey/lox/golox
 
 extra_test_args =
 ifdef RUN
 	extra_test_args = -run ${RUN}
 endif
-test: golox
-	go run github.com/rakyll/gotest ./test -interpreter ${BUILD_DIR}/golox ${extra_test_args}
+
+test_golox: golox
+	go run github.com/rakyll/gotest ./test -interpreter ${GOLOX_BUILD_PATH} ${extra_test_args}
 
 update_tests: golox
-	go run github.com/rakyll/gotest ./test -interpreter ${BUILD_DIR}/golox -update
+	go run github.com/rakyll/gotest ./test -interpreter ${GOLOX_BUILD_PATH} -update

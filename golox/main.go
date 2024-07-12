@@ -16,9 +16,9 @@ import (
 
 	"github.com/chzyer/readline"
 
-	"github.com/marcuscaisey/golox/ast"
-	"github.com/marcuscaisey/golox/interpreter"
-	"github.com/marcuscaisey/golox/parser"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/interpreter"
+	"github.com/marcuscaisey/lox/golox/parser"
 )
 
 var (

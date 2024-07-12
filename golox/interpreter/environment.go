@@ -3,7 +3,7 @@ package interpreter
 import (
 	"fmt"
 
-	"github.com/marcuscaisey/golox/token"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 type environment struct {

@@ -1,4 +1,4 @@
-module github.com/marcuscaisey/golox
+module github.com/marcuscaisey/lox
 
 go 1.21.1
 

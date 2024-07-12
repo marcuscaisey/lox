@@ -8,8 +8,8 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/marcuscaisey/golox/ast"
-	"github.com/marcuscaisey/golox/token"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 // loxType is the string representation of a Lox object's type.
