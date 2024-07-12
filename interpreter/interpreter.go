@@ -150,9 +150,12 @@ func (i *Interpreter) interpretPrintStmt(env *environment, stmt ast.PrintStmt) {
 }
 
 func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) stmtResult {
-	childEnv := env.Child()
-	for _, stmt := range stmt.Stmts {
-		result := i.interpretStmt(childEnv, stmt)
+	return i.executeBlock(env.Child(), stmt.Stmts)
+}
+
+func (i *Interpreter) executeBlock(env *environment, stmts []ast.Stmt) stmtResult {
+	for _, stmt := range stmts {
+		result := i.interpretStmt(env, stmt)
 		if _, ok := result.(stmtResultNone); !ok {
 			return result
 		}

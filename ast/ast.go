@@ -43,15 +43,16 @@ func (d VarDecl) End() token.Position   { return d.Semicolon.End }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {
-	Fun    token.Token
-	Name   token.Token   `print:"named"`
-	Params []token.Token `print:"named"`
-	Body   BlockStmt     `print:"named"`
+	Fun        token.Token
+	Name       token.Token   `print:"named"`
+	Params     []token.Token `print:"named"`
+	Body       []Stmt        `print:"named"`
+	RightBrace token.Token
 	stmt
 }
 
 func (d FunDecl) Start() token.Position { return d.Fun.Start }
-func (d FunDecl) End() token.Position   { return d.Body.End() }
+func (d FunDecl) End() token.Position   { return d.RightBrace.End }
 
 // ExprStmt is an expression statement, such as a function call.
 type ExprStmt struct {
@@ -193,14 +194,15 @@ func (expr) isExpr() {}
 
 // FunExpr is a function expression, such as fun(x, y) { return x + y; }.
 type FunExpr struct {
-	Fun    token.Token
-	Params []token.Token `print:"named"`
-	Body   BlockStmt     `print:"named"`
+	Fun        token.Token
+	Params     []token.Token `print:"named"`
+	Body       []Stmt        `print:"named"`
+	RightBrace token.Token
 	expr
 }
 
 func (d FunExpr) Start() token.Position { return d.Fun.Start }
-func (d FunExpr) End() token.Position   { return d.Body.End() }
+func (d FunExpr) End() token.Position   { return d.RightBrace.End }
 
 // GroupExpr is a group expression, such as (a + b).
 type GroupExpr struct {

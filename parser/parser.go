@@ -140,7 +140,7 @@ func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 	}
 }
 
-func (p *parser) parseFunParamsAndBody() ([]token.Token, ast.BlockStmt) {
+func (p *parser) parseFunParamsAndBody() ([]token.Token, []ast.Stmt) {
 	leftParen := p.expectf(token.LeftParen, "expected parameter list inside %h%h", token.LeftParen, token.RightParen)
 	var params []token.Token
 	if !p.match(token.RightParen) {
@@ -150,7 +150,7 @@ func (p *parser) parseFunParamsAndBody() ([]token.Token, ast.BlockStmt) {
 	}
 	leftBrace := p.expectf(token.LeftBrace, "expected block for function body")
 	body := p.parseBlock(leftBrace)
-	return params, body
+	return params, body.Stmts
 }
 
 func (p *parser) parseParams(context string) []token.Token {

@@ -38,6 +38,7 @@ type loxObject interface {
 	String() string
 	Type() loxType
 	IsTruthy() loxBool
+	// TODO: Extract these out to separate interface(s)?
 	UnaryOp(op token.Token) loxObject
 	BinaryOp(op token.Token, right loxObject) loxObject
 }
@@ -226,7 +227,7 @@ func (n loxNil) BinaryOp(op token.Token, right loxObject) loxObject {
 type loxFunction struct {
 	name    string
 	params  []token.Token
-	body    ast.BlockStmt
+	body    []ast.Stmt
 	closure *environment
 }
 
@@ -269,7 +270,7 @@ func (f loxFunction) Call(interpreter *Interpreter, env *environment, args []lox
 	for i, param := range f.Params() {
 		childEnv.Set(param, args[i])
 	}
-	result := interpreter.interpretBlockStmt(childEnv, f.body)
+	result := interpreter.executeBlock(childEnv, f.body)
 	if r, ok := result.(stmtResultReturn); ok {
 		return r.Value
 	}
