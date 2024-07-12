@@ -1,0 +1,475 @@
+================================================================================
+Expression Statement
+================================================================================
+
+1 + 2;
+
+--------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (binary_expression
+      left: (number)
+      right: (number))))
+
+================================================================================
+Print Statement
+================================================================================
+
+print 1 + 2;
+
+--------------------------------------------------------------------------------
+
+(program
+  (print_statement
+    (binary_expression
+      left: (number)
+      right: (number))))
+
+================================================================================
+Block Statement
+================================================================================
+
+var a = 1;
+{
+    var a = 2;
+    print a;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_declaration
+    (identifier)
+    (number))
+  (block_statement
+    (variable_declaration
+      (identifier)
+      (number))
+    (print_statement
+      (identifier))))
+
+================================================================================
+If Statement
+================================================================================
+
+if (1 < 2) {
+    print 3;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    then: (block_statement
+      (print_statement
+        (number)))))
+
+================================================================================
+If Statement - Else
+================================================================================
+
+if (1 < 2) {
+    print 3;
+} else {
+    print 4;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    then: (block_statement
+      (print_statement
+        (number)))
+    else: (block_statement
+      (print_statement
+        (number)))))
+
+================================================================================
+If Statement - Else If
+================================================================================
+
+if (1 < 2) {
+    print 3;
+} else if (4 < 5) {
+    print 6;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    then: (block_statement
+      (print_statement
+        (number)))
+    else: (if_statement
+      condition: (binary_expression
+        left: (number)
+        right: (number))
+      then: (block_statement
+        (print_statement
+          (number))))))
+
+================================================================================
+If Statement - Nested
+================================================================================
+
+if (1 < 2) {
+    if (3 < 4) {
+        print 5;
+    }
+    print 6;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    then: (block_statement
+      (if_statement
+        condition: (binary_expression
+          left: (number)
+          right: (number))
+        then: (block_statement
+          (print_statement
+            (number))))
+      (print_statement
+        (number)))))
+
+================================================================================
+If Statement - No Block
+================================================================================
+
+if (1 < 2)
+    print 3;
+else
+    print 4;
+
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    then: (print_statement
+      (number))
+    else: (print_statement
+      (number))))
+
+================================================================================
+If Statement - Associativity
+================================================================================
+
+if (1 < 2)
+    if (3 < 4)
+        print 5;
+    else
+        print 6;
+
+--------------------------------------------------------------------------------
+
+(program
+  (if_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    then: (if_statement
+      condition: (binary_expression
+        left: (number)
+        right: (number))
+      then: (print_statement
+        (number))
+      else: (print_statement
+        (number)))))
+
+================================================================================
+While Statement
+================================================================================
+
+while (1 < 2) {
+    print 3;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (while_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    body: (block_statement
+      (print_statement
+        (number)))))
+
+================================================================================
+While Statement - Nested
+================================================================================
+
+while (1 < 2) {
+    while (3 < 4) {
+        print 5;
+    }
+    print 6;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (while_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    body: (block_statement
+      (while_statement
+        condition: (binary_expression
+          left: (number)
+          right: (number))
+        body: (block_statement
+          (print_statement
+            (number))))
+      (print_statement
+        (number)))))
+
+================================================================================
+While Statement - No Block
+================================================================================
+
+while (1 < 2)
+    print 3;
+
+--------------------------------------------------------------------------------
+
+(program
+  (while_statement
+    condition: (binary_expression
+      left: (number)
+      right: (number))
+    body: (print_statement
+      (number))))
+
+================================================================================
+For Statement
+================================================================================
+
+for (var i = 0; i < 3; i = i + 1) {
+    print i;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (for_statement
+    initialiser: (variable_declaration
+      name: (identifier)
+      initialiser: (number))
+    condition: (binary_expression
+      left: (identifier)
+      right: (number))
+    update: (assignment_expression
+      left: (identifier)
+      right: (binary_expression
+        left: (identifier)
+        right: (number)))
+    body: (block_statement
+      (print_statement
+        (identifier)))))
+
+================================================================================
+For Statement - Assign Initialiser
+================================================================================
+
+var i;
+for (i = 0; i < 3; i = i + 1) {
+    print i;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_declaration
+    name: (identifier))
+  (for_statement
+    initialiser: (expression_statement
+      (assignment_expression
+        left: (identifier)
+        right: (number)))
+    condition: (binary_expression
+      left: (identifier)
+      right: (number))
+    update: (assignment_expression
+      left: (identifier)
+      right: (binary_expression
+        left: (identifier)
+        right: (number)))
+    body: (block_statement
+      (print_statement
+        (identifier)))))
+
+================================================================================
+For Statement - Nested
+================================================================================
+
+for (var i = 0; i < 3; i = i + 1) {
+    for (var j = 0; j < 2; j = j + 1) {
+        print j + 2 * i;
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (for_statement
+    initialiser: (variable_declaration
+      name: (identifier)
+      initialiser: (number))
+    condition: (binary_expression
+      left: (identifier)
+      right: (number))
+    update: (assignment_expression
+      left: (identifier)
+      right: (binary_expression
+        left: (identifier)
+        right: (number)))
+    body: (block_statement
+      (for_statement
+        initialiser: (variable_declaration
+          name: (identifier)
+          initialiser: (number))
+        condition: (binary_expression
+          left: (identifier)
+          right: (number))
+        update: (assignment_expression
+          left: (identifier)
+          right: (binary_expression
+            left: (identifier)
+            right: (number)))
+        body: (block_statement
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (binary_expression
+                left: (number)
+                right: (identifier)))))))))
+
+================================================================================
+For Statement - No Block
+================================================================================
+
+for (var i = 0; i < 3; i = i + 1)
+    print i;
+
+--------------------------------------------------------------------------------
+
+(program
+  (for_statement
+    initialiser: (variable_declaration
+      name: (identifier)
+      initialiser: (number))
+    condition: (binary_expression
+      left: (identifier)
+      right: (number))
+    update: (assignment_expression
+      left: (identifier)
+      right: (binary_expression
+        left: (identifier)
+        right: (number)))
+    body: (print_statement
+      (identifier))))
+
+================================================================================
+For Statement - Optional Parts
+================================================================================
+
+for (; a < 3; a = a + 1) {
+    print a;
+}
+
+for (var b = 0;; b = b + 1) {
+    print b;
+}
+
+for (var c = 0; c < 3;) {
+    print c;
+}
+
+for (;;) {
+    print d;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (for_statement
+    condition: (binary_expression
+      left: (identifier)
+      right: (number))
+    update: (assignment_expression
+      left: (identifier)
+      right: (binary_expression
+        left: (identifier)
+        right: (number)))
+    body: (block_statement
+      (print_statement
+        (identifier))))
+  (for_statement
+    initialiser: (variable_declaration
+      name: (identifier)
+      initialiser: (number))
+    update: (assignment_expression
+      left: (identifier)
+      right: (binary_expression
+        left: (identifier)
+        right: (number)))
+    body: (block_statement
+      (print_statement
+        (identifier))))
+  (for_statement
+    initialiser: (variable_declaration
+      name: (identifier)
+      initialiser: (number))
+    condition: (binary_expression
+      left: (identifier)
+      right: (number))
+    body: (block_statement
+      (print_statement
+        (identifier))))
+  (for_statement
+    body: (block_statement
+      (print_statement
+        (identifier)))))
+
+================================================================================
+Break Statement
+================================================================================
+
+break;
+
+--------------------------------------------------------------------------------
+
+(program
+  (break_statement))
+
+================================================================================
+Continue Statement
+================================================================================
+
+continue;
+
+--------------------------------------------------------------------------------
+
+(program
+  (continue_statement))

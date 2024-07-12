@@ -1,0 +1,89 @@
+// Literal Expression
+1;
+// <- number
+"one";
+// <- string
+true;
+// <- boolean
+nil;
+// <- constant.builtin
+
+// Identifier Expression
+foo;
+// <- variable
+
+// Assignment Expression
+foo = 1;
+// <- variable
+//  ^ operator
+
+// Function Expression
+fun(x, y) {
+// <- keyword.function
+// ^ punctuation.bracket
+//  ^ variable.parameter
+//   ^ punctuation.delimiter
+//     ^ variable.parameter
+//      ^ punctuation.bracket
+    return x + y;
+};
+
+
+// Group expression
+( 1 );
+// <- punctuation.bracket
+//  ^ punctuation.bracket
+//   ^ punctuation.delimiter
+
+// Call Expression
+foo(1, 2);
+// <- function.call
+// ^ punctuation.bracket
+//   ^ punctuation.delimiter
+//      ^ punctuation.bracket
+//       ^ punctuation.delimiter
+
+// Builtin Call Expression
+clock();
+// <- function.builtin
+
+// Unary Expression
+!1;
+// <- operator
+-1;
+// <- operator
+
+// Binary Expression
+1, 2;
+ // <- punctuation.delimiter
+1 and 2;
+  // <- keyword.operator
+1 or 2;
+  // <- keyword.operator
+1 == 2;
+  // <- operator
+1 != 2;
+  // <- operator
+1 < 2;
+  // <- operator
+1 <= 2;
+  // <- operator
+1 > 2;
+  // <- operator
+1 >= 2;
+  // <- operator
+1 + 2;
+  // <- operator
+1 - 2;
+  // <- operator
+1 * 2;
+  // <- operator
+1 / 2;
+  // <- operator
+1 % 2;
+  // <- operator
+
+// Ternary expression
+1 ? 2 : 3;
+  // <- keyword.conditional.ternary
+  //  ^ keyword.conditional.ternary

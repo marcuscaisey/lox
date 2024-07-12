@@ -1,0 +1,105 @@
+================================================================================
+Variable Declaration
+================================================================================
+
+var foo;
+var bar = 1;
+
+--------------------------------------------------------------------------------
+
+(program
+  (variable_declaration
+    name: (identifier))
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number)))
+
+================================================================================
+Function Declaration - No Parameters
+================================================================================
+
+fun greet() {
+    print "Hello, World!";
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (function_declaration
+    name: (identifier)
+    parameters: (parameters)
+    body: (block_statement
+      (print_statement
+        (string)))))
+
+================================================================================
+Function Declaration - One Parameter
+================================================================================
+
+fun id(x) {
+    return x;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (function_declaration
+    name: (identifier)
+    parameters: (parameters
+      (identifier))
+    body: (block_statement
+      (return_statement
+        (identifier)))))
+
+================================================================================
+Function Declaration - Two Parameters
+================================================================================
+
+fun add(x, y) {
+    return x + y;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (function_declaration
+    name: (identifier)
+    parameters: (parameters
+      (identifier)
+      (identifier))
+    body: (block_statement
+      (return_statement
+        (binary_expression
+          left: (identifier)
+          right: (identifier))))))
+
+================================================================================
+Function Declaration - Nested
+================================================================================
+
+fun add(x) {
+    fun add(y) {
+        return x + y;
+    }
+    return add;
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (function_declaration
+    name: (identifier)
+    parameters: (parameters
+      (identifier))
+    body: (block_statement
+      (function_declaration
+        name: (identifier)
+        parameters: (parameters
+          (identifier))
+        body: (block_statement
+          (return_statement
+            (binary_expression
+              left: (identifier)
+              right: (identifier)))))
+      (return_statement
+        (identifier)))))

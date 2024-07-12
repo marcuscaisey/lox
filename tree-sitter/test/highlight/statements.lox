@@ -1,0 +1,48 @@
+// Print Statement
+print 1;
+// <- keyword
+
+// Block Statement
+{
+// <- punctuation.bracket
+    var a = 1;
+}
+// <- punctuation.bracket
+
+// If Statement
+if (1 < 2) {
+// <- keyword.conditional
+// ^ punctuation.bracket
+//       ^ punctuation.bracket
+    print 3;
+} else {
+  // <- keyword.conditional
+    print 4;
+}
+
+// While Statement
+while (1 < 2) {
+// <- keyword.repeat
+   // ^ punctuation.bracket
+   //       ^ punctuation.bracket
+    print 3;
+}
+
+// For Statement
+for (var i = 0; i < 10; i = i + 1) {
+// <- keyword.repeat
+//  ^ punctuation.bracket
+//                               ^ punctuation.bracket
+    print 3;
+}
+
+// Break Statement
+break;
+// <- keyword
+
+// Continue Statement
+continue;
+// <- keyword
+
+return 1;
+// <- keyword

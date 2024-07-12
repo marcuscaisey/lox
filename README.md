@@ -4,6 +4,8 @@ Lox is the dynamically typed programming language defined in the book [Crafting
 Interpreters](https://craftinginterpreters.com). This repository contains:
 
 - A Go implementation of the language: [golox](golox)
+- A grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter):
+  [tree-sitter](tree-sitter)
 
 Working Lox code examples can be found under [test/testdata](test/testdata).
 

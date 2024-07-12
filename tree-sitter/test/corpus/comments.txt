@@ -1,0 +1,46 @@
+================================================================================
+Single-Line Comment
+================================================================================
+
+// Comment on its own line 1
+// Comment on its own line 2
+print 1; // Comment after statement
+print 2;
+
+--------------------------------------------------------------------------------
+
+(program
+  (comment)
+  (comment)
+  (print_statement
+    (number))
+  (comment)
+  (print_statement
+    (number)))
+
+================================================================================
+Multi-Line Comment
+================================================================================
+
+/*
+ * Comment on its own line
+ */
+/* Comment before statement */ print /* Comment in middle of statement */ 1; /* Comment after statement */
+/*
+ * /* Nested comment */
+ */
+print 2;
+
+--------------------------------------------------------------------------------
+
+(program
+  (comment)
+  (comment)
+  (print_statement
+    (comment)
+    (number))
+  (comment)
+  (comment
+    (comment))
+  (print_statement
+    (number)))

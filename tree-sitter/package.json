@@ -1,0 +1,41 @@
+{
+  "name": "tree-sitter-lox",
+  "version": "0.1.0",
+  "description": "Lox grammar for tree-sitter",
+  "scripts": {
+    "test": "tree-sitter generate && tree-sitter test",
+    "update_tests": "tree-sitter generate && tree-sitter test --update",
+    "build": "tree-sitter generate",
+    "parse": "tree-sitter generate && tree-sitter parse"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcuscaisey/lox.git"
+  },
+  "keywords": [
+    "parser",
+    "lox"
+  ],
+  "author": "Marcus Caisey",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/marcuscaisey/lox/issues"
+  },
+  "homepage": "https://github.com/marcuscaisey/lox#readme",
+  "dependencies": {
+    "nan": "^2.18.0"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.20.8"
+  },
+  "main": "bindings/node",
+  "tree-sitter": [
+    {
+      "scope": "source.lox",
+      "file-types": [
+        "lox"
+      ],
+      "highlights": "queries/lox/highlights.scm"
+    }
+  ]
+}
