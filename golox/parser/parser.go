@@ -546,7 +546,7 @@ func (e *syntaxError) Error() string {
 		return strings.TrimSuffix(b.String(), "\n")
 	}
 
-	bold.Fprintln(&b, e.start, ": ", red.Sprint("syntax error: "), e.msg)
+	bold.Fprint(&b, e.start, ": ", red.Sprint("syntax error: "), e.msg, "\n")
 
 	lines := make([]string, e.end.Line-e.start.Line+1)
 	for i := e.start.Line; i <= e.end.Line; i++ {

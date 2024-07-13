@@ -397,7 +397,7 @@ func (e *runtimeError) Error() string {
 	line := e.start.File.Line(e.start.Line)
 
 	var b strings.Builder
-	bold.Fprintln(&b, e.start, ": ", red.Sprint("runtime error: "), e.msg)
+	bold.Fprint(&b, e.start, ": ", red.Sprint("runtime error: "), e.msg, "\n")
 	fmt.Fprintln(&b, string(line))
 	fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(line[:e.start.Column]))))
 	red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(line[e.start.Column:e.end.Column]))))
