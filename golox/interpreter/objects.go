@@ -47,7 +47,7 @@ type loxCallable interface {
 	loxObject
 	Name() string
 	Params() []string
-	Call(i *Interpreter, env *environment, args []loxObject) loxObject
+	Call(i *Interpreter, args []loxObject) loxObject
 }
 
 func invalidUnaryOpError(op token.Token, object loxObject) error {
@@ -265,7 +265,7 @@ func (f loxFunction) Params() []string {
 	return params
 }
 
-func (f loxFunction) Call(interpreter *Interpreter, env *environment, args []loxObject) loxObject {
+func (f loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject {
 	childEnv := f.closure.Child()
 	for i, param := range f.Params() {
 		childEnv.Set(param, args[i])
@@ -313,6 +313,6 @@ func (f loxBuiltinFunction) Params() []string {
 	return f.params
 }
 
-func (f loxBuiltinFunction) Call(_ *Interpreter, _ *environment, args []loxObject) loxObject {
+func (f loxBuiltinFunction) Call(_ *Interpreter, args []loxObject) loxObject {
 	return f.fn(args)
 }

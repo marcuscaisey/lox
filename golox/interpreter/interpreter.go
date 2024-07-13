@@ -320,7 +320,7 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 		))
 	}
 
-	return callable.Call(i, env, args)
+	return callable.Call(i, args)
 }
 
 func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
