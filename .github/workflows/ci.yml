@@ -20,3 +20,16 @@ jobs:
         run: make golox
       - name: Test
         run: make test_golox
+
+  golangci_lint:
+    name: Lint Go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: go.mod
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
