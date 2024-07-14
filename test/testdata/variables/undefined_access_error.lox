@@ -1,1 +1,2 @@
-print a + 1; // runtime error: a has not been defined
+var a;
+print a; // runtime error: a has not been defined

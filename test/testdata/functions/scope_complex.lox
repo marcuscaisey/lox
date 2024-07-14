@@ -1,0 +1,17 @@
+var x = "global x";
+var y;
+
+{
+  fun f() {
+    y = "global y";
+    print x;
+  }
+
+  f(); // prints global x
+  var x = "local x";
+  var y = "local y";
+  f(); // prints global x
+  print y; // prints local y
+}
+
+print y; // prints global y

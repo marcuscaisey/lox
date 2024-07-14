@@ -2,5 +2,4 @@ fun f(x) {
     var x = 1;
 }
 
-// runtime error: x has already been defined
-f(1);
+f(1); // runtime error: x has already been declared

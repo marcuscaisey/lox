@@ -37,8 +37,9 @@ func (stmtResultReturn) stmtResult() {}
 
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
-	globals  *environment
-	replMode bool
+	globals                   *environment
+	localDeclDistancesByIdent map[token.Token]int
+	replMode                  bool
 }
 
 // Option can be passed to New to configure the interpreter.
@@ -69,7 +70,7 @@ func New(opts ...Option) *Interpreter {
 
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
-func (i *Interpreter) Interpret(program ast.Program) (err error) {
+func (i *Interpreter) Interpret(program ast.Program, localDeclDistancesByIdent map[token.Token]int) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if runtimeErr, ok := r.(*runtimeError); ok {
@@ -79,6 +80,7 @@ func (i *Interpreter) Interpret(program ast.Program) (err error) {
 			}
 		}
 	}()
+	i.localDeclDistancesByIdent = localDeclDistancesByIdent
 	i.interpretProgram(program)
 	return nil
 }
@@ -226,7 +228,7 @@ func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
 	case ast.FunExpr:
 		return i.interpretFunExpr(env, expr)
 	case ast.GroupExpr:
-		return i.interpretExpr(env, expr.Expr)
+		return i.interpretGroupExpr(env, expr)
 	case ast.LiteralExpr:
 		return i.interpretLiteralExpr(expr)
 	case ast.VariableExpr:
@@ -255,6 +257,10 @@ func (i *Interpreter) interpretFunExpr(env *environment, expr ast.FunExpr) loxOb
 	}
 }
 
+func (i *Interpreter) interpretGroupExpr(env *environment, expr ast.GroupExpr) loxObject {
+	return i.interpretExpr(env, expr.Expr)
+}
+
 func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
 	switch tok := expr.Value; tok.Type {
 	case token.Number:
@@ -275,7 +281,15 @@ func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
 }
 
 func (i *Interpreter) interpretVariableExpr(env *environment, expr ast.VariableExpr) loxObject {
-	return env.Get(expr.Name)
+	return i.resolveIdent(env, expr.Name)
+}
+
+func (i *Interpreter) resolveIdent(env *environment, tok token.Token) loxObject {
+	distance, ok := i.localDeclDistancesByIdent[tok]
+	if ok {
+		return env.GetAt(distance, tok)
+	}
+	return i.globals.Get(tok)
 }
 
 func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) loxObject {
@@ -380,7 +394,12 @@ func (i *Interpreter) interpretTernaryExpr(env *environment, expr ast.TernaryExp
 
 func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.AssignmentExpr) loxObject {
 	value := i.interpretExpr(env, expr.Right)
-	env.Assign(expr.Left, value)
+	distance, ok := i.localDeclDistancesByIdent[expr.Left]
+	if ok {
+		env.AssignAt(distance, expr.Left, value)
+	} else {
+		i.globals.Assign(expr.Left, value)
+	}
 	return value
 }
 
@@ -388,21 +407,6 @@ type runtimeError struct {
 	start token.Position
 	end   token.Position
 	msg   string
-}
-
-func (e *runtimeError) Error() string {
-	bold := color.New(color.Bold)
-	red := color.New(color.FgRed)
-
-	line := e.start.File.Line(e.start.Line)
-
-	var b strings.Builder
-	bold.Fprint(&b, e.start, ": ", red.Sprint("runtime error: "), e.msg, "\n")
-	fmt.Fprintln(&b, string(line))
-	fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(line[:e.start.Column]))))
-	red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(line[e.start.Column:e.end.Column]))))
-
-	return b.String()
 }
 
 func newRuntimeErrorf(start token.Position, end token.Position, format string, args ...interface{}) *runtimeError {
@@ -423,4 +427,19 @@ func newNodeRuntimeErrorf(node ast.Node, format string, args ...interface{}) *ru
 
 func newNodeRangeRuntimeErrorf(start, end ast.Node, format string, args ...interface{}) *runtimeError {
 	return newRuntimeErrorf(start.Start(), end.End(), format, args...)
+}
+
+func (e *runtimeError) Error() string {
+	bold := color.New(color.Bold)
+	red := color.New(color.FgRed)
+
+	line := e.start.File.Line(e.start.Line)
+
+	var b strings.Builder
+	bold.Fprint(&b, e.start, ": ", red.Sprint("runtime error: "), e.msg, "\n")
+	fmt.Fprintln(&b, string(line))
+	fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(line[:e.start.Column]))))
+	red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(line[e.start.Column:e.end.Column]))))
+
+	return b.String()
 }

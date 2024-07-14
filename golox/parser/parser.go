@@ -44,7 +44,6 @@ func Parse(r io.Reader) (ast.Program, error) {
 	return p.Parse()
 }
 
-// parser parses Lox source code into an abstract syntax tree.
 type parser struct {
 	l            *lexer.Lexer
 	tok          token.Token // token currently being considered
