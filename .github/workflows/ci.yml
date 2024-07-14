@@ -51,6 +51,7 @@ jobs:
         with:
           node-version: latest
           cache: npm
+          cache-dependency-path: tree-sitter-lox/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Test
