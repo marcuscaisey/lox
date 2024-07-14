@@ -7,5 +7,5 @@
  */
 print 2;
 
-// prints 1
-// prints 2
+// prints: 1
+// prints: 2

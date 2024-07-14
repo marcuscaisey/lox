@@ -1,7 +1,7 @@
 var a = 2;
 var b = a + 3;
-print b; // prints 5
+print b; // prints: 5
 
 var c;
 c = 1;
-print c; // prints 1
+print c; // prints: 1

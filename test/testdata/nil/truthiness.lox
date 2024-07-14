@@ -1,1 +1,1 @@
-print nil ? "nil is truthy" : "nil is falsey"; // prints nil is falsey
+print nil ? "nil is truthy" : "nil is falsey"; // prints: nil is falsey

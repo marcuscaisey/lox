@@ -7,6 +7,6 @@ fun newCounter() {
 }
 
 var counter = newCounter();
-print counter(); // prints 1
-print counter(); // prints 2
-print counter(); // prints 3
+print counter(); // prints: 1
+print counter(); // prints: 2
+print counter(); // prints: 3

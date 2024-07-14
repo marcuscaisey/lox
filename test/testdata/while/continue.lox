@@ -4,8 +4,8 @@ while (i < 5) {
     if (i % 2 == 1) {
         continue;
     }
-    // prints 2
-    // prints 4
+    // prints: 2
+    // prints: 4
     print i;
 }
 
@@ -17,9 +17,9 @@ while (j < 3) {
         if (k == 2) {
             continue;
         }
-        // prints 0
-        // prints 1
-        // prints 2
+        // prints: 0
+        // prints: 1
+        // prints: 2
         print j;
     }
     j = j + 1;

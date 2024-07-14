@@ -1,4 +1,4 @@
-print 1 - 2.1; // prints -1.1
+print 1 - 2.1; // prints: -1.1
 
-print -1; // prints -1
-print --1; // prints 1
+print -1; // prints: -1
+print --1; // prints: 1

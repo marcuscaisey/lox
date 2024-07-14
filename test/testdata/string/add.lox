@@ -1,1 +1,1 @@
-print "foo" + "bar"; // prints foobar
+print "foo" + "bar"; // prints: foobar

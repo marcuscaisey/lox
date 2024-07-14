@@ -9,6 +9,6 @@ fun returnsNoValue() {
 
 fun noReturn() {}
 
-print returnsValue(); // prints return value
-print returnsNoValue(); // prints nil
-print noReturn(); // prints nil
+print returnsValue(); // prints: return value
+print returnsNoValue(); // prints: nil
+print noReturn(); // prints: nil

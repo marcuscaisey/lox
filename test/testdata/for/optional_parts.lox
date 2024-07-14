@@ -1,8 +1,8 @@
 var a = 0;
 for (; a < 3; a = a + 1) {
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print a;
 }
 
@@ -10,16 +10,16 @@ for (var b = 0;; b = b + 1) {
     if (b >= 3) {
         break;
     }
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print b;
 }
 
 for (var c = 0; c < 3;) {
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print c;
     c = c + 1;
 }
@@ -29,9 +29,9 @@ for (;;) {
     if (d >= 3) {
         break;
     }
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print d;
     d = d + 1;
 }

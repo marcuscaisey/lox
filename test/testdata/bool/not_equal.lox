@@ -1,5 +1,5 @@
-print true != true; // prints false
-print false != false; // prints false
-print true != false; // prints true
-print false != true; // prints true
-print false != 1; // prints true
+print true != true; // prints: false
+print false != false; // prints: false
+print true != false; // prints: true
+print false != true; // prints: true
+print false != 1; // prints: true

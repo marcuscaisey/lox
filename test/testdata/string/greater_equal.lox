@@ -1,6 +1,6 @@
-print "b" >= "a"; // prints true
-print "b" >= "b"; // prints true
-print "b" >= "c"; // prints false
-print "aa" >= "a"; // prints true
-print "a" >= "aa"; // prints false
-print "aa" >= "ab"; // prints false
+print "b" >= "a"; // prints: true
+print "b" >= "b"; // prints: true
+print "b" >= "c"; // prints: false
+print "aa" >= "a"; // prints: true
+print "a" >= "aa"; // prints: false
+print "aa" >= "ab"; // prints: false

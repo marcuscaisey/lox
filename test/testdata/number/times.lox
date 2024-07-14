@@ -1,5 +1,5 @@
-print 2 * 3.4; // prints 6.8
+print 2 * 3.4; // prints: 6.8
 
-print 0 * "hello"; // prints <empty>
-print 1 * "hello"; // prints hello
-print 2 * "hello"; // prints hellohello
+print 0 * "hello"; // prints: <empty>
+print 1 * "hello"; // prints: hello
+print 2 * "hello"; // prints: hellohello

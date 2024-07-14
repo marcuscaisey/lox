@@ -1,20 +1,20 @@
 var a = 1;
-print a; // prints 1
+print a; // prints: 1
 a = 2;
-print a; // prints 2
+print a; // prints: 2
 
 var b = 1;
-print b = 2; // prints 2
-print b; // prints 2
+print b = 2; // prints: 2
+print b; // prints: 2
 
 var c = 1;
 var d = 1;
 c = d = 2;
-print c; // prints 2
-print d; // prints 2
+print c; // prints: 2
+print d; // prints: 2
 
 var e = 1;
 var f;
-print e = f = 2; // prints 2
-print e; // prints 2
-print f; // prints 2
+print e = f = 2; // prints: 2
+print e; // prints: 2
+print f; // prints: 2

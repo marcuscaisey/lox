@@ -6,17 +6,17 @@ var c = "global c";
     var b = "outer b";
     {
         var a = "inner a";
-        print a; // prints inner a
-        print b; // prints outer b
-        print c; // prints global c
+        print a; // prints: inner a
+        print b; // prints: outer b
+        print c; // prints: global c
     }
-        print a; // prints outer a
-        print b; // prints outer b
-        print c; // prints global c
+        print a; // prints: outer a
+        print b; // prints: outer b
+        print c; // prints: global c
 }
-print a; // prints global a
-print b; // prints global b
-print c; // prints global c
+print a; // prints: global a
+print b; // prints: global b
+print c; // prints: global c
 
 var d = "global d";
 var e = "global e";
@@ -26,14 +26,14 @@ var f = "global f";
     e = "outer e";
     {
         d = "inner d";
-        print d; // prints inner d
-        print e; // prints outer e
-        print f; // prints global f
+        print d; // prints: inner d
+        print e; // prints: outer e
+        print f; // prints: global f
     }
-    print d; // prints inner d
-    print e; // prints outer e
-    print f; // prints global f
+    print d; // prints: inner d
+    print e; // prints: outer e
+    print f; // prints: global f
 }
-print d; // prints inner d
-print e; // prints outer e
-print f; // prints global f
+print d; // prints: inner d
+print e; // prints: outer e
+print f; // prints: global f

@@ -4,11 +4,11 @@ fun applyToRange(start, end, f) {
     }
 }
 
-// prints 2
-// prints 4
-// prints 6
-// prints 8
-// prints 10
+// prints: 2
+// prints: 4
+// prints: 6
+// prints: 8
+// prints: 10
 applyToRange(1, 5, fun(i) {
     print i * 2;
 });

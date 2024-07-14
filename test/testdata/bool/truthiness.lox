@@ -1,2 +1,2 @@
-print true ? "true is truthy" : "true is falsey"; // prints true is truthy
-print false ? "false is truthy" : "false is falsey"; // prints false is falsey
+print true ? "true is truthy" : "true is falsey"; // prints: true is truthy
+print false ? "false is truthy" : "false is falsey"; // prints: false is falsey

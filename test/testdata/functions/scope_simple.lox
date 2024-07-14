@@ -6,6 +6,6 @@ fun f() {
 var x = "global x";
 var y = "global y";
 
-f(); // prints global x
+f(); // prints: global x
 
-print y; // prints global y
+print y; // prints: global y

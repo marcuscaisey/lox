@@ -1,4 +1,4 @@
-print "a" == "a"; // prints true
-print "" == ""; // prints true
-print "a" == "b"; // prints false
-print "a" == 1; // prints false
+print "a" == "a"; // prints: true
+print "" == ""; // prints: true
+print "a" == "b"; // prints: false
+print "a" == 1; // prints: false

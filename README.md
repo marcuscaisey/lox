@@ -31,10 +31,10 @@ Expressions are constructs that produce a value.
 A literal expression produces a value directly.
 
 ```lox
-print 123.4; // prints 123.4
-print "hello"; // prints hello
-print false; // prints false
-print nil; // prints nil
+print 123.4; // prints: 123.4
+print "hello"; // prints: hello
+print false; // prints: false
+print nil; // prints: nil
 ```
 
 #### Unary Expression
@@ -47,8 +47,8 @@ A unary expression is an operator followed by a single operand.
 | -        | `number` | `number` | Negates the operand                   |
 
 ```lox
-print !""; // prints true
-print -1; // prints -1
+print !""; // prints: true
+print -1; // prints: -1
 ```
 
 #### Binary Expression
@@ -72,19 +72,19 @@ A binary expression is an operator surrounded by two operands.
 | ,         | All       | All       | Type of the right operand | Evaluates the left then right operand<br>Returns the second result     |
 
 ```lox
-print 2 * 3.5; // prints 7
-print 3 * "ab"; // prints "ababab"
-print 10 / 2; // prints 5
-print 3.5 % 2; // prints 1.5
-print 1 + 2; // prints 3
-print "a" + "b"; // prints "ab"
-print 3 - 1; // prints 2
-print 1 < 2; // prints true
-print "a" > "b"; // prints false
-print 1 == "1"; // prints false
-print 1 and "a"; // prints a
-print 1 or 2; // prints 1
-print 1, 2; // prints 2
+print 2 * 3.5; // prints: 7
+print 3 * "ab"; // prints: "ababab"
+print 10 / 2; // prints: 5
+print 3.5 % 2; // prints: 1.5
+print 1 + 2; // prints: 3
+print "a" + "b"; // prints: "ab"
+print 3 - 1; // prints: 2
+print 1 < 2; // prints: true
+print "a" > "b"; // prints: false
+print 1 == "1"; // prints: false
+print 1 and "a"; // prints: a
+print 1 or 2; // prints: 1
+print 1, 2; // prints: 2
 ```
 
 #### Ternary Expression
@@ -94,8 +94,8 @@ operand, and if it is truthy, it evaluates and returns the second operand. Other
 and returns the third operand.
 
 ```lox
-print true ? 1 : 2; // prints 1
-print "" ? 1 : 2;   // prints 2
+print true ? 1 : 2; // prints: 1
+print "" ? 1 : 2;   // prints: 2
 ```
 
 #### Variable Expression
@@ -105,7 +105,7 @@ variable.
 
 ```lox
 var a = 1;
-print a; // prints 1
+print a; // prints: 1
 ```
 
 #### Assignment Expression
@@ -115,9 +115,9 @@ An assignment expression assigns a value to a variable and produces the value.
 ```lox
 var a;
 a = 1;
-print a; // prints 1
-print a = 2; // prints 2
-print a; // prints 2
+print a; // prints: 1
+print a = 2; // prints: 2
+print a; // prints: 2
 ```
 
 #### Call Expression
@@ -129,7 +129,7 @@ fun add(a, b) {
     return a + b;
 }
 
-print add(1, 2); // prints 3
+print add(1, 2); // prints: 3
 ```
 
 #### Function Expression
@@ -141,7 +141,7 @@ var add = fun(a, b) {
     return a + b;
 };
 
-print add(1, 2); // prints 3
+print add(1, 2); // prints: 3
 ```
 
 #### Operator Precedence and Associativity
@@ -179,7 +179,7 @@ An expression statement evaluates an expression and discards the result.
 A print statement evaluates an expression and prints the result.
 
 ```lox
-print 1 + 2; // prints 3
+print 1 + 2; // prints: 3
 ```
 
 #### Block Statement
@@ -192,11 +192,11 @@ var a = "global a";
 var b = "global b";
 {
     var a = "outer a";
-    print a; // prints outer a
-    print b; // prints global b
+    print a; // prints: outer a
+    print b; // prints: global b
 }
-print a; // prints global a
-print b; // prints global b
+print a; // prints: global a
+print b; // prints: global b
 ```
 
 #### If Statement
@@ -206,20 +206,20 @@ optional else statement can be provided to execute a statement if the expression
 
 ```lox
 if (1 < 2) {
-    print "1 is less than 2"; // prints 1 is less than 2
+    print "1 is less than 2"; // prints: 1 is less than 2
 }
 
 
 if (1 > 2) {
     print "1 is greater than 2";
 } else {
-    print "1 is not greater than 2"; // prints 1 is not greater than 2
+    print "1 is not greater than 2"; // prints: 1 is not greater than 2
 }
 
 if (1 > 2) {
     print "1 is greater than 2";
 } else if (3 < 4) {
-    print "3 is less than 4"; // prints 3 is less than 4
+    print "3 is less than 4"; // prints: 3 is less than 4
 }
 ```
 
@@ -230,9 +230,9 @@ A while statement repeatedly executes a statement while the provided expression 
 ```lox
 var i = 0;
 while (i < 3) {
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print i;
     i = i + 1;
 }
@@ -248,9 +248,9 @@ The following while statement:
 ```lox
 var i = 0;
 while (i < 3) {
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print i;
     i = i + 1;
 }
@@ -260,9 +260,9 @@ is equivalent to the following for statement:
 
 ```lox
 for (var i = 0; i < 3; i = i + 1) {
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print i;
 }
 ```
@@ -280,9 +280,9 @@ The initialisation section can either be a variable declaration or an expression
 ```lox
 var i;
 for (i = 0; i < 3; i = i + 1) {
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print i;
 }
 ```
@@ -296,7 +296,7 @@ for (var i = 0; i < 3; i++) {
     if (i == 1) {
         break;
     }
-    print i; // prints 0
+    print i; // prints: 0
 }
 ```
 
@@ -309,9 +309,9 @@ for (var i = 0; i < 5; i++) {
     if (i % 2 == 1) {
         continue;
     }
-    // prints 0
-    // prints 2
-    // prints 4
+    // prints: 0
+    // prints: 2
+    // prints: 4
     print i;
 }
 ```
@@ -332,8 +332,8 @@ fun greet() {
     print "This is unreachable";
 }
 
-print add(1, 2); // prints 3
-greet(); // prints Hello, World!
+print add(1, 2); // prints: 3
+greet(); // prints: Hello, World!
 ```
 
 ### Declarations
@@ -347,9 +347,9 @@ initial value to the variable.
 
 ```lox
 var a;
-print a; // prints nil
+print a; // prints: nil
 var b = 1;
-print b; // prints 1
+print b; // prints: 1
 ```
 
 #### Function Declaration
@@ -363,7 +363,7 @@ fun add(a, b) {
     return a + b;
 }
 
-print add(1, 2); // prints 3
+print add(1, 2); // prints: 3
 ```
 
 ### Comments

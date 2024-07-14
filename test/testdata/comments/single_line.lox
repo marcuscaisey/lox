@@ -3,5 +3,5 @@
 print 1; // Comment after statement
 print 2;
 
-// prints 1
-// prints 2
+// prints: 1
+// prints: 2

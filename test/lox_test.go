@@ -18,8 +18,13 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-var interpreter = flag.String("interpreter", "", "path to the interpreter to test")
-var update = flag.Bool("update", false, "updates the expected output of each test")
+var (
+	interpreter = flag.String("interpreter", "", "path to the interpreter to test")
+	update      = flag.Bool("update", false, "updates the expected output of each test")
+
+	printsRe = regexp.MustCompile(`// prints: (.+)`)
+	errorRe  = regexp.MustCompile(`// error: (.+)`)
+)
 
 func TestMain(m *testing.M) {
 	flag.Parse()
@@ -165,8 +170,6 @@ func parseExpectedResult(t *testing.T, path string) result {
 	return r
 }
 
-var printsRe = regexp.MustCompile(`// prints (.+)`)
-
 func parseExpectedStdout(data []byte) []byte {
 	var b bytes.Buffer
 	for _, match := range printsRe.FindAllSubmatch(data, -1) {
@@ -180,8 +183,7 @@ func parseExpectedStdout(data []byte) []byte {
 
 func parseExpectedErrors(data []byte) [][]byte {
 	var errors [][]byte
-	re := regexp.MustCompile(`// error: (.+)`)
-	for _, match := range re.FindAllSubmatch(data, -1) {
+	for _, match := range errorRe.FindAllSubmatch(data, -1) {
 		errors = append(errors, match[1])
 	}
 	return errors
@@ -254,8 +256,7 @@ func updateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte)
 }
 
 func updateExpectedErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
-	re := regexp.MustCompile(`// error: (.+)`)
-	matches := re.FindAllSubmatchIndex(data, -1)
+	matches := errorRe.FindAllSubmatchIndex(data, -1)
 	if len(errors) != len(matches) {
 		t.Fatalf(`%d "// error:" %s found in %s but %d %s printed to stderr, these should be equal`,
 			len(matches), pluralise("comment", len(matches)), path, len(errors), pluralise("error", len(errors)))

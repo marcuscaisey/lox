@@ -3,9 +3,9 @@ while (true) {
     if (i >= 3) {
         break;
     }
-    // prints 0
-    // prints 1
-    // prints 2
+    // prints: 0
+    // prints: 1
+    // prints: 2
     print i;
     i = i + 1;
 }
@@ -17,9 +17,9 @@ while (j < 3) {
         if (k == 1) {
             break;
         }
-        // prints 0
-        // prints 1
-        // prints 2
+        // prints: 0
+        // prints: 1
+        // prints: 2
         print j;
         k = k + 1;
     }
