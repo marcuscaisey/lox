@@ -12,7 +12,7 @@ ifdef RUN
 endif
 
 test_golox: golox
-	go run github.com/rakyll/gotest ./test -interpreter ${GOLOX_BUILD_PATH} ${extra_test_args}
+	go run gotest.tools/gotestsum --format=testname ./test -interpreter=${GOLOX_BUILD_PATH} ${extra_test_args}
 
 update_tests: golox
-	go run github.com/rakyll/gotest ./test -interpreter ${GOLOX_BUILD_PATH} -update
+	go run gotest.tools/gotestsum --format=testname ./test -interpreter=${GOLOX_BUILD_PATH} -update ${extra_test_args}
