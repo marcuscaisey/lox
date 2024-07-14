@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: tree-sitter
+        working-directory: tree-sitter-lox
     steps:
       - name: Checkout commit
         uses: actions/checkout@v4
