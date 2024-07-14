@@ -7,7 +7,7 @@ linters-settings:
     sections:
       - standard # Captures all standard packages.
       - default # Contains all imports that could not be matched to another section type.
-      - prefix(github.com/marcuscaisey/golox) # Groups all imports with the specified Prefix.
+      - prefix(github.com/marcuscaisey/lox) # Groups all imports with the specified Prefix.
     custom-order: true
 issues:
   exclude-rules:
