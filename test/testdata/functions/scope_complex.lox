@@ -3,8 +3,8 @@ var y;
 
 {
   fun f() {
-    y = "global y";
-    print x;
+  y = "global y";
+  print x;
   }
 
   f(); // prints: global x

@@ -5,7 +5,7 @@ print 1;
 // Block Statement
 {
 // <- punctuation.bracket
-    var a = 1;
+  var a = 1;
 }
 // <- punctuation.bracket
 
@@ -13,27 +13,27 @@ print 1;
 if (1 < 2) {
 // <- keyword.conditional
 // ^ punctuation.bracket
-//       ^ punctuation.bracket
-    print 3;
+//     ^ punctuation.bracket
+  print 3;
 } else {
   // <- keyword.conditional
-    print 4;
+  print 4;
 }
 
 // While Statement
 while (1 < 2) {
 // <- keyword.repeat
    // ^ punctuation.bracket
-   //       ^ punctuation.bracket
-    print 3;
+   //     ^ punctuation.bracket
+  print 3;
 }
 
 // For Statement
 for (var i = 0; i < 10; i = i + 1) {
 // <- keyword.repeat
 //  ^ punctuation.bracket
-//                               ^ punctuation.bracket
-    print 3;
+//                 ^ punctuation.bracket
+  print 3;
 }
 
 // Break Statement

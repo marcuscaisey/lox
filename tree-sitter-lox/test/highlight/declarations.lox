@@ -7,10 +7,10 @@ var foo = 2;
 fun add(x, y) {
 // <- keyword.function
 //  ^ function
-//     ^ punctuation.bracket
-//      ^ variable.parameter
-//       ^ punctuation.delimiter
-//         ^ variable.parameter
-//          ^ punctuation.bracket
-    return x + y;
+//   ^ punctuation.bracket
+//    ^ variable.parameter
+//     ^ punctuation.delimiter
+//     ^ variable.parameter
+//      ^ punctuation.bracket
+  return x + y;
 }

@@ -23,9 +23,9 @@ fun(x, y) {
 // ^ punctuation.bracket
 //  ^ variable.parameter
 //   ^ punctuation.delimiter
-//     ^ variable.parameter
-//      ^ punctuation.bracket
-    return x + y;
+//   ^ variable.parameter
+//    ^ punctuation.bracket
+  return x + y;
 };
 
 
@@ -40,8 +40,8 @@ foo(1, 2);
 // <- function.call
 // ^ punctuation.bracket
 //   ^ punctuation.delimiter
-//      ^ punctuation.bracket
-//       ^ punctuation.delimiter
+//    ^ punctuation.bracket
+//     ^ punctuation.delimiter
 
 // Builtin Call Expression
 clock();

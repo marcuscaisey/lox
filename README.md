@@ -126,7 +126,7 @@ A call expression calls a function with arguments.
 
 ```lox
 fun add(a, b) {
-    return a + b;
+  return a + b;
 }
 
 print add(1, 2); // prints: 3
@@ -138,7 +138,7 @@ A function expression creates an anonymous function.
 
 ```lox
 var add = fun(a, b) {
-    return a + b;
+  return a + b;
 };
 
 print add(1, 2); // prints: 3
@@ -191,9 +191,9 @@ lexical scope.
 var a = "global a";
 var b = "global b";
 {
-    var a = "outer a";
-    print a; // prints: outer a
-    print b; // prints: global b
+  var a = "outer a";
+  print a; // prints: outer a
+  print b; // prints: global b
 }
 print a; // prints: global a
 print b; // prints: global b
@@ -206,20 +206,20 @@ optional else statement can be provided to execute a statement if the expression
 
 ```lox
 if (1 < 2) {
-    print "1 is less than 2"; // prints: 1 is less than 2
+  print "1 is less than 2"; // prints: 1 is less than 2
 }
 
 
 if (1 > 2) {
-    print "1 is greater than 2";
+  print "1 is greater than 2";
 } else {
-    print "1 is not greater than 2"; // prints: 1 is not greater than 2
+  print "1 is not greater than 2"; // prints: 1 is not greater than 2
 }
 
 if (1 > 2) {
-    print "1 is greater than 2";
+  print "1 is greater than 2";
 } else if (3 < 4) {
-    print "3 is less than 4"; // prints: 3 is less than 4
+  print "3 is less than 4"; // prints: 3 is less than 4
 }
 ```
 
@@ -230,11 +230,11 @@ A while statement repeatedly executes a statement while the provided expression 
 ```lox
 var i = 0;
 while (i < 3) {
-    // prints: 0
-    // prints: 1
-    // prints: 2
-    print i;
-    i = i + 1;
+  // prints: 0
+  // prints: 1
+  // prints: 2
+  print i;
+  i = i + 1;
 }
 ```
 
@@ -248,11 +248,11 @@ The following while statement:
 ```lox
 var i = 0;
 while (i < 3) {
-    // prints: 0
-    // prints: 1
-    // prints: 2
-    print i;
-    i = i + 1;
+  // prints: 0
+  // prints: 1
+  // prints: 2
+  print i;
+  i = i + 1;
 }
 ```
 
@@ -260,10 +260,10 @@ is equivalent to the following for statement:
 
 ```lox
 for (var i = 0; i < 3; i = i + 1) {
-    // prints: 0
-    // prints: 1
-    // prints: 2
-    print i;
+  // prints: 0
+  // prints: 1
+  // prints: 2
+  print i;
 }
 ```
 
@@ -271,7 +271,7 @@ All three sections of the for statement are optional. The following is an infini
 
 ```lox
 for (;;) {
-    print "infinite loop";
+  print "infinite loop";
 }
 ```
 
@@ -280,10 +280,10 @@ The initialisation section can either be a variable declaration or an expression
 ```lox
 var i;
 for (i = 0; i < 3; i = i + 1) {
-    // prints: 0
-    // prints: 1
-    // prints: 2
-    print i;
+  // prints: 0
+  // prints: 1
+  // prints: 2
+  print i;
 }
 ```
 
@@ -293,10 +293,10 @@ A break statement immediately exits the innermost enclosing loop.
 
 ```lox
 for (var i = 0; i < 3; i++) {
-    if (i == 1) {
-        break;
-    }
-    print i; // prints: 0
+  if (i == 1) {
+    break;
+  }
+  print i; // prints: 0
 }
 ```
 
@@ -306,13 +306,13 @@ A continue statement immediately jumps to the end of the innermost enclosing for
 
 ```lox
 for (var i = 0; i < 5; i++) {
-    if (i % 2 == 1) {
-        continue;
-    }
-    // prints: 0
-    // prints: 2
-    // prints: 4
-    print i;
+  if (i % 2 == 1) {
+    continue;
+  }
+  // prints: 0
+  // prints: 2
+  // prints: 4
+  print i;
 }
 ```
 
@@ -323,13 +323,13 @@ caller.
 
 ```lox
 fun add(a, b) {
-    return a + b;
+  return a + b;
 }
 
 fun greet() {
-    print "Hello, World!";
-    return;
-    print "This is unreachable";
+  print "Hello, World!";
+  return;
+  print "This is unreachable";
 }
 
 print add(1, 2); // prints: 3
@@ -360,7 +360,7 @@ implicitly returns `nil`.
 
 ```lox
 fun add(a, b) {
-    return a + b;
+  return a + b;
 }
 
 print add(1, 2); // prints: 3

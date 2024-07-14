@@ -1,9 +1,9 @@
 fun add2(x) {
-    print x + 2;
+  print x + 2;
 }
 
 fun add(x, y) {
-    print x + y;
+  print x + y;
 }
 
 add2(1); // prints: 3

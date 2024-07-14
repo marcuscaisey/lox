@@ -1,6 +1,6 @@
 fun f() {
-    print x;
-    var y = "local y";
+  print x;
+  var y = "local y";
 }
 
 var x = "global x";

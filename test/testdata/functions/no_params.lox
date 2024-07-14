@@ -1,5 +1,5 @@
 fun greet() {
-    print "Hello, World!";
+  print "Hello, World!";
 }
 
 greet(); // prints: Hello, World!
