@@ -1,1 +1,1 @@
-print a + 1; // runtime error: a has not been declared
+print a + 1; // error: a has not been declared

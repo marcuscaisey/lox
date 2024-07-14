@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/loxerror"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -51,11 +52,11 @@ type loxCallable interface {
 }
 
 func invalidUnaryOpError(op token.Token, object loxObject) error {
-	return newTokenRuntimeErrorf(op, "%h operator cannot be used with type %h", op.Type, object.Type())
+	return loxerror.NewFromToken(op, "%h operator cannot be used with type %h", op.Type, object.Type())
 }
 
 func invalidBinaryOpError(op token.Token, left, right loxObject) error {
-	return newTokenRuntimeErrorf(op, "%h operator cannot be used with types %h and %h", op.Type, left.Type(), right.Type())
+	return loxerror.NewFromToken(op, "%h operator cannot be used with types %h and %h", op.Type, left.Type(), right.Type())
 }
 
 type loxNumber float64
@@ -89,12 +90,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 			return n * right
 		case token.Slash:
 			if right == 0 {
-				panic(newTokenRuntimeErrorf(op, "cannot divide by 0"))
+				panic(loxerror.NewFromToken(op, "cannot divide by 0"))
 			}
 			return n / right
 		case token.Percent:
 			if right == 0 {
-				panic(newTokenRuntimeErrorf(op, "cannot modulo by 0"))
+				panic(loxerror.NewFromToken(op, "cannot modulo by 0"))
 			}
 			return loxNumber(math.Mod(float64(n), float64(right)))
 		case token.Plus:
@@ -121,10 +122,10 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
 	if math.Floor(float64(n)) != float64(n) {
-		panic(newTokenRuntimeErrorf(op, "cannot multiply %h by non-integer %h", loxTypeString, loxTypeNumber))
+		panic(loxerror.NewFromToken(op, "cannot multiply %h by non-integer %h", loxTypeString, loxTypeNumber))
 	}
 	if n < 0 {
-		panic(newTokenRuntimeErrorf(op, "cannot multiply %h by negative %h", loxTypeString, loxTypeNumber))
+		panic(loxerror.NewFromToken(op, "cannot multiply %h by negative %h", loxTypeString, loxTypeNumber))
 	}
 	return loxString(strings.Repeat(string(s), int(n)))
 }

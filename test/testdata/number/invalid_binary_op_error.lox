@@ -1,1 +1,1 @@
-1 + true; // runtime error: + operator cannot be used with types number and bool
+1 + true; // error: + operator cannot be used with types number and bool

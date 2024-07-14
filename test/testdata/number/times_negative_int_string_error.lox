@@ -1,1 +1,1 @@
-print -1 * "hello"; // runtime error: cannot multiply string by negative number
+print -1 * "hello"; // error: cannot multiply string by negative number

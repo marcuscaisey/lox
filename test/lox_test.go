@@ -74,11 +74,10 @@ func snakeToPascalCase(s string) string {
 }
 
 type result struct {
-	Stdout        []byte
-	Stderr        []byte
-	SyntaxErrors  [][]byte
-	RuntimeErrors [][]byte
-	ExitCode      int
+	Stdout   []byte
+	Stderr   []byte
+	Errors   [][]byte
+	ExitCode int
 }
 
 func runTest(t *testing.T, path string) {
@@ -96,18 +95,8 @@ func runTest(t *testing.T, path string) {
 		t.Errorf("incorrect output printed to stdout:\n%s", computeDiff(want.Stdout, got.Stdout))
 	}
 
-	errorsCorrect := true
-	if !cmp.Equal(want.SyntaxErrors, got.SyntaxErrors) {
-		errorsCorrect = false
-		t.Errorf("incorrect syntax errors printed to stderr:\n%s", computeDiff(want.SyntaxErrors, got.SyntaxErrors))
-	}
-
-	if !cmp.Equal(want.RuntimeErrors, got.RuntimeErrors) {
-		errorsCorrect = false
-		t.Errorf("incorrect runtime errors printed to stderr:\n%s", computeDiff(want.RuntimeErrors, got.RuntimeErrors))
-	}
-
-	if !errorsCorrect {
+	if !cmp.Equal(want.Errors, got.Errors) {
+		t.Errorf("incorrect errors printed to stderr:\n%s", computeDiff(want.Errors, got.Errors))
 		t.Errorf("stderr:\n%s", got.Stderr)
 	}
 }
@@ -126,22 +115,17 @@ func runInterpreter(t *testing.T, path string) result {
 	if err != nil && !errors.As(err, &exitErr) {
 		t.Fatal(err)
 	}
-	var syntaxErrors, runtimeErrors [][]byte
-	errorRe := regexp.MustCompile(`(?m)^.+:\d+:\d+: (syntax|runtime) error: (.+)$`)
+	var errors [][]byte
+	errorRe := regexp.MustCompile(`(?m)^.+:\d+:\d+: error: (.+)$`)
 	for _, match := range errorRe.FindAllSubmatch(exitErr.Stderr, -1) {
-		if bytes.Equal(match[1], []byte("syntax")) {
-			syntaxErrors = append(syntaxErrors, match[2])
-		} else {
-			runtimeErrors = append(runtimeErrors, match[2])
-		}
+		errors = append(errors, match[1])
 	}
 
 	return result{
-		Stdout:        stdout,
-		Stderr:        exitErr.Stderr,
-		SyntaxErrors:  syntaxErrors,
-		RuntimeErrors: runtimeErrors,
-		ExitCode:      cmd.ProcessState.ExitCode(),
+		Stdout:   stdout,
+		Stderr:   exitErr.Stderr,
+		Errors:   errors,
+		ExitCode: cmd.ProcessState.ExitCode(),
 	}
 }
 
@@ -168,14 +152,13 @@ func parseExpectedResult(t *testing.T, path string) result {
 		t.Fatal(err)
 	}
 
-	syntaxErrors, runtimeErrors := parseExpectedErrors(data)
+	errors := parseExpectedErrors(data)
 
 	r := result{
-		Stdout:        parseExpectedStdout(data),
-		SyntaxErrors:  syntaxErrors,
-		RuntimeErrors: runtimeErrors,
+		Stdout: parseExpectedStdout(data),
+		Errors: errors,
 	}
-	if len(r.SyntaxErrors)+len(r.RuntimeErrors) > 0 {
+	if len(r.Errors) > 0 {
 		r.ExitCode = 1
 	}
 
@@ -195,16 +178,13 @@ func parseExpectedStdout(data []byte) []byte {
 	return b.Bytes()
 }
 
-func parseExpectedErrors(data []byte) (syntaxErrors [][]byte, runtimeErrors [][]byte) {
-	re := regexp.MustCompile(`// (syntax|runtime) error: (.+)`)
+func parseExpectedErrors(data []byte) [][]byte {
+	var errors [][]byte
+	re := regexp.MustCompile(`// error: (.+)`)
 	for _, match := range re.FindAllSubmatch(data, -1) {
-		if bytes.Equal(match[1], []byte("syntax")) {
-			syntaxErrors = append(syntaxErrors, match[2])
-		} else {
-			runtimeErrors = append(runtimeErrors, match[2])
-		}
+		errors = append(errors, match[1])
 	}
-	return syntaxErrors, runtimeErrors
+	return errors
 }
 
 func updateExpectedOutput(t *testing.T, path string) {
@@ -220,15 +200,10 @@ func updateExpectedOutput(t *testing.T, path string) {
 	}
 	if len(result.Stderr) > 0 {
 		t.Logf("stderr:\n%s", result.Stderr)
-		if len(result.SyntaxErrors) > 0 {
-			t.Logf("syntax errors:\n%s", bytes.Join(result.SyntaxErrors, []byte("\n")))
+		if len(result.Errors) > 0 {
+			t.Logf("errors:\n%s", bytes.Join(result.Errors, []byte("\n")))
 		} else {
-			t.Logf("syntax errors: <empty>")
-		}
-		if len(result.RuntimeErrors) > 0 {
-			t.Logf("runtime errors:\n%s", bytes.Join(result.RuntimeErrors, []byte("\n")))
-		} else {
-			t.Logf("runtime errors: <empty>")
+			t.Logf("errors: <empty>")
 		}
 	} else {
 		t.Logf("stderr: <empty>")
@@ -240,8 +215,7 @@ func updateExpectedOutput(t *testing.T, path string) {
 	}
 
 	data = updateExpectedStdout(t, path, data, result.Stdout)
-	data = updateExpectedSyntaxErrors(t, path, data, result.SyntaxErrors)
-	data = updateExpectedRuntimeErrors(t, path, data, result.RuntimeErrors)
+	data = updateExpectedErrors(t, path, data, result.Errors)
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		t.Fatal(err)
@@ -279,36 +253,12 @@ func updateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte)
 	return b.Bytes()
 }
 
-func updateExpectedSyntaxErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
-	re := regexp.MustCompile(`// syntax error: (.+)`)
+func updateExpectedErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
+	re := regexp.MustCompile(`// error: (.+)`)
 	matches := re.FindAllSubmatchIndex(data, -1)
 	if len(errors) != len(matches) {
-		t.Fatalf(`%d "// syntax error:" %s found in %s but %d %s printed to stderr, these should be equal`,
-			len(matches), pluralise("comment", len(matches)), path, len(errors), pluralise("syntax error", len(errors)))
-	}
-	if len(errors) == 0 {
-		return data
-	}
-
-	var b bytes.Buffer
-	lastEnd := 0
-	for i, match := range matches {
-		start, end := match[2], match[3]
-		b.Write(data[lastEnd:start])
-		b.Write(errors[i])
-		lastEnd = end
-	}
-	b.Write(data[lastEnd:])
-
-	return b.Bytes()
-}
-
-func updateExpectedRuntimeErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
-	re := regexp.MustCompile(`// runtime error: (.+)`)
-	matches := re.FindAllSubmatchIndex(data, -1)
-	if len(errors) != len(matches) {
-		t.Fatalf(`%d "// runtime error:" %s found in %s but %d %s printed to stderr, these should be equal`,
-			len(matches), pluralise("comment", len(matches)), path, len(errors), pluralise("runtime error", len(errors)))
+		t.Fatalf(`%d "// error:" %s found in %s but %d %s printed to stderr, these should be equal`,
+			len(matches), pluralise("comment", len(matches)), path, len(errors), pluralise("error", len(errors)))
 	}
 	if len(errors) == 0 {
 		return data

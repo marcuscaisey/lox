@@ -1,1 +1,1 @@
-true - false; // runtime error: - operator cannot be used with types bool and bool
+true - false; // error: - operator cannot be used with types bool and bool

@@ -1,1 +1,1 @@
-print 2.5 * "hello"; // runtime error: cannot multiply string by non-integer number
+print 2.5 * "hello"; // error: cannot multiply string by non-integer number

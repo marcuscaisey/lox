@@ -1,1 +1,1 @@
--nil; // runtime error: - operator cannot be used with type nil
+-nil; // error: - operator cannot be used with type nil

@@ -1,1 +1,1 @@
-1 % 0; // runtime error: cannot modulo by 0
+1 % 0; // error: cannot modulo by 0

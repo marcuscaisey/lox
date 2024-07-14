@@ -6,10 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fatih/color"
-	"github.com/mattn/go-runewidth"
-
 	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/loxerror"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -73,8 +71,8 @@ func New(opts ...Option) *Interpreter {
 func (i *Interpreter) Interpret(program ast.Program, localDeclDistancesByIdent map[token.Token]int) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			if runtimeErr, ok := r.(*runtimeError); ok {
-				err = runtimeErr
+			if loxErr, ok := r.(*loxerror.LoxError); ok {
+				err = loxErr
 			} else {
 				panic(r)
 			}
@@ -301,7 +299,7 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 
 	callable, ok := callee.(loxCallable)
 	if !ok {
-		panic(newNodeRuntimeErrorf(expr.Callee, "%h object is not callable", callee.Type()))
+		panic(loxerror.NewFromNode(expr.Callee, "%h object is not callable", callee.Type()))
 	}
 
 	params := callable.Params()
@@ -322,12 +320,12 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 		default:
 			missingArgsStr = strings.Join(missingArgs[:len(missingArgs)-1], ", ") + ", and " + missingArgs[len(missingArgs)-1]
 		}
-		panic(newNodeRuntimeErrorf(
+		panic(loxerror.NewFromNode(
 			expr,
 			"%s() missing %d argument%s: %s", callable.Name(), arity-len(args), argumentSuffix, missingArgsStr,
 		))
 	case len(args) > arity:
-		panic(newNodeRangeRuntimeErrorf(
+		panic(loxerror.NewFromNodeRange(
 			expr.Args[arity],
 			expr.Args[len(args)-1],
 			"%s() accepts %d arguments but %d were given", callable.Name(), arity, len(args),
@@ -401,45 +399,4 @@ func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.Assignm
 		i.globals.Assign(expr.Left, value)
 	}
 	return value
-}
-
-type runtimeError struct {
-	start token.Position
-	end   token.Position
-	msg   string
-}
-
-func newRuntimeErrorf(start token.Position, end token.Position, format string, args ...interface{}) *runtimeError {
-	return &runtimeError{
-		start: start,
-		end:   end,
-		msg:   fmt.Sprintf(format, args...),
-	}
-}
-
-func newTokenRuntimeErrorf(tok token.Token, format string, args ...interface{}) *runtimeError {
-	return newRuntimeErrorf(tok.Start, tok.End, format, args...)
-}
-
-func newNodeRuntimeErrorf(node ast.Node, format string, args ...interface{}) *runtimeError {
-	return newRuntimeErrorf(node.Start(), node.End(), format, args...)
-}
-
-func newNodeRangeRuntimeErrorf(start, end ast.Node, format string, args ...interface{}) *runtimeError {
-	return newRuntimeErrorf(start.Start(), end.End(), format, args...)
-}
-
-func (e *runtimeError) Error() string {
-	bold := color.New(color.Bold)
-	red := color.New(color.FgRed)
-
-	line := e.start.File.Line(e.start.Line)
-
-	var b strings.Builder
-	bold.Fprint(&b, e.start, ": ", red.Sprint("runtime error: "), e.msg, "\n")
-	fmt.Fprintln(&b, string(line))
-	fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(line[:e.start.Column]))))
-	red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(line[e.start.Column:e.end.Column]))))
-
-	return b.String()
 }

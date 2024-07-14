@@ -1,3 +1,3 @@
-// syntax error: unterminated string literal
+// error: unterminated string literal
 print "aaaa;
 print "this won't be printed";

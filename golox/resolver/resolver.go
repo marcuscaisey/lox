@@ -3,12 +3,9 @@ package resolver
 
 import (
 	"fmt"
-	"strings"
-
-	"github.com/fatih/color"
-	"github.com/mattn/go-runewidth"
 
 	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/loxerror"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -72,8 +69,8 @@ func (r *resolver) resolveIdent(ident token.Token) {
 func (r *resolver) Resolve(program ast.Program) (m map[token.Token]int, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			if resolverErr, ok := r.(*resolverError); ok {
-				err = resolverErr
+			if loxErr, ok := r.(*loxerror.LoxError); ok {
+				err = loxErr
 			} else {
 				panic(r)
 			}
@@ -245,7 +242,7 @@ func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
 	// TODO: this is a bit awkward
 	if r.scopes.Len() > 0 {
 		if defined, ok := r.scopes.Peek()[expr.Name.Literal]; ok && !defined {
-			panic(newTokenResolverErrorf(expr.Name, "variable definition cannot refer to itself"))
+			panic(loxerror.NewFromToken(expr.Name, "variable definition cannot refer to itself"))
 		}
 	}
 	r.resolveIdent(expr.Name)
@@ -276,37 +273,4 @@ func (r *resolver) resolveUnaryExpr(expr ast.UnaryExpr) {
 func (r *resolver) resolveAssignmentExpr(expr ast.AssignmentExpr) {
 	r.resolveExpr(expr.Right)
 	r.resolveIdent(expr.Left)
-}
-
-type resolverError struct {
-	start token.Position
-	end   token.Position
-	msg   string
-}
-
-func newResolverErrorf(start token.Position, end token.Position, format string, args ...interface{}) *resolverError {
-	return &resolverError{
-		start: start,
-		end:   end,
-		msg:   fmt.Sprintf(format, args...),
-	}
-}
-
-func newTokenResolverErrorf(tok token.Token, format string, args ...interface{}) *resolverError {
-	return newResolverErrorf(tok.Start, tok.End, format, args...)
-}
-
-func (e *resolverError) Error() string {
-	bold := color.New(color.Bold)
-	red := color.New(color.FgRed)
-
-	line := e.start.File.Line(e.start.Line)
-
-	var b strings.Builder
-	bold.Fprint(&b, e.start, ": ", red.Sprint("runtime error: "), e.msg, "\n")
-	fmt.Fprintln(&b, string(line))
-	fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(line[:e.start.Column]))))
-	red.Fprint(&b, strings.Repeat("~", runewidth.StringWidth(string(line[e.start.Column:e.end.Column]))))
-
-	return b.String()
 }

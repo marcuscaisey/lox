@@ -1,4 +1,4 @@
 var x = "outer";
 {
-  var x = x; // runtime error: variable definition cannot refer to itself
+  var x = x; // error: variable definition cannot refer to itself
 }

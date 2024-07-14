@@ -5,14 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
-	"unicode/utf8"
-
-	"github.com/fatih/color"
-	"github.com/mattn/go-runewidth"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/lexer"
+	"github.com/marcuscaisey/lox/golox/loxerror"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -32,12 +28,7 @@ func Parse(r io.Reader) (ast.Program, error) {
 	p := &parser{l: l}
 	errHandler := func(tok token.Token, msg string) {
 		p.lastErrPos = tok.Start
-		err := &syntaxError{
-			start: tok.Start,
-			end:   tok.End,
-			msg:   msg,
-		}
-		p.errs = append(p.errs, err)
+		p.errs = append(p.errs, loxerror.NewFromToken(tok, msg))
 	}
 	l.SetErrorHandler(errHandler)
 
@@ -160,13 +151,13 @@ func (p *parser) parseParams(context string) []token.Token {
 	for p.match(token.Comma) {
 		param := p.expectf(token.Ident, "expected identifier %s", context)
 		if seen[param.Literal] {
-			p.addTokenErrorf(param, "duplicate parameter %s", param.Literal)
+			p.addTokenError(param, "duplicate parameter %s", param.Literal)
 		}
 		params = append(params, param)
 		seen[param.Literal] = true
 	}
 	if len(params) > maxParams {
-		p.addTokenErrorf(params[maxParams], "cannot define more than %d function parameters", maxParams)
+		p.addTokenError(params[maxParams], "cannot define more than %d function parameters", maxParams)
 	}
 	return params
 }
@@ -267,7 +258,7 @@ func (p *parser) parseBreakStmt(breakTok token.Token) ast.BreakStmt {
 	semicolon := p.expectSemicolon("after break statement")
 	stmt := ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
-		p.addNodeErrorf(stmt, "break statement must be inside a loop")
+		p.addNodeError(stmt, "break statement must be inside a loop")
 	}
 	return stmt
 }
@@ -276,7 +267,7 @@ func (p *parser) parseContinueStmt(continueTok token.Token) ast.ContinueStmt {
 	semicolon := p.expectSemicolon("after continue statement")
 	stmt := ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
-		p.addNodeErrorf(stmt, "continue statement must be inside a loop")
+		p.addNodeError(stmt, "continue statement must be inside a loop")
 	}
 	return stmt
 }
@@ -290,7 +281,7 @@ func (p *parser) parseReturnStmt(returnTok token.Token) ast.ReturnStmt {
 	}
 	stmt := ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
 	if p.funDeclDepth == 0 {
-		p.addNodeErrorf(stmt, "return statement must be inside a function definition")
+		p.addNodeError(stmt, "return statement must be inside a function definition")
 	}
 	return stmt
 }
@@ -308,7 +299,7 @@ func (p *parser) parseAssignmentExpr(context string) ast.Expr {
 	if p.match(token.Equal) {
 		left, ok := expr.(ast.VariableExpr)
 		if !ok {
-			p.addNodeErrorf(expr, "left-hand side of assignment must be a variable")
+			p.addNodeError(expr, "left-hand side of assignment must be a variable")
 		}
 		right := p.parseAssignmentExpr("on right-hand side of assignment")
 		expr = ast.AssignmentExpr{
@@ -416,7 +407,7 @@ func (p *parser) parseArgs(context string) []ast.Expr {
 		args = append(args, p.parseAssignmentExpr(context))
 	}
 	if len(args) > maxArgs {
-		p.addNodeErrorf(args[maxArgs], "cannot pass more than %d arguments to function", maxArgs)
+		p.addNodeError(args[maxArgs], "cannot pass more than %d arguments to function", maxArgs)
 	}
 	return args
 }
@@ -435,7 +426,7 @@ func (p *parser) parsePrimaryExpr(context string) ast.Expr {
 		return ast.GroupExpr{LeftParen: tok, Expr: innerExpr, RightParen: rightParen}
 	// Error productions
 	case p.match(token.EqualEqual, token.BangEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus):
-		p.addTokenErrorf(tok, "binary operator %h must have left and right operands", tok.Type)
+		p.addTokenError(tok, "binary operator %h must have left and right operands", tok.Type)
 		var right ast.Expr
 		switch tok.Type {
 		case token.EqualEqual, token.BangEqual:
@@ -452,7 +443,7 @@ func (p *parser) parsePrimaryExpr(context string) ast.Expr {
 			Right: right,
 		}
 	default:
-		p.addTokenErrorf(tok, "expected expression "+context)
+		p.addTokenError(tok, "expected expression "+context)
 		panic(unwind{})
 	}
 }
@@ -493,7 +484,7 @@ func (p *parser) expectf(t token.Type, format string, a ...any) token.Token {
 		p.next()
 		return tok
 	}
-	p.addTokenErrorf(p.tok, format, a...)
+	p.addTokenError(p.tok, format, a...)
 	panic(unwind{})
 }
 
@@ -507,77 +498,21 @@ func (p *parser) next() {
 	p.nextTok = p.l.Next()
 }
 
-func (p *parser) addSyntaxErrorf(start, end token.Position, format string, a ...any) {
+func (p *parser) addError(start token.Position, err error) {
 	if len(p.errs) > 0 && start == p.lastErrPos {
 		return
 	}
-	p.errs = append(p.errs, &syntaxError{
-		start: start,
-		end:   end,
-		msg:   fmt.Sprintf(format, a...),
-	})
+	p.errs = append(p.errs, err)
 }
 
-func (p *parser) addTokenErrorf(tok token.Token, format string, a ...any) {
-	p.addSyntaxErrorf(tok.Start, tok.End, format, a...)
+func (p *parser) addTokenError(tok token.Token, format string, a ...any) {
+	p.addError(tok.Start, loxerror.NewFromToken(tok, format, a...))
 }
 
-func (p *parser) addNodeErrorf(node ast.Node, format string, a ...any) {
-	p.addSyntaxErrorf(node.Start(), node.End(), format, a...)
+func (p *parser) addNodeError(node ast.Node, format string, a ...any) {
+	p.addError(node.Start(), loxerror.NewFromNode(node, format, a...))
 }
 
 // unwind is used as a panic value so that we can unwind the stack and recover from a parsing error without having to
 // check for errors after every call to each parsing method.
 type unwind struct{}
-
-type syntaxError struct {
-	start token.Position
-	end   token.Position
-	msg   string
-}
-
-func (e *syntaxError) Error() string {
-	bold := color.New(color.Bold)
-	red := color.New(color.FgRed)
-
-	var b strings.Builder
-	buildString := func() string {
-		return strings.TrimSuffix(b.String(), "\n")
-	}
-
-	bold.Fprint(&b, e.start, ": ", red.Sprint("syntax error: "), e.msg, "\n")
-
-	lines := make([]string, e.end.Line-e.start.Line+1)
-	for i := e.start.Line; i <= e.end.Line; i++ {
-		line := e.start.File.Line(i)
-		if !utf8.Valid(line) {
-			// If any of the lines are not valid UTF-8 then we can't display the source code, so just return the error
-			// message on its own. This is a very rare case and it's not worth the effort to handle it any better.
-			return buildString()
-		}
-		lines[i-e.start.Line] = string(line)
-	}
-	fmt.Fprintln(&b, string(lines[0]))
-	if e.start == e.end {
-		// There's nothing to highlight
-		return buildString()
-	}
-
-	if len(lines) == 1 {
-		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.start.Column]))))
-		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:e.end.Column]))))
-	} else {
-		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.start.Column]))))
-		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:]))))
-		for _, line := range lines[1 : len(lines)-1] {
-			fmt.Fprintln(&b, string(line))
-			red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(line))))
-		}
-		if lastLine := lines[len(lines)-1]; len(lastLine) > 0 {
-			fmt.Fprintln(&b, string(lastLine))
-			red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
-		}
-	}
-
-	return buildString()
-}
