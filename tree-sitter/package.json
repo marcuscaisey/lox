@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "description": "Lox grammar for tree-sitter",
   "scripts": {
-    "test": "tree-sitter generate && tree-sitter test",
-    "update_tests": "tree-sitter generate && tree-sitter test --update",
+    "test": "tree-sitter test",
+    "update_tests": "tree-sitter test --update",
     "build": "tree-sitter generate",
-    "parse": "tree-sitter generate && tree-sitter parse"
+    "parse": "tree-sitter parse"
   },
   "repository": {
     "type": "git",
