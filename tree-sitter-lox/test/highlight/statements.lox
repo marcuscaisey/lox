@@ -13,7 +13,7 @@ print 1;
 if (1 < 2) {
 // <- keyword.conditional
 // ^ punctuation.bracket
-//     ^ punctuation.bracket
+//       ^ punctuation.bracket
   print 3;
 } else {
   // <- keyword.conditional
@@ -24,7 +24,7 @@ if (1 < 2) {
 while (1 < 2) {
 // <- keyword.repeat
    // ^ punctuation.bracket
-   //     ^ punctuation.bracket
+   //       ^ punctuation.bracket
   print 3;
 }
 
@@ -32,7 +32,7 @@ while (1 < 2) {
 for (var i = 0; i < 10; i = i + 1) {
 // <- keyword.repeat
 //  ^ punctuation.bracket
-//                 ^ punctuation.bracket
+//                               ^ punctuation.bracket
   print 3;
 }
 
