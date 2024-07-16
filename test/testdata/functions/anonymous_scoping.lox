@@ -1,0 +1,32 @@
+var a = "global a";
+var b;
+var c = "global c";
+var d = "global d";
+var e = "global e";
+var f = "global f";
+
+{
+  var d = "block d";
+  var e;
+  var f = "block f";
+
+  var g = fun() {
+    print a; // prints: global a
+    b = "global b";
+    var c = "fun c";
+    print d; // prints: block d
+    e = "block e";
+    var f = "fun f";
+  };
+
+  var a = "block a";
+  var b = "block b";
+  g();
+  print b; // prints: block b
+  print e; // prints: block e
+}
+
+print b; // prints: global b
+print c; // prints: global c
+print e; // prints: global e
+print f; // prints: global f

@@ -1,0 +1,15 @@
+var a = "global a";
+var b = "global b";
+var c;
+var d = "global d";
+
+for (var a = "local a";;) {
+  print a; // prints: local a
+  print b; // prints: global b
+  c = "global c";
+  var d = "local d";
+  break;
+}
+
+print c; // prints: global c
+print d; // prints: global d

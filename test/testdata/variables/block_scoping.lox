@@ -10,9 +10,9 @@ var c = "global c";
     print b; // prints: outer b
     print c; // prints: global c
   }
-    print a; // prints: outer a
-    print b; // prints: outer b
-    print c; // prints: global c
+  print a; // prints: outer a
+  print b; // prints: outer b
+  print c; // prints: global c
 }
 print a; // prints: global a
 print b; // prints: global b
