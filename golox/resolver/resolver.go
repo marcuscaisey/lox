@@ -25,6 +25,7 @@ type resolver struct {
 	// localDeclDistancesByIdent maps identifiers which were declared locally to the distance from their current lexical
 	// scope to the one where they were declared
 	localDeclDistancesByIdent map[token.Token]int
+	inVarDecl                 bool // whether we're currently resolving a variable declaration
 }
 
 func newResolver() *resolver {
@@ -48,17 +49,28 @@ func (r *resolver) declareIdent(ident string) {
 	r.scopes.Peek()[ident] = false
 }
 
-func (r *resolver) defineIdent(ident string) {
+func (r *resolver) defineIdent(ident token.Token) {
 	if r.scopes.Len() == 0 {
 		return
 	}
-	r.scopes.Peek()[ident] = true
+	for i := r.scopes.Len() - 1; i >= 0; i-- {
+		scope := r.scopes.Index(i)
+		if _, ok := scope[ident.Literal]; ok {
+			scope[ident.Literal] = true
+			return
+		}
+	}
+	// TODO: Can't panic here because we don't know whether the identifier refers to a global variable or a variable
+	// which hasn't been declared. We should resolve global variables in the resolver as well.
+	// panic(loxerror.NewFromToken(ident, "%s has not been declared", ident.Literal))
 }
 
 func (r *resolver) resolveIdent(ident token.Token) {
 	for i := r.scopes.Len() - 1; i >= 0; i-- {
-		// TODO: Check if the identifier has been defined and if not, error?
-		if _, ok := r.scopes.Index(i)[ident.Literal]; ok {
+		if defined, ok := r.scopes.Index(i)[ident.Literal]; ok {
+			if !defined {
+				panic(loxerror.NewFromToken(ident, "%s has not been defined", ident.Literal))
+			}
 			r.localDeclDistancesByIdent[ident] = r.scopes.Len() - 1 - i
 			return
 		}
@@ -118,18 +130,21 @@ func (r *resolver) resolveStmt(stmt ast.Stmt) {
 func (r *resolver) resolveVarDecl(stmt ast.VarDecl) {
 	r.declareIdent(stmt.Name.Literal)
 	if stmt.Initialiser != nil {
+		r.inVarDecl = true
+		defer func() { r.inVarDecl = false }()
 		r.resolveExpr(stmt.Initialiser)
+		r.defineIdent(stmt.Name)
 	}
-	// TODO: Move this into initialiser if block? The variable is only defined its got an initialiser
-	r.defineIdent(stmt.Name.Literal)
 }
 
 func (r *resolver) resolveFunDecl(stmt ast.FunDecl) {
-	r.defineIdent(stmt.Name.Literal)
+	r.declareIdent(stmt.Name.Literal)
+	r.defineIdent(stmt.Name)
 	endScope := r.beginScope()
 	defer endScope()
 	for _, param := range stmt.Params {
-		r.defineIdent(param.Literal)
+		r.declareIdent(param.Literal)
+		r.defineIdent(param)
 	}
 	for _, stmt := range stmt.Body {
 		r.resolveStmt(stmt)
@@ -223,7 +238,8 @@ func (r *resolver) resolveFunExpr(expr ast.FunExpr) {
 	endScope := r.beginScope()
 	defer endScope()
 	for _, param := range expr.Params {
-		r.defineIdent(param.Literal)
+		r.declareIdent(param.Literal)
+		r.defineIdent(param)
 	}
 	for _, stmt := range expr.Body {
 		r.resolveStmt(stmt)
@@ -239,9 +255,8 @@ func (r *resolver) resolveLiteralExpr(ast.LiteralExpr) {
 }
 
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
-	// TODO: this is a bit awkward
 	if r.scopes.Len() > 0 {
-		if defined, ok := r.scopes.Peek()[expr.Name.Literal]; ok && !defined {
+		if defined, ok := r.scopes.Peek()[expr.Name.Literal]; r.inVarDecl && ok && !defined {
 			panic(loxerror.NewFromToken(expr.Name, "variable definition cannot refer to itself"))
 		}
 	}
@@ -272,5 +287,6 @@ func (r *resolver) resolveUnaryExpr(expr ast.UnaryExpr) {
 
 func (r *resolver) resolveAssignmentExpr(expr ast.AssignmentExpr) {
 	r.resolveExpr(expr.Right)
+	r.defineIdent(expr.Left)
 	r.resolveIdent(expr.Left)
 }
