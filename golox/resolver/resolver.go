@@ -2,6 +2,7 @@
 package resolver
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -25,7 +26,10 @@ type resolver struct {
 	// localDeclDistancesByIdent maps identifiers which were declared locally to the distance from their current lexical
 	// scope to the one where they were declared
 	localDeclDistancesByIdent map[token.Token]int
-	inVarDecl                 bool // whether we're currently resolving a variable declaration
+
+	inVarDecl bool // whether we're currently resolving a variable declaration
+
+	errs []error
 }
 
 func newResolver() *resolver {
@@ -69,7 +73,8 @@ func (r *resolver) resolveIdent(ident token.Token) {
 	for i := r.scopes.Len() - 1; i >= 0; i-- {
 		if defined, ok := r.scopes.Index(i)[ident.Literal]; ok {
 			if !defined {
-				panic(loxerror.NewFromToken(ident, "%s has not been defined", ident.Literal))
+				r.errs = append(r.errs, loxerror.NewFromToken(ident, "%s has not been defined", ident.Literal))
+				return
 			}
 			r.localDeclDistancesByIdent[ident] = r.scopes.Len() - 1 - i
 			return
@@ -78,17 +83,11 @@ func (r *resolver) resolveIdent(ident token.Token) {
 	// If the identifier can't be found in any scope, then it must be a global variable
 }
 
-func (r *resolver) Resolve(program ast.Program) (m map[token.Token]int, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if loxErr, ok := r.(*loxerror.LoxError); ok {
-				err = loxErr
-			} else {
-				panic(r)
-			}
-		}
-	}()
+func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, error) {
 	r.resolveProgram(program)
+	if len(r.errs) > 0 {
+		return nil, errors.Join(r.errs...)
+	}
 	return r.localDeclDistancesByIdent, nil
 }
 
@@ -257,7 +256,8 @@ func (r *resolver) resolveLiteralExpr(ast.LiteralExpr) {
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
 	if r.scopes.Len() > 0 {
 		if defined, ok := r.scopes.Peek()[expr.Name.Literal]; r.inVarDecl && ok && !defined {
-			panic(loxerror.NewFromToken(expr.Name, "variable definition cannot refer to itself"))
+			r.errs = append(r.errs, loxerror.NewFromToken(expr.Name, "variable definition cannot refer to itself"))
+			return
 		}
 	}
 	r.resolveIdent(expr.Name)
