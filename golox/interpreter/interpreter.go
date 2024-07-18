@@ -341,7 +341,13 @@ func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) l
 		// The behaviour of ! is independent of the type of the operand, so we can implement it here.
 		return !right.IsTruthy()
 	}
-	return right.UnaryOp(expr.Op)
+	unaryOperand, ok := right.(loxUnaryOperand)
+	if ok {
+		if result := unaryOperand.UnaryOp(expr.Op); result != nil {
+			return result
+		}
+	}
+	panic(loxerror.NewFromToken(expr.Op, "%h operator cannot be used with type %h", expr.Op.Type, right.Type()))
 }
 
 func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
@@ -378,7 +384,13 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 		// The behaviour of != is independent of the types of the operands, so we can implement it here.
 		return loxBool(left != right)
 	default:
-		return left.BinaryOp(expr.Op, right)
+		binaryOperand, ok := left.(loxBinaryOperand)
+		if ok {
+			if result := binaryOperand.BinaryOp(expr.Op, right); result != nil {
+				return result
+			}
+		}
+		panic(loxerror.NewFromToken(expr.Op, "%h operator cannot be used with types %h and %h", expr.Op.Type, left.Type(), right.Type()))
 	}
 }
 

@@ -39,29 +39,33 @@ type loxObject interface {
 	String() string
 	Type() loxType
 	IsTruthy() loxBool
-	// TODO: Extract these out to separate interface(s)?
+}
+
+type loxUnaryOperand interface {
+	// UnaryOp returns the result of applying the given unary operator to the object. If the operator is not supported,
+	// then the return value is nil.
 	UnaryOp(op token.Token) loxObject
+}
+
+type loxBinaryOperand interface {
+	// BinaryOp returns the result of applying the given binary operator to the object. If the operator is not
+	// supported, then the return value is nil.
 	BinaryOp(op token.Token, right loxObject) loxObject
 }
 
 type loxCallable interface {
-	loxObject
 	Name() string
 	Params() []string
 	Call(i *Interpreter, args []loxObject) loxObject
 }
 
-func invalidUnaryOpError(op token.Token, object loxObject) error {
-	return loxerror.NewFromToken(op, "%h operator cannot be used with type %h", op.Type, object.Type())
-}
-
-func invalidBinaryOpError(op token.Token, left, right loxObject) error {
-	return loxerror.NewFromToken(op, "%h operator cannot be used with types %h and %h", op.Type, left.Type(), right.Type())
-}
-
 type loxNumber float64
 
-var _ loxObject = loxNumber(0)
+var (
+	_ loxObject        = loxNumber(0)
+	_ loxUnaryOperand  = loxNumber(0)
+	_ loxBinaryOperand = loxNumber(0)
+)
 
 func (n loxNumber) String() string {
 	return strconv.FormatFloat(float64(n), 'f', -1, 64)
@@ -79,7 +83,7 @@ func (n loxNumber) UnaryOp(op token.Token) loxObject {
 	if op.Type == token.Minus {
 		return -n
 	}
-	panic(invalidUnaryOpError(op, n))
+	return nil
 }
 
 func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
@@ -117,7 +121,7 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 			return numberTimesString(n, op, right)
 		}
 	}
-	panic(invalidBinaryOpError(op, n, right))
+	return nil
 }
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
@@ -132,7 +136,10 @@ func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
 
 type loxString string
 
-var _ loxObject = loxString("")
+var (
+	_ loxObject        = loxString("")
+	_ loxBinaryOperand = loxString("")
+)
 
 func (s loxString) String() string {
 	return string(s)
@@ -144,10 +151,6 @@ func (s loxString) Type() loxType {
 
 func (s loxString) IsTruthy() loxBool {
 	return s != ""
-}
-
-func (s loxString) UnaryOp(op token.Token) loxObject {
-	panic(invalidUnaryOpError(op, s))
 }
 
 func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
@@ -171,7 +174,7 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 			return numberTimesString(right, op, s)
 		}
 	}
-	panic(invalidBinaryOpError(op, s, right))
+	return nil
 }
 
 type loxBool bool
@@ -193,14 +196,6 @@ func (b loxBool) IsTruthy() loxBool {
 	return b
 }
 
-func (b loxBool) UnaryOp(op token.Token) loxObject {
-	panic(invalidUnaryOpError(op, b))
-}
-
-func (b loxBool) BinaryOp(op token.Token, right loxObject) loxObject {
-	panic(invalidBinaryOpError(op, b, right))
-}
-
 type loxNil struct{}
 
 var _ loxObject = loxNil{}
@@ -217,14 +212,6 @@ func (n loxNil) IsTruthy() loxBool {
 	return false
 }
 
-func (n loxNil) UnaryOp(op token.Token) loxObject {
-	panic(invalidUnaryOpError(op, n))
-}
-
-func (n loxNil) BinaryOp(op token.Token, right loxObject) loxObject {
-	panic(invalidBinaryOpError(op, n, right))
-}
-
 type loxFunction struct {
 	name    string
 	params  []token.Token
@@ -232,7 +219,10 @@ type loxFunction struct {
 	closure *environment
 }
 
-var _ loxCallable = loxFunction{}
+var (
+	_ loxObject   = loxFunction{}
+	_ loxCallable = loxFunction{}
+)
 
 func (f loxFunction) String() string {
 	return fmt.Sprintf("<function %s>", f.name)
@@ -244,14 +234,6 @@ func (f loxFunction) Type() loxType {
 
 func (f loxFunction) IsTruthy() loxBool {
 	return true
-}
-
-func (f loxFunction) UnaryOp(op token.Token) loxObject {
-	panic(invalidUnaryOpError(op, f))
-}
-
-func (f loxFunction) BinaryOp(op token.Token, right loxObject) loxObject {
-	panic(invalidBinaryOpError(op, f, right))
 }
 
 func (f loxFunction) Name() string {
@@ -284,7 +266,10 @@ type loxBuiltinFunction struct {
 	fn     func(args []loxObject) loxObject
 }
 
-var _ loxCallable = loxBuiltinFunction{}
+var (
+	_ loxObject   = loxBuiltinFunction{}
+	_ loxCallable = loxBuiltinFunction{}
+)
 
 func (f loxBuiltinFunction) String() string {
 	return fmt.Sprintf("<builtin function %s>", f.name)
@@ -296,14 +281,6 @@ func (f loxBuiltinFunction) Type() loxType {
 
 func (f loxBuiltinFunction) IsTruthy() loxBool {
 	return true
-}
-
-func (f loxBuiltinFunction) UnaryOp(op token.Token) loxObject {
-	panic(invalidUnaryOpError(op, f))
-}
-
-func (f loxBuiltinFunction) BinaryOp(op token.Token, right loxObject) loxObject {
-	panic(invalidBinaryOpError(op, f, right))
 }
 
 func (f loxBuiltinFunction) Name() string {
