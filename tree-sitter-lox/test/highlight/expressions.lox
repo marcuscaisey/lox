@@ -43,8 +43,8 @@ foo(1, 2);
 //      ^ punctuation.bracket
 //       ^ punctuation.delimiter
 
-// Builtin Call Expression
-clock();
+// Builtin identifier
+clock;
 // <- function.builtin
 
 // Unary Expression
