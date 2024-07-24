@@ -1,8 +1,7 @@
-// Package resolver implements the resolution of identifiers in a Lox program.
+// Package resolver implements the resolution of identifier tokens in a Lox program.
 package resolver
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -10,85 +9,122 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-// Resolve resolves the identifiers in the given program.
-// It returns a map from identifiers which were declared locally to the distance from their lexical scope to the one
-// where they were declared. A distance of 0 means the identifier was declared in its current scope, 1 means it was
-// declared in the parent scope, and so on.
-// If an identifier is not present in the map, then it was declared in the global scope.
+// Resolve resolves the identifier tokens in a program to the declarations that they refer to.
+// It returns a map from identifier tokens to the distance to the declaration of the identifier that they refer.
+// to. A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
+// parent scope, and so on.
+// If a token is not present in the map, then the identifier that it refers to was either declared globally or not at
+// all.
 func Resolve(program ast.Program) (map[token.Token]int, error) {
 	r := newResolver()
 	return r.Resolve(program)
 }
 
+type identStatus int
+
+const (
+	undeclared identStatus = iota
+	declared
+	defined
+)
+
+// scope represents a lexical scope and keeps track of which identifiers have been declared and defined in that scope.
+type scope map[string]identStatus
+
+// Declare marks an identifier as declared in the scope.
+func (s scope) Declare(ident string) {
+	s[ident] = declared
+}
+
+// Define marks an identifier as defined in the scope.
+func (s scope) Define(ident string) {
+	s[ident] = defined
+}
+
+// IsDeclared returns true if the identifier has been declared in the scope.
+func (s scope) IsDeclared(ident string) bool {
+	return s[ident] != undeclared
+}
+
+// IsDefined returns true if the identifier has been defined in the scope.
+func (s scope) IsDefined(ident string) bool {
+	return s[ident] == defined
+}
+
 type resolver struct {
-	// scopes is a stack of lexical scopes where each scope maps identifiers to whether they've been defined
-	scopes *stack[map[string]bool]
-	// localDeclDistancesByIdent maps identifiers which were declared locally to the distance from their current lexical
-	// scope to the one where they were declared
-	localDeclDistancesByIdent map[token.Token]int
+	// stack of lexical scopes where each scope maps identifiers to their status in that scope
+	scopes *stack[scope]
+	// whether we're currently resolving a variable declaration
+	inVarDecl bool
 
-	inVarDecl bool // whether we're currently resolving a variable declaration
+	// declDistancesByTok maps identifier tokens to the distance to the declaration of the identifier that they refer to
+	declDistancesByTok map[token.Token]int
 
-	errs []error
+	errs loxerror.LoxErrors
 }
 
 func newResolver() *resolver {
 	return &resolver{
-		scopes:                    newStack[map[string]bool](),
-		localDeclDistancesByIdent: map[token.Token]int{},
+		scopes:             newStack[scope](),
+		declDistancesByTok: map[token.Token]int{},
 	}
 }
 
+func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, error) {
+	r.resolveProgram(program)
+	if err := r.errs.Err(); err != nil {
+		return nil, err
+	}
+	return r.declDistancesByTok, nil
+}
+
 func (r *resolver) beginScope() func() {
-	r.scopes.Push(map[string]bool{})
+	r.scopes.Push(scope{})
 	return func() {
 		r.scopes.Pop()
 	}
 }
 
-func (r *resolver) declareIdent(ident string) {
+func (r *resolver) declareIdent(tok token.Token) {
 	if r.scopes.Len() == 0 {
 		return
 	}
-	r.scopes.Peek()[ident] = false
+	if scope := r.scopes.Peek(); scope.IsDeclared(tok.Literal) {
+		r.errs.AddFromToken(tok, "%s has already been declared", tok.Literal)
+	} else {
+		scope.Declare(tok.Literal)
+	}
 }
 
-func (r *resolver) defineIdent(ident token.Token) {
-	if r.scopes.Len() == 0 {
-		return
-	}
+func (r *resolver) defineIdent(tok token.Token) {
 	for i := r.scopes.Len() - 1; i >= 0; i-- {
-		scope := r.scopes.Index(i)
-		if _, ok := scope[ident.Literal]; ok {
-			scope[ident.Literal] = true
+		if scope := r.scopes.Index(i); scope.IsDeclared(tok.Literal) {
+			scope.Define(tok.Literal)
 			return
 		}
 	}
-	// TODO: Can't panic here because we don't know whether the identifier refers to a global variable or a variable
-	// which hasn't been declared. We should resolve global variables in the resolver as well.
-	// panic(loxerror.NewFromToken(ident, "%s has not been declared", ident.Literal))
+	// The identifier will either be declared globally later in the program or not at all
 }
 
-func (r *resolver) resolveIdent(ident token.Token) {
+type identOp int
+
+const (
+	read identOp = iota
+	write
+)
+
+func (r *resolver) resolveIdent(tok token.Token, op identOp) {
 	for i := r.scopes.Len() - 1; i >= 0; i-- {
-		if defined, ok := r.scopes.Index(i)[ident.Literal]; ok {
-			if !defined {
-				r.errs = append(r.errs, loxerror.NewFromToken(ident, "%s has not been defined", ident.Literal))
-				return
+		if scope := r.scopes.Index(i); scope.IsDeclared(tok.Literal) {
+			if !scope.IsDefined(tok.Literal) && op == read {
+				r.errs.AddFromToken(tok, "%s has not been defined", tok.Literal)
+			} else {
+				r.declDistancesByTok[tok] = r.scopes.Len() - 1 - i
 			}
-			r.localDeclDistancesByIdent[ident] = r.scopes.Len() - 1 - i
 			return
 		}
 	}
-	// If the identifier can't be found in any scope, then it must be a global variable
-}
-
-func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, error) {
-	r.resolveProgram(program)
-	if len(r.errs) > 0 {
-		return nil, errors.Join(r.errs...)
-	}
-	return r.localDeclDistancesByIdent, nil
+	// The identifier will either be declared globally later in the program or not at all
 }
 
 func (r *resolver) resolveProgram(program ast.Program) {
@@ -127,7 +163,7 @@ func (r *resolver) resolveStmt(stmt ast.Stmt) {
 }
 
 func (r *resolver) resolveVarDecl(stmt ast.VarDecl) {
-	r.declareIdent(stmt.Name.Literal)
+	r.declareIdent(stmt.Name)
 	if stmt.Initialiser != nil {
 		r.inVarDecl = true
 		defer func() { r.inVarDecl = false }()
@@ -137,15 +173,19 @@ func (r *resolver) resolveVarDecl(stmt ast.VarDecl) {
 }
 
 func (r *resolver) resolveFunDecl(stmt ast.FunDecl) {
-	r.declareIdent(stmt.Name.Literal)
+	r.declareIdent(stmt.Name)
 	r.defineIdent(stmt.Name)
+	r.resolveFun(stmt.Params, stmt.Body)
+}
+
+func (r *resolver) resolveFun(params []token.Token, body []ast.Stmt) {
 	endScope := r.beginScope()
 	defer endScope()
-	for _, param := range stmt.Params {
-		r.declareIdent(param.Literal)
+	for _, param := range params {
+		r.declareIdent(param)
 		r.defineIdent(param)
 	}
-	for _, stmt := range stmt.Body {
+	for _, stmt := range body {
 		r.resolveStmt(stmt)
 	}
 }
@@ -234,15 +274,7 @@ func (r *resolver) resolveExpr(expr ast.Expr) {
 }
 
 func (r *resolver) resolveFunExpr(expr ast.FunExpr) {
-	endScope := r.beginScope()
-	defer endScope()
-	for _, param := range expr.Params {
-		r.declareIdent(param.Literal)
-		r.defineIdent(param)
-	}
-	for _, stmt := range expr.Body {
-		r.resolveStmt(stmt)
-	}
+	r.resolveFun(expr.Params, expr.Body)
 }
 
 func (r *resolver) resolveGroupExpr(expr ast.GroupExpr) {
@@ -254,13 +286,11 @@ func (r *resolver) resolveLiteralExpr(ast.LiteralExpr) {
 }
 
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
-	if r.scopes.Len() > 0 {
-		if defined, ok := r.scopes.Peek()[expr.Name.Literal]; r.inVarDecl && ok && !defined {
-			r.errs = append(r.errs, loxerror.NewFromToken(expr.Name, "variable definition cannot refer to itself"))
-			return
-		}
+	if r.inVarDecl && r.scopes.Len() > 0 && r.scopes.Peek().IsDeclared(expr.Name.Literal) {
+		r.errs.AddFromToken(expr.Name, "variable definition cannot refer to itself")
+	} else {
+		r.resolveIdent(expr.Name, read)
 	}
-	r.resolveIdent(expr.Name)
 }
 
 func (r *resolver) resolveBinaryExpr(expr ast.BinaryExpr) {
@@ -287,6 +317,6 @@ func (r *resolver) resolveUnaryExpr(expr ast.UnaryExpr) {
 
 func (r *resolver) resolveAssignmentExpr(expr ast.AssignmentExpr) {
 	r.resolveExpr(expr.Right)
+	r.resolveIdent(expr.Left, write)
 	r.defineIdent(expr.Left)
-	r.resolveIdent(expr.Left)
 }

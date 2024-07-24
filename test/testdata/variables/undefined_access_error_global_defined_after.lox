@@ -1,0 +1,3 @@
+var a;
+print a; // error: a has not been defined
+a = 1;

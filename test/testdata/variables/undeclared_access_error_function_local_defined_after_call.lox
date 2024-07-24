@@ -1,0 +1,6 @@
+fun printX() {
+  print x;
+}
+
+printX(); // error: x has not been declared
+var x = 2;

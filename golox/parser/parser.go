@@ -2,7 +2,6 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"io"
 
@@ -28,7 +27,7 @@ func Parse(r io.Reader) (ast.Program, error) {
 	p := &parser{l: l}
 	errHandler := func(tok token.Token, msg string) {
 		p.lastErrPos = tok.Start
-		p.errs = append(p.errs, loxerror.NewFromToken(tok, msg))
+		p.errs.AddFromToken(tok, msg)
 	}
 	l.SetErrorHandler(errHandler)
 
@@ -42,7 +41,7 @@ type parser struct {
 	loopDepth    int
 	funDeclDepth int
 
-	errs       []error
+	errs       loxerror.LoxErrors
 	lastErrPos token.Position
 }
 
@@ -56,10 +55,7 @@ func (p *parser) Parse() (ast.Program, error) {
 	for p.tok.Type != token.EOF {
 		program.Stmts = append(program.Stmts, p.safelyParseDecl())
 	}
-	if len(p.errs) > 0 {
-		return program, errors.Join(p.errs...)
-	}
-	return program, nil
+	return program, p.errs.Err()
 }
 
 func (p *parser) safelyParseDecl() (stmt ast.Stmt) {
@@ -498,19 +494,19 @@ func (p *parser) next() {
 	p.nextTok = p.l.Next()
 }
 
-func (p *parser) addError(start token.Position, err error) {
+func (p *parser) addError(start token.Position, end token.Position, format string, args ...any) {
 	if len(p.errs) > 0 && start == p.lastErrPos {
 		return
 	}
-	p.errs = append(p.errs, err)
+	p.errs.Add(start, end, format, args...)
 }
 
 func (p *parser) addTokenError(tok token.Token, format string, a ...any) {
-	p.addError(tok.Start, loxerror.NewFromToken(tok, format, a...))
+	p.addError(tok.Start, tok.End, format, a...)
 }
 
 func (p *parser) addNodeError(node ast.Node, format string, a ...any) {
-	p.addError(node.Start(), loxerror.NewFromNode(node, format, a...))
+	p.addError(node.Start(), node.End(), format, a...)
 }
 
 // unwind is used as a panic value so that we can unwind the stack and recover from a parsing error without having to

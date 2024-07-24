@@ -1,0 +1,4 @@
+var a = "global a";
+{
+  var a = a; // error: variable definition cannot refer to itself
+}

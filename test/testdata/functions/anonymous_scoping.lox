@@ -13,10 +13,14 @@ var f = "global f";
   var g = fun() {
     print a; // prints: global a
     b = "global b";
+    print b; // prints: global b
     var c = "fun c";
+    print c; // prints: fun c
     print d; // prints: block d
     e = "block e";
+    print e; // prints: block e
     var f = "fun f";
+    print f; // prints: fun f
   };
 
   var a = "block a";

@@ -1,4 +1,0 @@
-var x = "outer";
-{
-  var x = x; // error: variable definition cannot refer to itself
-}

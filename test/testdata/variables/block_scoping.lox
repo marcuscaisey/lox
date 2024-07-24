@@ -1,39 +1,29 @@
 var a = "global a";
-var b = "global b";
+var b;
 var c = "global c";
+
 {
-  var a = "outer a";
-  var b = "outer b";
+  print a; // prints: global a
+  b = "global b";
+  print b; // prints: global b
+  var c = "outer c";
+  print c; // prints: outer c
+
+  var d = "outer d";
+  var e;
+  var f = "outer f";
+
   {
-    var a = "inner a";
-    print a; // prints: inner a
-    print b; // prints: outer b
-    print c; // prints: global c
+    print d; // prints: outer d
+    e = "outer e";
+    print e; // prints: outer e
+    var f = "inner f";
+    print f; // prints: inner f
   }
-  print a; // prints: outer a
-  print b; // prints: outer b
-  print c; // prints: global c
+
+  print e; // prints: outer e
+  print f; // prints: outer f
 }
-print a; // prints: global a
+
 print b; // prints: global b
 print c; // prints: global c
-
-var d = "global d";
-var e = "global e";
-var f = "global f";
-{
-  d = "outer d";
-  e = "outer e";
-  {
-    d = "inner d";
-    print d; // prints: inner d
-    print e; // prints: outer e
-    print f; // prints: global f
-  }
-  print d; // prints: inner d
-  print e; // prints: outer e
-  print f; // prints: global f
-}
-print d; // prints: inner d
-print e; // prints: outer e
-print f; // prints: global f

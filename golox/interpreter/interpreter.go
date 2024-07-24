@@ -35,9 +35,9 @@ func (stmtResultReturn) stmtResult() {}
 
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
-	globals                   *environment
-	localDeclDistancesByIdent map[token.Token]int
-	replMode                  bool
+	globals            *environment
+	declDistancesByTok map[token.Token]int
+	replMode           bool
 }
 
 // Option can be passed to New to configure the interpreter.
@@ -54,7 +54,7 @@ func REPLMode() Option {
 // New constructs a new Interpreter with the given options.
 func New(opts ...Option) *Interpreter {
 	globals := newEnvironment()
-	for name, fn := range builtinFns {
+	for name, fn := range builtins {
 		globals.Set(name, fn)
 	}
 	interpreter := &Interpreter{
@@ -68,7 +68,7 @@ func New(opts ...Option) *Interpreter {
 
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
-func (i *Interpreter) Interpret(program ast.Program, localDeclDistancesByIdent map[token.Token]int) (err error) {
+func (i *Interpreter) Interpret(program ast.Program, declDistancesByTok map[token.Token]int) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if loxErr, ok := r.(*loxerror.LoxError); ok {
@@ -78,7 +78,7 @@ func (i *Interpreter) Interpret(program ast.Program, localDeclDistancesByIdent m
 			}
 		}
 	}()
-	i.localDeclDistancesByIdent = localDeclDistancesByIdent
+	i.declDistancesByTok = declDistancesByTok
 	i.interpretProgram(program)
 	return nil
 }
@@ -120,11 +120,10 @@ func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) stmtResult 
 }
 
 func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
-	var value loxObject
+	env.Declare(stmt.Name)
 	if stmt.Initialiser != nil {
-		value = i.interpretExpr(env, stmt.Initialiser)
+		env.Assign(stmt.Name, i.interpretExpr(env, stmt.Initialiser))
 	}
-	env.Define(stmt.Name, value)
 }
 
 func (i *Interpreter) interpretFunDecl(env *environment, stmt ast.FunDecl) {
@@ -283,7 +282,7 @@ func (i *Interpreter) interpretVariableExpr(env *environment, expr ast.VariableE
 }
 
 func (i *Interpreter) resolveIdent(env *environment, tok token.Token) loxObject {
-	distance, ok := i.localDeclDistancesByIdent[tok]
+	distance, ok := i.declDistancesByTok[tok]
 	if ok {
 		return env.GetAt(distance, tok)
 	}
@@ -404,7 +403,7 @@ func (i *Interpreter) interpretTernaryExpr(env *environment, expr ast.TernaryExp
 
 func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.AssignmentExpr) loxObject {
 	value := i.interpretExpr(env, expr.Right)
-	distance, ok := i.localDeclDistancesByIdent[expr.Left]
+	distance, ok := i.declDistancesByTok[expr.Left]
 	if ok {
 		env.AssignAt(distance, expr.Left, value)
 	} else {

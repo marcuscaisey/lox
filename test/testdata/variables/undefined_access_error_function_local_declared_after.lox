@@ -1,0 +1,6 @@
+fun f() {
+  print a; // error: a has not been defined
+}
+
+var a;
+f();

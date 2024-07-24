@@ -25,11 +25,37 @@ func (e *environment) Child() *environment {
 	return env
 }
 
-// Set assigns a value to an identifier in this environment.
-// If the identifier has already been defined in this environment, then this method panics.
+// Declare declares an identifier in this environment.
+// If the identifier has already been declared in this environment, then a runtime error is raised.
+func (e *environment) Declare(tok token.Token) {
+	if _, ok := e.valuesByIdent[tok.Literal]; ok {
+		panic(loxerror.NewFromToken(tok, "%s has already been declared", tok.Literal))
+	}
+	e.valuesByIdent[tok.Literal] = nil
+}
+
+// Define declares an identifier in this environment and defines it with a value.
+// If the identifier has already been declared in this environment, then a runtime error is raised.
+// This method should be used for defining values which originated from an assignment in code. For example, a variable
+// or function declaration. Otherwise, use [*environment.Set].
+func (e *environment) Define(tok token.Token, value loxObject) {
+	if value == nil {
+		panic(fmt.Sprintf("attempt to define %s to nil", tok.Literal))
+	}
+	if _, ok := e.valuesByIdent[tok.Literal]; ok {
+		panic(loxerror.NewFromToken(tok, "%s has already been declared", tok.Literal))
+	}
+	e.valuesByIdent[tok.Literal] = value
+}
+
+// Set declares an identifier in this environment and defines it with a value.
+// If the identifier has already been declared in this environment, then this method panics.
 // This method should be used for defining values which did not originate from an assignment in code. For example,
-// defining built-in functions or function arguments. Otherwise, use Define.
+// defining built-in functions or function arguments. Otherwise, use [*environment.Define].
 func (e *environment) Set(ident string, value loxObject) {
+	if value == nil {
+		panic(fmt.Sprintf("attempt to set %s to nil", ident))
+	}
 	if _, ok := e.valuesByIdent[ident]; ok {
 		// It's a bug if we end up here
 		panic(fmt.Sprintf("%s has already been declared", ident))
@@ -37,20 +63,12 @@ func (e *environment) Set(ident string, value loxObject) {
 	e.valuesByIdent[ident] = value
 }
 
-// Define defines an identifier in this environment and assigns it an initial value.
-// If the identifier has already been defined in this environment, then a runtime error is raised.
-// This method should be used for defining values which originated from an assignment in code. For example, a variable
-// or function declaration. Otherwise, use Set.
-func (e *environment) Define(tok token.Token, value loxObject) {
-	if _, ok := e.valuesByIdent[tok.Literal]; ok {
-		panic(loxerror.NewFromToken(tok, "%s has already been declared", tok.Literal))
-	}
-	e.valuesByIdent[tok.Literal] = value
-}
-
-// Assign assigns a value to a variable.
-// If the variable has not been defined then a runtime error is raised.
+// Assign assigns a value to an identifier in this environment.
+// If the identifier has not been defined in this environment, then a runtime error is raised.
 func (e *environment) Assign(tok token.Token, value loxObject) {
+	if value == nil {
+		panic(fmt.Sprintf("attempt to assign nil to %s", tok.Literal))
+	}
 	_, ok := e.valuesByIdent[tok.Literal]
 	if !ok {
 		panic(loxerror.NewFromToken(tok, "%s has not been declared", tok.Literal))
@@ -63,8 +81,8 @@ func (e *environment) AssignAt(distance int, tok token.Token, value loxObject) {
 	e.ancestor(distance).Assign(tok, value)
 }
 
-// Get returns the value of an identifier.
-// If the identifier has not been defined in this environment or any of its parents, then a runtime error is raised.
+// Get returns the value of an identifier in this environment.
+// If the identifier has not been declared or defined in this environment, then a runtime error is raised.
 func (e *environment) Get(tok token.Token) loxObject {
 	value, ok := e.valuesByIdent[tok.Literal]
 	if !ok {

@@ -2,6 +2,7 @@
 package token
 
 import (
+	"cmp"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -107,6 +108,18 @@ type Position struct {
 	File   *File
 	Line   int // 1-based line number
 	Column int // 0-based byte offset from the start of the line
+}
+
+// Compare returns
+//
+//	-1 if p is comes before other in the file,
+//	 0 if p and other are the same position,
+//	+1 if p comes after other in the file.
+func (p Position) Compare(other Position) int {
+	if p.Line == other.Line {
+		return cmp.Compare(p.Column, other.Column)
+	}
+	return cmp.Compare(p.Line, other.Line)
 }
 
 func (p Position) String() string {
