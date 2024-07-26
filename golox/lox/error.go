@@ -1,5 +1,5 @@
-// Package loxerror defines [LoxError] which is the main error type used in golox code.
-package loxerror
+// Package lox provides types which are shared by most of the packages in the Lox interpreter.
+package lox
 
 import (
 	"errors"
@@ -15,39 +15,39 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-// LoxError describes an error that occurred during the execution of a Lox program.
+// Error describes an error that occurred during the execution of a Lox program.
 // It can describe any error which can be attributed to a range of characters in the source code.
-type LoxError struct {
+type Error struct {
 	msg   string
 	start token.Position
 	end   token.Position
 }
 
-// New creates a [*LoxError].
+// NewError creates a [*Error].
 // The start and end positions are the range of characters in the source code that the error applies to.
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
-func New(start token.Position, end token.Position, format string, args ...any) error {
-	return &LoxError{
+func NewError(start token.Position, end token.Position, format string, args ...any) error {
+	return &Error{
 		msg:   fmt.Sprintf(format, args...),
 		start: start,
 		end:   end,
 	}
 }
 
-// NewFromToken creates a [*LoxError] which describes a problem with the given [token.Token].
-func NewFromToken(tok token.Token, format string, args ...interface{}) error {
-	return New(tok.Start, tok.End, format, args...)
+// NewErrorFromToken creates a [*Error] which describes a problem with the given [token.Token].
+func NewErrorFromToken(tok token.Token, format string, args ...interface{}) error {
+	return NewError(tok.Start, tok.End, format, args...)
 }
 
-// NewFromNode creates a [*LoxError] which describes a problem with the given [ast.Node].
-func NewFromNode(node ast.Node, format string, args ...interface{}) error {
-	return New(node.Start(), node.End(), format, args...)
+// NewErrorFromNode creates a [*Error] which describes a problem with the given [ast.Node].
+func NewErrorFromNode(node ast.Node, format string, args ...interface{}) error {
+	return NewError(node.Start(), node.End(), format, args...)
 }
 
-// NewFromNodeRange creates a [*LoxError] which describes a problem with the range of characters that the given
+// NewErrorFromNodeRange creates a [*Error] which describes a problem with the range of characters that the given
 // [ast.Node] cover.
-func NewFromNodeRange(start, end ast.Node, format string, args ...interface{}) error {
-	return New(start.Start(), end.End(), format, args...)
+func NewErrorFromNodeRange(start, end ast.Node, format string, args ...interface{}) error {
+	return NewError(start.Start(), end.End(), format, args...)
 }
 
 // Error formats the error by displaying the error message and highlighting the range of characters in the source code
@@ -58,7 +58,7 @@ func NewFromNodeRange(start, end ast.Node, format string, args ...interface{}) e
 //	test.lox:2:7: error: unterminated string literal
 //	print "bar;
 //	      ~~~~~
-func (e *LoxError) Error() string {
+func (e *Error) Error() string {
 	bold := color.New(color.Bold)
 	red := color.New(color.FgRed)
 
@@ -104,43 +104,43 @@ func (e *LoxError) Error() string {
 	return buildString()
 }
 
-// LoxErrors is a list of [*LoxError]s.
-type LoxErrors []*LoxError
+// Errors is a list of [*Error]s.
+type Errors []*Error
 
-// Add adds a [*LoxError] to the list of errors.
-// The parameters are the same as for [New].
-func (e *LoxErrors) Add(start token.Position, end token.Position, format string, args ...any) {
-	*e = append(*e, &LoxError{
+// Add adds a [*Error] to the list of errors.
+// The parameters are the same as for [NewError].
+func (e *Errors) Add(start token.Position, end token.Position, format string, args ...any) {
+	*e = append(*e, &Error{
 		msg:   fmt.Sprintf(format, args...),
 		start: start,
 		end:   end,
 	})
 }
 
-// AddFromToken adds a [*LoxError] to the list of errors.
-// The parameters are the same as for [NewFromToken].
-func (e *LoxErrors) AddFromToken(tok token.Token, format string, args ...interface{}) {
+// AddFromToken adds a [*Error] to the list of errors.
+// The parameters are the same as for [NewErrorFromToken].
+func (e *Errors) AddFromToken(tok token.Token, format string, args ...interface{}) {
 	e.Add(tok.Start, tok.End, format, args...)
 }
 
-// AddFromNode adds a [*LoxError] to the list of errors.
-// The parameters are the same as for [NewFromNode].
-func (e *LoxErrors) AddFromNode(node ast.Node, format string, args ...interface{}) {
+// AddFromNode adds a [*Error] to the list of errors.
+// The parameters are the same as for [NewErrorFromNode].
+func (e *Errors) AddFromNode(node ast.Node, format string, args ...interface{}) {
 	e.Add(node.Start(), node.End(), format, args...)
 }
 
-// AddFromNodeRange adds a [*LoxError] to the list of errors.
-// The parameters are the same as for [NewFromNodeRange].
-func (e *LoxErrors) AddFromNodeRange(start, end ast.Node, format string, args ...interface{}) {
+// AddFromNodeRange adds a [*Error] to the list of errors.
+// The parameters are the same as for [NewErrorFromNodeRange].
+func (e *Errors) AddFromNodeRange(start, end ast.Node, format string, args ...interface{}) {
 	e.Add(start.Start(), end.End(), format, args...)
 }
 
 // Err orders the errors in the list by their position in the source code and returns them as a single error.
-func (e LoxErrors) Err() error {
+func (e Errors) Err() error {
 	if len(e) == 0 {
 		return nil
 	}
-	slices.SortFunc([]*LoxError(e), func(e1, e2 *LoxError) int {
+	slices.SortFunc([]*Error(e), func(e1, e2 *Error) int {
 		return e1.start.Compare(e2.start)
 	})
 	var errs []error

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/loxerror"
+	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -28,7 +28,7 @@ type resolver struct {
 	// declDistancesByTok maps identifier tokens to the distance to the declaration of the identifier that they refer to
 	declDistancesByTok map[token.Token]int
 
-	errs loxerror.LoxErrors
+	errs lox.Errors
 }
 
 func newResolver() *resolver {

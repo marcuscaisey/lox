@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/loxerror"
+	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -73,7 +73,7 @@ func New(opts ...Option) *Interpreter {
 func (i *Interpreter) Interpret(program ast.Program) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			if loxErr, ok := r.(*loxerror.LoxError); ok {
+			if loxErr, ok := r.(*lox.Error); ok {
 				err = loxErr
 			} else {
 				panic(r)
@@ -304,7 +304,7 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 
 	callable, ok := callee.(loxCallable)
 	if !ok {
-		panic(loxerror.NewFromNode(expr.Callee, "%h object is not callable", callee.Type()))
+		panic(lox.NewErrorFromNode(expr.Callee, "%h object is not callable", callee.Type()))
 	}
 
 	params := callable.Params()
@@ -325,12 +325,12 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 		default:
 			missingArgsStr = strings.Join(missingArgs[:len(missingArgs)-1], ", ") + ", and " + missingArgs[len(missingArgs)-1]
 		}
-		panic(loxerror.NewFromNode(
+		panic(lox.NewErrorFromNode(
 			expr,
 			"%s() missing %d argument%s: %s", callable.Name(), arity-len(args), argumentSuffix, missingArgsStr,
 		))
 	case len(args) > arity:
-		panic(loxerror.NewFromNodeRange(
+		panic(lox.NewErrorFromNodeRange(
 			expr.Args[arity],
 			expr.Args[len(args)-1],
 			"%s() accepts %d arguments but %d were given", callable.Name(), arity, len(args),
@@ -352,7 +352,7 @@ func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) l
 			return result
 		}
 	}
-	panic(loxerror.NewFromToken(expr.Op, "%h operator cannot be used with type %h", expr.Op.Type, right.Type()))
+	panic(lox.NewErrorFromToken(expr.Op, "%h operator cannot be used with type %h", expr.Op.Type, right.Type()))
 }
 
 func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
@@ -395,7 +395,7 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 				return result
 			}
 		}
-		panic(loxerror.NewFromToken(expr.Op, "%h operator cannot be used with types %h and %h", expr.Op.Type, left.Type(), right.Type()))
+		panic(lox.NewErrorFromToken(expr.Op, "%h operator cannot be used with types %h and %h", expr.Op.Type, left.Type(), right.Type()))
 	}
 }
 

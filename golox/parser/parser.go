@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/loxerror"
+	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -40,7 +40,7 @@ type parser struct {
 	loopDepth    int
 	funDeclDepth int
 
-	errs       loxerror.LoxErrors
+	errs       lox.Errors
 	lastErrPos token.Position
 }
 

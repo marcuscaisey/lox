@@ -3,7 +3,7 @@ package interpreter
 import (
 	"fmt"
 
-	"github.com/marcuscaisey/lox/golox/loxerror"
+	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -29,7 +29,7 @@ func (e *environment) Child() *environment {
 // If the identifier has already been declared in this environment, then a runtime error is raised.
 func (e *environment) Declare(tok token.Token) {
 	if _, ok := e.valuesByIdent[tok.Literal]; ok {
-		panic(loxerror.NewFromToken(tok, "%s has already been declared", tok.Literal))
+		panic(lox.NewErrorFromToken(tok, "%s has already been declared", tok.Literal))
 	}
 	e.valuesByIdent[tok.Literal] = nil
 }
@@ -43,7 +43,7 @@ func (e *environment) Define(tok token.Token, value loxObject) {
 		panic(fmt.Sprintf("attempt to define %s to nil", tok.Literal))
 	}
 	if _, ok := e.valuesByIdent[tok.Literal]; ok {
-		panic(loxerror.NewFromToken(tok, "%s has already been declared", tok.Literal))
+		panic(lox.NewErrorFromToken(tok, "%s has already been declared", tok.Literal))
 	}
 	e.valuesByIdent[tok.Literal] = value
 }
@@ -71,7 +71,7 @@ func (e *environment) Assign(tok token.Token, value loxObject) {
 	}
 	_, ok := e.valuesByIdent[tok.Literal]
 	if !ok {
-		panic(loxerror.NewFromToken(tok, "%s has not been declared", tok.Literal))
+		panic(lox.NewErrorFromToken(tok, "%s has not been declared", tok.Literal))
 	}
 	e.valuesByIdent[tok.Literal] = value
 }
@@ -86,10 +86,10 @@ func (e *environment) AssignAt(distance int, tok token.Token, value loxObject) {
 func (e *environment) Get(tok token.Token) loxObject {
 	value, ok := e.valuesByIdent[tok.Literal]
 	if !ok {
-		panic(loxerror.NewFromToken(tok, "%s has not been declared", tok.Literal))
+		panic(lox.NewErrorFromToken(tok, "%s has not been declared", tok.Literal))
 	}
 	if value == nil {
-		panic(loxerror.NewFromToken(tok, "%s has not been defined", tok.Literal))
+		panic(lox.NewErrorFromToken(tok, "%s has not been defined", tok.Literal))
 	}
 	return value
 }

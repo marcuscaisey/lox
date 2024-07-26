@@ -9,7 +9,7 @@ import (
 	"github.com/fatih/color"
 
 	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/loxerror"
+	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -94,12 +94,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 			return n * right
 		case token.Slash:
 			if right == 0 {
-				panic(loxerror.NewFromToken(op, "cannot divide by 0"))
+				panic(lox.NewErrorFromToken(op, "cannot divide by 0"))
 			}
 			return n / right
 		case token.Percent:
 			if right == 0 {
-				panic(loxerror.NewFromToken(op, "cannot modulo by 0"))
+				panic(lox.NewErrorFromToken(op, "cannot modulo by 0"))
 			}
 			return loxNumber(math.Mod(float64(n), float64(right)))
 		case token.Plus:
@@ -126,10 +126,10 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
 	if math.Floor(float64(n)) != float64(n) {
-		panic(loxerror.NewFromToken(op, "cannot multiply %h by non-integer %h", loxTypeString, loxTypeNumber))
+		panic(lox.NewErrorFromToken(op, "cannot multiply %h by non-integer %h", loxTypeString, loxTypeNumber))
 	}
 	if n < 0 {
-		panic(loxerror.NewFromToken(op, "cannot multiply %h by negative %h", loxTypeString, loxTypeNumber))
+		panic(lox.NewErrorFromToken(op, "cannot multiply %h by negative %h", loxTypeString, loxTypeNumber))
 	}
 	return loxString(strings.Repeat(string(s), int(n)))
 }
