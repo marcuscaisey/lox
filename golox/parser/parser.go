@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/lexer"
 	"github.com/marcuscaisey/lox/golox/loxerror"
 	"github.com/marcuscaisey/lox/golox/token"
 )
@@ -19,7 +18,7 @@ const (
 // Parse parses the source code read from r.
 // If an error is returned then an incomplete AST will still be returned along with it.
 func Parse(r io.Reader) (ast.Program, error) {
-	l, err := lexer.New(r)
+	l, err := newLexer(r)
 	if err != nil {
 		return ast.Program{}, fmt.Errorf("constructing parser: %s", err)
 	}
@@ -35,7 +34,7 @@ func Parse(r io.Reader) (ast.Program, error) {
 }
 
 type parser struct {
-	l            *lexer.Lexer
+	l            *lexer
 	tok          token.Token // token currently being considered
 	nextTok      token.Token // next token
 	loopDepth    int

@@ -1,5 +1,4 @@
-// Package lexer implements a lexer for Lox source code.
-package lexer
+package parser
 
 import (
 	"fmt"
@@ -12,18 +11,18 @@ import (
 
 const eof = -1
 
-// ErrorHandler is the function which handles syntax errors encountered during lexing.
+// errorHandler is the function which handles syntax errors encountered during lexing.
 // It's passed the offending token and a message describing the error.
-type ErrorHandler func(tok token.Token, msg string)
+type errorHandler func(tok token.Token, msg string)
 
-// Lexer converts Lox source code into lexical tokens.
+// lexer converts Lox source code into lexical tokens.
 // Tokens are read from the lexer using the Next method.
 // Syntax errors are handled by calling the error handler function which can be set using SetErrorHandler. The default
 // error handler is a no-op.
-type Lexer struct {
+type lexer struct {
 	// Immutable state
 	src        []byte
-	errHandler ErrorHandler
+	errHandler errorHandler
 
 	// Mutable state
 	ch           rune           // character currently being considered
@@ -32,8 +31,8 @@ type Lexer struct {
 	lastReadSize int            // size of last rune read
 }
 
-// New constructs a Lexer which will lex the source code read from an io.Reader.
-func New(r io.Reader) (*Lexer, error) {
+// newLexer constructs a lexer which will lex the source code read from an io.Reader.
+func newLexer(r io.Reader) (*lexer, error) {
 	src, err := io.ReadAll(r)
 	if err != nil {
 		return nil, fmt.Errorf("constructing lexer: %s", err)
@@ -41,7 +40,7 @@ func New(r io.Reader) (*Lexer, error) {
 	errHandler := func(token.Token, string) {}
 	filename := name(r)
 
-	l := &Lexer{
+	l := &lexer{
 		src:        src,
 		errHandler: errHandler,
 		pos: token.Position{
@@ -64,12 +63,12 @@ func name(v any) string {
 }
 
 // SetErrorHandler sets the error handler function which will be called when a syntax error is encountered.
-func (l *Lexer) SetErrorHandler(errHandler ErrorHandler) {
+func (l *lexer) SetErrorHandler(errHandler errorHandler) {
 	l.errHandler = errHandler
 }
 
 // Next returns the next token. An EOF token is returned if the end of the source code has been reached.
-func (l *Lexer) Next() token.Token {
+func (l *lexer) Next() token.Token {
 	l.skipWhitespace()
 
 	tok := token.Token{Start: l.pos}
@@ -186,19 +185,19 @@ func (l *Lexer) Next() token.Token {
 	return tok
 }
 
-func (l *Lexer) skipWhitespace() {
+func (l *lexer) skipWhitespace() {
 	for isWhitespace(l.ch) {
 		l.next()
 	}
 }
 
-func (l *Lexer) skipSingleLineComment() {
+func (l *lexer) skipSingleLineComment() {
 	for l.ch != '\n' && l.ch != eof {
 		l.next()
 	}
 }
 
-func (l *Lexer) consumeMultiLineComment() (comment string, terminated bool) {
+func (l *lexer) consumeMultiLineComment() (comment string, terminated bool) {
 	var b strings.Builder
 	b.WriteString("/*")
 	// Multi-line comments can be nested
@@ -217,7 +216,7 @@ func (l *Lexer) consumeMultiLineComment() (comment string, terminated bool) {
 	return b.String(), openComments == 0
 }
 
-func (l *Lexer) consumeNumber() string {
+func (l *lexer) consumeNumber() string {
 	var b strings.Builder
 	for isDigit(l.ch) {
 		b.WriteRune(l.ch)
@@ -236,7 +235,7 @@ func (l *Lexer) consumeNumber() string {
 	return b.String()
 }
 
-func (l *Lexer) consumeString() (s string, terminated bool) {
+func (l *lexer) consumeString() (s string, terminated bool) {
 	l.next()
 	var b strings.Builder
 	b.WriteRune('"')
@@ -253,7 +252,7 @@ func (l *Lexer) consumeString() (s string, terminated bool) {
 	}
 }
 
-func (l *Lexer) consumeIdent() string {
+func (l *lexer) consumeIdent() string {
 	var b strings.Builder
 	for isAlphaNumeric(l.ch) {
 		b.WriteRune(l.ch)
@@ -285,7 +284,7 @@ func isAlphaNumeric(r rune) bool {
 
 // next reads the next character into s.ch and advances the lexer.
 // If the end of the source code has been reached, s.ch is set to eof.
-func (l *Lexer) next() {
+func (l *lexer) next() {
 	if l.ch == eof {
 		return
 	}
@@ -324,7 +323,7 @@ func (l *Lexer) next() {
 
 // peek returns the next character without advancing the lexer.
 // If the end of the source code has been reached, eof is returned.
-func (l *Lexer) peek() rune {
+func (l *lexer) peek() rune {
 	if l.readOffset >= len(l.src) {
 		return eof
 	}
