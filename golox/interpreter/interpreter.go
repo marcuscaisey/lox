@@ -3,6 +3,7 @@ package interpreter
 
 import (
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 
@@ -35,9 +36,9 @@ func (stmtResultReturn) stmtResult() {}
 
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
-	globals            *environment
-	declDistancesByTok map[token.Token]int
-	replMode           bool
+	globals              *environment
+	declDistancesByTok   map[token.Token]int
+	printExprStmtResults bool
 }
 
 // Option can be passed to New to configure the interpreter.
@@ -47,7 +48,7 @@ type Option func(*Interpreter)
 // In REPL mode, the interpreter will print the result of expression statements.
 func REPLMode() Option {
 	return func(i *Interpreter) {
-		i.replMode = true
+		i.printExprStmtResults = true
 	}
 }
 
@@ -58,7 +59,8 @@ func New(opts ...Option) *Interpreter {
 		globals.Set(name, fn)
 	}
 	interpreter := &Interpreter{
-		globals: globals,
+		globals:            globals,
+		declDistancesByTok: map[token.Token]int{},
 	}
 	for _, opt := range opts {
 		opt(interpreter)
@@ -68,7 +70,7 @@ func New(opts ...Option) *Interpreter {
 
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
-func (i *Interpreter) Interpret(program ast.Program, declDistancesByTok map[token.Token]int) (err error) {
+func (i *Interpreter) Interpret(program ast.Program) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if loxErr, ok := r.(*loxerror.LoxError); ok {
@@ -78,7 +80,11 @@ func (i *Interpreter) Interpret(program ast.Program, declDistancesByTok map[toke
 			}
 		}
 	}()
-	i.declDistancesByTok = declDistancesByTok
+	declDistancesByTok, err := resolve(program)
+	if err != nil {
+		return err
+	}
+	maps.Copy(i.declDistancesByTok, declDistancesByTok)
 	i.interpretProgram(program)
 	return nil
 }
@@ -138,7 +144,7 @@ func (i *Interpreter) interpretFunDecl(env *environment, stmt ast.FunDecl) {
 
 func (i *Interpreter) interpretExprStmt(env *environment, stmt ast.ExprStmt) {
 	value := i.interpretExpr(env, stmt.Expr)
-	if i.replMode {
+	if i.printExprStmtResults {
 		fmt.Println(value.String())
 	}
 }

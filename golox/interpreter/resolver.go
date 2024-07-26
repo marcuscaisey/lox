@@ -1,5 +1,4 @@
-// Package resolver implements the resolution of identifier tokens in a Lox program.
-package resolver
+package interpreter
 
 import (
 	"fmt"
@@ -9,15 +8,42 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-// Resolve resolves the identifier tokens in a program to the declarations that they refer to.
+// resolve resolves the identifier tokens in a program to the declarations that they refer to.
 // It returns a map from identifier tokens to the distance to the declaration of the identifier that they refer.
 // to. A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
 // parent scope, and so on.
 // If a token is not present in the map, then the identifier that it refers to was either declared globally or not at
 // all.
-func Resolve(program ast.Program) (map[token.Token]int, error) {
+func resolve(program ast.Program) (map[token.Token]int, error) {
 	r := newResolver()
 	return r.Resolve(program)
+}
+
+type resolver struct {
+	// stack of lexical scopes where each scope maps identifiers to their status in that scope
+	scopes *stack[scope]
+	// whether we're currently resolving a variable declaration
+	inVarDecl bool
+
+	// declDistancesByTok maps identifier tokens to the distance to the declaration of the identifier that they refer to
+	declDistancesByTok map[token.Token]int
+
+	errs loxerror.LoxErrors
+}
+
+func newResolver() *resolver {
+	return &resolver{
+		scopes:             newStack[scope](),
+		declDistancesByTok: map[token.Token]int{},
+	}
+}
+
+func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, error) {
+	r.resolveProgram(program)
+	if err := r.errs.Err(); err != nil {
+		return nil, err
+	}
+	return r.declDistancesByTok, nil
 }
 
 type identStatus int
@@ -49,33 +75,6 @@ func (s scope) IsDeclared(ident string) bool {
 // IsDefined returns true if the identifier has been defined in the scope.
 func (s scope) IsDefined(ident string) bool {
 	return s[ident] == defined
-}
-
-type resolver struct {
-	// stack of lexical scopes where each scope maps identifiers to their status in that scope
-	scopes *stack[scope]
-	// whether we're currently resolving a variable declaration
-	inVarDecl bool
-
-	// declDistancesByTok maps identifier tokens to the distance to the declaration of the identifier that they refer to
-	declDistancesByTok map[token.Token]int
-
-	errs loxerror.LoxErrors
-}
-
-func newResolver() *resolver {
-	return &resolver{
-		scopes:             newStack[scope](),
-		declDistancesByTok: map[token.Token]int{},
-	}
-}
-
-func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, error) {
-	r.resolveProgram(program)
-	if err := r.errs.Err(); err != nil {
-		return nil, err
-	}
-	return r.declDistancesByTok, nil
 }
 
 func (r *resolver) beginScope() func() {
@@ -319,4 +318,39 @@ func (r *resolver) resolveAssignmentExpr(expr ast.AssignmentExpr) {
 	r.resolveExpr(expr.Right)
 	r.resolveIdent(expr.Left, write)
 	r.defineIdent(expr.Left)
+}
+
+type stack[T any] []T
+
+func newStack[T any]() *stack[T] {
+	return &stack[T]{}
+}
+
+func (s *stack[T]) Push(v T) {
+	*s = append(*s, v)
+}
+
+func (s *stack[T]) Pop() T {
+	if len(*s) == 0 {
+		panic("pop from empty stack")
+	}
+	v := (*s)[len(*s)-1]
+	*s = (*s)[:len(*s)-1]
+	return v
+}
+
+func (s *stack[T]) Peek() T {
+	if len(*s) == 0 {
+		panic("peek of empty stack")
+	}
+	return (*s)[len(*s)-1]
+}
+
+func (s *stack[T]) Len() int {
+	return len(*s)
+}
+
+// TODO: delete this when we can replace its use with an interator in Go 1.23
+func (s *stack[T]) Index(i int) T {
+	return (*s)[i]
 }

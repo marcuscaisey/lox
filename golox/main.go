@@ -19,7 +19,6 @@ import (
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/interpreter"
 	"github.com/marcuscaisey/lox/golox/parser"
-	"github.com/marcuscaisey/lox/golox/resolver"
 )
 
 var (
@@ -125,11 +124,7 @@ func run(r io.Reader, interpreter *interpreter.Interpreter) error {
 	if err != nil {
 		return err
 	}
-	localDeclDistancesByIdent, err := resolver.Resolve(root)
-	if err != nil {
-		return err
-	}
-	return interpreter.Interpret(root, localDeclDistancesByIdent)
+	return interpreter.Interpret(root)
 }
 
 func runREPL() error {
