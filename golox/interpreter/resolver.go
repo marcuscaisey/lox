@@ -22,8 +22,6 @@ func resolve(program ast.Program) (map[token.Token]int, error) {
 type resolver struct {
 	// stack of lexical scopes where each scope maps identifiers to their status in that scope
 	scopes *stack[scope]
-	// whether we're currently resolving a variable declaration
-	inVarDecl bool
 
 	// declDistancesByTok maps identifier tokens to the distance to the declaration of the identifier that they refer to
 	declDistancesByTok map[token.Token]int
@@ -162,12 +160,12 @@ func (r *resolver) resolveStmt(stmt ast.Stmt) {
 }
 
 func (r *resolver) resolveVarDecl(stmt ast.VarDecl) {
-	r.declareIdent(stmt.Name)
 	if stmt.Initialiser != nil {
-		r.inVarDecl = true
-		defer func() { r.inVarDecl = false }()
 		r.resolveExpr(stmt.Initialiser)
+		r.declareIdent(stmt.Name)
 		r.defineIdent(stmt.Name)
+	} else {
+		r.declareIdent(stmt.Name)
 	}
 }
 
@@ -285,11 +283,7 @@ func (r *resolver) resolveLiteralExpr(ast.LiteralExpr) {
 }
 
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
-	if r.inVarDecl && r.scopes.Len() > 0 && r.scopes.Peek().IsDeclared(expr.Name.Literal) {
-		r.errs.AddFromToken(expr.Name, "variable definition cannot refer to itself")
-	} else {
-		r.resolveIdent(expr.Name, read)
-	}
+	r.resolveIdent(expr.Name, read)
 }
 
 func (r *resolver) resolveBinaryExpr(expr ast.BinaryExpr) {

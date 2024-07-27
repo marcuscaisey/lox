@@ -1,1 +1,1 @@
-var a = a; // error: a has not been defined
+var a = a; // error: a has not been declared

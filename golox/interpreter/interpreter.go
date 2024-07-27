@@ -126,9 +126,10 @@ func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) stmtResult 
 }
 
 func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
-	env.Declare(stmt.Name)
 	if stmt.Initialiser != nil {
-		env.Assign(stmt.Name, i.interpretExpr(env, stmt.Initialiser))
+		env.Define(stmt.Name, i.interpretExpr(env, stmt.Initialiser))
+	} else {
+		env.Declare(stmt.Name)
 	}
 }
 
