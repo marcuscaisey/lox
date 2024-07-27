@@ -10,7 +10,6 @@ for (var i = 0;; i = i + 1) {
 
 
 for (var j = 0; j < 3; j = j + 1) {
-  var k = 0;
   for (var k = 0;; k = k + 1) {
     if (k == 1) {
       break;

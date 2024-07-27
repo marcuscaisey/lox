@@ -9,6 +9,9 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
+// BlankIdent is the special identifier which can be used as a placeholder in declarations and assignments.
+const BlankIdent = "_"
+
 //go:generate go run golang.org/x/tools/cmd/stringer -type Type -linecomment
 
 // Type is the type of a lexical token of Lox code.

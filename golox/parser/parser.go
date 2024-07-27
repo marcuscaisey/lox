@@ -149,7 +149,9 @@ func (p *parser) parseParams(context string) []token.Token {
 			p.addTokenError(param, "duplicate parameter %s", param.Literal)
 		}
 		params = append(params, param)
-		seen[param.Literal] = true
+		if param.Literal != token.BlankIdent {
+			seen[param.Literal] = true
+		}
 	}
 	if len(params) > maxParams {
 		p.addTokenError(params[maxParams], "cannot define more than %d function parameters", maxParams)

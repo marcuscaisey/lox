@@ -9,6 +9,7 @@ var f = "global f";
   var d = "block d";
   var e;
   var f = "block f";
+  _ = f;
 
   var g = fun() {
     print a; // prints: global a
@@ -24,6 +25,7 @@ var f = "global f";
   };
 
   var a = "block a";
+  _ = a;
   var b = "block b";
   g();
   print b; // prints: block b

@@ -8,6 +8,7 @@ for (var a = "local a";;) {
   print b; // prints: global b
   c = "global c";
   var d = "local d";
+  var _ = d; // suppress unused declaration error
   break;
 }
 

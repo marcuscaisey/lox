@@ -1,0 +1,14 @@
+fun _() {
+  return 1;
+}
+fun _() {
+  return 2;
+}
+{
+  fun _() {
+    return 3;
+  }
+  fun _() {
+    return 4;
+  }
+}

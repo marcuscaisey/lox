@@ -100,8 +100,7 @@ print "" ? 1 : 2;   // prints: 2
 
 #### Variable Expression
 
-A variable expression produces the value of a variable. It is not valid to access an uninitialised
-variable.
+A variable expression produces the value of a variable.
 
 ```lox
 var a = 1;
@@ -338,12 +337,17 @@ greet(); // prints: Hello, World!
 
 ### Declarations
 
-Declarations are constructs that bind a name to a value.
+Declarations are constructs that bind an identifier (name) to a value. It is not valid to:
+
+- declare a [non-blank](#blank-identifier) identifier more than once in the same lexical scope.
+- use a [non-blank](#blank-identifier) identifier before it has been declared.
+- use a declared identifier which has not been assigned a value (defined).
+- declare a [non-blank](#blank-identifier) identifier in a local scope and not use it.
 
 #### Variable Declaration
 
-A variable declaration declares a name which can be assigned a value. You can optionally assign an
-initial value to the variable.
+A variable declaration declares an identifier which can be assigned a value. You can optionally
+assign (define) an initial value to the variable.
 
 ```lox
 var a;
@@ -354,8 +358,8 @@ print b; // prints: 1
 
 #### Function Declaration
 
-A function declaration declares a name which can be called with arguments. The function body is a
-block statement which can return a value to the caller. A function which does not return a value
+A function declaration declares a function which can be called with arguments. The function body is
+a block statement which can return a value to the caller. A function which does not return a value
 implicitly returns `nil`.
 
 ```lox
@@ -365,6 +369,15 @@ fun add(a, b) {
 
 print add(1, 2); // prints: 3
 ```
+
+#### Blank Identifier
+
+The blank identifier `_` is a special identifier which:
+
+- can be declared more than once in the same lexical scope.
+- can be used before it has been declared.
+- can be declared but not used.
+- cannot be used in a non-assignment expression.
 
 ### Comments
 

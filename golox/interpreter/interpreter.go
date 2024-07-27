@@ -12,28 +12,6 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-type stmtResult interface {
-	stmtResult()
-}
-
-type stmtResultNone struct{}
-
-func (stmtResultNone) stmtResult() {}
-
-type stmtResultBreak struct{}
-
-func (stmtResultBreak) stmtResult() {}
-
-type stmtResultContinue struct{}
-
-func (stmtResultContinue) stmtResult() {}
-
-type stmtResultReturn struct {
-	Value loxObject
-}
-
-func (stmtResultReturn) stmtResult() {}
-
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
 	globals              *environment
@@ -88,6 +66,28 @@ func (i *Interpreter) Interpret(program ast.Program) (err error) {
 	i.interpretProgram(program)
 	return nil
 }
+
+type stmtResult interface {
+	stmtResult()
+}
+
+type stmtResultNone struct{}
+
+func (stmtResultNone) stmtResult() {}
+
+type stmtResultBreak struct{}
+
+func (stmtResultBreak) stmtResult() {}
+
+type stmtResultContinue struct{}
+
+func (stmtResultContinue) stmtResult() {}
+
+type stmtResultReturn struct {
+	Value loxObject
+}
+
+func (stmtResultReturn) stmtResult() {}
 
 func (i *Interpreter) interpretProgram(node ast.Program) {
 	for _, stmt := range node.Stmts {

@@ -9,8 +9,8 @@ import (
 )
 
 // resolve resolves the identifier tokens in a program to the declarations that they refer to.
-// It returns a map from identifier tokens to the distance to the declaration of the identifier that they refer.
-// to. A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
+// It returns a map from identifier tokens to the distance to the declaration of the identifier that they refer to.
+// A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
 // parent scope, and so on.
 // If a token is not present in the map, then the identifier that it refers to was either declared globally or not at
 // all.
@@ -20,10 +20,9 @@ func resolve(program ast.Program) (map[token.Token]int, error) {
 }
 
 type resolver struct {
-	// stack of lexical scopes where each scope maps identifiers to their status in that scope
 	scopes *stack[scope]
 
-	// declDistancesByTok maps identifier tokens to the distance to the declaration of the identifier that they refer to
+	// map of identifier tokens to the distance to the declaration of the identifier that they refer to
 	declDistancesByTok map[token.Token]int
 
 	errs lox.Errors
@@ -44,41 +43,63 @@ func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, error) {
 	return r.declDistancesByTok, nil
 }
 
-type identStatus int
+type identInfo struct {
+	Defined bool
+	Used    bool
+	Token   token.Token
+}
 
-const (
-	undeclared identStatus = iota
-	declared
-	defined
-)
+// scope represents a lexical scope and keeps track of the identifiers declared in that scope
+type scope map[string]*identInfo
 
-// scope represents a lexical scope and keeps track of which identifiers have been declared and defined in that scope.
-type scope map[string]identStatus
-
-// Declare marks an identifier as declared in the scope.
-func (s scope) Declare(ident string) {
-	s[ident] = declared
+// Declare marks an identifier as declared in the scope, unless it's [token.BlankIdent].
+func (s scope) Declare(tok token.Token) {
+	if tok.Literal == token.BlankIdent {
+		return
+	}
+	s[tok.Literal] = &identInfo{Token: tok}
 }
 
 // Define marks an identifier as defined in the scope.
-func (s scope) Define(ident string) {
-	s[ident] = defined
+func (s scope) Define(tok token.Token) {
+	s[tok.Literal].Defined = true
 }
 
-// IsDeclared returns true if the identifier has been declared in the scope.
-func (s scope) IsDeclared(ident string) bool {
-	return s[ident] != undeclared
+// Use marks an identifier as used in the scope.
+func (s scope) Use(tok token.Token) {
+	s[tok.Literal].Used = true
 }
 
-// IsDefined returns true if the identifier has been defined in the scope.
-func (s scope) IsDefined(ident string) bool {
-	return s[ident] == defined
+// IsDeclared reports whether the identifier has been declared in the scope.
+func (s scope) IsDeclared(tok token.Token) bool {
+	_, ok := s[tok.Literal]
+	return ok
 }
 
+// IsDefined reports whether the identifier has been defined in the scope.
+func (s scope) IsDefined(tok token.Token) bool {
+	return s[tok.Literal].Defined
+}
+
+// UnusedIdents returns the identifier tokens in the scope that have been declared but not used.
+func (s scope) UnusedIdents() []token.Token {
+	var unused []token.Token
+	for _, info := range s {
+		if !info.Used {
+			unused = append(unused, info.Token)
+		}
+	}
+	return unused
+}
+
+// beginScope creates a new scope and returns a function that ends the scope
 func (r *resolver) beginScope() func() {
 	r.scopes.Push(scope{})
 	return func() {
-		r.scopes.Pop()
+		scope := r.scopes.Pop()
+		for _, tok := range scope.UnusedIdents() {
+			r.errs.AddFromToken(tok, "%s has been declared but is never used", tok.Literal)
+		}
 	}
 }
 
@@ -86,17 +107,17 @@ func (r *resolver) declareIdent(tok token.Token) {
 	if r.scopes.Len() == 0 {
 		return
 	}
-	if scope := r.scopes.Peek(); scope.IsDeclared(tok.Literal) {
+	if scope := r.scopes.Peek(); scope.IsDeclared(tok) {
 		r.errs.AddFromToken(tok, "%s has already been declared", tok.Literal)
 	} else {
-		scope.Declare(tok.Literal)
+		scope.Declare(tok)
 	}
 }
 
 func (r *resolver) defineIdent(tok token.Token) {
 	for i := r.scopes.Len() - 1; i >= 0; i-- {
-		if scope := r.scopes.Index(i); scope.IsDeclared(tok.Literal) {
-			scope.Define(tok.Literal)
+		if scope := r.scopes.Index(i); scope.IsDeclared(tok) {
+			scope.Define(tok)
 			return
 		}
 	}
@@ -112,8 +133,9 @@ const (
 
 func (r *resolver) resolveIdent(tok token.Token, op identOp) {
 	for i := r.scopes.Len() - 1; i >= 0; i-- {
-		if scope := r.scopes.Index(i); scope.IsDeclared(tok.Literal) {
-			if !scope.IsDefined(tok.Literal) && op == read {
+		if scope := r.scopes.Index(i); scope.IsDeclared(tok) {
+			scope.Use(tok)
+			if !scope.IsDefined(tok) && op == read {
 				r.errs.AddFromToken(tok, "%s has not been defined", tok.Literal)
 			} else {
 				r.declDistancesByTok[tok] = r.scopes.Len() - 1 - i
@@ -283,7 +305,11 @@ func (r *resolver) resolveLiteralExpr(ast.LiteralExpr) {
 }
 
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
-	r.resolveIdent(expr.Name, read)
+	if expr.Name.Literal == token.BlankIdent {
+		r.errs.AddFromToken(expr.Name, "blank identifier _ cannot be used in a non-assignment expression")
+	} else {
+		r.resolveIdent(expr.Name, read)
+	}
 }
 
 func (r *resolver) resolveBinaryExpr(expr ast.BinaryExpr) {
