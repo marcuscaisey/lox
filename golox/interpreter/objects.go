@@ -38,7 +38,6 @@ func (t loxType) Format(f fmt.State, verb rune) {
 type loxObject interface {
 	String() string
 	Type() loxType
-	IsTruthy() loxBool
 }
 
 type loxUnaryOperand interface {
@@ -53,6 +52,10 @@ type loxBinaryOperand interface {
 	BinaryOp(op token.Token, right loxObject) loxObject
 }
 
+type loxTruther interface {
+	IsTruthy() loxBool
+}
+
 type loxCallable interface {
 	Name() string
 	Params() []string
@@ -65,6 +68,7 @@ var (
 	_ loxObject        = loxNumber(0)
 	_ loxUnaryOperand  = loxNumber(0)
 	_ loxBinaryOperand = loxNumber(0)
+	_ loxTruther       = loxNumber(0)
 )
 
 func (n loxNumber) String() string {
@@ -139,6 +143,7 @@ type loxString string
 var (
 	_ loxObject        = loxString("")
 	_ loxBinaryOperand = loxString("")
+	_ loxTruther       = loxString("")
 )
 
 func (s loxString) String() string {
@@ -179,7 +184,10 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 
 type loxBool bool
 
-var _ loxObject = loxBool(false)
+var (
+	_ loxObject  = loxBool(false)
+	_ loxTruther = loxBool(false)
+)
 
 func (b loxBool) String() string {
 	if b {
@@ -198,7 +206,10 @@ func (b loxBool) IsTruthy() loxBool {
 
 type loxNil struct{}
 
-var _ loxObject = loxNil{}
+var (
+	_ loxObject  = loxNil{}
+	_ loxTruther = loxNil{}
+)
 
 func (n loxNil) String() string {
 	return "nil"
@@ -230,10 +241,6 @@ func (f loxFunction) String() string {
 
 func (f loxFunction) Type() loxType {
 	return loxTypeFunction
-}
-
-func (f loxFunction) IsTruthy() loxBool {
-	return true
 }
 
 func (f loxFunction) Name() string {
@@ -277,10 +284,6 @@ func (f loxBuiltinFunction) String() string {
 
 func (f loxBuiltinFunction) Type() loxType {
 	return loxTypeFunction
-}
-
-func (f loxBuiltinFunction) IsTruthy() loxBool {
-	return true
 }
 
 func (f loxBuiltinFunction) Name() string {

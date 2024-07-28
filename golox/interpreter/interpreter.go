@@ -171,7 +171,7 @@ func (i *Interpreter) executeBlock(env *environment, stmts []ast.Stmt) stmtResul
 
 func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) stmtResult {
 	condition := i.interpretExpr(env, stmt.Condition)
-	if condition.IsTruthy() {
+	if isTruthy(condition) {
 		return i.interpretStmt(env, stmt.Then)
 	} else if stmt.Else != nil {
 		return i.interpretStmt(env, stmt.Else)
@@ -181,7 +181,7 @@ func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) stmtRes
 }
 
 func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) stmtResult {
-	for i.interpretExpr(env, stmt.Condition).IsTruthy() {
+	for isTruthy(i.interpretExpr(env, stmt.Condition)) {
 		switch result := i.interpretStmt(env, stmt.Body).(type) {
 		case stmtResultBreak:
 			return stmtResultNone{}
@@ -197,7 +197,7 @@ func (i *Interpreter) interpretForStmt(env *environment, stmt ast.ForStmt) stmtR
 	if stmt.Initialise != nil {
 		i.interpretStmt(childEnv, stmt.Initialise)
 	}
-	for stmt.Condition == nil || i.interpretExpr(childEnv, stmt.Condition).IsTruthy() {
+	for stmt.Condition == nil || isTruthy(i.interpretExpr(childEnv, stmt.Condition)) {
 		switch result := i.interpretStmt(childEnv, stmt.Body).(type) {
 		case stmtResultBreak:
 			return stmtResultNone{}
@@ -345,7 +345,7 @@ func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) l
 	right := i.interpretExpr(env, expr.Right)
 	if expr.Op.Type == token.Bang {
 		// The behaviour of ! is independent of the type of the operand, so we can implement it here.
-		return !right.IsTruthy()
+		return !isTruthy(right)
 	}
 	unaryOperand, ok := right.(loxUnaryOperand)
 	if ok {
@@ -363,14 +363,14 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 	switch expr.Op.Type {
 	case token.Or:
 		// The behaviour of or is independent of the types of the operands, so we can implement it here.
-		if left.IsTruthy() {
+		if isTruthy(left) {
 			return left
 		} else {
 			return i.interpretExpr(env, expr.Right)
 		}
 	case token.And:
 		// The behaviour of and is independent of the types of the operands, so we can implement it here.
-		if !left.IsTruthy() {
+		if !isTruthy(left) {
 			return left
 		} else {
 			return i.interpretExpr(env, expr.Right)
@@ -402,7 +402,7 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 
 func (i *Interpreter) interpretTernaryExpr(env *environment, expr ast.TernaryExpr) loxObject {
 	condition := i.interpretExpr(env, expr.Condition)
-	if condition.IsTruthy() {
+	if isTruthy(condition) {
 		return i.interpretExpr(env, expr.Then)
 	}
 	return i.interpretExpr(env, expr.Else)
@@ -417,4 +417,11 @@ func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.Assignm
 		i.globals.Assign(expr.Left, value)
 	}
 	return value
+}
+
+func isTruthy(obj loxObject) loxBool {
+	if truther, ok := obj.(loxTruther); ok {
+		return truther.IsTruthy()
+	}
+	return true
 }
