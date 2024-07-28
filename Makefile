@@ -11,6 +11,8 @@ ifdef RUN
 	extra_test_args = -run ${RUN}
 endif
 
+test: test_golox
+
 test_golox: golox
 	go run gotest.tools/gotestsum ./test -interpreter=${GOLOX_BUILD_PATH} ${extra_test_args}
 
