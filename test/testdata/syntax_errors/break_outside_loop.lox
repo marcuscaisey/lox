@@ -1,2 +1,2 @@
-// error: break statement must be inside a loop
+// error: 'break' can only be used inside a loop
 break;

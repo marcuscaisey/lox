@@ -254,7 +254,7 @@ func (p *parser) parseBreakStmt(breakTok token.Token) ast.BreakStmt {
 	semicolon := p.expect(token.Semicolon)
 	stmt := ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
-		p.addNodeError(stmt, "break statement must be inside a loop")
+		p.addNodeError(stmt, "%m can only be used inside a loop", token.Break)
 	}
 	return stmt
 }
@@ -263,7 +263,7 @@ func (p *parser) parseContinueStmt(continueTok token.Token) ast.ContinueStmt {
 	semicolon := p.expect(token.Semicolon)
 	stmt := ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
 	if p.loopDepth == 0 {
-		p.addNodeError(stmt, "continue statement must be inside a loop")
+		p.addNodeError(stmt, "%m can only be used inside a loop", token.Continue)
 	}
 	return stmt
 }
@@ -277,7 +277,7 @@ func (p *parser) parseReturnStmt(returnTok token.Token) ast.ReturnStmt {
 	}
 	stmt := ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
 	if p.funDeclDepth == 0 {
-		p.addNodeError(stmt, "return statement must be inside a function definition")
+		p.addNodeError(stmt, "%m can only be used inside a function definition", token.Return)
 	}
 	return stmt
 }

@@ -1,2 +1,2 @@
-// error: continue statement must be inside a loop
+// error: 'continue' can only be used inside a loop
 continue;

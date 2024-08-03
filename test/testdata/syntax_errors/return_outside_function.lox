@@ -1,2 +1,2 @@
-// error: return statement must be inside a function definition
+// error: 'return' can only be used inside a function definition
 return 2;
