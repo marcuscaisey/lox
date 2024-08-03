@@ -142,15 +142,15 @@ func (p *parser) parseParams(context string) []token.Token {
 	var params []token.Token
 	seen := map[string]bool{}
 	params = append(params, p.expectf(token.Ident, "expected identifier %s", context))
-	seen[params[0].Literal] = true
+	seen[params[0].Lexeme] = true
 	for p.match(token.Comma) {
 		param := p.expectf(token.Ident, "expected identifier %s", context)
-		if seen[param.Literal] {
-			p.addTokenError(param, "duplicate parameter %s", param.Literal)
+		if seen[param.Lexeme] {
+			p.addTokenError(param, "duplicate parameter %s", param.Lexeme)
 		}
 		params = append(params, param)
-		if param.Literal != token.BlankIdent {
-			seen[param.Literal] = true
+		if param.Lexeme != token.BlankIdent {
+			seen[param.Lexeme] = true
 		}
 	}
 	if len(params) > maxParams {

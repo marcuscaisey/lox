@@ -20,14 +20,13 @@ type errorHandler func(tok token.Token, msg string)
 // Syntax errors are handled by calling the error handler function which can be set using SetErrorHandler. The default
 // error handler is a no-op.
 type lexer struct {
-	// Immutable state
 	src        []byte
 	errHandler errorHandler
 
-	// Mutable state
 	ch           rune           // character currently being considered
 	pos          token.Position // position of character currently being considered
-	readOffset   int            // position of next character to be read
+	offset       int            // offset of character currently being considered
+	readOffset   int            // offset of next character to be read
 	lastReadSize int            // size of last rune read
 }
 
@@ -71,6 +70,7 @@ func (l *lexer) SetErrorHandler(errHandler errorHandler) {
 func (l *lexer) Next() token.Token {
 	l.skipWhitespace()
 
+	startOffset := l.offset
 	tok := token.Token{Start: l.pos}
 
 	switch {
@@ -108,7 +108,7 @@ func (l *lexer) Next() token.Token {
 			if comment, terminated := l.consumeMultiLineComment(); !terminated {
 				tok.End = l.pos
 				tok.Type = token.Illegal
-				tok.Literal = comment
+				tok.Lexeme = comment
 				l.errHandler(tok, "unterminated multi-line comment")
 			}
 			return l.Next()
@@ -148,7 +148,7 @@ func (l *lexer) Next() token.Token {
 	case l.ch == '"':
 		lit, terminated := l.consumeString()
 		tok.End = l.pos
-		tok.Literal = lit
+		tok.Lexeme = lit
 		if terminated {
 			tok.Type = token.String
 		} else {
@@ -158,29 +158,28 @@ func (l *lexer) Next() token.Token {
 		return tok
 	case isDigit(l.ch):
 		tok.Type = token.Number
-		tok.Literal = l.consumeNumber()
+		tok.Lexeme = l.consumeNumber()
 		tok.End = l.pos
 		return tok
 	case isAlpha(l.ch):
 		ident := l.consumeIdent()
 		tok.End = l.pos
-		tok.Type = token.LookupIdent(ident)
-		if tok.Type == token.Ident {
-			tok.Literal = ident
-		}
+		tok.Type = token.IdentType(ident)
+		tok.Lexeme = ident
 		return tok
 	default:
 		ch := l.ch
 		l.next()
 		tok.End = l.pos
 		tok.Type = token.Illegal
-		tok.Literal = string(ch)
+		tok.Lexeme = string(ch)
 		l.errHandler(tok, fmt.Sprintf("illegal character %#U", ch))
 		return tok
 	}
 
 	l.next()
 	tok.End = l.pos
+	tok.Lexeme = string(l.src[startOffset:l.offset])
 
 	return tok
 }
@@ -289,6 +288,8 @@ func (l *lexer) next() {
 		return
 	}
 
+	l.offset = l.readOffset
+
 	if l.ch == '\n' {
 		l.pos.Line++
 		l.pos.Column = 0
@@ -306,14 +307,15 @@ func (l *lexer) next() {
 	l.readOffset += size
 
 	if r == utf8.RuneError {
+		// If we get here then we've read exactly one invalid UTF-8 byte
 		tok := token.Token{
-			Start:   l.pos,
-			End:     l.pos,
-			Type:    token.Illegal,
-			Literal: string(l.src[l.readOffset-1 : l.readOffset]),
+			Start:  l.pos,
+			End:    l.pos,
+			Type:   token.Illegal,
+			Lexeme: string(l.src[l.offset : l.offset+1]),
 		}
 		tok.End.Column++
-		l.errHandler(tok, fmt.Sprintf("invalid UTF-8 byte %#x", l.src[l.readOffset-1]))
+		l.errHandler(tok, fmt.Sprintf("invalid UTF-8 byte %#x", l.src[l.offset]))
 		l.next()
 		return
 	}

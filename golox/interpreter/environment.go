@@ -29,13 +29,13 @@ func (e *environment) Child() *environment {
 // If the identifier has already been declared in this environment, then a runtime error is raised.
 // If the identifier is [token.BlankIdent], then this method is a no-op.
 func (e *environment) Declare(tok token.Token) {
-	if tok.Literal == token.BlankIdent {
+	if tok.Lexeme == token.BlankIdent {
 		return
 	}
-	if _, ok := e.valuesByIdent[tok.Literal]; ok {
-		panic(lox.NewErrorFromToken(tok, "%s has already been declared", tok.Literal))
+	if _, ok := e.valuesByIdent[tok.Lexeme]; ok {
+		panic(lox.NewErrorFromToken(tok, "%s has already been declared", tok.Lexeme))
 	}
-	e.valuesByIdent[tok.Literal] = nil
+	e.valuesByIdent[tok.Lexeme] = nil
 }
 
 // Define declares an identifier in this environment and defines it with a value.
@@ -44,16 +44,16 @@ func (e *environment) Declare(tok token.Token) {
 // This method should be used for defining values which originated from an assignment in code. For example, a variable
 // or function declaration. Otherwise, use [*environment.Set].
 func (e *environment) Define(tok token.Token, value loxObject) {
-	if tok.Literal == token.BlankIdent {
+	if tok.Lexeme == token.BlankIdent {
 		return
 	}
 	if value == nil {
-		panic(fmt.Sprintf("attempt to define %s to nil", tok.Literal))
+		panic(fmt.Sprintf("attempt to define %s to nil", tok.Lexeme))
 	}
-	if _, ok := e.valuesByIdent[tok.Literal]; ok {
-		panic(lox.NewErrorFromToken(tok, "%s has already been declared", tok.Literal))
+	if _, ok := e.valuesByIdent[tok.Lexeme]; ok {
+		panic(lox.NewErrorFromToken(tok, "%s has already been declared", tok.Lexeme))
 	}
-	e.valuesByIdent[tok.Literal] = value
+	e.valuesByIdent[tok.Lexeme] = value
 }
 
 // Set declares an identifier in this environment and defines it with a value.
@@ -79,17 +79,17 @@ func (e *environment) Set(ident string, value loxObject) {
 // If the identifier has not been defined in this environment, then a runtime error is raised.
 // If the identifier is [token.BlankIdent], then this method is a no-op.
 func (e *environment) Assign(tok token.Token, value loxObject) {
-	if tok.Literal == token.BlankIdent {
+	if tok.Lexeme == token.BlankIdent {
 		return
 	}
 	if value == nil {
-		panic(fmt.Sprintf("attempt to assign nil to %s", tok.Literal))
+		panic(fmt.Sprintf("attempt to assign nil to %s", tok.Lexeme))
 	}
-	_, ok := e.valuesByIdent[tok.Literal]
+	_, ok := e.valuesByIdent[tok.Lexeme]
 	if !ok {
-		panic(lox.NewErrorFromToken(tok, "%s has not been declared", tok.Literal))
+		panic(lox.NewErrorFromToken(tok, "%s has not been declared", tok.Lexeme))
 	}
-	e.valuesByIdent[tok.Literal] = value
+	e.valuesByIdent[tok.Lexeme] = value
 }
 
 // AssignAt assigns a value to a variable in the environment distance levels up the parent chain.
@@ -100,12 +100,12 @@ func (e *environment) AssignAt(distance int, tok token.Token, value loxObject) {
 // Get returns the value of an identifier in this environment.
 // If the identifier has not been declared or defined in this environment, then a runtime error is raised.
 func (e *environment) Get(tok token.Token) loxObject {
-	value, ok := e.valuesByIdent[tok.Literal]
+	value, ok := e.valuesByIdent[tok.Lexeme]
 	if !ok {
-		panic(lox.NewErrorFromToken(tok, "%s has not been declared", tok.Literal))
+		panic(lox.NewErrorFromToken(tok, "%s has not been declared", tok.Lexeme))
 	}
 	if value == nil {
-		panic(lox.NewErrorFromToken(tok, "%s has not been defined", tok.Literal))
+		panic(lox.NewErrorFromToken(tok, "%s has not been defined", tok.Lexeme))
 	}
 	return value
 }

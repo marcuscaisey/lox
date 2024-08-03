@@ -250,7 +250,7 @@ func (f loxFunction) Name() string {
 func (f loxFunction) Params() []string {
 	params := make([]string, len(f.params))
 	for i, param := range f.params {
-		params[i] = param.Literal
+		params[i] = param.Lexeme
 	}
 	return params
 }

@@ -54,31 +54,31 @@ type scope map[string]*identInfo
 
 // Declare marks an identifier as declared in the scope, unless it's [token.BlankIdent].
 func (s scope) Declare(tok token.Token) {
-	if tok.Literal == token.BlankIdent {
+	if tok.Lexeme == token.BlankIdent {
 		return
 	}
-	s[tok.Literal] = &identInfo{Token: tok}
+	s[tok.Lexeme] = &identInfo{Token: tok}
 }
 
 // Define marks an identifier as defined in the scope.
 func (s scope) Define(tok token.Token) {
-	s[tok.Literal].Defined = true
+	s[tok.Lexeme].Defined = true
 }
 
 // Use marks an identifier as used in the scope.
 func (s scope) Use(tok token.Token) {
-	s[tok.Literal].Used = true
+	s[tok.Lexeme].Used = true
 }
 
 // IsDeclared reports whether the identifier has been declared in the scope.
 func (s scope) IsDeclared(tok token.Token) bool {
-	_, ok := s[tok.Literal]
+	_, ok := s[tok.Lexeme]
 	return ok
 }
 
 // IsDefined reports whether the identifier has been defined in the scope.
 func (s scope) IsDefined(tok token.Token) bool {
-	return s[tok.Literal].Defined
+	return s[tok.Lexeme].Defined
 }
 
 // UnusedIdents returns the identifier tokens in the scope that have been declared but not used.
@@ -98,7 +98,7 @@ func (r *resolver) beginScope() func() {
 	return func() {
 		scope := r.scopes.Pop()
 		for _, tok := range scope.UnusedIdents() {
-			r.errs.AddFromToken(tok, "%s has been declared but is never used", tok.Literal)
+			r.errs.AddFromToken(tok, "%s has been declared but is never used", tok.Lexeme)
 		}
 	}
 }
@@ -108,7 +108,7 @@ func (r *resolver) declareIdent(tok token.Token) {
 		return
 	}
 	if scope := r.scopes.Peek(); scope.IsDeclared(tok) {
-		r.errs.AddFromToken(tok, "%s has already been declared", tok.Literal)
+		r.errs.AddFromToken(tok, "%s has already been declared", tok.Lexeme)
 	} else {
 		scope.Declare(tok)
 	}
@@ -136,7 +136,7 @@ func (r *resolver) resolveIdent(tok token.Token, op identOp) {
 		if scope := r.scopes.Index(i); scope.IsDeclared(tok) {
 			scope.Use(tok)
 			if !scope.IsDefined(tok) && op == read {
-				r.errs.AddFromToken(tok, "%s has not been defined", tok.Literal)
+				r.errs.AddFromToken(tok, "%s has not been defined", tok.Lexeme)
 			} else {
 				r.declDistancesByTok[tok] = r.scopes.Len() - 1 - i
 			}
@@ -305,7 +305,7 @@ func (r *resolver) resolveLiteralExpr(ast.LiteralExpr) {
 }
 
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
-	if expr.Name.Literal == token.BlankIdent {
+	if expr.Name.Lexeme == token.BlankIdent {
 		r.errs.AddFromToken(expr.Name, "blank identifier _ cannot be used in a non-assignment expression")
 	} else {
 		r.resolveIdent(expr.Name, read)

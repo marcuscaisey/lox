@@ -22,9 +22,9 @@ func Sprint(node Node) string {
 func sprint(node Node, depth int) string {
 	switch node := node.(type) {
 	case LiteralExpr:
-		return node.Value.String()
+		return node.Value.Lexeme
 	case VariableExpr:
-		return node.Name.String()
+		return node.Name.Lexeme
 	}
 
 	nodeType := reflect.TypeOf(node)
@@ -90,7 +90,7 @@ func childString(value reflect.Value, depth int) (string, bool) {
 	case Node:
 		child = sprint(value, depth)
 	case token.Token:
-		child = value.String()
+		child = value.Lexeme
 	default:
 		return "", false
 	}

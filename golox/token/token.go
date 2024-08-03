@@ -4,82 +4,159 @@ package token
 import (
 	"cmp"
 	"fmt"
+	"unicode"
 
 	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 )
 
+func init() {
+	for i := range typesEnd {
+		t := Type(i)
+		if _, ok := typeStrings[t]; !ok && unicode.IsUpper(rune(t.String()[0])) {
+			panic(fmt.Sprintf("typeStrings is missing entry for Type %s", t))
+		}
+	}
+}
+
 // BlankIdent is the special identifier which can be used as a placeholder in declarations and assignments.
 const BlankIdent = "_"
 
-//go:generate go run golang.org/x/tools/cmd/stringer -type Type -linecomment
+//go:generate go run golang.org/x/tools/cmd/stringer -type Type
 
 // Type is the type of a lexical token of Lox code.
 type Type uint8
 
 // The list of all token types.
 const (
-	Illegal Type = iota // ILLEGAL
-	EOF                 // EOF
+	Illegal Type = iota
+	EOF
 
 	// Keywords
 	keywordsStart
-	Print    // print
-	Var      // var
-	True     // true
-	False    // false
-	Nil      // nil
-	If       // if
-	Else     // else
-	And      // and
-	Or       // or
-	While    // while
-	For      // for
-	Break    // break
-	Continue // continue
-	Fun      // fun
-	Return   // return
-	Class    // class
-	This     // this
-	Super    // super
+	Print
+	Var
+	True
+	False
+	Nil
+	If
+	Else
+	And
+	Or
+	While
+	For
+	Break
+	Continue
+	Fun
+	Return
+	Class
+	This
+	Super
 	keywordsEnd
 
 	// Literals
-	Ident  // identifier
-	String // string
-	Number // number
+	Ident
+	String
+	Number
 
 	// Symbols
-	Semicolon    // ;
-	Comma        // ,
-	Dot          // .
-	Equal        // =
-	Plus         // +
-	Minus        // -
-	Asterisk     // *
-	Slash        // /
-	Percent      // %
-	Less         // <
-	LessEqual    // <=
-	Greater      // >
-	GreaterEqual // >=
-	EqualEqual   // ==
-	BangEqual    // !=
-	Bang         // !
-	Question     // ?
-	Colon        // :
-	LeftParen    // (
-	RightParen   // )
-	LeftBrace    // {
-	RightBrace   // }
+	Semicolon
+	Comma
+	Dot
+	Equal
+	Plus
+	Minus
+	Asterisk
+	Slash
+	Percent
+	Less
+	LessEqual
+	Greater
+	GreaterEqual
+	EqualEqual
+	BangEqual
+	Bang
+	Question
+	Colon
+	LeftParen
+	RightParen
+	LeftBrace
+	RightBrace
+
+	typesEnd
 )
+
+var typeStrings = map[Type]string{
+	Illegal:      "illegal",
+	EOF:          "EOF",
+	Print:        "print",
+	Var:          "var",
+	True:         "true",
+	False:        "false",
+	Nil:          "nil",
+	If:           "if",
+	Else:         "else",
+	And:          "and",
+	Or:           "or",
+	While:        "while",
+	For:          "for",
+	Break:        "break",
+	Continue:     "continue",
+	Fun:          "fun",
+	Return:       "return",
+	Class:        "class",
+	This:         "this",
+	Super:        "super",
+	Ident:        "identifier",
+	String:       "string",
+	Number:       "number",
+	Semicolon:    ";",
+	Comma:        ",",
+	Dot:          ".",
+	Equal:        "=",
+	Plus:         "+",
+	Minus:        "-",
+	Asterisk:     "*",
+	Slash:        "/",
+	Percent:      "%",
+	Less:         "<",
+	LessEqual:    "<=",
+	Greater:      ">",
+	GreaterEqual: ">=",
+	EqualEqual:   "==",
+	BangEqual:    "!=",
+	Bang:         "!",
+	Question:     "?",
+	Colon:        ":",
+	LeftParen:    "(",
+	RightParen:   ")",
+	LeftBrace:    "{",
+	RightBrace:   "}",
+}
+
+var keywordTypesByIdent = func() map[string]Type {
+	keywordTypesByIdent := make(map[string]Type, keywordsEnd-keywordsStart)
+	for i := keywordsStart; i < keywordsEnd; i++ {
+		keywordTypesByIdent[typeStrings[i]] = i
+	}
+	return keywordTypesByIdent
+}()
+
+// IdentType returns the type of the keyword with the given identifier, or Ident if the identifier is not a
+// keyword.
+func IdentType(ident string) Type {
+	if keywordType, ok := keywordTypesByIdent[ident]; ok {
+		return keywordType
+	}
+	return Ident
+}
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the
 // type in cyan.
 func (t Type) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'h':
-		fmt.Fprint(f, color.CyanString(t.String()))
+		fmt.Fprint(f, color.CyanString(typeStrings[t]))
 	case 's', 'q', 'v', 'x', 'X':
 		if !f.Flag('#') {
 			fmt.Fprintf(f, fmt.FormatString(f, verb), t.String())
@@ -93,17 +170,14 @@ func (t Type) Format(f fmt.State, verb rune) {
 
 // Token is a lexical token of Lox code.
 type Token struct {
-	Start   Position // Position of the first character of the token
-	End     Position // Position of the character immediately after the token
-	Type    Type
-	Literal string
+	Start  Position // Position of the first character of the token
+	End    Position // Position of the character immediately after the token
+	Type   Type
+	Lexeme string
 }
 
 func (t Token) String() string {
-	if t.Literal != "" {
-		return t.Literal
-	}
-	return t.Type.String()
+	return fmt.Sprintf("%s: %s", t.Start, t.Lexeme)
 }
 
 // Position is a position in a file.
@@ -166,20 +240,4 @@ func (f *File) Line(n int) []byte {
 	}
 	line := f.contents[low:high]
 	return line
-}
-
-var keywordTypesByIdent = func() map[string]Type {
-	m := make(map[string]Type, keywordsEnd-keywordsStart-2)
-	for i := keywordsStart + 1; i < keywordsEnd; i++ {
-		m[Type(i).String()] = Type(i)
-	}
-	return m
-}()
-
-// LookupIdent returns the keyword Type associated with the given ident if its a keyword, otherwise Ident.
-func LookupIdent(ident string) Type {
-	if keywordType, ok := keywordTypesByIdent[ident]; ok {
-		return keywordType
-	}
-	return Ident
 }

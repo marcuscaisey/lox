@@ -135,7 +135,7 @@ func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
 
 func (i *Interpreter) interpretFunDecl(env *environment, stmt ast.FunDecl) {
 	fun := loxFunction{
-		name:    stmt.Name.Literal,
+		name:    stmt.Name.Lexeme,
 		params:  stmt.Params,
 		body:    stmt.Body,
 		closure: env,
@@ -268,13 +268,13 @@ func (i *Interpreter) interpretGroupExpr(env *environment, expr ast.GroupExpr) l
 func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
 	switch tok := expr.Value; tok.Type {
 	case token.Number:
-		value, err := strconv.ParseFloat(tok.Literal, 64)
+		value, err := strconv.ParseFloat(tok.Lexeme, 64)
 		if err != nil {
 			panic(fmt.Sprintf("unexpected error parsing number literal: %s", err))
 		}
 		return loxNumber(value)
 	case token.String:
-		return loxString(tok.Literal[1 : len(tok.Literal)-1]) // Remove surrounding quotes
+		return loxString(tok.Lexeme[1 : len(tok.Lexeme)-1]) // Remove surrounding quotes
 	case token.True, token.False:
 		return loxBool(tok.Type == token.True)
 	case token.Nil:
