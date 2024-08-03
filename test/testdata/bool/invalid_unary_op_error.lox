@@ -1,1 +1,1 @@
--true; // error: - operator cannot be used with type bool
+-true; // error: '-' operator cannot be used with type 'bool'

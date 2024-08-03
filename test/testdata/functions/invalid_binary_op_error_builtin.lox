@@ -1,1 +1,1 @@
-clock - 1; // error: - operator cannot be used with types function and number
+clock - 1; // error: '-' operator cannot be used with types 'function' and 'number'

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"unicode"
 
-	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -151,18 +150,12 @@ func IdentType(ident string) Type {
 	return Ident
 }
 
-// Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the
-// type in cyan.
+// Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
+// type for use in an error message.
 func (t Type) Format(f fmt.State, verb rune) {
 	switch verb {
-	case 'h':
-		fmt.Fprint(f, color.CyanString(typeStrings[t]))
-	case 's', 'q', 'v', 'x', 'X':
-		if !f.Flag('#') {
-			fmt.Fprintf(f, fmt.FormatString(f, verb), t.String())
-			break
-		}
-		fallthrough
+	case 'm':
+		fmt.Fprintf(f, "'%s'", typeStrings[t])
 	default:
 		fmt.Fprintf(f, fmt.FormatString(f, verb), uint8(t))
 	}

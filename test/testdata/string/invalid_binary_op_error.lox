@@ -1,1 +1,1 @@
-"a" - "b"; // error: - operator cannot be used with types string and string
+"a" - "b"; // error: '-' operator cannot be used with types 'string' and 'string'

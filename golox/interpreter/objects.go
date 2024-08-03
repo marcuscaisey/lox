@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fatih/color"
-
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
@@ -24,12 +22,12 @@ const (
 	loxTypeFunction loxType = "function"
 )
 
-// Format implements fmt.Formatter. All verbs have the default behaviour, except for 'h' (highlight) which prints the
-// type in green.
+// Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
+// type for use in an error message.
 func (t loxType) Format(f fmt.State, verb rune) {
 	switch verb {
-	case 'h':
-		fmt.Fprint(f, color.GreenString(string(t)))
+	case 'm':
+		fmt.Fprintf(f, "'%s'", t)
 	default:
 		fmt.Fprintf(f, fmt.FormatString(f, verb), string(t))
 	}
@@ -130,10 +128,10 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
 	if math.Floor(float64(n)) != float64(n) {
-		panic(lox.NewErrorFromToken(op, "cannot multiply %h by non-integer %h", loxTypeString, loxTypeNumber))
+		panic(lox.NewErrorFromToken(op, "cannot multiply %m by non-integer %m", loxTypeString, loxTypeNumber))
 	}
 	if n < 0 {
-		panic(lox.NewErrorFromToken(op, "cannot multiply %h by negative %h", loxTypeString, loxTypeNumber))
+		panic(lox.NewErrorFromToken(op, "cannot multiply %m by negative %m", loxTypeString, loxTypeNumber))
 	}
 	return loxString(strings.Repeat(string(s), int(n)))
 }

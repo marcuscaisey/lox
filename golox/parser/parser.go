@@ -103,7 +103,7 @@ func (p *parser) parseDecl() ast.Stmt {
 }
 
 func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
-	name := p.expectf(token.Ident, "%h must be followed by a variable name", token.Var)
+	name := p.expectf(token.Ident, "%m must be followed by a variable name", token.Var)
 	var value ast.Expr
 	if p.match(token.Equal) {
 		value = p.parseExpr("on right-hand side of variable declaration")
@@ -126,12 +126,12 @@ func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 }
 
 func (p *parser) parseFunParamsAndBody() ([]token.Token, []ast.Stmt) {
-	leftParen := p.expectf(token.LeftParen, "expected parameter list inside %h%h", token.LeftParen, token.RightParen)
+	leftParen := p.expectf(token.LeftParen, "expected parameter list inside %m%m", token.LeftParen, token.RightParen)
 	var params []token.Token
 	if !p.match(token.RightParen) {
 		params = p.parseParams("for function parameter")
 		// TODO: extract this out
-		p.expectf(token.RightParen, "expected closing %h after opening %h at %s", token.RightParen, token.LeftParen, leftParen.Start)
+		p.expectf(token.RightParen, "expected closing %m after opening %m at %s", token.RightParen, token.LeftParen, leftParen.Start)
 	}
 	leftBrace := p.expectf(token.LeftBrace, "expected block for function body")
 	body := p.parseBlock(leftBrace)
@@ -199,14 +199,14 @@ func (p *parser) parseBlock(leftBrace token.Token) ast.BlockStmt {
 	for p.tok.Type != token.RightBrace && p.tok.Type != token.EOF {
 		stmts = append(stmts, p.safelyParseDecl())
 	}
-	rightBrace := p.expectf(token.RightBrace, "expected closing %h after block", token.RightBrace)
+	rightBrace := p.expectf(token.RightBrace, "expected closing %m after block", token.RightBrace)
 	return ast.BlockStmt{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
 }
 
 func (p *parser) parseIfStmt(ifTok token.Token) ast.IfStmt {
-	p.expectf(token.LeftParen, "%h should be followed by condition inside %h%h", token.If, token.LeftParen, token.RightParen)
+	p.expectf(token.LeftParen, "%m should be followed by condition inside %m%m", token.If, token.LeftParen, token.RightParen)
 	condition := p.parseExpr("as condition in if statement")
-	p.expectf(token.RightParen, "%h should be followed by condition inside %h%h", token.If, token.LeftParen, token.RightParen)
+	p.expectf(token.RightParen, "%m should be followed by condition inside %m%m", token.If, token.LeftParen, token.RightParen)
 	thenBranch := p.parseStmt()
 	var elseBranch ast.Stmt
 	if p.match(token.Else) {
@@ -218,9 +218,9 @@ func (p *parser) parseIfStmt(ifTok token.Token) ast.IfStmt {
 func (p *parser) parseWhileStmt(whileTok token.Token) ast.WhileStmt {
 	p.loopDepth++
 	defer func() { p.loopDepth-- }()
-	p.expectf(token.LeftParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
+	p.expectf(token.LeftParen, "%m should be followed by condition inside %m%m", token.While, token.LeftParen, token.RightParen)
 	condition := p.parseExpr("as condition in while statement")
-	p.expectf(token.RightParen, "%h should be followed by condition inside %h%h", token.While, token.LeftParen, token.RightParen)
+	p.expectf(token.RightParen, "%m should be followed by condition inside %m%m", token.While, token.LeftParen, token.RightParen)
 	body := p.parseStmt()
 	return ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
 }
@@ -228,7 +228,7 @@ func (p *parser) parseWhileStmt(whileTok token.Token) ast.WhileStmt {
 func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
 	p.loopDepth++
 	defer func() { p.loopDepth-- }()
-	p.expectf(token.LeftParen, "%h should be followed by initialise statement, condition expression, and update expression inside %h%h", token.For, token.LeftParen, token.RightParen)
+	p.expectf(token.LeftParen, "%m should be followed by initialise statement, condition expression, and update expression inside %m%m", token.For, token.LeftParen, token.RightParen)
 	var initialise ast.Stmt
 	switch tok := p.tok; {
 	case p.match(token.Var):
@@ -245,7 +245,7 @@ func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
 	var update ast.Expr
 	if !p.match(token.RightParen) {
 		update = p.parseExpr("as update expression in for loop")
-		p.expectf(token.RightParen, "%h should be followed by initialise statement, condition expression, and update expression inside %h%h", token.For, token.LeftParen, token.RightParen)
+		p.expectf(token.RightParen, "%m should be followed by initialise statement, condition expression, and update expression inside %m%m", token.For, token.LeftParen, token.RightParen)
 	}
 	body := p.parseStmt()
 	return ast.ForStmt{For: forTok, Initialise: initialise, Condition: condition, Update: update, Body: body}
@@ -311,7 +311,7 @@ func (p *parser) parseTernaryExpr(context string) ast.Expr {
 	expr := p.parseLogicalOrExpr(context)
 	if p.match(token.Question) {
 		then := p.parseExpr("for then part of ternary expression")
-		p.expectf(token.Colon, "next part of ternary expression should be %h", token.Colon)
+		p.expectf(token.Colon, "next part of ternary expression should be %m", token.Colon)
 		elseExpr := p.parseTernaryExpr("for else part of ternary expression")
 		expr = ast.TernaryExpr{
 			Condition: expr,
@@ -387,7 +387,7 @@ func (p *parser) parseCallExpr(context string) ast.Expr {
 		rightParen, ok := p.match2(token.RightParen)
 		if !ok {
 			args = p.parseArgs("for function argument")
-			rightParen = p.expectf(token.RightParen, "expected closing %h after opening %h at %s", token.RightParen, token.LeftParen, leftParen.Start)
+			rightParen = p.expectf(token.RightParen, "expected closing %m after opening %m at %s", token.RightParen, token.LeftParen, leftParen.Start)
 		}
 		expr = ast.CallExpr{
 			Callee:     expr,
@@ -419,11 +419,11 @@ func (p *parser) parsePrimaryExpr(context string) ast.Expr {
 		return p.parseFunExpr(tok)
 	case p.match(token.LeftParen):
 		innerExpr := p.parseExpr("inside parentheses")
-		rightParen := p.expectf(token.RightParen, "expected closing %h after opening %h at %s", token.RightParen, token.LeftParen, tok.Start)
+		rightParen := p.expectf(token.RightParen, "expected closing %m after opening %m at %s", token.RightParen, token.LeftParen, tok.Start)
 		return ast.GroupExpr{LeftParen: tok, Expr: innerExpr, RightParen: rightParen}
 	// Error productions
 	case p.match(token.EqualEqual, token.BangEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus):
-		p.addTokenError(tok, "binary operator %h must have left and right operands", tok.Type)
+		p.addTokenError(tok, "binary operator %m must have left and right operands", tok.Type)
 		var right ast.Expr
 		switch tok.Type {
 		case token.EqualEqual, token.BangEqual:
@@ -486,7 +486,7 @@ func (p *parser) expectf(t token.Type, format string, a ...any) token.Token {
 }
 
 func (p *parser) expectSemicolon(context string) token.Token {
-	return p.expectf(token.Semicolon, "expected %h %s", token.Semicolon, context)
+	return p.expectf(token.Semicolon, "expected %m %s", token.Semicolon, context)
 }
 
 // next advances the parser to the next token.

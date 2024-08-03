@@ -1,1 +1,1 @@
-fun() {} - 1; // error: - operator cannot be used with types function and number
+fun() {} - 1; // error: '-' operator cannot be used with types 'function' and 'number'

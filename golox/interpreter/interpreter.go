@@ -305,7 +305,7 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 
 	callable, ok := callee.(loxCallable)
 	if !ok {
-		panic(lox.NewErrorFromNode(expr.Callee, "%h object is not callable", callee.Type()))
+		panic(lox.NewErrorFromNode(expr.Callee, "%m object is not callable", callee.Type()))
 	}
 
 	params := callable.Params()
@@ -353,7 +353,7 @@ func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) l
 			return result
 		}
 	}
-	panic(lox.NewErrorFromToken(expr.Op, "%h operator cannot be used with type %h", expr.Op.Type, right.Type()))
+	panic(lox.NewErrorFromToken(expr.Op, "%m operator cannot be used with type %m", expr.Op.Type, right.Type()))
 }
 
 func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
@@ -396,7 +396,7 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 				return result
 			}
 		}
-		panic(lox.NewErrorFromToken(expr.Op, "%h operator cannot be used with types %h and %h", expr.Op.Type, left.Type(), right.Type()))
+		panic(lox.NewErrorFromToken(expr.Op, "%m operator cannot be used with types %m and %m", expr.Op.Type, left.Type(), right.Type()))
 	}
 }
 
