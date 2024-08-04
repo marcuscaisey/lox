@@ -1,0 +1,1 @@
+1(); // error: 'number' object is not callable
