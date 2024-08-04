@@ -1,0 +1,5 @@
+fun add(x, y) {
+  print x + y;
+}
+
+add(1); // error: add() missing 1 argument: y
