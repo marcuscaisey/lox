@@ -126,6 +126,11 @@ func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 }
 
 func (p *parser) parseFunParamsAndBody() ([]token.Token, []ast.Stmt) {
+	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
+	prevLoopDepth := p.loopDepth
+	p.loopDepth = 0
+	defer func() { p.loopDepth = prevLoopDepth }()
+
 	p.expect(token.LeftParen)
 	var params []token.Token
 	if !p.match(token.RightParen) {

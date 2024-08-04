@@ -1,0 +1,7 @@
+for (;;) {
+  fun c() {
+    continue; // error: 'continue' can only be used inside a loop
+  }
+  c();
+  break;
+}

@@ -1,0 +1,7 @@
+while (true) {
+  fun b() {
+    break; // error: 'break' can only be used inside a loop
+  }
+  b();
+  break;
+}
