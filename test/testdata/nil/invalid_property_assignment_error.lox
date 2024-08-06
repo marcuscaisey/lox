@@ -1,0 +1,1 @@
+nil.y = 1; // error: property assignment is not valid for 'nil' object

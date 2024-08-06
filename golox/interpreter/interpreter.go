@@ -33,8 +33,8 @@ func REPLMode() Option {
 // New constructs a new Interpreter with the given options.
 func New(opts ...Option) *Interpreter {
 	globals := newEnvironment()
-	for name, fn := range builtins {
-		globals.Set(name, fn)
+	for _, fun := range builtins {
+		globals.Set(fun.Name(), fun)
 	}
 	interpreter := &Interpreter{
 		globals:            globals,
@@ -101,6 +101,8 @@ func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) stmtResult 
 		i.interpretVarDecl(env, stmt)
 	case ast.FunDecl:
 		i.interpretFunDecl(env, stmt)
+	case ast.ClassDecl:
+		i.interpretClassDecl(env, stmt)
 	case ast.ExprStmt:
 		i.interpretExprStmt(env, stmt)
 	case ast.PrintStmt:
@@ -134,13 +136,20 @@ func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
 }
 
 func (i *Interpreter) interpretFunDecl(env *environment, stmt ast.FunDecl) {
-	fun := loxFunction{
-		name:    stmt.Name.Lexeme,
-		params:  stmt.Params,
-		body:    stmt.Body,
-		closure: env,
+	env.Define(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Params, stmt.Body, funTypeFunction, env))
+}
+
+func (i *Interpreter) interpretClassDecl(env *environment, stmt ast.ClassDecl) {
+	methodsByName := make(map[string]*loxFunction, len(stmt.Body))
+	for _, methodDecl := range stmt.Body {
+		type_ := funTypeMethod
+		if methodDecl.Name.Lexeme == token.InitIdent {
+			type_ = funTypeInit
+		}
+		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
+		methodsByName[methodDecl.Name.Lexeme] = newLoxFunction(name, methodDecl.Params, methodDecl.Body, type_, env)
 	}
-	env.Define(stmt.Name, fun)
+	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, methodsByName))
 }
 
 func (i *Interpreter) interpretExprStmt(env *environment, stmt ast.ExprStmt) {
@@ -237,8 +246,12 @@ func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
 		return i.interpretLiteralExpr(expr)
 	case ast.VariableExpr:
 		return i.interpretVariableExpr(env, expr)
+	case ast.ThisExpr:
+		return i.resolveThisExpr(env, expr)
 	case ast.CallExpr:
 		return i.interpretCallExpr(env, expr)
+	case ast.GetExpr:
+		return i.interpretGetExpr(env, expr)
 	case ast.UnaryExpr:
 		return i.interpretUnaryExpr(env, expr)
 	case ast.BinaryExpr:
@@ -247,18 +260,15 @@ func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
 		return i.interpretTernaryExpr(env, expr)
 	case ast.AssignmentExpr:
 		return i.interpretAssignmentExpr(env, expr)
+	case ast.SetExpr:
+		return i.interpretSetExpr(env, expr)
 	default:
 		panic(fmt.Sprintf("unexpected expression type: %T", expr))
 	}
 }
 
 func (i *Interpreter) interpretFunExpr(env *environment, expr ast.FunExpr) loxObject {
-	return loxFunction{
-		name:    fmt.Sprintf("<lambda> at %d:%d", expr.Fun.Start.Line, expr.Fun.Start.Column),
-		params:  expr.Params,
-		body:    expr.Body,
-		closure: env,
-	}
+	return newLoxFunction("(anonymous)", expr.Params, expr.Body, funTypeFunction, env)
 }
 
 func (i *Interpreter) interpretGroupExpr(env *environment, expr ast.GroupExpr) loxObject {
@@ -286,6 +296,10 @@ func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
 
 func (i *Interpreter) interpretVariableExpr(env *environment, expr ast.VariableExpr) loxObject {
 	return i.resolveIdent(env, expr.Name)
+}
+
+func (i *Interpreter) resolveThisExpr(env *environment, expr ast.ThisExpr) loxObject {
+	return i.resolveIdent(env, expr.This)
 }
 
 func (i *Interpreter) resolveIdent(env *environment, tok token.Token) loxObject {
@@ -339,6 +353,15 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 	}
 
 	return callable.Call(i, args)
+}
+
+func (i *Interpreter) interpretGetExpr(env *environment, expr ast.GetExpr) loxObject {
+	object := i.interpretExpr(env, expr.Object)
+	instance, ok := object.(*loxInstance)
+	if !ok {
+		panic(lox.NewError(expr.Object.Start(), expr.Name.End, "property access is not valid for %m object", object.Type()))
+	}
+	return instance.Get(expr.Name)
 }
 
 func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
@@ -419,9 +442,28 @@ func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.Assignm
 	return value
 }
 
+func (i *Interpreter) interpretSetExpr(env *environment, expr ast.SetExpr) loxObject {
+	object := i.interpretExpr(env, expr.Object)
+	instance, ok := object.(*loxInstance)
+	if !ok {
+		panic(lox.NewErrorFromNodeRange(expr.Object, expr.Value, "property assignment is not valid for %m object", object.Type()))
+	}
+	value := i.interpretExpr(env, expr.Value)
+	instance.Set(expr.Name, value)
+	return value
+}
+
 func isTruthy(obj loxObject) loxBool {
 	if truther, ok := obj.(loxTruther); ok {
 		return truther.IsTruthy()
 	}
 	return true
+}
+
+func extractLexemes(params []token.Token) []string {
+	names := make([]string, len(params))
+	for j, param := range params {
+		names[j] = param.Lexeme
+	}
+	return names
 }

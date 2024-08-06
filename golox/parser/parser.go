@@ -34,11 +34,11 @@ func Parse(r io.Reader) (ast.Program, error) {
 }
 
 type parser struct {
-	l            *lexer
-	tok          token.Token // token currently being considered
-	nextTok      token.Token // next token
-	loopDepth    int
-	funDeclDepth int
+	l              *lexer
+	tok            token.Token // token currently being considered
+	nextTok        token.Token
+	loopDepth      int
+	curFunType     funType
 
 	errs       lox.Errors
 	lastErrPos token.Position
@@ -97,6 +97,8 @@ func (p *parser) parseDecl() ast.Stmt {
 	case p.tok.Type == token.Fun && p.nextTok.Type == token.Ident:
 		p.match(token.Fun)
 		return p.parseFunDecl(tok)
+	case p.match(token.Class):
+		return p.parseClassDecl(tok)
 	default:
 		return p.parseStmt()
 	}
@@ -113,23 +115,65 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
 }
 
 func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
-	p.funDeclDepth++
-	defer func() { p.funDeclDepth-- }()
 	name := p.expectf(token.Ident, "expected function name")
-	params, body := p.parseFunParamsAndBody()
+	params, body := p.parseFunParamsAndBody(funTypeFunction)
 	return ast.FunDecl{
-		Fun:    funTok,
-		Name:   name,
-		Params: params,
-		Body:   body,
+		Fun:        funTok,
+		Name:       name,
+		Params:     params,
+		Body:       body.Stmts,
+		RightBrace: body.RightBrace,
 	}
 }
 
-func (p *parser) parseFunParamsAndBody() ([]token.Token, []ast.Stmt) {
+func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
+	name := p.expectf(token.Ident, "expected class name")
+	p.expect(token.LeftBrace)
+	var methods []ast.MethodDecl
+	for {
+		name, ok := p.match2(token.Ident)
+		if !ok {
+			break
+		}
+		funType := funTypeMethod
+		if name.Lexeme == token.InitIdent {
+			funType = funTypeInit
+		}
+		params, body := p.parseFunParamsAndBody(funType)
+		methods = append(methods, ast.MethodDecl{
+			Name:       name,
+			Params:     params,
+			Body:       body.Stmts,
+			RightBrace: body.RightBrace,
+		})
+	}
+	rightBrace := p.expect(token.RightBrace)
+	return ast.ClassDecl{
+		Class:      classTok,
+		Name:       name,
+		Body:       methods,
+		RightBrace: rightBrace,
+	}
+}
+
+type funType int
+
+const (
+	funTypeNone funType = iota
+	funTypeFunction
+	funTypeMethod
+	funTypeInit
+)
+
+func (p *parser) parseFunParamsAndBody(funType funType) ([]token.Token, ast.BlockStmt) {
 	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
 	prevLoopDepth := p.loopDepth
 	p.loopDepth = 0
 	defer func() { p.loopDepth = prevLoopDepth }()
+
+	prevFunType := p.curFunType
+	p.curFunType = funType
+	defer func() { p.curFunType = prevFunType }()
 
 	p.expect(token.LeftParen)
 	var params []token.Token
@@ -139,7 +183,7 @@ func (p *parser) parseFunParamsAndBody() ([]token.Token, []ast.Stmt) {
 	}
 	leftBrace := p.expect(token.LeftBrace)
 	body := p.parseBlock(leftBrace)
-	return params, body.Stmts
+	return params, body
 }
 
 func (p *parser) parseParams() []token.Token {
@@ -281,8 +325,11 @@ func (p *parser) parseReturnStmt(returnTok token.Token) ast.ReturnStmt {
 		semicolon = p.expect(token.Semicolon)
 	}
 	stmt := ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
-	if p.funDeclDepth == 0 {
+	if p.curFunType == funTypeNone {
 		p.addNodeError(stmt, "%m can only be used inside a function definition", token.Return)
+	}
+	if p.curFunType == funTypeInit && stmt.Value != nil {
+		p.addNodeError(stmt, "%s() cannot return a value", token.InitIdent)
 	}
 	return stmt
 }
@@ -298,14 +345,22 @@ func (p *parser) parseCommaExpr() ast.Expr {
 func (p *parser) parseAssignmentExpr() ast.Expr {
 	expr := p.parseTernaryExpr()
 	if p.match(token.Equal) {
-		left, ok := expr.(ast.VariableExpr)
-		if !ok {
-			p.addNodeError(expr, "left-hand side of assignment must be a variable")
-		}
-		right := p.parseAssignmentExpr()
-		expr = ast.AssignmentExpr{
-			Left:  left.Name,
-			Right: right,
+		switch left := expr.(type) {
+		case ast.VariableExpr:
+			right := p.parseAssignmentExpr()
+			expr = ast.AssignmentExpr{
+				Left:  left.Name,
+				Right: right,
+			}
+		case ast.GetExpr:
+			right := p.parseAssignmentExpr()
+			expr = ast.SetExpr{
+				Object: left.Object,
+				Name:   left.Name,
+				Value:  right,
+			}
+		default:
+			p.addNodeError(expr, "invalid assignment target")
 		}
 	}
 	return expr
@@ -383,19 +438,27 @@ func (p *parser) parseUnaryExpr() ast.Expr {
 func (p *parser) parseCallExpr() ast.Expr {
 	expr := p.parsePrimaryExpr()
 	for {
-		if !p.match(token.LeftParen) {
+		switch {
+		case p.match(token.LeftParen):
+			var args []ast.Expr
+			rightParen, ok := p.match2(token.RightParen)
+			if !ok {
+				args = p.parseArgs()
+				rightParen = p.expect(token.RightParen)
+			}
+			expr = ast.CallExpr{
+				Callee:     expr,
+				Args:       args,
+				RightParen: rightParen,
+			}
+		case p.match(token.Dot):
+			name := p.expectf(token.Ident, "expected property name")
+			expr = ast.GetExpr{
+				Object: expr,
+				Name:   name,
+			}
+		default:
 			return expr
-		}
-		var args []ast.Expr
-		rightParen, ok := p.match2(token.RightParen)
-		if !ok {
-			args = p.parseArgs()
-			rightParen = p.expect(token.RightParen)
-		}
-		expr = ast.CallExpr{
-			Callee:     expr,
-			Args:       args,
-			RightParen: rightParen,
 		}
 	}
 }
@@ -418,6 +481,11 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 		return ast.LiteralExpr{Value: tok}
 	case p.match(token.Ident):
 		return ast.VariableExpr{Name: tok}
+	case p.match(token.This):
+		if p.curFunType != funTypeMethod && p.curFunType != funTypeInit {
+			p.addTokenError(tok, "%m can only be used inside a method definition", token.This)
+		}
+		return ast.ThisExpr{This: tok}
 	case p.match(token.Fun):
 		return p.parseFunExpr(tok)
 	case p.match(token.LeftParen):
@@ -449,13 +517,12 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 }
 
 func (p *parser) parseFunExpr(funTok token.Token) ast.FunExpr {
-	p.funDeclDepth++
-	defer func() { p.funDeclDepth-- }()
-	params, body := p.parseFunParamsAndBody()
+	params, body := p.parseFunParamsAndBody(funTypeFunction)
 	return ast.FunExpr{
-		Fun:    funTok,
-		Params: params,
-		Body:   body,
+		Fun:        funTok,
+		Params:     params,
+		Body:       body.Stmts,
+		RightBrace: body.RightBrace,
 	}
 }
 

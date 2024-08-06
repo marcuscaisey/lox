@@ -28,6 +28,10 @@
         {
           "type": "SYMBOL",
           "name": "function_declaration"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "class_declaration"
         }
       ]
     },
@@ -84,6 +88,64 @@
           "type": "STRING",
           "value": "fun"
         },
+        {
+          "type": "SYMBOL",
+          "name": "_function"
+        }
+      ]
+    },
+    "class_declaration": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "class"
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "FIELD",
+          "name": "body",
+          "content": {
+            "type": "SYMBOL",
+            "name": "class_body"
+          }
+        }
+      ]
+    },
+    "class_body": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "{"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "method_declaration"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "}"
+        }
+      ]
+    },
+    "method_declaration": {
+      "type": "SYMBOL",
+      "name": "_function"
+    },
+    "_function": {
+      "type": "SEQ",
+      "members": [
         {
           "type": "FIELD",
           "name": "name",
@@ -510,7 +572,15 @@
         },
         {
           "type": "SYMBOL",
+          "name": "this_expression"
+        },
+        {
+          "type": "SYMBOL",
           "name": "call_expression"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "get_expression"
         },
         {
           "type": "SYMBOL",
@@ -624,11 +694,15 @@
     },
     "identifier": {
       "type": "PATTERN",
-      "value": "[a-zA-Z][a-zA-Z0-9_]*"
+      "value": "[a-zA-Z_][a-zA-Z0-9_]*"
+    },
+    "this_expression": {
+      "type": "STRING",
+      "value": "this"
     },
     "call_expression": {
       "type": "PREC",
-      "value": 11,
+      "value": "postfix",
       "content": {
         "type": "SEQ",
         "members": [
@@ -646,6 +720,35 @@
             "content": {
               "type": "SYMBOL",
               "name": "arguments"
+            }
+          }
+        ]
+      }
+    },
+    "get_expression": {
+      "type": "PREC",
+      "value": "postfix",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "object",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_expression"
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "."
+          },
+          {
+            "type": "FIELD",
+            "name": "name",
+            "content": {
+              "type": "SYMBOL",
+              "name": "identifier"
             }
           }
         ]
@@ -680,7 +783,7 @@
                   "type": "REPEAT",
                   "content": {
                     "type": "PREC",
-                    "value": 2,
+                    "value": "arguments",
                     "content": {
                       "type": "SEQ",
                       "members": [
@@ -711,7 +814,7 @@
     },
     "unary_expression": {
       "type": "PREC_RIGHT",
-      "value": 10,
+      "value": "unary",
       "content": {
         "type": "SEQ",
         "members": [
@@ -744,7 +847,7 @@
       "members": [
         {
           "type": "PREC_LEFT",
-          "value": 1,
+          "value": "comma",
           "content": {
             "type": "SEQ",
             "members": [
@@ -773,7 +876,7 @@
         },
         {
           "type": "PREC_LEFT",
-          "value": 4,
+          "value": "logical_or",
           "content": {
             "type": "SEQ",
             "members": [
@@ -802,7 +905,7 @@
         },
         {
           "type": "PREC_LEFT",
-          "value": 5,
+          "value": "logical_and",
           "content": {
             "type": "SEQ",
             "members": [
@@ -831,7 +934,7 @@
         },
         {
           "type": "PREC_LEFT",
-          "value": 6,
+          "value": "equality",
           "content": {
             "type": "SEQ",
             "members": [
@@ -869,7 +972,7 @@
         },
         {
           "type": "PREC_LEFT",
-          "value": 7,
+          "value": "relational",
           "content": {
             "type": "SEQ",
             "members": [
@@ -915,7 +1018,7 @@
         },
         {
           "type": "PREC_LEFT",
-          "value": 8,
+          "value": "additive",
           "content": {
             "type": "SEQ",
             "members": [
@@ -953,7 +1056,7 @@
         },
         {
           "type": "PREC_LEFT",
-          "value": 9,
+          "value": "multiplicative",
           "content": {
             "type": "SEQ",
             "members": [
@@ -997,7 +1100,7 @@
     },
     "ternary_expression": {
       "type": "PREC_RIGHT",
-      "value": 3,
+      "value": "ternary",
       "content": {
         "type": "SEQ",
         "members": [
@@ -1038,7 +1141,7 @@
     },
     "assignment_expression": {
       "type": "PREC_RIGHT",
-      "value": 2,
+      "value": "assignment",
       "content": {
         "type": "SEQ",
         "members": [
@@ -1046,8 +1149,17 @@
             "type": "FIELD",
             "name": "left",
             "content": {
-              "type": "SYMBOL",
-              "name": "identifier"
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "identifier"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "get_expression"
+                }
+              ]
             }
           },
           {
@@ -1115,7 +1227,58 @@
     }
   ],
   "conflicts": [],
-  "precedences": [],
+  "precedences": [
+    [
+      {
+        "type": "STRING",
+        "value": "postfix"
+      },
+      {
+        "type": "STRING",
+        "value": "unary"
+      },
+      {
+        "type": "STRING",
+        "value": "multiplicative"
+      },
+      {
+        "type": "STRING",
+        "value": "additive"
+      },
+      {
+        "type": "STRING",
+        "value": "relational"
+      },
+      {
+        "type": "STRING",
+        "value": "equality"
+      },
+      {
+        "type": "STRING",
+        "value": "logical_and"
+      },
+      {
+        "type": "STRING",
+        "value": "logical_or"
+      },
+      {
+        "type": "STRING",
+        "value": "ternary"
+      },
+      {
+        "type": "STRING",
+        "value": "arguments"
+      },
+      {
+        "type": "STRING",
+        "value": "assignment"
+      },
+      {
+        "type": "STRING",
+        "value": "comma"
+      }
+    ]
+  ],
   "externals": [],
   "inline": [],
   "supertypes": []

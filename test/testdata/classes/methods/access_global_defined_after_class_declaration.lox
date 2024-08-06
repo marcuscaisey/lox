@@ -1,0 +1,8 @@
+class Foo {
+  bar() {
+    print a;
+  }
+}
+
+var a = "global";
+Foo().bar(); // prints: global

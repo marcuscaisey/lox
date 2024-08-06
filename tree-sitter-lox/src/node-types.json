@@ -28,6 +28,10 @@
           "named": true
         },
         {
+          "type": "get_expression",
+          "named": true
+        },
+        {
           "type": "group_expression",
           "named": true
         },
@@ -52,6 +56,10 @@
           "named": true
         },
         {
+          "type": "this_expression",
+          "named": true
+        },
+        {
           "type": "unary_expression",
           "named": true
         }
@@ -66,6 +74,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "get_expression",
+            "named": true
+          },
           {
             "type": "identifier",
             "named": true
@@ -97,6 +109,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -118,6 +134,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -157,6 +177,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -178,6 +202,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -211,6 +239,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -235,6 +267,10 @@
             "named": true
           },
           {
+            "type": "this_expression",
+            "named": true
+          },
+          {
             "type": "unary_expression",
             "named": true
           }
@@ -256,6 +292,10 @@
         },
         {
           "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "class_declaration",
           "named": true
         },
         {
@@ -346,6 +386,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -370,7 +414,52 @@
             "named": true
           },
           {
+            "type": "this_expression",
+            "named": true
+          },
+          {
             "type": "unary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "class_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "method_declaration",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "class_declaration",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "class_body",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
             "named": true
           }
         ]
@@ -416,6 +505,10 @@
           "named": true
         },
         {
+          "type": "get_expression",
+          "named": true
+        },
+        {
           "type": "group_expression",
           "named": true
         },
@@ -437,6 +530,10 @@
         },
         {
           "type": "ternary_expression",
+          "named": true
+        },
+        {
+          "type": "this_expression",
           "named": true
         },
         {
@@ -517,6 +614,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -541,6 +642,10 @@
             "named": true
           },
           {
+            "type": "this_expression",
+            "named": true
+          },
+          {
             "type": "unary_expression",
             "named": true
           }
@@ -550,6 +655,10 @@
         "multiple": false,
         "required": false,
         "types": [
+          {
+            "type": "class_declaration",
+            "named": true
+          },
           {
             "type": "expression_statement",
             "named": true
@@ -589,6 +698,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -610,6 +723,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -683,6 +800,84 @@
     }
   },
   {
+    "type": "get_expression",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "object": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "assignment_expression",
+            "named": true
+          },
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "call_expression",
+            "named": true
+          },
+          {
+            "type": "function_expression",
+            "named": true
+          },
+          {
+            "type": "get_expression",
+            "named": true
+          },
+          {
+            "type": "group_expression",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "nil",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
+            "named": true
+          },
+          {
+            "type": "unary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "group_expression",
     "named": true,
     "fields": {
@@ -711,6 +906,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -732,6 +931,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -771,6 +974,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -792,6 +999,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -887,6 +1098,42 @@
     }
   },
   {
+    "type": "method_declaration",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block_statement",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "parameters": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "parameters",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "parameters",
     "named": true,
     "fields": {},
@@ -930,6 +1177,10 @@
           "named": true
         },
         {
+          "type": "get_expression",
+          "named": true
+        },
+        {
           "type": "group_expression",
           "named": true
         },
@@ -954,6 +1205,10 @@
           "named": true
         },
         {
+          "type": "this_expression",
+          "named": true
+        },
+        {
           "type": "unary_expression",
           "named": true
         }
@@ -974,6 +1229,10 @@
         },
         {
           "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "class_declaration",
           "named": true
         },
         {
@@ -1044,6 +1303,10 @@
           "named": true
         },
         {
+          "type": "get_expression",
+          "named": true
+        },
+        {
           "type": "group_expression",
           "named": true
         },
@@ -1065,6 +1328,10 @@
         },
         {
           "type": "ternary_expression",
+          "named": true
+        },
+        {
+          "type": "this_expression",
           "named": true
         },
         {
@@ -1103,6 +1370,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -1124,6 +1395,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -1157,6 +1432,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -1178,6 +1457,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -1211,6 +1494,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -1232,6 +1519,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -1271,6 +1562,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -1292,6 +1587,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -1331,6 +1630,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -1352,6 +1655,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -1443,6 +1750,10 @@
             "named": true
           },
           {
+            "type": "get_expression",
+            "named": true
+          },
+          {
             "type": "group_expression",
             "named": true
           },
@@ -1464,6 +1775,10 @@
           },
           {
             "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
             "named": true
           },
           {
@@ -1512,6 +1827,10 @@
   },
   {
     "type": "-",
+    "named": false
+  },
+  {
+    "type": ".",
     "named": false
   },
   {
@@ -1571,6 +1890,10 @@
     "named": false
   },
   {
+    "type": "class",
+    "named": false
+  },
+  {
     "type": "continue",
     "named": false
   },
@@ -1620,6 +1943,10 @@
   },
   {
     "type": "string",
+    "named": true
+  },
+  {
+    "type": "this_expression",
     "named": true
   },
   {

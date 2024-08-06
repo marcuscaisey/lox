@@ -1,3 +1,7 @@
+fun greet() {
+  print "Hello, World!";
+}
+
 fun add2(x) {
   print x + 2;
 }
@@ -6,5 +10,6 @@ fun add(x, y) {
   print x + y;
 }
 
+greet(); // prints: Hello, World!
 add2(1); // prints: 3
 add(2, 3); // prints: 5

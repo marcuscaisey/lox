@@ -1,0 +1,5 @@
+var add = fun(a, b, c, d) {
+  print a + b + c + d;
+};
+
+add(); // error: (anonymous)() missing 4 arguments: a, b, c, and d

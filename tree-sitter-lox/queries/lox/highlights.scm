@@ -1,7 +1,12 @@
 (identifier) @variable
 
+(this_expression) @variable.builtin
+
 (parameters
   (identifier) @variable.parameter)
+
+(get_expression
+  name: (identifier) @variable.member)
 
 (nil) @constant.builtin
 
@@ -11,6 +16,9 @@
 
 (number) @number
 
+(class_declaration
+  name: (identifier) @type)
+
 (function_declaration
   name: (identifier) @function)
 
@@ -18,6 +26,16 @@
   callee: (identifier) @function.call)
 
 ((identifier) @function.builtin (#eq? @function.builtin "clock"))
+
+(method_declaration
+  name: (identifier) @function.method)
+
+(call_expression
+  callee: (get_expression
+    name: (identifier) @function.method.call))
+
+(method_declaration
+  name: (identifier) @constructor (#eq? @constructor "init"))
 
 [
   "!"
@@ -45,6 +63,8 @@
 
 "fun" @keyword.function
 
+"class" @keyword.type
+
 [
   "or"
   "and"
@@ -67,6 +87,7 @@
 
 [
   ","
+  "."
   ";"
 ] @punctuation.delimiter
 

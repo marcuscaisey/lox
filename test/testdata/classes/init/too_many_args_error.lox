@@ -1,0 +1,7 @@
+class Foo {
+  init(x, y) {
+    print x + y;
+  }
+}
+
+Foo(1, 2, 3); // error: Foo() accepts 2 arguments but 3 were given

@@ -1,0 +1,1 @@
+print this; // error: 'this' can only be used inside a method definition

@@ -20,6 +20,7 @@ const (
 	loxTypeBool     loxType = "bool"
 	loxTypeNil      loxType = "nil"
 	loxTypeFunction loxType = "function"
+	loxTypeClass    loxType = "class"
 )
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
@@ -221,77 +222,214 @@ func (n loxNil) IsTruthy() loxBool {
 	return false
 }
 
+type funType int
+
+const (
+	funTypeFunction funType = iota
+	funTypeMethod
+	funTypeInit
+)
+
 type loxFunction struct {
 	name    string
-	params  []token.Token
+	params  []string
 	body    []ast.Stmt
+	type_   funType
 	closure *environment
 }
 
-var (
-	_ loxObject   = loxFunction{}
-	_ loxCallable = loxFunction{}
-)
-
-func (f loxFunction) String() string {
-	return fmt.Sprintf("<function %s>", f.name)
+func newLoxFunction(name string, params []token.Token, body []ast.Stmt, type_ funType, closure *environment) *loxFunction {
+	paramNames := make([]string, len(params))
+	for i, param := range params {
+		paramNames[i] = param.Lexeme
+	}
+	f := &loxFunction{
+		name:    name,
+		params:  paramNames,
+		body:    body,
+		type_:   type_,
+		closure: closure,
+	}
+	return f
 }
 
-func (f loxFunction) Type() loxType {
+var (
+	_ loxObject   = &loxFunction{}
+	_ loxCallable = &loxFunction{}
+)
+
+func (f *loxFunction) String() string {
+	switch f.type_ {
+	case funTypeFunction:
+		return fmt.Sprintf("[function %s]", f.name)
+	case funTypeMethod, funTypeInit:
+		return fmt.Sprintf("[bound method %s]", f.name)
+	default:
+		panic(fmt.Sprintf("unexpected function type %d", f.type_))
+	}
+}
+
+func (f *loxFunction) Type() loxType {
 	return loxTypeFunction
 }
 
-func (f loxFunction) Name() string {
+func (f *loxFunction) Name() string {
 	return f.name
 }
 
-func (f loxFunction) Params() []string {
-	params := make([]string, len(f.params))
-	for i, param := range f.params {
-		params[i] = param.Lexeme
-	}
-	return params
+func (f *loxFunction) Params() []string {
+	return f.params
 }
 
-func (f loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject {
+func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject {
 	childEnv := f.closure.Child()
-	for i, param := range f.Params() {
+	for i, param := range f.params {
 		childEnv.Set(param, args[i])
 	}
 	result := interpreter.executeBlock(childEnv, f.body)
+	if f.type_ == funTypeInit {
+		return f.closure.GetByIdent(token.ThisIdent)
+	}
 	if r, ok := result.(stmtResultReturn); ok {
 		return r.Value
 	}
 	return loxNil{}
 }
 
+func (f *loxFunction) Bind(instance *loxInstance) *loxFunction {
+	fCopy := *f
+	fCopy.closure = f.closure.Child()
+	fCopy.closure.Set(token.ThisIdent, instance)
+	return &fCopy
+}
+
 type loxBuiltinFunction struct {
 	name   string
 	params []string
-	fn     func(args []loxObject) loxObject
+	body   func(args []loxObject) loxObject
+}
+
+func newLoxBuiltinFunction(name string, params []string, body func(args []loxObject) loxObject) *loxBuiltinFunction {
+	return &loxBuiltinFunction{
+		name:   name,
+		params: params,
+		body:   body,
+	}
 }
 
 var (
-	_ loxObject   = loxBuiltinFunction{}
-	_ loxCallable = loxBuiltinFunction{}
+	_ loxObject   = &loxBuiltinFunction{}
+	_ loxCallable = &loxBuiltinFunction{}
 )
 
-func (f loxBuiltinFunction) String() string {
-	return fmt.Sprintf("<builtin function %s>", f.name)
+func (f *loxBuiltinFunction) String() string {
+	return fmt.Sprintf("[builtin function %s]", f.name)
 }
 
-func (f loxBuiltinFunction) Type() loxType {
+func (f *loxBuiltinFunction) Type() loxType {
 	return loxTypeFunction
 }
 
-func (f loxBuiltinFunction) Name() string {
+func (f *loxBuiltinFunction) Name() string {
 	return f.name
 }
 
-func (f loxBuiltinFunction) Params() []string {
+func (f *loxBuiltinFunction) Params() []string {
 	return f.params
 }
 
-func (f loxBuiltinFunction) Call(_ *Interpreter, args []loxObject) loxObject {
-	return f.fn(args)
+func (f *loxBuiltinFunction) Call(_ *Interpreter, args []loxObject) loxObject {
+	return f.body(args)
+}
+
+type loxClass struct {
+	name          string
+	init          *loxFunction
+	methodsByName map[string]*loxFunction
+}
+
+func newLoxClass(name string, methodsByName map[string]*loxFunction) *loxClass {
+	class := &loxClass{
+		name:          name,
+		methodsByName: methodsByName,
+	}
+	if init, ok := class.GetMethod(token.InitIdent); ok {
+		class.init = init
+	}
+	return class
+}
+
+var (
+	_ loxObject   = &loxClass{}
+	_ loxCallable = &loxClass{}
+)
+
+func (c *loxClass) String() string {
+	return fmt.Sprintf("[class %s]", c.name)
+}
+
+func (c *loxClass) Type() loxType {
+	return loxTypeClass
+}
+
+func (c *loxClass) Name() string {
+	return c.name
+}
+
+func (c *loxClass) Params() []string {
+	if c.init == nil {
+		return nil
+	}
+	return c.init.Params()
+}
+
+func (c *loxClass) Call(i *Interpreter, args []loxObject) loxObject {
+	instance := newLoxInstance(c)
+	if c.init != nil {
+		c.init.Bind(instance).Call(i, args)
+	}
+	return instance
+}
+
+func (c *loxClass) GetMethod(name string) (*loxFunction, bool) {
+	method, ok := c.methodsByName[name]
+	return method, ok
+}
+
+type loxInstance struct {
+	class             *loxClass
+	fieldValuesByName map[string]loxObject
+}
+
+func newLoxInstance(class *loxClass) *loxInstance {
+	return &loxInstance{
+		class:             class,
+		fieldValuesByName: make(map[string]loxObject),
+	}
+}
+
+var _ loxObject = &loxInstance{}
+
+func (i *loxInstance) String() string {
+	return fmt.Sprintf("[%s object]", i.class.Name())
+}
+
+func (i *loxInstance) Type() loxType {
+	return loxType(i.class.Name())
+}
+
+func (i *loxInstance) Get(name token.Token) loxObject {
+	if value, ok := i.fieldValuesByName[name.Lexeme]; ok {
+		return value
+	}
+
+	if method, ok := i.class.GetMethod(name.Lexeme); ok {
+		return method.Bind(i)
+	}
+
+	panic(lox.NewErrorFromToken(name, "%m object has no property %s", i.Type(), name.Lexeme))
+}
+
+func (i *loxInstance) Set(name token.Token, value loxObject) {
+	i.fieldValuesByName[name.Lexeme] = value
 }

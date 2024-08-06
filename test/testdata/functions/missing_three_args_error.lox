@@ -1,5 +1,0 @@
-fun add(x, y, z) {
-  print x + y + z;
-}
-
-add(); // error: add() missing 3 arguments: x, y, and z

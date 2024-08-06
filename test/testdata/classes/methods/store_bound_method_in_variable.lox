@@ -1,0 +1,18 @@
+class Point {
+  init(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  move(dx, dy) {
+    this.x = this.x + dx;
+    this.y = this.y + dy;
+  }
+}
+
+var p = Point(1, 2);
+var moveP = p.move;
+moveP(3, 4);
+
+print p.x; // prints: 4
+print p.y; // prints: 6

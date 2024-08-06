@@ -2,6 +2,8 @@ package interpreter
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
@@ -18,6 +20,41 @@ func newEnvironment() *environment {
 	}
 }
 
+func (e *environment) String() string {
+	_, s := e.string()
+	return s
+}
+
+func (e *environment) string() (prefix string, s string) {
+	var b strings.Builder
+	firstLinePrefix := ""
+	if e.parent != nil {
+		parentPrefix, parentString := e.parent.string()
+		fmt.Fprintf(&b, "%s\n", parentString)
+		prefix = parentPrefix + "   "
+		firstLinePrefix = parentPrefix + "└──"
+	}
+
+	if len(e.valuesByIdent) == 0 {
+		fmt.Fprintf(&b, "%s<empty>", firstLinePrefix)
+		return prefix, b.String()
+	}
+
+	idents := make([]string, 0, len(e.valuesByIdent))
+	for ident := range e.valuesByIdent {
+		idents = append(idents, ident)
+	}
+	slices.Sort(idents)
+	for i, ident := range idents {
+		prefix := prefix
+		if i == 0 {
+			prefix = firstLinePrefix
+		}
+		fmt.Fprintf(&b, "%s%s: %s\n", prefix, ident, e.valuesByIdent[ident])
+	}
+	return prefix, strings.TrimSuffix(b.String(), "\n")
+}
+
 // Child creates a new child environment of this environment.
 func (e *environment) Child() *environment {
 	env := newEnvironment()
@@ -26,7 +63,7 @@ func (e *environment) Child() *environment {
 }
 
 // Declare declares an identifier in this environment.
-// If the identifier has already been declared in this environment, then a runtime error is raised.
+// If the identifier has already been declared in this environment, then an error is raised.
 // If the identifier is [token.BlankIdent], then this method is a no-op.
 func (e *environment) Declare(tok token.Token) {
 	if tok.Lexeme == token.BlankIdent {
@@ -39,7 +76,7 @@ func (e *environment) Declare(tok token.Token) {
 }
 
 // Define declares an identifier in this environment and defines it with a value.
-// If the identifier has already been declared in this environment, then a runtime error is raised.
+// If the identifier has already been declared in this environment, then an error is raised.
 // If the identifier is [token.BlankIdent], then this method is a no-op.
 // This method should be used for defining values which originated from an assignment in code. For example, a variable
 // or function declaration. Otherwise, use [*environment.Set].
@@ -66,6 +103,7 @@ func (e *environment) Set(ident string, value loxObject) {
 		return
 	}
 	if value == nil {
+		// It's a bug if we end up here
 		panic(fmt.Sprintf("attempt to set %s to nil", ident))
 	}
 	if _, ok := e.valuesByIdent[ident]; ok {
@@ -76,7 +114,7 @@ func (e *environment) Set(ident string, value loxObject) {
 }
 
 // Assign assigns a value to an identifier in this environment.
-// If the identifier has not been defined in this environment, then a runtime error is raised.
+// If the identifier has not been defined in this environment, then an error is raised.
 // If the identifier is [token.BlankIdent], then this method is a no-op.
 func (e *environment) Assign(tok token.Token, value loxObject) {
 	if tok.Lexeme == token.BlankIdent {
@@ -98,7 +136,7 @@ func (e *environment) AssignAt(distance int, tok token.Token, value loxObject) {
 }
 
 // Get returns the value of an identifier in this environment.
-// If the identifier has not been declared or defined in this environment, then a runtime error is raised.
+// If the identifier has not been declared or defined in this environment, then an error is raised.
 func (e *environment) Get(tok token.Token) loxObject {
 	value, ok := e.valuesByIdent[tok.Lexeme]
 	if !ok {
@@ -106,6 +144,23 @@ func (e *environment) Get(tok token.Token) loxObject {
 	}
 	if value == nil {
 		panic(lox.NewErrorFromToken(tok, "%s has not been defined", tok.Lexeme))
+	}
+	return value
+}
+
+// Get returns the value of an identifier in this environment.
+// If the identifier has not been declared or defined in this environment, then this method panics.
+// This method should be used for accesses which did not originate from an expression in code. Otherwise, use
+// [*environment.Get].
+func (e *environment) GetByIdent(ident string) loxObject {
+	value, ok := e.valuesByIdent[ident]
+	if !ok {
+		// It's a bug if we end up here
+		panic(fmt.Sprintf("%s has not been declared", ident))
+	}
+	if value == nil {
+		// It's a bug if we end up here
+		panic(fmt.Sprintf("%s has not been defined", ident))
 	}
 	return value
 }

@@ -1,0 +1,31 @@
+class CountCallsThis {
+  init(start, end) {
+    if (start <= end) {
+      print start;
+      this.init(start + 1, end);
+    }
+  }
+}
+
+class CountCallsClass {
+  init(start, end) {
+    if (start <= end) {
+      print start;
+      CountCallsClass(start + 1, end);
+    }
+  }
+}
+
+// prints: 1
+// prints: 2
+// prints: 3
+// prints: 4
+// prints: 5
+CountCallsThis(1, 5);
+
+// prints: 6
+// prints: 7
+// prints: 8
+// prints: 9
+// prints: 10
+CountCallsClass(6, 10);

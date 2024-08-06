@@ -145,7 +145,7 @@ func runREPL() error {
 	}
 	defer rl.Close()
 
-	fmt.Fprintln(os.Stderr, "Welcome to Lox!")
+	fmt.Fprintln(os.Stderr, "Welcome to the Lox REPL. Press Ctrl-D to exit.")
 
 	interpreter := interpreter.New(interpreter.REPLMode())
 	for {

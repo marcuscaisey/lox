@@ -1,0 +1,20 @@
+class Point {
+  init(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  setX(x) {
+    this.x = x;
+  }
+
+  setY(y) {
+    this.y = y;
+  }
+}
+
+var p = Point(1, 2);
+p.setX(3);
+p.setY(4);
+print p.x; // prints: 3
+print p.y; // prints: 4

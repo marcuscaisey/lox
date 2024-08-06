@@ -6,13 +6,35 @@ module.exports = grammar({
 
   extras: ($) => [/\s/, $.comment],
 
+  precedences: () => [
+    [
+      "postfix",
+      "unary",
+      "multiplicative",
+      "additive",
+      "relational",
+      "equality",
+      "logical_and",
+      "logical_or",
+      "ternary",
+      "arguments",
+      "assignment",
+      "comma",
+    ],
+  ],
+
   word: ($) => $.identifier,
 
   rules: {
     program: ($) => repeat(choice($._declaration, $._statement)),
 
     // Declarations
-    _declaration: ($) => choice($.variable_declaration, $.function_declaration),
+    _declaration: ($) =>
+      choice(
+        $.variable_declaration,
+        $.function_declaration,
+        $.class_declaration,
+      ),
 
     variable_declaration: ($) =>
       seq(
@@ -22,9 +44,17 @@ module.exports = grammar({
         ";",
       ),
 
-    function_declaration: ($) =>
+    function_declaration: ($) => seq("fun", $._function),
+
+    class_declaration: ($) =>
+      seq("class", field("name", $.identifier), field("body", $.class_body)),
+
+    class_body: ($) => seq("{", repeat($.method_declaration), "}"),
+
+    method_declaration: ($) => $._function,
+
+    _function: ($) =>
       seq(
-        "fun",
         field("name", $.identifier),
         field("parameters", $.parameters),
         field("body", $.block_statement),
@@ -107,7 +137,9 @@ module.exports = grammar({
         $.function_expression,
         $.group_expression,
         $.identifier,
+        $.this_expression,
         $.call_expression,
+        $.get_expression,
         $.unary_expression,
         $.binary_expression,
         $.ternary_expression,
@@ -133,12 +165,20 @@ module.exports = grammar({
 
     group_expression: ($) => seq("(", field("expression", $._expression), ")"),
 
-    identifier: (_) => /[a-zA-Z][a-zA-Z0-9_]*/,
+    identifier: (_) => /[a-zA-Z_][a-zA-Z0-9_]*/,
+
+    this_expression: (_) => "this",
 
     call_expression: ($) =>
       prec(
-        11,
+        "postfix",
         seq(field("callee", $._expression), field("arguments", $.arguments)),
+      ),
+
+    get_expression: ($) =>
+      prec(
+        "postfix",
+        seq(field("object", $._expression), ".", field("name", $.identifier)),
       ),
 
     arguments: ($) =>
@@ -147,23 +187,23 @@ module.exports = grammar({
         optional(
           seq(
             optional($._expression),
-            repeat(prec(2, seq(",", $._expression))),
+            repeat(prec("arguments", seq(",", $._expression))),
           ),
         ),
         ")",
       ),
 
     unary_expression: ($) =>
-      prec.right(10, seq(choice("!", "-"), field("right", $._expression))),
+      prec.right("unary", seq(choice("!", "-"), field("right", $._expression))),
 
     binary_expression: ($) =>
       choice(
         prec.left(
-          1,
+          "comma",
           seq(field("left", $._expression), ",", field("right", $._expression)),
         ),
         prec.left(
-          4,
+          "logical_or",
           seq(
             field("left", $._expression),
             "or",
@@ -171,7 +211,7 @@ module.exports = grammar({
           ),
         ),
         prec.left(
-          5,
+          "logical_and",
           seq(
             field("left", $._expression),
             "and",
@@ -179,7 +219,7 @@ module.exports = grammar({
           ),
         ),
         prec.left(
-          6,
+          "equality",
           seq(
             field("left", $._expression),
             choice("==", "!="),
@@ -187,7 +227,7 @@ module.exports = grammar({
           ),
         ),
         prec.left(
-          7,
+          "relational",
           seq(
             field("left", $._expression),
             choice("<", "<=", ">", ">="),
@@ -195,7 +235,7 @@ module.exports = grammar({
           ),
         ),
         prec.left(
-          8,
+          "additive",
           seq(
             field("left", $._expression),
             choice("+", "-"),
@@ -203,7 +243,7 @@ module.exports = grammar({
           ),
         ),
         prec.left(
-          9,
+          "multiplicative",
           seq(
             field("left", $._expression),
             choice("*", "/", "%"),
@@ -214,7 +254,7 @@ module.exports = grammar({
 
     ternary_expression: ($) =>
       prec.right(
-        3,
+        "ternary",
         seq(
           field("condition", $._expression),
           "?",
@@ -226,8 +266,12 @@ module.exports = grammar({
 
     assignment_expression: ($) =>
       prec.right(
-        2,
-        seq(field("left", $.identifier), "=", field("right", $._expression)),
+        "assignment",
+        seq(
+          field("left", choice($.identifier, $.get_expression)),
+          "=",
+          field("right", $._expression),
+        ),
       ),
 
     comment: (_) => choice(seq("//", /.*/), seq("/*", repeat(/./), "*/")),

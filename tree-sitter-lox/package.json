@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "description": "Lox grammar for tree-sitter",
   "scripts": {
+    "pretest": "tree-sitter generate",
     "test": "tree-sitter test",
-    "update_tests": "tree-sitter test --update",
     "build": "tree-sitter generate",
     "parse": "tree-sitter parse",
     "install": "node-gyp-build",

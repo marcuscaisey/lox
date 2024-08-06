@@ -1,0 +1,15 @@
+fun newCounter() {
+  var i = 0;
+  class Counter {
+    increment() {
+      i = i + 1;
+      return i;
+    }
+  }
+  return Counter();
+}
+
+var counter = newCounter();
+print counter.increment(); // prints: 1
+print counter.increment(); // prints: 2
+print counter.increment(); // prints: 3

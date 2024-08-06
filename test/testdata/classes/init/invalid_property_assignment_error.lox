@@ -1,0 +1,4 @@
+class Foo {
+  init() {}
+}
+Foo().init.y = 1; // error: property assignment is not valid for 'function' object

@@ -1,13 +1,21 @@
-// , has higher precedence than =
+// = has higher precedence than ,
 var a;
 a = 1, 2;
 print a; // prints: 1
 
-// ? : has higher precedence than ,
-print 1 ? 2 : 3, 4; // prints: 4
+// ? : has higher precedence than =
+var b;
+b = 1 ? 2 : 3;
+print b; // prints: 2
 
-// == has higher precedence than ? :
-print 1 == 2 ? 3 : 4; // prints: 4
+// or has higher precedence than ? :
+print 1 or 2 ? 3 : 4; // prints: 3
+
+// and has higher precedence than or
+print 1 or 2 and 3; // prints: 1
+
+// == has higher precedence than and
+print 1 == 2 and 1; // prints: false
 
 // < has higher precedence than ==
 print 1 < 2 == false; // prints: false
@@ -18,8 +26,16 @@ print 1 < 2 + 3; // prints: true
 // * has higher precedence than +
 print 1 + 2 * 3; // prints: 7
 
-// - has higher precedence than *
+// unary - has higher precedence than *
 print --1 * "foo"; // prints: foo
+
+// call and property access have higher precedence than unary -
+class C {
+  init(x) {
+    this.x = x;
+  }
+}
+print -C(1).x; // prints: -1
 
 // () has higher precedence than any operator
 print (1 + 2) * 3; // prints: 9

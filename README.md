@@ -131,6 +131,35 @@ fun add(a, b) {
 print add(1, 2); // prints: 3
 ```
 
+#### Get Expression
+
+A get expression produces the value of a property of an object.
+
+```lox
+class Foo {
+  init(bar) {
+    this.bar = bar;
+  }
+}
+var foo = Foo(1);
+
+print foo.bar; // prints: 1
+```
+
+#### Set Expression
+
+A set expression assigns a value to a property of an object and produces the value.
+
+```lox
+class Foo {}
+var foo = Foo();
+
+foo.bar = 1;
+print foo.bar; // prints: 1
+print foo.bar = 2; // prints: 2
+print foo.bar; // prints: 2
+```
+
 #### Function Expression
 
 A function expression creates an anonymous function.
@@ -149,7 +178,7 @@ From highest to lowest:
 
 | Operators | Associativity |
 | --------- | ------------- |
-| ()        | left-to-right |
+| () .      | left-to-right |
 | ! -       | right-to-left |
 | \* / %    | left-to-right |
 | + -       | left-to-right |
@@ -370,6 +399,36 @@ fun add(a, b) {
 print add(1, 2); // prints: 3
 ```
 
+#### Class Declaration
+
+A class declaration declares a class which can be instantiated to create objects. The class body is
+a block which can contain method declarations. `this` is a special identifier which can be used
+inside a method body to refer to the instance that the method was accessed from. The `init` method
+is a special method which is called when an object is instantiated.
+
+```lox
+class Point {
+  init(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  move(dx, dy) {
+    this.x = this.x + dx;
+    this.y = this.y + dy;
+  }
+}
+
+var p1 = Point(1, 2);
+var p2 = Point(3, 4);
+p1.move(5, 6);
+p2.move(7, 8);
+print p1.x; // prints: 6
+print p1.y; // prints: 8
+print p2.x; // prints: 10
+print p2.y; // prints: 12
+```
+
 #### Blank Identifier
 
 The blank identifier `_` is a special identifier which:
@@ -416,9 +475,10 @@ Markup Language (XML) 1.0 (Fifth Edition)](https://www.w3.org/TR/xml/#sec-notati
 ```ebnf
 program =  decl* EOF ;
 
-decl       = var_decl | fun_decl | stmt ;
+decl       = var_decl | fun_decl | class_decl | stmt ;
 var_decl   = "var" IDENT ( "=" expr )? ";" ;
 fun_decl   = "fun" function ;
+class_decl = "class" IDENT "{" function* "}" ;
 function   = IDENT "(" parameters? ")" block_stmt ;
 parameters = IDENT ( "," IDENT )* ;
 
@@ -436,7 +496,7 @@ return_stmt   = "return" expression? ";" ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr ( "," assignment_expr )* ;
-assignment_expr     = IDENT "=" assignment_expr | ternary_expr ;
+assignment_expr     = ( postfix_expr "." )? IDENT "=" assignment_expr | ternary_expr ;
 ternary_expr        = logical_or_expr ( "?" expr ":" ternary_expr )? ;
 logical_or_expr     = logical_and_expr ( "or" logical_and_expr )* ;
 logical_and_expr    = equality_expr ( "and" equality_expr )* ;
@@ -444,10 +504,11 @@ equality_expr       = relational_expr ( ( "==" | "!=" ) relational_expr )* ;
 relational_expr     = additive_expr ( ( "<" | "<=" | ">" | ">=" ) additive_expr )* ;
 additive_expr       = multiplicative_expr ( ( "+" | "-" ) multiplicative_expr )* ;
 multiplicative_expr = unary_expr ( ( "*" | "/" | "%" ) unary_expr )* ;
-unary_expr          = ( "!" | "-" ) unary_expr | call_expr ;
-call_expr           = primary_expr ( "(" arguments? ")" )* ;
+unary_expr          = ( "!" | "-" ) unary_expr | postfix_expr ;
+postfix_expr        = primary_expr ( "(" arguments? ")" | "." IDENT )* ;
 arguments           = assignment_expr ( "," assignment_expr )* ;
-primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | IDENT | group_expr | fun_expr
+primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | IDENT | "this" | group_expr
+                    | fun_expr
                     /* Error productions */
                     | ( "==" | "!=" ) relational_expr
                     | ( "<" | "<=" | ">" | ">=" ) additive_expr

@@ -66,10 +66,13 @@ Identifier Expression
 
 foo;
 Bar_1;
+_;
 
 --------------------------------------------------------------------------------
 
 (program
+  (expression_statement
+    (identifier))
   (expression_statement
     (identifier))
   (expression_statement
@@ -139,6 +142,52 @@ d(1, 2)(3, 4);
       arguments: (arguments
         (number)
         (number)))))
+
+================================================================================
+Get Expression - Identifier
+================================================================================
+
+foo.bar;
+
+--------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (get_expression
+      object: (identifier)
+      name: (identifier))))
+
+================================================================================
+Get Expression - Repeated Identifiers
+================================================================================
+
+foo.bar.baz;
+
+--------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (get_expression
+      object: (get_expression
+        object: (identifier)
+        name: (identifier))
+      name: (identifier))))
+
+================================================================================
+Get Expression - Call
+================================================================================
+
+foo().bar;
+
+--------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (get_expression
+      object: (call_expression
+        callee: (identifier)
+        arguments: (arguments))
+      name: (identifier))))
 
 ================================================================================
 Unary Expression
@@ -410,6 +459,22 @@ a = 1;
       right: (number))))
 
 ================================================================================
+Assignment Expression - Instance Field
+================================================================================
+
+a.b = 1;
+
+--------------------------------------------------------------------------------
+
+(program
+  (expression_statement
+    (assignment_expression
+      left: (get_expression
+        object: (identifier)
+        name: (identifier))
+      right: (number))))
+
+================================================================================
 Assignment Expression - Right Associativity
 ================================================================================
 
@@ -429,7 +494,7 @@ a = b = 1;
 Precedence
 ================================================================================
 
-1, a = 1 ? 1 : 1 or 1 and 1 == 1 < 1 + -1() * 1;
+1, a = 1 ? 1 : 1 or 1 and 1 == 1 < 1 + 1 * -1().a;
 
 --------------------------------------------------------------------------------
 
@@ -453,8 +518,10 @@ Precedence
                   right: (binary_expression
                     left: (number)
                     right: (binary_expression
-                      left: (unary_expression
-                        right: (call_expression
-                          callee: (number)
-                          arguments: (arguments)))
-                      right: (number))))))))))))
+                      left: (number)
+                      right: (unary_expression
+                        right: (get_expression
+                          object: (call_expression
+                            callee: (number)
+                            arguments: (arguments))
+                          name: (identifier))))))))))))))

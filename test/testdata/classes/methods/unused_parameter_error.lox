@@ -1,0 +1,6 @@
+class Foo {
+  // error: z has been declared but is never used
+  add(x, y, z) {
+    print x + y;
+  }
+}

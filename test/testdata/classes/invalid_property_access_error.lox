@@ -1,0 +1,2 @@
+class Foo {}
+Foo.x; // error: property access is not valid for 'class' object

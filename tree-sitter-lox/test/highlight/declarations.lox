@@ -14,3 +14,25 @@ fun add(x, y) {
 //          ^ punctuation.bracket
   return x + y;
 }
+
+// Class Declaration
+class Point {
+// <- keyword.type
+//    ^ type
+  init(x, y) {
+// ^ constructor
+//    ^ punctuation.bracket
+//     ^ variable.parameter
+//      ^ punctuation.delimiter
+//        ^ variable.parameter
+//         ^ punctuation.bracket
+    this.x = x;
+//  ^ variable.builtin
+    this.y = y;
+  }
+
+  add(other) {
+// ^ function.method
+    return Point(this.x + other.x, this.y + other.y);
+  }
+}

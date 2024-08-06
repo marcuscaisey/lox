@@ -54,6 +54,40 @@ type FunDecl struct {
 func (d FunDecl) Start() token.Position { return d.Fun.Start }
 func (d FunDecl) End() token.Position   { return d.RightBrace.End }
 
+// ClassDecl is a class declaration, such as
+//
+//	class Foo {
+//	  bar() {
+//	    return "baz";
+//	  }
+//	}
+type ClassDecl struct {
+	Class      token.Token
+	Name       token.Token  `print:"named"`
+	Body       []MethodDecl `print:"named"`
+	RightBrace token.Token
+	stmt
+}
+
+func (c ClassDecl) Start() token.Position { return c.Class.Start }
+func (c ClassDecl) End() token.Position   { return c.RightBrace.End }
+
+// MethodDecl is a method declaration, such as
+//
+//	bar() {
+//	  return "baz";
+//	}
+type MethodDecl struct {
+	Name       token.Token   `print:"named"`
+	Params     []token.Token `print:"named"`
+	Body       []Stmt        `print:"named"`
+	RightBrace token.Token
+	stmt
+}
+
+func (m MethodDecl) Start() token.Position { return m.Name.Start }
+func (m MethodDecl) End() token.Position   { return m.RightBrace.End }
+
 // ExprStmt is an expression statement, such as a function call.
 type ExprStmt struct {
 	Expr      Expr `print:"unnamed"`
@@ -233,6 +267,15 @@ type VariableExpr struct {
 func (v VariableExpr) Start() token.Position { return v.Name.Start }
 func (v VariableExpr) End() token.Position   { return v.Name.End }
 
+// ThisExpr represents usage of the 'this' keyword.
+type ThisExpr struct {
+	This token.Token
+	expr
+}
+
+func (t ThisExpr) Start() token.Position { return t.This.Start }
+func (t ThisExpr) End() token.Position   { return t.This.End }
+
 // CallExpr is a call expression, such as add(x, 1).
 type CallExpr struct {
 	Callee     Expr   `print:"named"`
@@ -243,6 +286,16 @@ type CallExpr struct {
 
 func (c CallExpr) Start() token.Position { return c.Callee.Start() }
 func (c CallExpr) End() token.Position   { return c.RightParen.End }
+
+// GetExpr is a property access expression, such as a.b.
+type GetExpr struct {
+	Object Expr        `print:"named"`
+	Name   token.Token `print:"named"`
+	expr
+}
+
+func (g GetExpr) Start() token.Position { return g.Object.Start() }
+func (g GetExpr) End() token.Position   { return g.Name.End }
 
 // UnaryExpr is a unary operator expression, such as !a.
 type UnaryExpr struct {
@@ -285,3 +338,14 @@ type AssignmentExpr struct {
 
 func (a AssignmentExpr) Start() token.Position { return a.Left.Start }
 func (a AssignmentExpr) End() token.Position   { return a.Right.End() }
+
+// SetExpr is a property assignment expression, such as a.b = 2.
+type SetExpr struct {
+	Object Expr        `print:"named"`
+	Name   token.Token `print:"named"`
+	Value  Expr        `print:"named"`
+	expr
+}
+
+func (s SetExpr) Start() token.Position { return s.Object.Start() }
+func (s SetExpr) End() token.Position   { return s.Value.End() }

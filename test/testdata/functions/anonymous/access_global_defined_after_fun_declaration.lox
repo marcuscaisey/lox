@@ -1,0 +1,6 @@
+var f = fun() {
+  print a;
+};
+
+var a = "global";
+f(); // prints: global

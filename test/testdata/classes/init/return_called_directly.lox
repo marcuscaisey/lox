@@ -1,0 +1,18 @@
+class ReturnsNoValue {
+  init(x) {
+    this.x = x;
+    return;
+  }
+}
+
+class NoReturn {
+  init(x) {
+    this.x = x;
+  }
+}
+
+var returnsNoValue = ReturnsNoValue(1);
+print returnsNoValue.init(2).x; // prints: 2
+
+var noReturn = NoReturn(3);
+print noReturn.init(4).x; // prints: 4

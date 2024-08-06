@@ -1,0 +1,4 @@
+class Foo {
+  init() {}
+}
+-Foo().init; // error: '-' operator cannot be used with type 'function'

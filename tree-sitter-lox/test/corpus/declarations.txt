@@ -103,3 +103,161 @@ fun add(x) {
               right: (identifier)))))
       (return_statement
         (identifier)))))
+
+================================================================================
+Class Declaration - Empty
+================================================================================
+
+class Point {}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body)))
+
+================================================================================
+Class Declaration - One Method - No Parameters
+================================================================================
+
+class Breakfast {
+  cook() {
+    print "Cooking breakfast!";
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        name: (identifier)
+        parameters: (parameters)
+        body: (block_statement
+          (print_statement
+            (string)))))))
+
+================================================================================
+Class Declaration - One Method - One Parameter
+================================================================================
+
+class Breakfast {
+  serve(who) {
+    print "Enjoy your breakfast, " + who + ".";
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        name: (identifier)
+        parameters: (parameters
+          (identifier))
+        body: (block_statement
+          (print_statement
+            (binary_expression
+              left: (binary_expression
+                left: (string)
+                right: (identifier))
+              right: (string))))))))
+
+================================================================================
+Class Declaration - One Method - Two Parameters
+================================================================================
+
+class Breakfast {
+  serve(what, who) {
+    print "Enjoy your " + what + ", " + who + ".";
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        name: (identifier)
+        parameters: (parameters
+          (identifier)
+          (identifier))
+        body: (block_statement
+          (print_statement
+            (binary_expression
+              left: (binary_expression
+                left: (binary_expression
+                  left: (binary_expression
+                    left: (string)
+                    right: (identifier))
+                  right: (string))
+                right: (identifier))
+              right: (string))))))))
+
+================================================================================
+Class Declaration - Two Methods
+================================================================================
+
+class Breakfast {
+  cook() {
+    print "Eggs a-fryin'!";
+  }
+
+  serve() {
+    print "Enjoy your breakfast.";
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        name: (identifier)
+        parameters: (parameters)
+        body: (block_statement
+          (print_statement
+            (string))))
+      (method_declaration
+        name: (identifier)
+        parameters: (parameters)
+        body: (block_statement
+          (print_statement
+            (string)))))))
+
+================================================================================
+Class Declaration - Init
+================================================================================
+
+class Person {
+  init(name) {
+    this.name = name;
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        name: (identifier)
+        parameters: (parameters
+          (identifier))
+        body: (block_statement
+          (expression_statement
+            (assignment_expression
+              left: (get_expression
+                object: (this_expression)
+                name: (identifier))
+              right: (identifier))))))))

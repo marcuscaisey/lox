@@ -1,0 +1,10 @@
+fun add(x, y) {
+  return x + y;
+}
+
+class Foo {}
+
+var foo = Foo();
+foo.add = add;
+
+print foo.add(1, 2); // prints: 3

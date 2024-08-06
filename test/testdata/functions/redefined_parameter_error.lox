@@ -1,6 +1,4 @@
 fun f(x) {
   var x = 1; // error: x has already been declared
-  print x;
+  _ = x;
 }
-
-f(1);

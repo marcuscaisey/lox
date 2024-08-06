@@ -28,7 +28,6 @@ fun(x, y) {
   return x + y;
 };
 
-
 // Group expression
 ( 1 );
 // <- punctuation.bracket
@@ -42,6 +41,15 @@ foo(1, 2);
 //   ^ punctuation.delimiter
 //      ^ punctuation.bracket
 //       ^ punctuation.delimiter
+
+foo.bar(1, 2);
+//  ^ function.method.call
+
+// Get Expression
+foo.bar;
+// <- variable
+// ^ punctuation.delimiter
+//  ^ variable.member
 
 // Builtin identifier
 clock;

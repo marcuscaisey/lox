@@ -1,0 +1,23 @@
+class Object {}
+
+var o = Object();
+
+o.a = 1;
+print o.a; // prints: 1
+o.a = 2;
+print o.a; // prints: 2
+
+o.b = 1;
+print o.b = 2; // prints: 2
+print o.b; // prints: 2
+
+o.c = 1;
+o.d = 1;
+o.c = o.d = 2;
+print o.c; // prints: 2
+print o.d; // prints: 2
+
+o.e = 1;
+print o.e = o.f = 2; // prints: 2
+print o.e; // prints: 2
+print o.f; // prints: 2

@@ -1,0 +1,1 @@
+nil.y; // error: property access is not valid for 'nil' object

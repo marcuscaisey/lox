@@ -1,3 +1,4 @@
-fun add(x, y, z) { // error: z has been declared but is never used
+// error: z has been declared but is never used
+fun add(x, y, z) {
   return x + y;
 }

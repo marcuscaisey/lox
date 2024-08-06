@@ -1,0 +1,6 @@
+class Foo {
+  bar(x) {
+    var x = 1; // error: x has already been declared
+    _ = x;
+  }
+}

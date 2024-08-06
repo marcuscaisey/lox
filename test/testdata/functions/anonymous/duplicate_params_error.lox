@@ -1,0 +1,3 @@
+// error: duplicate parameter x
+// error: duplicate parameter y
+fun(x, y, z, x, y) {};
