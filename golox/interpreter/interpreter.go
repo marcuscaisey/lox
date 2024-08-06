@@ -142,12 +142,12 @@ func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
 func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
 	methodsByName := make(map[string]*loxFunction, len(stmt.Body))
 	for _, methodDecl := range stmt.Body {
-		type_ := funTypeMethod
+		typ := funTypeMethod
 		if methodDecl.Name.Lexeme == token.InitIdent {
-			type_ = funTypeInit
+			typ = funTypeInit
 		}
 		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
-		methodsByName[methodDecl.Name.Lexeme] = newLoxFunction(name, methodDecl.Params, methodDecl.Body, type_, env)
+		methodsByName[methodDecl.Name.Lexeme] = newLoxFunction(name, methodDecl.Params, methodDecl.Body, typ, env)
 	}
 	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, methodsByName))
 }
@@ -458,12 +458,4 @@ func isTruthy(obj loxObject) loxBool {
 		return truther.IsTruthy()
 	}
 	return true
-}
-
-func extractLexemes(params []token.Token) []string {
-	names := make([]string, len(params))
-	for j, param := range params {
-		names[j] = param.Lexeme
-	}
-	return names
 }

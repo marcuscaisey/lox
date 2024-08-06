@@ -234,11 +234,11 @@ type loxFunction struct {
 	name    string
 	params  []string
 	body    []ast.Stmt
-	type_   funType
+	typ     funType
 	closure *environment
 }
 
-func newLoxFunction(name string, params []token.Token, body []ast.Stmt, type_ funType, closure *environment) *loxFunction {
+func newLoxFunction(name string, params []token.Token, body []ast.Stmt, typ funType, closure *environment) *loxFunction {
 	paramNames := make([]string, len(params))
 	for i, param := range params {
 		paramNames[i] = param.Lexeme
@@ -247,7 +247,7 @@ func newLoxFunction(name string, params []token.Token, body []ast.Stmt, type_ fu
 		name:    name,
 		params:  paramNames,
 		body:    body,
-		type_:   type_,
+		typ:     typ,
 		closure: closure,
 	}
 	return f
@@ -259,13 +259,13 @@ var (
 )
 
 func (f *loxFunction) String() string {
-	switch f.type_ {
+	switch f.typ {
 	case funTypeFunction:
 		return fmt.Sprintf("[function %s]", f.name)
 	case funTypeMethod, funTypeInit:
 		return fmt.Sprintf("[bound method %s]", f.name)
 	default:
-		panic(fmt.Sprintf("unexpected function type %d", f.type_))
+		panic(fmt.Sprintf("unexpected function type %d", f.typ))
 	}
 }
 
@@ -287,7 +287,7 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 		childEnv.Set(param, args[i])
 	}
 	result := interpreter.executeBlock(childEnv, f.body)
-	if f.type_ == funTypeInit {
+	if f.typ == funTypeInit {
 		return f.closure.GetByIdent(token.ThisIdent)
 	}
 	if r, ok := result.(stmtResultReturn); ok {

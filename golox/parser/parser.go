@@ -34,11 +34,11 @@ func Parse(r io.Reader) (ast.Program, error) {
 }
 
 type parser struct {
-	l              *lexer
-	tok            token.Token // token currently being considered
-	nextTok        token.Token
-	loopDepth      int
-	curFunType     funType
+	l          *lexer
+	tok        token.Token // token currently being considered
+	nextTok    token.Token
+	loopDepth  int
+	curFunType funType
 
 	errs       lox.Errors
 	lastErrPos token.Position
