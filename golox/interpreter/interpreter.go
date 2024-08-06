@@ -91,55 +91,55 @@ func (stmtResultReturn) stmtResult() {}
 
 func (i *Interpreter) interpretProgram(node ast.Program) {
 	for _, stmt := range node.Stmts {
-		i.interpretStmt(i.globals, stmt)
+		i.execStmt(i.globals, stmt)
 	}
 }
 
-func (i *Interpreter) interpretStmt(env *environment, stmt ast.Stmt) stmtResult {
+func (i *Interpreter) execStmt(env *environment, stmt ast.Stmt) stmtResult {
 	switch stmt := stmt.(type) {
 	case ast.VarDecl:
-		i.interpretVarDecl(env, stmt)
+		i.execVarDecl(env, stmt)
 	case ast.FunDecl:
-		i.interpretFunDecl(env, stmt)
+		i.execFunDecl(env, stmt)
 	case ast.ClassDecl:
-		i.interpretClassDecl(env, stmt)
+		i.execClassDecl(env, stmt)
 	case ast.ExprStmt:
-		i.interpretExprStmt(env, stmt)
+		i.execExprStmt(env, stmt)
 	case ast.PrintStmt:
-		i.interpretPrintStmt(env, stmt)
+		i.execPrintStmt(env, stmt)
 	case ast.BlockStmt:
-		return i.interpretBlockStmt(env, stmt)
+		return i.execBlockStmt(env, stmt)
 	case ast.IfStmt:
-		return i.interpretIfStmt(env, stmt)
+		return i.execIfStmt(env, stmt)
 	case ast.WhileStmt:
-		return i.interpretWhileStmt(env, stmt)
+		return i.execWhileStmt(env, stmt)
 	case ast.ForStmt:
-		return i.interpretForStmt(env, stmt)
+		return i.execForStmt(env, stmt)
 	case ast.BreakStmt:
-		return i.interpretBreakStmt()
+		return i.execBreakStmt()
 	case ast.ContinueStmt:
-		return i.interpretContinueStmt()
+		return i.execContinueStmt()
 	case ast.ReturnStmt:
-		return i.interpretReturnStmt(env, stmt)
+		return i.execReturnStmt(env, stmt)
 	default:
 		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
 	}
 	return stmtResultNone{}
 }
 
-func (i *Interpreter) interpretVarDecl(env *environment, stmt ast.VarDecl) {
+func (i *Interpreter) execVarDecl(env *environment, stmt ast.VarDecl) {
 	if stmt.Initialiser != nil {
-		env.Define(stmt.Name, i.interpretExpr(env, stmt.Initialiser))
+		env.Define(stmt.Name, i.evalExpr(env, stmt.Initialiser))
 	} else {
 		env.Declare(stmt.Name)
 	}
 }
 
-func (i *Interpreter) interpretFunDecl(env *environment, stmt ast.FunDecl) {
+func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
 	env.Define(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Params, stmt.Body, funTypeFunction, env))
 }
 
-func (i *Interpreter) interpretClassDecl(env *environment, stmt ast.ClassDecl) {
+func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
 	methodsByName := make(map[string]*loxFunction, len(stmt.Body))
 	for _, methodDecl := range stmt.Body {
 		type_ := funTypeMethod
@@ -152,25 +152,25 @@ func (i *Interpreter) interpretClassDecl(env *environment, stmt ast.ClassDecl) {
 	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, methodsByName))
 }
 
-func (i *Interpreter) interpretExprStmt(env *environment, stmt ast.ExprStmt) {
-	value := i.interpretExpr(env, stmt.Expr)
+func (i *Interpreter) execExprStmt(env *environment, stmt ast.ExprStmt) {
+	value := i.evalExpr(env, stmt.Expr)
 	if i.printExprStmtResults {
 		fmt.Println(value.String())
 	}
 }
 
-func (i *Interpreter) interpretPrintStmt(env *environment, stmt ast.PrintStmt) {
-	value := i.interpretExpr(env, stmt.Expr)
+func (i *Interpreter) execPrintStmt(env *environment, stmt ast.PrintStmt) {
+	value := i.evalExpr(env, stmt.Expr)
 	fmt.Println(value.String())
 }
 
-func (i *Interpreter) interpretBlockStmt(env *environment, stmt ast.BlockStmt) stmtResult {
+func (i *Interpreter) execBlockStmt(env *environment, stmt ast.BlockStmt) stmtResult {
 	return i.executeBlock(env.Child(), stmt.Stmts)
 }
 
 func (i *Interpreter) executeBlock(env *environment, stmts []ast.Stmt) stmtResult {
 	for _, stmt := range stmts {
-		result := i.interpretStmt(env, stmt)
+		result := i.execStmt(env, stmt)
 		if _, ok := result.(stmtResultNone); !ok {
 			return result
 		}
@@ -178,20 +178,20 @@ func (i *Interpreter) executeBlock(env *environment, stmts []ast.Stmt) stmtResul
 	return stmtResultNone{}
 }
 
-func (i *Interpreter) interpretIfStmt(env *environment, stmt ast.IfStmt) stmtResult {
-	condition := i.interpretExpr(env, stmt.Condition)
+func (i *Interpreter) execIfStmt(env *environment, stmt ast.IfStmt) stmtResult {
+	condition := i.evalExpr(env, stmt.Condition)
 	if isTruthy(condition) {
-		return i.interpretStmt(env, stmt.Then)
+		return i.execStmt(env, stmt.Then)
 	} else if stmt.Else != nil {
-		return i.interpretStmt(env, stmt.Else)
+		return i.execStmt(env, stmt.Else)
 	} else {
 		return stmtResultNone{}
 	}
 }
 
-func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) stmtResult {
-	for isTruthy(i.interpretExpr(env, stmt.Condition)) {
-		switch result := i.interpretStmt(env, stmt.Body).(type) {
+func (i *Interpreter) execWhileStmt(env *environment, stmt ast.WhileStmt) stmtResult {
+	for isTruthy(i.evalExpr(env, stmt.Condition)) {
+		switch result := i.execStmt(env, stmt.Body).(type) {
 		case stmtResultBreak:
 			return stmtResultNone{}
 		case stmtResultReturn:
@@ -201,81 +201,81 @@ func (i *Interpreter) interpretWhileStmt(env *environment, stmt ast.WhileStmt) s
 	return stmtResultNone{}
 }
 
-func (i *Interpreter) interpretForStmt(env *environment, stmt ast.ForStmt) stmtResult {
+func (i *Interpreter) execForStmt(env *environment, stmt ast.ForStmt) stmtResult {
 	childEnv := env.Child()
 	if stmt.Initialise != nil {
-		i.interpretStmt(childEnv, stmt.Initialise)
+		i.execStmt(childEnv, stmt.Initialise)
 	}
-	for stmt.Condition == nil || isTruthy(i.interpretExpr(childEnv, stmt.Condition)) {
-		switch result := i.interpretStmt(childEnv, stmt.Body).(type) {
+	for stmt.Condition == nil || isTruthy(i.evalExpr(childEnv, stmt.Condition)) {
+		switch result := i.execStmt(childEnv, stmt.Body).(type) {
 		case stmtResultBreak:
 			return stmtResultNone{}
 		case stmtResultReturn:
 			return result
 		}
 		if stmt.Update != nil {
-			i.interpretExpr(childEnv, stmt.Update)
+			i.evalExpr(childEnv, stmt.Update)
 		}
 	}
 	return stmtResultNone{}
 }
 
-func (i *Interpreter) interpretBreakStmt() stmtResultBreak {
+func (i *Interpreter) execBreakStmt() stmtResultBreak {
 	return stmtResultBreak{}
 }
 
-func (i *Interpreter) interpretContinueStmt() stmtResultContinue {
+func (i *Interpreter) execContinueStmt() stmtResultContinue {
 	return stmtResultContinue{}
 }
 
-func (i *Interpreter) interpretReturnStmt(env *environment, stmt ast.ReturnStmt) stmtResultReturn {
+func (i *Interpreter) execReturnStmt(env *environment, stmt ast.ReturnStmt) stmtResultReturn {
 	var value loxObject = loxNil{}
 	if stmt.Value != nil {
-		value = i.interpretExpr(env, stmt.Value)
+		value = i.evalExpr(env, stmt.Value)
 	}
 	return stmtResultReturn{Value: value}
 }
 
-func (i *Interpreter) interpretExpr(env *environment, expr ast.Expr) loxObject {
+func (i *Interpreter) evalExpr(env *environment, expr ast.Expr) loxObject {
 	switch expr := expr.(type) {
 	case ast.FunExpr:
-		return i.interpretFunExpr(env, expr)
+		return i.evalFunExpr(env, expr)
 	case ast.GroupExpr:
-		return i.interpretGroupExpr(env, expr)
+		return i.evalGroupExpr(env, expr)
 	case ast.LiteralExpr:
-		return i.interpretLiteralExpr(expr)
+		return i.evalLiteralExpr(expr)
 	case ast.VariableExpr:
-		return i.interpretVariableExpr(env, expr)
+		return i.evalVariableExpr(env, expr)
 	case ast.ThisExpr:
-		return i.resolveThisExpr(env, expr)
+		return i.evalThisExpr(env, expr)
 	case ast.CallExpr:
-		return i.interpretCallExpr(env, expr)
+		return i.evalCallExpr(env, expr)
 	case ast.GetExpr:
-		return i.interpretGetExpr(env, expr)
+		return i.evalGetExpr(env, expr)
 	case ast.UnaryExpr:
-		return i.interpretUnaryExpr(env, expr)
+		return i.evalUnaryExpr(env, expr)
 	case ast.BinaryExpr:
-		return i.interpretBinaryExpr(env, expr)
+		return i.evalBinaryExpr(env, expr)
 	case ast.TernaryExpr:
-		return i.interpretTernaryExpr(env, expr)
+		return i.evalTernaryExpr(env, expr)
 	case ast.AssignmentExpr:
-		return i.interpretAssignmentExpr(env, expr)
+		return i.evalAssignmentExpr(env, expr)
 	case ast.SetExpr:
-		return i.interpretSetExpr(env, expr)
+		return i.evalSetExpr(env, expr)
 	default:
 		panic(fmt.Sprintf("unexpected expression type: %T", expr))
 	}
 }
 
-func (i *Interpreter) interpretFunExpr(env *environment, expr ast.FunExpr) loxObject {
+func (i *Interpreter) evalFunExpr(env *environment, expr ast.FunExpr) loxObject {
 	return newLoxFunction("(anonymous)", expr.Params, expr.Body, funTypeFunction, env)
 }
 
-func (i *Interpreter) interpretGroupExpr(env *environment, expr ast.GroupExpr) loxObject {
-	return i.interpretExpr(env, expr.Expr)
+func (i *Interpreter) evalGroupExpr(env *environment, expr ast.GroupExpr) loxObject {
+	return i.evalExpr(env, expr.Expr)
 }
 
-func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
+func (i *Interpreter) evalLiteralExpr(expr ast.LiteralExpr) loxObject {
 	switch tok := expr.Value; tok.Type {
 	case token.Number:
 		value, err := strconv.ParseFloat(tok.Lexeme, 64)
@@ -294,11 +294,11 @@ func (i *Interpreter) interpretLiteralExpr(expr ast.LiteralExpr) loxObject {
 	}
 }
 
-func (i *Interpreter) interpretVariableExpr(env *environment, expr ast.VariableExpr) loxObject {
+func (i *Interpreter) evalVariableExpr(env *environment, expr ast.VariableExpr) loxObject {
 	return i.resolveIdent(env, expr.Name)
 }
 
-func (i *Interpreter) resolveThisExpr(env *environment, expr ast.ThisExpr) loxObject {
+func (i *Interpreter) evalThisExpr(env *environment, expr ast.ThisExpr) loxObject {
 	return i.resolveIdent(env, expr.This)
 }
 
@@ -310,11 +310,11 @@ func (i *Interpreter) resolveIdent(env *environment, tok token.Token) loxObject 
 	return i.globals.Get(tok)
 }
 
-func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) loxObject {
-	callee := i.interpretExpr(env, expr.Callee)
+func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObject {
+	callee := i.evalExpr(env, expr.Callee)
 	args := make([]loxObject, len(expr.Args))
 	for j, arg := range expr.Args {
-		args[j] = i.interpretExpr(env, arg)
+		args[j] = i.evalExpr(env, arg)
 	}
 
 	callable, ok := callee.(loxCallable)
@@ -355,8 +355,8 @@ func (i *Interpreter) interpretCallExpr(env *environment, expr ast.CallExpr) lox
 	return callable.Call(i, args)
 }
 
-func (i *Interpreter) interpretGetExpr(env *environment, expr ast.GetExpr) loxObject {
-	object := i.interpretExpr(env, expr.Object)
+func (i *Interpreter) evalGetExpr(env *environment, expr ast.GetExpr) loxObject {
+	object := i.evalExpr(env, expr.Object)
 	instance, ok := object.(*loxInstance)
 	if !ok {
 		panic(lox.NewError(expr.Object.Start(), expr.Name.End, "property access is not valid for %m object", object.Type()))
@@ -364,8 +364,8 @@ func (i *Interpreter) interpretGetExpr(env *environment, expr ast.GetExpr) loxOb
 	return instance.Get(expr.Name)
 }
 
-func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
-	right := i.interpretExpr(env, expr.Right)
+func (i *Interpreter) evalUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
+	right := i.evalExpr(env, expr.Right)
 	if expr.Op.Type == token.Bang {
 		// The behaviour of ! is independent of the type of the operand, so we can implement it here.
 		return !isTruthy(right)
@@ -379,8 +379,8 @@ func (i *Interpreter) interpretUnaryExpr(env *environment, expr ast.UnaryExpr) l
 	panic(lox.NewErrorFromToken(expr.Op, "%m operator cannot be used with type %m", expr.Op.Type, right.Type()))
 }
 
-func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
-	left := i.interpretExpr(env, expr.Left)
+func (i *Interpreter) evalBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
+	left := i.evalExpr(env, expr.Left)
 
 	// We check for short-circuiting operators first.
 	switch expr.Op.Type {
@@ -389,18 +389,18 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 		if isTruthy(left) {
 			return left
 		} else {
-			return i.interpretExpr(env, expr.Right)
+			return i.evalExpr(env, expr.Right)
 		}
 	case token.And:
 		// The behaviour of and is independent of the types of the operands, so we can implement it here.
 		if !isTruthy(left) {
 			return left
 		} else {
-			return i.interpretExpr(env, expr.Right)
+			return i.evalExpr(env, expr.Right)
 		}
 	}
 
-	right := i.interpretExpr(env, expr.Right)
+	right := i.evalExpr(env, expr.Right)
 	switch expr.Op.Type {
 	case token.Comma:
 		// The , operator evaluates both operands and returns the value of the right operand.
@@ -423,16 +423,16 @@ func (i *Interpreter) interpretBinaryExpr(env *environment, expr ast.BinaryExpr)
 	}
 }
 
-func (i *Interpreter) interpretTernaryExpr(env *environment, expr ast.TernaryExpr) loxObject {
-	condition := i.interpretExpr(env, expr.Condition)
+func (i *Interpreter) evalTernaryExpr(env *environment, expr ast.TernaryExpr) loxObject {
+	condition := i.evalExpr(env, expr.Condition)
 	if isTruthy(condition) {
-		return i.interpretExpr(env, expr.Then)
+		return i.evalExpr(env, expr.Then)
 	}
-	return i.interpretExpr(env, expr.Else)
+	return i.evalExpr(env, expr.Else)
 }
 
-func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.AssignmentExpr) loxObject {
-	value := i.interpretExpr(env, expr.Right)
+func (i *Interpreter) evalAssignmentExpr(env *environment, expr ast.AssignmentExpr) loxObject {
+	value := i.evalExpr(env, expr.Right)
 	distance, ok := i.declDistancesByTok[expr.Left]
 	if ok {
 		env.AssignAt(distance, expr.Left, value)
@@ -442,13 +442,13 @@ func (i *Interpreter) interpretAssignmentExpr(env *environment, expr ast.Assignm
 	return value
 }
 
-func (i *Interpreter) interpretSetExpr(env *environment, expr ast.SetExpr) loxObject {
-	object := i.interpretExpr(env, expr.Object)
+func (i *Interpreter) evalSetExpr(env *environment, expr ast.SetExpr) loxObject {
+	object := i.evalExpr(env, expr.Object)
 	instance, ok := object.(*loxInstance)
 	if !ok {
 		panic(lox.NewErrorFromNodeRange(expr.Object, expr.Value, "property assignment is not valid for %m object", object.Type()))
 	}
-	value := i.interpretExpr(env, expr.Value)
+	value := i.evalExpr(env, expr.Value)
 	instance.Set(expr.Name, value)
 	return value
 }
