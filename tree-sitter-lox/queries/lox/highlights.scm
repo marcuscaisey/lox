@@ -25,7 +25,7 @@
 (call_expression
   callee: (identifier) @function.call)
 
-((identifier) @function.builtin (#eq? @function.builtin "clock"))
+((identifier) @function.builtin (#any-of? @function.builtin "clock" "type"))
 
 (method_declaration
   name: (identifier) @function.method)

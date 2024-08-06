@@ -1,0 +1,2 @@
+fun f() {}
+print type(f); // prints: function

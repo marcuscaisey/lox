@@ -35,6 +35,7 @@ either from challenges in the book or my own ideas.
 - AST printer in [golox](golox/ast/print.go)
 - [`%` operator](#Binary-Expression)
 - [`continue` statement](#Continue-Statement)
+- [`type` built-in function](#Built-in-Functions)
 
 ### Types
 
@@ -487,9 +488,10 @@ print 1 /* Multi line comments can be used anywhere */ + 2;
 
 Lox has the following built-in functions.
 
-| Name      | Returns  | Description                                         |
-| --------- | -------- | --------------------------------------------------- |
-| `clock()` | `number` | Returns the number of seconds since the Unix epoch. |
+| Name           | Returns  | Description                                         |
+| -------------- | -------- | --------------------------------------------------- |
+| `clock()`      | `number` | Returns the number of seconds since the Unix epoch. |
+| `type(object)` | `string` | Returns the type of the object.                     |
 
 ### Grammar
 

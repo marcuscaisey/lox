@@ -51,8 +51,10 @@ foo.bar;
 // ^ punctuation.delimiter
 //  ^ variable.member
 
-// Builtin identifier
+// Builtin Functions
 clock;
+// <- function.builtin
+type;
 // <- function.builtin
 
 // Unary Expression
