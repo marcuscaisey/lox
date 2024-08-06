@@ -11,6 +11,31 @@ Working Lox code examples can be found under [test/testdata](test/testdata).
 
 ## Language
 
+### Extra Features
+
+Implemented is a superset of the Lox language defined in the book where the extra features originate
+either from challenges in the book or my own ideas.
+
+#### Challenges
+
+- Multi-line comments - [Scanning](https://craftinginterpreters.com/scanning.html#challenges)
+- [Comma expression](#Binary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
+- [Ternary expression](#Ternary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
+- Error productions for [binary expressions](#Grammar) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
+- [`<`, `<=`, `>`, `>=` operators for strings](#Binary-Expression) - [Evaluating Expressions](https://craftinginterpreters.com/evaluating-expressions.html#challenges)
+- [Division by zero handling](#Binary-Expression) - [Evaluating Expressions](https://craftinginterpreters.com/evaluating-expressions.html#challenges)
+- Displaying of evaluated expressions in REPL - [Statements and State](https://craftinginterpreters.com/statements-and-state.html#challenges)
+- [Runtime error](#Declarations) for accessing uninitialised variable - [Statements and State](https://craftinginterpreters.com/statements-and-state.html#challenges)
+- [`break` statement](#Break-Statement) - [Control Flow](https://craftinginterpreters.com/control-flow.html#challenges)
+- [Function expression](#Function-Expression) - [Functions](https://craftinginterpreters.com/functions.html#challenges)
+- Reporting of [unused variables](#Blank-Identifier) - [Resolving and Binding](https://craftinginterpreters.com/resolving-and-binding.html#challenges)
+
+#### Own Ideas
+
+- AST printer in [golox](golox/ast/print.go)
+- [`%` operator](#Binary-Expression)
+- [`continue` statement](#Continue-Statement)
+
 ### Types
 
 Lox has four primitive types:
