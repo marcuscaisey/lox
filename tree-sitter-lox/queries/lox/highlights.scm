@@ -16,9 +16,6 @@
 
 (number) @number
 
-(class_declaration
-  name: (identifier) @type)
-
 (function_declaration
   name: (identifier) @function)
 
@@ -36,6 +33,15 @@
 
 (method_declaration
   name: (identifier) @constructor (#eq? @constructor "init"))
+
+((identifier) @constructor
+ (#match? @constructor "^[A-Z]"))
+
+((identifier) @constant
+ (#match? @constant "^[A-Z][A-Z_]*$"))
+
+(class_declaration
+  name: (identifier) @type)
 
 [
   "!"

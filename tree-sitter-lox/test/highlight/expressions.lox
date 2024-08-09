@@ -12,6 +12,12 @@ nil;
 foo;
 // <- variable
 
+Foo;
+// <- constructor
+
+FOO;
+// <- constant
+
 // Assignment Expression
 foo = 1;
 // <- variable
@@ -44,6 +50,9 @@ foo(1, 2);
 
 foo.bar(1, 2);
 //  ^ function.method.call
+
+Foo();
+// <- constructor
 
 // Get Expression
 foo.bar;
