@@ -91,6 +91,8 @@ func childString(value reflect.Value, depth int) (string, bool) {
 		child = sprint(value, depth)
 	case token.Token:
 		child = value.Lexeme
+	case bool:
+		child = fmt.Sprint(value)
 	default:
 		return "", false
 	}

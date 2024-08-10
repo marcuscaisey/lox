@@ -129,51 +129,38 @@ func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	name := p.expectf(token.Ident, "expected class name")
 	p.expect(token.LeftBrace)
-	var instanceMethods []ast.MethodDecl
-	var classMethods []ast.ClassMethodDecl
+	var methods []ast.MethodDecl
 	for {
-		if classTok, ok := p.match2(token.Class); ok {
-			name, ok := p.match2(token.Ident)
-			if !ok {
-				break
-			}
-			funType := funTypeMethod
-			if name.Lexeme == token.InitIdent {
-				funType = funTypeInit
-			}
-			params, body := p.parseFunParamsAndBody(funType)
-			classMethods = append(classMethods, ast.ClassMethodDecl{
-				Class:      classTok,
-				Name:       name,
-				Params:     params,
-				Body:       body.Stmts,
-				RightBrace: body.RightBrace,
-			})
+		var name token.Token
+		funType := funTypeMethod
+		isClassMethod := false
+		if p.match(token.Class) {
+			isClassMethod = true
+			name = p.expectf(token.Ident, "expected method name")
 		} else {
-			name, ok := p.match2(token.Ident)
+			var ok bool
+			name, ok = p.match2(token.Ident)
 			if !ok {
 				break
-			}
-			funType := funTypeMethod
-			if name.Lexeme == token.InitIdent {
+			} else if name.Lexeme == token.InitIdent {
 				funType = funTypeInit
 			}
-			params, body := p.parseFunParamsAndBody(funType)
-			instanceMethods = append(instanceMethods, ast.MethodDecl{
-				Name:       name,
-				Params:     params,
-				Body:       body.Stmts,
-				RightBrace: body.RightBrace,
-			})
 		}
+		params, body := p.parseFunParamsAndBody(funType)
+		methods = append(methods, ast.MethodDecl{
+			IsClassMethod: isClassMethod,
+			Name:          name,
+			Params:        params,
+			Body:          body.Stmts,
+			RightBrace:    body.RightBrace,
+		})
 	}
 	rightBrace := p.expect(token.RightBrace)
 	return ast.ClassDecl{
-		Class:           classTok,
-		Name:            name,
-		InstanceMethods: instanceMethods,
-		ClassMethods:    classMethods,
-		RightBrace:      rightBrace,
+		Class:      classTok,
+		Name:       name,
+		Methods:    methods,
+		RightBrace: rightBrace,
 	}
 }
 

@@ -140,19 +140,20 @@ func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
 }
 
 func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
-	instanceMethodsByName := make(map[string]*loxFunction, len(stmt.InstanceMethods))
-	classMethodsByName := make(map[string]*loxFunction, len(stmt.ClassMethods))
-	for _, methodDecl := range stmt.InstanceMethods {
+	instanceMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
+	classMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
+	for _, methodDecl := range stmt.Methods {
 		typ := funTypeMethod
-		if methodDecl.Name.Lexeme == token.InitIdent {
+		if !methodDecl.IsClassMethod && methodDecl.Name.Lexeme == token.InitIdent {
 			typ = funTypeInit
 		}
 		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
-		instanceMethodsByName[methodDecl.Name.Lexeme] = newLoxFunction(name, methodDecl.Params, methodDecl.Body, typ, env)
-	}
-	for _, methodDecl := range stmt.ClassMethods {
-		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
-		classMethodsByName[methodDecl.Name.Lexeme] = newLoxFunction(name, methodDecl.Params, methodDecl.Body, funTypeMethod, env)
+		method := newLoxFunction(name, methodDecl.Params, methodDecl.Body, typ, env)
+		if methodDecl.IsClassMethod {
+			classMethodsByName[methodDecl.Name.Lexeme] = method
+		} else {
+			instanceMethodsByName[methodDecl.Name.Lexeme] = method
+		}
 	}
 	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, instanceMethodsByName, classMethodsByName))
 }
