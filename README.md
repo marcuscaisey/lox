@@ -29,6 +29,7 @@ either from challenges in the book or my own ideas.
 - [`break` statement](#Break-Statement) - [Control Flow](https://craftinginterpreters.com/control-flow.html#challenges)
 - [Function expression](#Function-Expression) - [Functions](https://craftinginterpreters.com/functions.html#challenges)
 - Reporting of [unused variables](#Blank-Identifier) - [Resolving and Binding](https://craftinginterpreters.com/resolving-and-binding.html#challenges)
+- [Class methods](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
 
 #### Own Ideas
 
@@ -455,6 +456,20 @@ print p2.x; // prints: 10
 print p2.y; // prints: 12
 ```
 
+Methods can be declared as class methods by prefixing the method declaration with `class`. Class
+methods are accessed from the class itself rather than the instance. `this` inside a class method
+refers to the class.
+
+```lox
+class Math {
+  class square(x) {
+    return x * x;
+  }
+}
+
+print Math.square(2); // prints: 4
+```
+
 #### Blank Identifier
 
 The blank identifier `_` is a special identifier which:
@@ -505,9 +520,10 @@ program =  decl* EOF ;
 decl       = var_decl | fun_decl | class_decl | stmt ;
 var_decl   = "var" IDENT ( "=" expr )? ";" ;
 fun_decl   = "fun" function ;
-class_decl = "class" IDENT "{" function* "}" ;
 function   = IDENT "(" parameters? ")" block_stmt ;
 parameters = IDENT ( "," IDENT )* ;
+class_decl = "class" IDENT "{" method* "}" ;
+method     = "class"? function ;
 
 stmt          = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | for_stmt | break_stmt
               | continue_stmt ;

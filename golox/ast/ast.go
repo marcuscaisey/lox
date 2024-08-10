@@ -62,10 +62,11 @@ func (d FunDecl) End() token.Position   { return d.RightBrace.End }
 //	  }
 //	}
 type ClassDecl struct {
-	Class      token.Token
-	Name       token.Token  `print:"named"`
-	Body       []MethodDecl `print:"named"`
-	RightBrace token.Token
+	Class           token.Token
+	Name            token.Token       `print:"named"`
+	InstanceMethods []MethodDecl      `print:"named"`
+	ClassMethods    []ClassMethodDecl `print:"named"`
+	RightBrace      token.Token
 	stmt
 }
 
@@ -87,6 +88,23 @@ type MethodDecl struct {
 
 func (m MethodDecl) Start() token.Position { return m.Name.Start }
 func (m MethodDecl) End() token.Position   { return m.RightBrace.End }
+
+// ClassMethodDecl is a class method declaration, such as
+//
+//	class bar() {
+//	  return "baz";
+//	}
+type ClassMethodDecl struct {
+	Class      token.Token
+	Name       token.Token   `print:"named"`
+	Params     []token.Token `print:"named"`
+	Body       []Stmt        `print:"named"`
+	RightBrace token.Token
+	stmt
+}
+
+func (m ClassMethodDecl) Start() token.Position { return m.Name.Start }
+func (m ClassMethodDecl) End() token.Position   { return m.RightBrace.End }
 
 // ExprStmt is an expression statement, such as a function call.
 type ExprStmt struct {

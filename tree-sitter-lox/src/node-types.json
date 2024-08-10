@@ -1131,7 +1131,22 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "modifiers",
+          "named": true
+        }
+      ]
     }
+  },
+  {
+    "type": "modifiers",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "parameters",

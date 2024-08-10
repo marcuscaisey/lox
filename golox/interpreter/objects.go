@@ -20,7 +20,6 @@ const (
 	loxTypeBool     loxType = "bool"
 	loxTypeNil      loxType = "nil"
 	loxTypeFunction loxType = "function"
-	loxTypeClass    loxType = "class"
 )
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
@@ -59,6 +58,14 @@ type loxCallable interface {
 	Name() string
 	Params() []string
 	Call(i *Interpreter, args []loxObject) loxObject
+}
+
+type loxGetter interface {
+	Get(name token.Token) loxObject
+}
+
+type loxSetter interface {
+	Set(name token.Token, value loxObject)
 }
 
 type loxNumber float64
@@ -343,15 +350,21 @@ func (f *loxBuiltinFunction) Call(_ *Interpreter, args []loxObject) loxObject {
 }
 
 type loxClass struct {
+	*loxInstance  // A class is an instance of its metaclass
 	name          string
 	init          *loxFunction
 	methodsByName map[string]*loxFunction
 }
 
-func newLoxClass(name string, methodsByName map[string]*loxFunction) *loxClass {
+func newLoxClass(name string, instanceMethodsByName map[string]*loxFunction, classMethodsByName map[string]*loxFunction) *loxClass {
+	metaclass := &loxClass{
+		name:          fmt.Sprintf("%s class", name),
+		methodsByName: classMethodsByName,
+	}
 	class := &loxClass{
 		name:          name,
-		methodsByName: methodsByName,
+		methodsByName: instanceMethodsByName,
+		loxInstance:   metaclass.Call(nil, nil).(*loxInstance),
 	}
 	if init, ok := class.GetMethod(token.InitIdent); ok {
 		class.init = init
@@ -366,10 +379,6 @@ var (
 
 func (c *loxClass) String() string {
 	return fmt.Sprintf("[class %s]", c.name)
-}
-
-func (c *loxClass) Type() loxType {
-	return loxTypeClass
 }
 
 func (c *loxClass) Name() string {

@@ -1,0 +1,3 @@
+class Foo {}
+
+print Foo.bar; // error: 'Foo class' object has no property bar

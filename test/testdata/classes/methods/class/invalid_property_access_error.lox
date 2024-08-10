@@ -1,0 +1,4 @@
+class Foo {
+  class bar() {}
+}
+Foo.bar.x; // error: property access is not valid for 'function' object

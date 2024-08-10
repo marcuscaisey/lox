@@ -231,7 +231,10 @@ func (r *resolver) resolveClassDecl(stmt ast.ClassDecl) {
 	scope.Declare(token.ThisIdent)
 	scope.Define(token.ThisIdent)
 	scope.Use(token.ThisIdent)
-	for _, method := range stmt.Body {
+	for _, method := range stmt.InstanceMethods {
+		r.resolveFun(method.Params, method.Body)
+	}
+	for _, method := range stmt.ClassMethods {
 		r.resolveFun(method.Params, method.Body)
 	}
 }

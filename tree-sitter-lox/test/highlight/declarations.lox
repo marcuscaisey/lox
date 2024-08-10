@@ -36,3 +36,11 @@ class Point {
     return Point(this.x + other.x, this.y + other.y);
   }
 }
+
+class Math {
+  class square(x) {
+// ^ keyword.modifier
+//      ^ function.method
+    return x * x;
+  }
+}

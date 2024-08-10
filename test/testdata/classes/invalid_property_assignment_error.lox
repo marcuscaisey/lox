@@ -1,2 +1,0 @@
-class Foo {}
-Foo.x = 1; // error: property assignment is not valid for 'class' object

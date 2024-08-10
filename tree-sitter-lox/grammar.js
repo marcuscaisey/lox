@@ -51,7 +51,9 @@ module.exports = grammar({
 
     class_body: ($) => seq("{", repeat($.method_declaration), "}"),
 
-    method_declaration: ($) => $._function,
+    method_declaration: ($) => seq(optional($.modifiers), $._function),
+
+    modifiers: () => repeat1(choice("class")),
 
     _function: ($) =>
       seq(

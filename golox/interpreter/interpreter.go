@@ -140,16 +140,21 @@ func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
 }
 
 func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
-	methodsByName := make(map[string]*loxFunction, len(stmt.Body))
-	for _, methodDecl := range stmt.Body {
+	instanceMethodsByName := make(map[string]*loxFunction, len(stmt.InstanceMethods))
+	classMethodsByName := make(map[string]*loxFunction, len(stmt.ClassMethods))
+	for _, methodDecl := range stmt.InstanceMethods {
 		typ := funTypeMethod
 		if methodDecl.Name.Lexeme == token.InitIdent {
 			typ = funTypeInit
 		}
 		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
-		methodsByName[methodDecl.Name.Lexeme] = newLoxFunction(name, methodDecl.Params, methodDecl.Body, typ, env)
+		instanceMethodsByName[methodDecl.Name.Lexeme] = newLoxFunction(name, methodDecl.Params, methodDecl.Body, typ, env)
 	}
-	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, methodsByName))
+	for _, methodDecl := range stmt.ClassMethods {
+		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
+		classMethodsByName[methodDecl.Name.Lexeme] = newLoxFunction(name, methodDecl.Params, methodDecl.Body, funTypeMethod, env)
+	}
+	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, instanceMethodsByName, classMethodsByName))
 }
 
 func (i *Interpreter) execExprStmt(env *environment, stmt ast.ExprStmt) {
@@ -357,11 +362,11 @@ func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObjec
 
 func (i *Interpreter) evalGetExpr(env *environment, expr ast.GetExpr) loxObject {
 	object := i.evalExpr(env, expr.Object)
-	instance, ok := object.(*loxInstance)
+	getter, ok := object.(loxGetter)
 	if !ok {
-		panic(lox.NewError(expr.Object.Start(), expr.Name.End, "property access is not valid for %m object", object.Type()))
+		panic(lox.NewErrorFromNode(expr, "property access is not valid for %m object", object.Type()))
 	}
-	return instance.Get(expr.Name)
+	return getter.Get(expr.Name)
 }
 
 func (i *Interpreter) evalUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
@@ -444,12 +449,12 @@ func (i *Interpreter) evalAssignmentExpr(env *environment, expr ast.AssignmentEx
 
 func (i *Interpreter) evalSetExpr(env *environment, expr ast.SetExpr) loxObject {
 	object := i.evalExpr(env, expr.Object)
-	instance, ok := object.(*loxInstance)
+	setter, ok := object.(loxSetter)
 	if !ok {
-		panic(lox.NewErrorFromNodeRange(expr.Object, expr.Value, "property assignment is not valid for %m object", object.Type()))
+		panic(lox.NewErrorFromNode(expr, "property assignment is not valid for %m object", object.Type()))
 	}
 	value := i.evalExpr(env, expr.Value)
-	instance.Set(expr.Name, value)
+	setter.Set(expr.Name, value)
 	return value
 }
 

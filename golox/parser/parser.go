@@ -129,30 +129,51 @@ func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	name := p.expectf(token.Ident, "expected class name")
 	p.expect(token.LeftBrace)
-	var methods []ast.MethodDecl
+	var instanceMethods []ast.MethodDecl
+	var classMethods []ast.ClassMethodDecl
 	for {
-		name, ok := p.match2(token.Ident)
-		if !ok {
-			break
+		if classTok, ok := p.match2(token.Class); ok {
+			name, ok := p.match2(token.Ident)
+			if !ok {
+				break
+			}
+			funType := funTypeMethod
+			if name.Lexeme == token.InitIdent {
+				funType = funTypeInit
+			}
+			params, body := p.parseFunParamsAndBody(funType)
+			classMethods = append(classMethods, ast.ClassMethodDecl{
+				Class:      classTok,
+				Name:       name,
+				Params:     params,
+				Body:       body.Stmts,
+				RightBrace: body.RightBrace,
+			})
+		} else {
+			name, ok := p.match2(token.Ident)
+			if !ok {
+				break
+			}
+			funType := funTypeMethod
+			if name.Lexeme == token.InitIdent {
+				funType = funTypeInit
+			}
+			params, body := p.parseFunParamsAndBody(funType)
+			instanceMethods = append(instanceMethods, ast.MethodDecl{
+				Name:       name,
+				Params:     params,
+				Body:       body.Stmts,
+				RightBrace: body.RightBrace,
+			})
 		}
-		funType := funTypeMethod
-		if name.Lexeme == token.InitIdent {
-			funType = funTypeInit
-		}
-		params, body := p.parseFunParamsAndBody(funType)
-		methods = append(methods, ast.MethodDecl{
-			Name:       name,
-			Params:     params,
-			Body:       body.Stmts,
-			RightBrace: body.RightBrace,
-		})
 	}
 	rightBrace := p.expect(token.RightBrace)
 	return ast.ClassDecl{
-		Class:      classTok,
-		Name:       name,
-		Body:       methods,
-		RightBrace: rightBrace,
+		Class:           classTok,
+		Name:            name,
+		InstanceMethods: instanceMethods,
+		ClassMethods:    classMethods,
+		RightBrace:      rightBrace,
 	}
 }
 

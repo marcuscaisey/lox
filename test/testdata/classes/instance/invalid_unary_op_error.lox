@@ -1,0 +1,2 @@
+class Foo {}
+-Foo(); // error: '-' operator cannot be used with type 'Foo'

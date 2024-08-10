@@ -1,2 +1,0 @@
-class Foo {}
-print type(Foo); // prints: class

@@ -235,7 +235,7 @@ class Breakfast {
             (string)))))))
 
 ================================================================================
-Class Declaration - Init
+Class Declaration - Init Method
 ================================================================================
 
 class Person {
@@ -260,4 +260,31 @@ class Person {
               left: (get_expression
                 object: (this_expression)
                 name: (identifier))
+              right: (identifier))))))))
+
+================================================================================
+Class Declaration - Class Method
+================================================================================
+
+class Math {
+  class square(n) {
+    return n * n;
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        (modifiers)
+        name: (identifier)
+        parameters: (parameters
+          (identifier))
+        body: (block_statement
+          (return_statement
+            (binary_expression
+              left: (identifier)
               right: (identifier))))))))

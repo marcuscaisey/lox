@@ -1,0 +1,4 @@
+class Foo {
+  class bar() {}
+}
+print type(Foo.bar); // prints: function

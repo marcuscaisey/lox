@@ -1,2 +1,0 @@
-fun f() {}
--f; // error: '-' operator cannot be used with type 'function'

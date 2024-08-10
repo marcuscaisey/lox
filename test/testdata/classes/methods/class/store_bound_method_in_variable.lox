@@ -1,0 +1,10 @@
+class Foo {
+  class setBar(bar) {
+    this.bar = bar;
+  }
+}
+
+var setBar = Foo.setBar;
+setBar("class bar");
+
+print Foo.bar; // prints: class bar

@@ -1,0 +1,18 @@
+class Foo {
+  init(x) {
+    this.x = x;
+  }
+}
+
+class Bar {
+  class setX(x) {
+    this.x = x;
+  }
+}
+
+var foo = Foo("instance x");
+foo.setX = Bar.setX;
+foo.setX("class x");
+
+print foo.x; // prints: instance x
+print Bar.x; // prints: class x

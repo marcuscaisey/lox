@@ -78,6 +78,9 @@
 
 "class" @keyword.type
 
+(modifiers
+  "class" @keyword.modifier)
+
 [
   "or"
   "and"
