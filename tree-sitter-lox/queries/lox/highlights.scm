@@ -8,6 +8,9 @@
 (get_expression
   name: (identifier) @variable.member)
 
+((identifier) @constant
+ (#match? @constant "^[A-Z][A-Z_0-9]*$"))
+
 (nil) @constant.builtin
 
 (string) @string
@@ -15,6 +18,12 @@
 (boolean) @boolean
 
 (number) @number
+
+((identifier) @type
+  (#match? @type "^[A-Z][a-z]"))
+
+(class_declaration
+  name: (identifier) @type)
 
 (function_declaration
   name: (identifier) @function)
@@ -34,14 +43,12 @@
 (method_declaration
   name: (identifier) @constructor (#eq? @constructor "init"))
 
-((identifier) @constructor
- (#match? @constructor "^[A-Z]"))
+(call_expression
+  callee: (identifier) @constructor (#match? @constructor "^[A-Z]"))
 
-((identifier) @constant
- (#match? @constant "^[A-Z][A-Z_]*$"))
-
-(class_declaration
-  name: (identifier) @type)
+(call_expression
+  callee: (get_expression
+    name: (identifier) @constructor (#match? @constructor "^[A-Z]")))
 
 [
   "!"

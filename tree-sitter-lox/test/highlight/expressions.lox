@@ -13,9 +13,9 @@ foo;
 // <- variable
 
 Foo;
-// <- constructor
+// <- type
 
-FOO;
+FOO_1_BAR;
 // <- constant
 
 // Assignment Expression
@@ -49,10 +49,19 @@ foo(1, 2);
 //       ^ punctuation.delimiter
 
 foo.bar(1, 2);
+// <- variable
 //  ^ function.method.call
 
 Foo();
 // <- constructor
+
+foo.Bar();
+// <- variable
+//  ^ constructor
+
+Foo.bar();
+// <- type
+//  ^ function.method.call
 
 // Get Expression
 foo.bar;
