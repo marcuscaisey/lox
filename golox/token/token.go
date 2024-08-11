@@ -30,7 +30,7 @@ const (
 //go:generate go run golang.org/x/tools/cmd/stringer -type Type
 
 // Type is the type of a lexical token of Lox code.
-type Type uint8
+type Type int
 
 // The list of all token types.
 const (
