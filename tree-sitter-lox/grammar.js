@@ -53,7 +53,7 @@ module.exports = grammar({
 
     method_declaration: ($) => seq(optional($.modifiers), $._function),
 
-    modifiers: () => repeat1(choice("class")),
+    modifiers: () => repeat1(choice("static")),
 
     _function: ($) =>
       seq(

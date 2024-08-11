@@ -141,21 +141,21 @@ func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
 
 func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
 	instanceMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
-	classMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
+	staticMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
 	for _, methodDecl := range stmt.Methods {
 		typ := funTypeMethod
-		if !methodDecl.IsClassMethod && methodDecl.Name.Lexeme == token.InitIdent {
+		if !methodDecl.IsStatic && methodDecl.Name.Lexeme == token.InitIdent {
 			typ = funTypeInit
 		}
 		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
 		method := newLoxFunction(name, methodDecl.Params, methodDecl.Body, typ, env)
-		if methodDecl.IsClassMethod {
-			classMethodsByName[methodDecl.Name.Lexeme] = method
+		if methodDecl.IsStatic {
+			staticMethodsByName[methodDecl.Name.Lexeme] = method
 		} else {
 			instanceMethodsByName[methodDecl.Name.Lexeme] = method
 		}
 	}
-	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, instanceMethodsByName, classMethodsByName))
+	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, instanceMethodsByName, staticMethodsByName))
 }
 
 func (i *Interpreter) execExprStmt(env *environment, stmt ast.ExprStmt) {

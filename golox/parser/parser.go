@@ -133,9 +133,9 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	for {
 		var name token.Token
 		funType := funTypeMethod
-		isClassMethod := false
-		if p.match(token.Class) {
-			isClassMethod = true
+		isStatic := false
+		if p.match(token.Static) {
+			isStatic = true
 			name = p.expectf(token.Ident, "expected method name")
 		} else {
 			var ok bool
@@ -148,11 +148,11 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 		}
 		params, body := p.parseFunParamsAndBody(funType)
 		methods = append(methods, ast.MethodDecl{
-			IsClassMethod: isClassMethod,
-			Name:          name,
-			Params:        params,
-			Body:          body.Stmts,
-			RightBrace:    body.RightBrace,
+			IsStatic:   isStatic,
+			Name:       name,
+			Params:     params,
+			Body:       body.Stmts,
+			RightBrace: body.RightBrace,
 		})
 	}
 	rightBrace := p.expect(token.RightBrace)

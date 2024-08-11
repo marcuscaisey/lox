@@ -1,4 +1,4 @@
 class Foo {
-  class bar() {}
+  static bar() {}
 }
 print type(Foo.bar); // prints: function

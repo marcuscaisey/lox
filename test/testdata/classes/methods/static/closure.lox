@@ -1,7 +1,7 @@
 fun newCounter() {
   var i = 0;
   class Counter {
-    class increment() {
+    static increment() {
       i = i + 1;
       return i;
     }

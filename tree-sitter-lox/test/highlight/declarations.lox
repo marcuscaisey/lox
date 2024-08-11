@@ -38,9 +38,9 @@ class Point {
 }
 
 class Math {
-  class square(x) {
+  static square(x) {
 // ^ keyword.modifier
-//      ^ function.method
+//       ^ function.method
     return x * x;
   }
 }

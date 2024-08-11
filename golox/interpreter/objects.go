@@ -356,10 +356,10 @@ type loxClass struct {
 	methodsByName map[string]*loxFunction
 }
 
-func newLoxClass(name string, instanceMethodsByName map[string]*loxFunction, classMethodsByName map[string]*loxFunction) *loxClass {
+func newLoxClass(name string, instanceMethodsByName map[string]*loxFunction, staticMethodsByName map[string]*loxFunction) *loxClass {
 	metaclass := &loxClass{
 		name:          fmt.Sprintf("%s class", name),
-		methodsByName: classMethodsByName,
+		methodsByName: staticMethodsByName,
 	}
 	class := &loxClass{
 		name:          name,

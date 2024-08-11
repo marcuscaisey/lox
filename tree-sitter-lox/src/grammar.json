@@ -167,7 +167,7 @@
         "members": [
           {
             "type": "STRING",
-            "value": "class"
+            "value": "static"
           }
         ]
       }

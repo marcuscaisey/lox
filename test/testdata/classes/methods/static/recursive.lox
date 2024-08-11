@@ -1,5 +1,5 @@
 class Fib {
-  class fib(n) {
+  static fib(n) {
     if (n <= 1) {
       return n;
     }

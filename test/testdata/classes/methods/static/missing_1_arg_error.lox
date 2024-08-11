@@ -1,5 +1,5 @@
 class Foo {
-  class add(a, b) {
+  static add(a, b) {
     print a + b;
   }
 }

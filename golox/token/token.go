@@ -13,7 +13,7 @@ func init() {
 	for i := range typesEnd {
 		t := Type(i)
 		if _, ok := typeStrings[t]; !ok && unicode.IsUpper(rune(t.String()[0])) {
-			panic(fmt.Sprintf("typeStrings is missing entry for Type %s", t))
+			panic(fmt.Sprintf("typeStrings is missing entry for Type %s", t.String()))
 		}
 	}
 }
@@ -57,6 +57,7 @@ const (
 	Class
 	This
 	Super
+	Static
 	keywordsEnd
 
 	// Literals
@@ -112,6 +113,7 @@ var typeStrings = map[Type]string{
 	Class:        "class",
 	This:         ThisIdent,
 	Super:        "super",
+	Static:       "static",
 	Ident:        "identifier",
 	String:       "string",
 	Number:       "number",

@@ -80,16 +80,16 @@ func (c ClassDecl) End() token.Position   { return c.RightBrace.End }
 //
 // or
 //
-//	class bar() {
+//	static bar() {
 //	  return "baz";
 //	}
 type MethodDecl struct {
-	StartPos      token.Position
-	IsClassMethod bool          `print:"named"`
-	Name          token.Token   `print:"named"`
-	Params        []token.Token `print:"named"`
-	Body          []Stmt        `print:"named"`
-	RightBrace    token.Token
+	StartPos   token.Position
+	IsStatic   bool          `print:"named"`
+	Name       token.Token   `print:"named"`
+	Params     []token.Token `print:"named"`
+	Body       []Stmt        `print:"named"`
+	RightBrace token.Token
 	stmt
 }
 

@@ -12,7 +12,7 @@ var f = "global f";
   _ = f;
 
   class Foo {
-    class g() {
+    static g() {
       print a; // prints: global a
       b = "global b";
       print b; // prints: global b

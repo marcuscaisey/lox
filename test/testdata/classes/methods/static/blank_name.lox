@@ -1,9 +1,9 @@
 class Foo {
-  class _() {
+  static _() {
     return 1;
   }
 
-  class _() {
+  static _() {
     return 2;
   }
 }

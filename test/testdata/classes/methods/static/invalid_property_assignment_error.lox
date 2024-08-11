@@ -1,4 +1,4 @@
 class Foo {
-  class bar() {}
+  static bar() {}
 }
 Foo.bar.y = 1; // error: property assignment is not valid for 'function' object

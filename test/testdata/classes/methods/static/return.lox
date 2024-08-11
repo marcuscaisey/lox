@@ -1,14 +1,14 @@
 class Foo {
-  class returnsValue() {
+  static returnsValue() {
     return "return value";
   }
 
-  class returnsNoValue() {
+  static returnsNoValue() {
     return;
     print "should not print";
   }
 
-  class noReturn() {}
+  static noReturn() {}
 }
 
 print Foo.returnsValue(); // prints: return value

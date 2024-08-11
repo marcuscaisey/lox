@@ -5,7 +5,7 @@ class Foo {
 }
 
 class Bar {
-  class setX(x) {
+  static setX(x) {
     this.x = x;
   }
 }

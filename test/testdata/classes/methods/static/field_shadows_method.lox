@@ -3,7 +3,7 @@ class Foo {
     this.bar = bar;
   }
 
-  class bar() {
+  static bar() {
     return "bar method";
   }
 }
