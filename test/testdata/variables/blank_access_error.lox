@@ -1,1 +1,1 @@
-print _; // error: blank identifier _ cannot be used in a non-assignment expression
+print _; // error: identifier _ cannot be used in a non-assignment expression

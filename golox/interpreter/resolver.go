@@ -61,14 +61,14 @@ type ident struct {
 // scope represents a lexical scope and keeps track of the identifiers declared in that scope
 type scope map[string]*ident
 
-// Declare marks an identifier as declared in the scope, unless it's [token.BlankIdent].
+// Declare marks an identifier as declared in the scope, unless it's [token.PlaceholderIdent].
 func (s scope) Declare(name string) {
 	s.DeclareFromToken(token.Token{Lexeme: name})
 }
 
-// DeclareFromToken marks an identifier as declared in the scope, unless it's [token.BlankIdent].
+// DeclareFromToken marks an identifier as declared in the scope, unless it's [token.PlaceholderIdent].
 func (s scope) DeclareFromToken(tok token.Token) {
-	if tok.Lexeme == token.BlankIdent {
+	if tok.Lexeme == token.PlaceholderIdent {
 		return
 	}
 	s[tok.Lexeme] = &ident{Token: tok}
@@ -367,8 +367,8 @@ func (r *resolver) resolveGroupExpr(expr ast.GroupExpr) {
 }
 
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
-	if expr.Name.Lexeme == token.BlankIdent {
-		r.errs.AddFromToken(expr.Name, "blank identifier _ cannot be used in a non-assignment expression")
+	if expr.Name.Lexeme == token.PlaceholderIdent {
+		r.errs.AddFromToken(expr.Name, "identifier %s cannot be used in a non-assignment expression", token.PlaceholderIdent)
 	} else {
 		r.resolveIdent(expr.Name, identOpRead)
 	}

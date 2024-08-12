@@ -64,9 +64,9 @@ func (e *environment) Child() *environment {
 
 // Declare declares an identifier in this environment.
 // If the identifier has already been declared in this environment, then an error is raised.
-// If the identifier is [token.BlankIdent], then this method is a no-op.
+// If the identifier is [token.PlaceholderIdent], then this method is a no-op.
 func (e *environment) Declare(tok token.Token) {
-	if tok.Lexeme == token.BlankIdent {
+	if tok.Lexeme == token.PlaceholderIdent {
 		return
 	}
 	if _, ok := e.valuesByIdent[tok.Lexeme]; ok {
@@ -77,11 +77,11 @@ func (e *environment) Declare(tok token.Token) {
 
 // Define declares an identifier in this environment and defines it with a value.
 // If the identifier has already been declared in this environment, then an error is raised.
-// If the identifier is [token.BlankIdent], then this method is a no-op.
+// If the identifier is [token.PlaceholderIdent], then this method is a no-op.
 // This method should be used for defining values which originated from an assignment in code. For example, a variable
 // or function declaration. Otherwise, use [*environment.Set].
 func (e *environment) Define(tok token.Token, value loxObject) {
-	if tok.Lexeme == token.BlankIdent {
+	if tok.Lexeme == token.PlaceholderIdent {
 		return
 	}
 	if value == nil {
@@ -95,11 +95,11 @@ func (e *environment) Define(tok token.Token, value loxObject) {
 
 // Set declares an identifier in this environment and defines it with a value.
 // If the identifier has already been declared in this environment, then this method panics.
-// If the identifier is [token.BlankIdent], then this method is a no-op.
+// If the identifier is [token.PlaceholderIdent], then this method is a no-op.
 // This method should be used for defining values which did not originate from an assignment in code. For example,
 // defining built-in functions or function arguments. Otherwise, use [*environment.Define].
 func (e *environment) Set(ident string, value loxObject) {
-	if ident == token.BlankIdent {
+	if ident == token.PlaceholderIdent {
 		return
 	}
 	if value == nil {
@@ -115,9 +115,9 @@ func (e *environment) Set(ident string, value loxObject) {
 
 // Assign assigns a value to an identifier in this environment.
 // If the identifier has not been defined in this environment, then an error is raised.
-// If the identifier is [token.BlankIdent], then this method is a no-op.
+// If the identifier is [token.PlaceholderIdent], then this method is a no-op.
 func (e *environment) Assign(tok token.Token, value loxObject) {
-	if tok.Lexeme == token.BlankIdent {
+	if tok.Lexeme == token.PlaceholderIdent {
 		return
 	}
 	if value == nil {

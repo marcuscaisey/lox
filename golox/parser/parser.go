@@ -178,7 +178,7 @@ func (p *parser) parseParams() []token.Token {
 			p.addTokenError(param, "duplicate parameter %s", param.Lexeme)
 		}
 		params = append(params, param)
-		if param.Lexeme != token.BlankIdent {
+		if param.Lexeme != token.PlaceholderIdent {
 			seen[param.Lexeme] = true
 		}
 	}
