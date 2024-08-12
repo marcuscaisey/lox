@@ -23,8 +23,8 @@ const (
 	BlankIdent = "_"
 	// ThisIdent is the identifier used for 'this' expressions.
 	ThisIdent = "this"
-	// InitIdent is the identifier used for the 'init' constructor method for classes.
-	InitIdent = "init"
+	// ConstructorIdent is the identifier used for the constructor method for classes.
+	ConstructorIdent = "init"
 )
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type Type

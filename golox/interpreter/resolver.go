@@ -20,7 +20,9 @@ func resolve(program ast.Program) (map[token.Token]int, error) {
 }
 
 type resolver struct {
-	scopes *stack[scope]
+	scopes     *stack[scope]
+	inLoop     bool
+	curFunType funType
 
 	// map of identifier tokens to the distance to the declaration of the identifier that they refer to
 	declDistancesByTok map[token.Token]int
@@ -47,7 +49,7 @@ type identStatus int
 
 const (
 	identStatusDeclared identStatus = iota
-	identStatusDefined              = 1 << iota
+	identStatusDefined              = 1 << (iota - 1)
 	identStatusUsed
 )
 
@@ -185,8 +187,9 @@ func (r *resolver) resolveStmt(stmt ast.Stmt) {
 	case ast.ForStmt:
 		r.resolveForStmt(stmt)
 	case ast.BreakStmt:
+		r.resolveBreakStmt(stmt)
 	case ast.ContinueStmt:
-		// Nothing to resolve
+		r.resolveContinueStmt(stmt)
 	case ast.ReturnStmt:
 		r.resolveReturnStmt(stmt)
 	default:
@@ -207,10 +210,19 @@ func (r *resolver) resolveVarDecl(stmt ast.VarDecl) {
 func (r *resolver) resolveFunDecl(stmt ast.FunDecl) {
 	r.declareIdent(stmt.Name)
 	r.defineIdent(stmt.Name)
-	r.resolveFun(stmt.Params, stmt.Body)
+	r.resolveFun(stmt.Params, stmt.Body, funTypeFunction)
 }
 
-func (r *resolver) resolveFun(params []token.Token, body []ast.Stmt) {
+func (r *resolver) resolveFun(params []token.Token, body []ast.Stmt, funType funType) {
+	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
+	prevInLoop := r.inLoop
+	r.inLoop = false
+	defer func() { r.inLoop = prevInLoop }()
+
+	prevFunType := r.curFunType
+	r.curFunType = funType
+	defer func() { r.curFunType = prevFunType }()
+
 	endScope := r.beginScope()
 	defer endScope()
 	for _, param := range params {
@@ -231,8 +243,8 @@ func (r *resolver) resolveClassDecl(stmt ast.ClassDecl) {
 	scope.Declare(token.ThisIdent)
 	scope.Define(token.ThisIdent)
 	scope.Use(token.ThisIdent)
-	for _, method := range stmt.Methods {
-		r.resolveFun(method.Params, method.Body)
+	for _, methodDecl := range stmt.Methods {
+		r.resolveFun(methodDecl.Params, methodDecl.Body, methodFunType(methodDecl))
 	}
 }
 
@@ -262,6 +274,8 @@ func (r *resolver) resolveIfStmt(stmt ast.IfStmt) {
 
 func (r *resolver) resolveWhileStmt(stmt ast.WhileStmt) {
 	r.resolveExpr(stmt.Condition)
+	endLoop := r.beginLoop()
+	defer endLoop()
 	r.resolveStmt(stmt.Body)
 }
 
@@ -277,11 +291,38 @@ func (r *resolver) resolveForStmt(stmt ast.ForStmt) {
 	if stmt.Update != nil {
 		r.resolveExpr(stmt.Update)
 	}
+	endLoop := r.beginLoop()
+	defer endLoop()
 	r.resolveStmt(stmt.Body)
 }
 
+// beginLoop sets the inLoop flag to true and returns a function which resets it to its previous value
+func (r *resolver) beginLoop() func() {
+	prev := r.inLoop
+	r.inLoop = true
+	return func() { r.inLoop = prev }
+}
+
+func (r *resolver) resolveBreakStmt(stmt ast.BreakStmt) {
+	if !r.inLoop {
+		r.errs.AddFromNode(stmt, "%m can only be used inside a loop", token.Break)
+	}
+}
+
+func (r *resolver) resolveContinueStmt(stmt ast.ContinueStmt) {
+	if !r.inLoop {
+		r.errs.AddFromNode(stmt, "%m can only be used inside a loop", token.Continue)
+	}
+}
+
 func (r *resolver) resolveReturnStmt(stmt ast.ReturnStmt) {
+	if r.curFunType == funTypeNone {
+		r.errs.AddFromNode(stmt, "%m can only be used inside a function definition", token.Return)
+	}
 	if stmt.Value != nil {
+		if r.curFunType.IsConstructor() {
+			r.errs.AddFromNode(stmt, "%s() cannot return a value", token.ConstructorIdent)
+		}
 		r.resolveExpr(stmt.Value)
 	}
 }
@@ -318,7 +359,7 @@ func (r *resolver) resolveExpr(expr ast.Expr) {
 }
 
 func (r *resolver) resolveFunExpr(expr ast.FunExpr) {
-	r.resolveFun(expr.Params, expr.Body)
+	r.resolveFun(expr.Params, expr.Body, funTypeFunction)
 }
 
 func (r *resolver) resolveGroupExpr(expr ast.GroupExpr) {
@@ -334,6 +375,9 @@ func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
 }
 
 func (r *resolver) resolveThisExpr(expr ast.ThisExpr) {
+	if !r.curFunType.IsMethod() {
+		r.errs.AddFromNode(expr, "%m can only be used inside a method definition", token.This)
+	}
 	r.resolveIdent(expr.This, identOpRead)
 }
 

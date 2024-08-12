@@ -143,12 +143,8 @@ func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
 	instanceMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
 	staticMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
 	for _, methodDecl := range stmt.Methods {
-		typ := funTypeMethod
-		if !methodDecl.IsStatic && methodDecl.Name.Lexeme == token.InitIdent {
-			typ = funTypeInit
-		}
 		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
-		method := newLoxFunction(name, methodDecl.Params, methodDecl.Body, typ, env)
+		method := newLoxFunction(name, methodDecl.Params, methodDecl.Body, methodFunType(methodDecl), env)
 		if methodDecl.IsStatic {
 			staticMethodsByName[methodDecl.Name.Lexeme] = method
 		} else {

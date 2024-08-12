@@ -232,10 +232,27 @@ func (n loxNil) IsTruthy() loxBool {
 type funType int
 
 const (
-	funTypeFunction funType = iota
-	funTypeMethod
-	funTypeInit
+	funTypeNone     funType = iota
+	funTypeFunction funType = 1 << (iota - 1)
+	funTypeMethodFlag
+	funTypeConstructorFlag
 )
+
+func (f funType) IsMethod() bool {
+	return f&funTypeMethodFlag != 0
+}
+
+func (f funType) IsConstructor() bool {
+	return f&funTypeConstructorFlag != 0
+}
+
+func methodFunType(decl ast.MethodDecl) funType {
+	typ := funTypeFunction | funTypeMethodFlag
+	if !decl.IsStatic && decl.Name.Lexeme == token.ConstructorIdent {
+		typ |= funTypeConstructorFlag
+	}
+	return typ
+}
 
 type loxFunction struct {
 	name    string
@@ -266,13 +283,10 @@ var (
 )
 
 func (f *loxFunction) String() string {
-	switch f.typ {
-	case funTypeFunction:
-		return fmt.Sprintf("[function %s]", f.name)
-	case funTypeMethod, funTypeInit:
+	if f.typ.IsMethod() {
 		return fmt.Sprintf("[bound method %s]", f.name)
-	default:
-		panic(fmt.Sprintf("unexpected function type %d", f.typ))
+	} else {
+		return fmt.Sprintf("[function %s]", f.name)
 	}
 }
 
@@ -294,7 +308,7 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 		childEnv.Set(param, args[i])
 	}
 	result := interpreter.executeBlock(childEnv, f.body)
-	if f.typ == funTypeInit {
+	if f.typ.IsConstructor() {
 		return f.closure.GetByIdent(token.ThisIdent)
 	}
 	if r, ok := result.(stmtResultReturn); ok {
@@ -366,7 +380,7 @@ func newLoxClass(name string, instanceMethodsByName map[string]*loxFunction, sta
 		methodsByName: instanceMethodsByName,
 		loxInstance:   metaclass.Call(nil, nil).(*loxInstance),
 	}
-	if init, ok := class.GetMethod(token.InitIdent); ok {
+	if init, ok := class.GetMethod(token.ConstructorIdent); ok {
 		class.init = init
 	}
 	return class

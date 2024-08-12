@@ -18,27 +18,25 @@ const (
 // Parse parses the source code read from r.
 // If an error is returned then an incomplete AST will still be returned along with it.
 func Parse(r io.Reader) (ast.Program, error) {
-	l, err := newLexer(r)
+	lexer, err := newLexer(r)
 	if err != nil {
 		return ast.Program{}, fmt.Errorf("constructing parser: %s", err)
 	}
 
-	p := &parser{l: l}
+	p := &parser{lexer: lexer}
 	errHandler := func(tok token.Token, msg string) {
 		p.lastErrPos = tok.Start
 		p.errs.AddFromToken(tok, msg)
 	}
-	l.SetErrorHandler(errHandler)
+	lexer.SetErrorHandler(errHandler)
 
 	return p.Parse()
 }
 
 type parser struct {
-	l          *lexer
-	tok        token.Token // token currently being considered
-	nextTok    token.Token
-	loopDepth  int
-	curFunType funType
+	lexer   *lexer
+	tok     token.Token // token currently being considered
+	nextTok token.Token
 
 	errs       lox.Errors
 	lastErrPos token.Position
@@ -116,7 +114,7 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
 
 func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 	name := p.expectf(token.Ident, "expected function name")
-	params, body := p.parseFunParamsAndBody(funTypeFunction)
+	params, body := p.parseFunParamsAndBody()
 	return ast.FunDecl{
 		Fun:        funTok,
 		Name:       name,
@@ -131,22 +129,15 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	p.expect(token.LeftBrace)
 	var methods []ast.MethodDecl
 	for {
-		var name token.Token
-		funType := funTypeMethod
 		isStatic := false
-		if p.match(token.Static) {
+		name, ok := p.match2(token.Ident)
+		if !ok && p.match(token.Static) {
 			isStatic = true
 			name = p.expectf(token.Ident, "expected method name")
-		} else {
-			var ok bool
-			name, ok = p.match2(token.Ident)
-			if !ok {
-				break
-			} else if name.Lexeme == token.InitIdent {
-				funType = funTypeInit
-			}
+		} else if !ok {
+			break
 		}
-		params, body := p.parseFunParamsAndBody(funType)
+		params, body := p.parseFunParamsAndBody()
 		methods = append(methods, ast.MethodDecl{
 			IsStatic:   isStatic,
 			Name:       name,
@@ -164,25 +155,7 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	}
 }
 
-type funType int
-
-const (
-	funTypeNone funType = iota
-	funTypeFunction
-	funTypeMethod
-	funTypeInit
-)
-
-func (p *parser) parseFunParamsAndBody(funType funType) ([]token.Token, ast.BlockStmt) {
-	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
-	prevLoopDepth := p.loopDepth
-	p.loopDepth = 0
-	defer func() { p.loopDepth = prevLoopDepth }()
-
-	prevFunType := p.curFunType
-	p.curFunType = funType
-	defer func() { p.curFunType = prevFunType }()
-
+func (p *parser) parseFunParamsAndBody() ([]token.Token, ast.BlockStmt) {
 	p.expect(token.LeftParen)
 	var params []token.Token
 	if !p.match(token.RightParen) {
@@ -272,8 +245,6 @@ func (p *parser) parseIfStmt(ifTok token.Token) ast.IfStmt {
 }
 
 func (p *parser) parseWhileStmt(whileTok token.Token) ast.WhileStmt {
-	p.loopDepth++
-	defer func() { p.loopDepth-- }()
 	p.expect(token.LeftParen)
 	condition := p.parseExpr()
 	p.expect(token.RightParen)
@@ -282,8 +253,6 @@ func (p *parser) parseWhileStmt(whileTok token.Token) ast.WhileStmt {
 }
 
 func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
-	p.loopDepth++
-	defer func() { p.loopDepth-- }()
 	p.expect(token.LeftParen)
 	var initialise ast.Stmt
 	switch tok := p.tok; {
@@ -309,20 +278,12 @@ func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
 
 func (p *parser) parseBreakStmt(breakTok token.Token) ast.BreakStmt {
 	semicolon := p.expect(token.Semicolon)
-	stmt := ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
-	if p.loopDepth == 0 {
-		p.addNodeError(stmt, "%m can only be used inside a loop", token.Break)
-	}
-	return stmt
+	return ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
 }
 
 func (p *parser) parseContinueStmt(continueTok token.Token) ast.ContinueStmt {
 	semicolon := p.expect(token.Semicolon)
-	stmt := ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
-	if p.loopDepth == 0 {
-		p.addNodeError(stmt, "%m can only be used inside a loop", token.Continue)
-	}
-	return stmt
+	return ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
 }
 
 func (p *parser) parseReturnStmt(returnTok token.Token) ast.ReturnStmt {
@@ -332,14 +293,7 @@ func (p *parser) parseReturnStmt(returnTok token.Token) ast.ReturnStmt {
 		value = p.parseExpr()
 		semicolon = p.expect(token.Semicolon)
 	}
-	stmt := ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
-	if p.curFunType == funTypeNone {
-		p.addNodeError(stmt, "%m can only be used inside a function definition", token.Return)
-	}
-	if p.curFunType == funTypeInit && stmt.Value != nil {
-		p.addNodeError(stmt, "%s() cannot return a value", token.InitIdent)
-	}
-	return stmt
+	return ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
 }
 
 func (p *parser) parseExpr() ast.Expr {
@@ -490,9 +444,6 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 	case p.match(token.Ident):
 		return ast.VariableExpr{Name: tok}
 	case p.match(token.This):
-		if p.curFunType != funTypeMethod && p.curFunType != funTypeInit {
-			p.addTokenError(tok, "%m can only be used inside a method definition", token.This)
-		}
 		return ast.ThisExpr{This: tok}
 	case p.match(token.Fun):
 		return p.parseFunExpr(tok)
@@ -525,7 +476,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 }
 
 func (p *parser) parseFunExpr(funTok token.Token) ast.FunExpr {
-	params, body := p.parseFunParamsAndBody(funTypeFunction)
+	params, body := p.parseFunParamsAndBody()
 	return ast.FunExpr{
 		Fun:        funTok,
 		Params:     params,
@@ -571,7 +522,7 @@ func (p *parser) expectf(t token.Type, format string, a ...any) token.Token {
 // next advances the parser to the next token.
 func (p *parser) next() {
 	p.tok = p.nextTok
-	p.nextTok = p.l.Next()
+	p.nextTok = p.lexer.Next()
 }
 
 func (p *parser) addError(start token.Position, end token.Position, format string, args ...any) {
