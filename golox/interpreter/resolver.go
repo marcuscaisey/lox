@@ -240,9 +240,9 @@ func (r *resolver) resolveClassDecl(stmt ast.ClassDecl) {
 	endScope := r.beginScope()
 	defer endScope()
 	scope := r.scopes.Peek()
-	scope.Declare(token.ThisIdent)
-	scope.Define(token.ThisIdent)
-	scope.Use(token.ThisIdent)
+	scope.Declare(token.CurrentInstanceIdent)
+	scope.Define(token.CurrentInstanceIdent)
+	scope.Use(token.CurrentInstanceIdent)
 	for _, methodDecl := range stmt.Methods {
 		r.resolveFun(methodDecl.Params, methodDecl.Body, methodFunType(methodDecl))
 	}

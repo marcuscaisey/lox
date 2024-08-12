@@ -309,7 +309,7 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 	}
 	result := interpreter.executeBlock(childEnv, f.body)
 	if f.typ.IsConstructor() {
-		return f.closure.GetByIdent(token.ThisIdent)
+		return f.closure.GetByIdent(token.CurrentInstanceIdent)
 	}
 	if r, ok := result.(stmtResultReturn); ok {
 		return r.Value
@@ -320,7 +320,7 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 func (f *loxFunction) Bind(instance *loxInstance) *loxFunction {
 	fCopy := *f
 	fCopy.closure = f.closure.Child()
-	fCopy.closure.Set(token.ThisIdent, instance)
+	fCopy.closure.Set(token.CurrentInstanceIdent, instance)
 	return &fCopy
 }
 

@@ -21,10 +21,12 @@ func init() {
 const (
 	// BlankIdent is the special identifier which can be used as a placeholder in declarations and assignments.
 	BlankIdent = "_"
-	// ThisIdent is the identifier used for 'this' expressions.
-	ThisIdent = "this"
+	// CurrentInstanceIdent is the identifier used to refer the current instance of the class in a method.
+	CurrentInstanceIdent = thisIdent
 	// ConstructorIdent is the identifier used for the constructor method for classes.
 	ConstructorIdent = "init"
+
+	thisIdent = "this"
 )
 
 //go:generate go run golang.org/x/tools/cmd/stringer -type Type
@@ -111,7 +113,7 @@ var typeStrings = map[Type]string{
 	Fun:          "fun",
 	Return:       "return",
 	Class:        "class",
-	This:         ThisIdent,
+	This:         thisIdent,
 	Super:        "super",
 	Static:       "static",
 	Ident:        "identifier",
