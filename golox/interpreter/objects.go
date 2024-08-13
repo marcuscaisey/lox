@@ -236,6 +236,7 @@ const (
 	funTypeFunction funType = 1 << (iota - 1)
 	funTypeMethodFlag
 	funTypeConstructorFlag
+	funTypeBuiltinFlag
 )
 
 func (f funType) IsMethod() bool {
@@ -244,6 +245,10 @@ func (f funType) IsMethod() bool {
 
 func (f funType) IsConstructor() bool {
 	return f&funTypeConstructorFlag != 0
+}
+
+func (f funType) IsBuiltin() bool {
+	return f&funTypeBuiltinFlag != 0
 }
 
 func methodFunType(decl ast.MethodDecl) funType {
@@ -255,11 +260,12 @@ func methodFunType(decl ast.MethodDecl) funType {
 }
 
 type loxFunction struct {
-	name    string
-	params  []string
-	body    []ast.Stmt
-	typ     funType
-	closure *environment
+	name       string
+	params     []string
+	body       []ast.Stmt
+	nativeBody func(args []loxObject) loxObject
+	typ        funType
+	closure    *environment
 }
 
 func newLoxFunction(name string, params []token.Token, body []ast.Stmt, typ funType, closure *environment) *loxFunction {
@@ -277,15 +283,27 @@ func newLoxFunction(name string, params []token.Token, body []ast.Stmt, typ funT
 	return f
 }
 
+func newBuiltinLoxFunction(name string, params []string, body func(args []loxObject) loxObject) *loxFunction {
+	return &loxFunction{
+		name:       name,
+		params:     params,
+		nativeBody: body,
+		typ:        funTypeFunction | funTypeBuiltinFlag,
+	}
+}
+
 var (
 	_ loxObject   = &loxFunction{}
 	_ loxCallable = &loxFunction{}
 )
 
 func (f *loxFunction) String() string {
-	if f.typ.IsMethod() {
+	switch {
+	case f.typ.IsMethod():
 		return fmt.Sprintf("[bound method %s]", f.name)
-	} else {
+	case f.typ.IsBuiltin():
+		return fmt.Sprintf("[builtin function %s]", f.name)
+	default:
 		return fmt.Sprintf("[function %s]", f.name)
 	}
 }
@@ -303,6 +321,10 @@ func (f *loxFunction) Params() []string {
 }
 
 func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject {
+	if f.nativeBody != nil {
+		return f.nativeBody(args)
+	}
+
 	childEnv := f.closure.Child()
 	for i, param := range f.params {
 		childEnv.Set(param, args[i])
@@ -322,45 +344,6 @@ func (f *loxFunction) Bind(instance *loxInstance) *loxFunction {
 	fCopy.closure = f.closure.Child()
 	fCopy.closure.Set(token.CurrentInstanceIdent, instance)
 	return &fCopy
-}
-
-type loxBuiltinFunction struct {
-	name   string
-	params []string
-	body   func(args []loxObject) loxObject
-}
-
-func newLoxBuiltinFunction(name string, params []string, body func(args []loxObject) loxObject) *loxBuiltinFunction {
-	return &loxBuiltinFunction{
-		name:   name,
-		params: params,
-		body:   body,
-	}
-}
-
-var (
-	_ loxObject   = &loxBuiltinFunction{}
-	_ loxCallable = &loxBuiltinFunction{}
-)
-
-func (f *loxBuiltinFunction) String() string {
-	return fmt.Sprintf("[builtin function %s]", f.name)
-}
-
-func (f *loxBuiltinFunction) Type() loxType {
-	return loxTypeFunction
-}
-
-func (f *loxBuiltinFunction) Name() string {
-	return f.name
-}
-
-func (f *loxBuiltinFunction) Params() []string {
-	return f.params
-}
-
-func (f *loxBuiltinFunction) Call(_ *Interpreter, args []loxObject) loxObject {
-	return f.body(args)
 }
 
 type loxClass struct {

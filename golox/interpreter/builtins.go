@@ -2,11 +2,11 @@ package interpreter
 
 import "time"
 
-var builtins = []*loxBuiltinFunction{
-	newLoxBuiltinFunction("clock", nil, func([]loxObject) loxObject {
+var builtinsByName = map[string]loxObject{
+	"clock": newBuiltinLoxFunction("clock", nil, func([]loxObject) loxObject {
 		return loxNumber(time.Now().UnixNano()) / loxNumber(time.Second)
 	}),
-	newLoxBuiltinFunction("type", []string{"object"}, func(args []loxObject) loxObject {
+	"type": newBuiltinLoxFunction("type", []string{"object"}, func(args []loxObject) loxObject {
 		return loxString(args[0].Type())
 	}),
 }

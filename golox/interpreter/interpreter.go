@@ -33,8 +33,8 @@ func REPLMode() Option {
 // New constructs a new Interpreter with the given options.
 func New(opts ...Option) *Interpreter {
 	globals := newEnvironment()
-	for _, fun := range builtins {
-		globals.Set(fun.Name(), fun)
+	for name, builtin := range builtinsByName {
+		globals.Set(name, builtin)
 	}
 	interpreter := &Interpreter{
 		globals:            globals,
