@@ -1,13 +1,9 @@
 class Foo {
-  init(bar) {
-    this.bar = bar;
-  }
-
   static bar() {
     return "bar method";
   }
 }
 
-var foo = Foo("bar field");
-print foo.bar; // prints: bar field
-foo.bar(); // error: 'string' object is not callable
+Foo.bar = "bar field";
+print Foo.bar; // prints: bar field
+Foo.bar(); // error: 'string' object is not callable
