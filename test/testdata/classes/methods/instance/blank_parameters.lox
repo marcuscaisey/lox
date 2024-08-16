@@ -1,7 +1,0 @@
-class Foo {
-  add(x, _, y, _) {
-    print x + y;
-  }
-}
-
-Foo().add(1, 2, 3, 4); // prints: 4

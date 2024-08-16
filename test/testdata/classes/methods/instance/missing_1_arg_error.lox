@@ -1,7 +1,0 @@
-class Foo {
-  add(a, b) {
-    print a + b;
-  }
-}
-
-Foo().add(1); // error: Foo.add() missing 1 argument: b

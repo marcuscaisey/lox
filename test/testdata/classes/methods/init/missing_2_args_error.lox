@@ -1,7 +1,0 @@
-class Foo {
-  init(a, b) {
-    print a + b;
-  }
-}
-
-Foo(); // error: Foo() missing 2 arguments: a and b

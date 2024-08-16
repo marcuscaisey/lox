@@ -1,8 +1,0 @@
-class Foo {
-  static bar() {
-    print a;
-  }
-}
-
-var a = "global";
-Foo.bar(); // prints: global

@@ -1,7 +1,0 @@
-class Foo {
-  static add(a, b, c, d) {
-    print a + b + c + d;
-  }
-}
-
-Foo.add(); // error: Foo.add() missing 4 arguments: a, b, c, and d

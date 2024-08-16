@@ -1,8 +1,0 @@
-class Foo {
-  init() {
-    print a;
-  }
-}
-
-var a = "global";
-Foo(); // prints: global

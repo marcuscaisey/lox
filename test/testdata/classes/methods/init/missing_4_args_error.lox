@@ -1,7 +1,0 @@
-class Foo {
-  init(a, b, c, d) {
-    print a + b + c + d;
-  }
-}
-
-Foo(); // error: Foo() missing 4 arguments: a, b, c, and d

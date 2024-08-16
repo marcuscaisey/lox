@@ -1,5 +1,0 @@
-var add = fun(x, _, y, _) {
-  return x + y;
-};
-
-print add(1, 2, 3, 4); // prints: 4

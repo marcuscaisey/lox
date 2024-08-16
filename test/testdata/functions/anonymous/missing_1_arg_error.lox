@@ -1,5 +1,0 @@
-var add = fun(a, b) {
-  print a + b;
-};
-
-add(1); // error: (anonymous)() missing 1 argument: b

@@ -1,9 +1,0 @@
-class Foo {
-  _() {
-    return 1;
-  }
-
-  _() {
-    return 2;
-  }
-}

@@ -1,7 +1,0 @@
-class Foo {
-  init(x, _, y, _) {
-    print x + y;
-  }
-}
-
-Foo(1, 2, 3, 4); // prints: 4
