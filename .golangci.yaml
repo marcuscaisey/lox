@@ -2,6 +2,7 @@ linters:
   enable:
     - gci
     - revive
+    - gofmt
 linters-settings:
   gci:
     sections:
@@ -9,6 +10,10 @@ linters-settings:
       - default # Contains all imports that could not be matched to another section type.
       - prefix(github.com/marcuscaisey/lox) # Groups all imports with the specified Prefix.
     custom-order: true
+  gofmt:
+    rewrite-rules:
+      - pattern: 'interface{}'
+        replacement: 'any'
 issues:
   exclude-rules:
     - text: "indent-error-flow: if block ends with a return statement, so drop this else and outdent its block"

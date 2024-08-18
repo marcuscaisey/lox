@@ -35,18 +35,18 @@ func NewError(start token.Position, end token.Position, format string, args ...a
 }
 
 // NewErrorFromToken creates a [*Error] which describes a problem with the given [token.Token].
-func NewErrorFromToken(tok token.Token, format string, args ...interface{}) error {
+func NewErrorFromToken(tok token.Token, format string, args ...any) error {
 	return NewError(tok.Start, tok.End, format, args...)
 }
 
 // NewErrorFromNode creates a [*Error] which describes a problem with the given [ast.Node].
-func NewErrorFromNode(node ast.Node, format string, args ...interface{}) error {
+func NewErrorFromNode(node ast.Node, format string, args ...any) error {
 	return NewError(node.Start(), node.End(), format, args...)
 }
 
 // NewErrorFromNodeRange creates a [*Error] which describes a problem with the range of characters that the given
 // [ast.Node] cover.
-func NewErrorFromNodeRange(start, end ast.Node, format string, args ...interface{}) error {
+func NewErrorFromNodeRange(start, end ast.Node, format string, args ...any) error {
 	return NewError(start.Start(), end.End(), format, args...)
 }
 
@@ -119,19 +119,19 @@ func (e *Errors) Add(start token.Position, end token.Position, format string, ar
 
 // AddFromToken adds a [*Error] to the list of errors.
 // The parameters are the same as for [NewErrorFromToken].
-func (e *Errors) AddFromToken(tok token.Token, format string, args ...interface{}) {
+func (e *Errors) AddFromToken(tok token.Token, format string, args ...any) {
 	e.Add(tok.Start, tok.End, format, args...)
 }
 
 // AddFromNode adds a [*Error] to the list of errors.
 // The parameters are the same as for [NewErrorFromNode].
-func (e *Errors) AddFromNode(node ast.Node, format string, args ...interface{}) {
+func (e *Errors) AddFromNode(node ast.Node, format string, args ...any) {
 	e.Add(node.Start(), node.End(), format, args...)
 }
 
 // AddFromNodeRange adds a [*Error] to the list of errors.
 // The parameters are the same as for [NewErrorFromNodeRange].
-func (e *Errors) AddFromNodeRange(start, end ast.Node, format string, args ...interface{}) {
+func (e *Errors) AddFromNodeRange(start, end ast.Node, format string, args ...any) {
 	e.Add(start.Start(), end.End(), format, args...)
 }
 

@@ -13,7 +13,7 @@ const eof = -1
 
 // errorHandler is the function which handles syntax errors encountered during lexing.
 // It's passed the offending token and a format string and arguments to construct an error message from.
-type errorHandler func(tok token.Token, format string, args ...interface{})
+type errorHandler func(tok token.Token, format string, args ...any)
 
 // lexer converts Lox source code into lexical tokens.
 // Tokens are read from the lexer using the Next method.
@@ -40,7 +40,7 @@ func newLexer(r io.Reader) (*lexer, error) {
 
 	l := &lexer{
 		src:        src,
-		errHandler: func(token.Token, string, ...interface{}) {},
+		errHandler: func(token.Token, string, ...any) {},
 		pos: token.Position{
 			File:   token.NewFile(filename, src),
 			Line:   1,
