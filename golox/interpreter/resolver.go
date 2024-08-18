@@ -1,7 +1,7 @@
 package interpreter
 
 import (
-	"fmt"
+	"fmt" //nolint:gci
 	"iter"
 
 	"github.com/marcuscaisey/lox/golox/ast"
