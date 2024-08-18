@@ -6,9 +6,9 @@ linters:
 linters-settings:
   gci:
     sections:
-      - standard # Captures all standard packages.
-      - default # Contains all imports that could not be matched to another section type.
-      - prefix(github.com/marcuscaisey/lox) # Groups all imports with the specified Prefix.
+      - standard # Standard section: captures all standard packages.
+      - default # Default section: contains all imports that could not be matched to another section type.
+      - localmodule # Local module section: contains all local packages. This section is not present unless explicitly enabled.
     custom-order: true
   gofmt:
     rewrite-rules:
