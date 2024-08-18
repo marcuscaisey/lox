@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"iter"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/lox"
@@ -129,8 +130,8 @@ func (r *resolver) declareIdent(tok token.Token) {
 }
 
 func (r *resolver) defineIdent(tok token.Token) {
-	for i := r.scopes.Len() - 1; i >= 0; i-- {
-		if scope := r.scopes.Index(i); scope.IsDeclared(tok.Lexeme) {
+	for _, scope := range r.scopes.Backward() {
+		if scope.IsDeclared(tok.Lexeme) {
 			scope.Define(tok.Lexeme)
 			return
 		}
@@ -146,8 +147,8 @@ const (
 )
 
 func (r *resolver) resolveIdent(tok token.Token, op identOp) {
-	for i := r.scopes.Len() - 1; i >= 0; i-- {
-		if scope := r.scopes.Index(i); scope.IsDeclared(tok.Lexeme) {
+	for i, scope := range r.scopes.Backward() {
+		if scope.IsDeclared(tok.Lexeme) {
 			scope.Use(tok.Lexeme)
 			if !scope.IsDefined(tok.Lexeme) && op == identOpRead {
 				r.errs.AddFromToken(tok, "%s has not been defined", tok.Lexeme)
@@ -418,17 +419,17 @@ func (r *resolver) resolveSetExpr(expr ast.SetExpr) {
 	r.resolveExpr(expr.Object)
 }
 
-type stack[T any] []T
+type stack[E any] []E
 
-func newStack[T any]() *stack[T] {
-	return &stack[T]{}
+func newStack[E any]() *stack[E] {
+	return &stack[E]{}
 }
 
-func (s *stack[T]) Push(v T) {
+func (s *stack[E]) Push(v E) {
 	*s = append(*s, v)
 }
 
-func (s *stack[T]) Pop() T {
+func (s *stack[E]) Pop() E {
 	if len(*s) == 0 {
 		panic("pop from empty stack")
 	}
@@ -437,18 +438,23 @@ func (s *stack[T]) Pop() T {
 	return v
 }
 
-func (s *stack[T]) Peek() T {
+func (s *stack[E]) Peek() E {
 	if len(*s) == 0 {
 		panic("peek of empty stack")
 	}
 	return (*s)[len(*s)-1]
 }
 
-func (s *stack[T]) Len() int {
+func (s *stack[E]) Len() int {
 	return len(*s)
 }
 
-// TODO: delete this when we can replace its use with an interator in Go 1.23
-func (s *stack[T]) Index(i int) T {
-	return (*s)[i]
+func (s *stack[E]) Backward() iter.Seq2[int, E] {
+	return func(yield func(int, E) bool) {
+		for i := s.Len() - 1; i >= 0; i-- {
+			if !yield(i, (*s)[i]) {
+				return
+			}
+		}
+	}
 }
