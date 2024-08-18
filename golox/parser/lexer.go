@@ -12,8 +12,8 @@ import (
 const eof = -1
 
 // errorHandler is the function which handles syntax errors encountered during lexing.
-// It's passed the offending token and a message describing the error.
-type errorHandler func(tok token.Token, msg string)
+// It's passed the offending token and a format string and arguments to construct an error message from.
+type errorHandler func(tok token.Token, format string, args ...interface{})
 
 // lexer converts Lox source code into lexical tokens.
 // Tokens are read from the lexer using the Next method.
@@ -36,12 +36,11 @@ func newLexer(r io.Reader) (*lexer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("constructing lexer: %s", err)
 	}
-	errHandler := func(token.Token, string) {}
 	filename := name(r)
 
 	l := &lexer{
 		src:        src,
-		errHandler: errHandler,
+		errHandler: func(token.Token, string, ...interface{}) {},
 		pos: token.Position{
 			File:   token.NewFile(filename, src),
 			Line:   1,
@@ -173,7 +172,7 @@ func (l *lexer) Next() token.Token {
 		tok.End = l.pos
 		tok.Type = token.Illegal
 		tok.Lexeme = string(ch)
-		l.errHandler(tok, fmt.Sprintf("illegal character %#U", ch))
+		l.errHandler(tok, "illegal character %#U", ch)
 		return tok
 	}
 
@@ -315,7 +314,7 @@ func (l *lexer) next() {
 			Lexeme: string(l.src[l.offset : l.offset+1]),
 		}
 		tok.End.Column++
-		l.errHandler(tok, fmt.Sprintf("invalid UTF-8 byte %#x", l.src[l.offset]))
+		l.errHandler(tok, "invalid UTF-8 byte %#x", l.src[l.offset])
 		l.next()
 		return
 	}

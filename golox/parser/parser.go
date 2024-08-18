@@ -24,9 +24,9 @@ func Parse(r io.Reader) (ast.Program, error) {
 	}
 
 	p := &parser{lexer: lexer}
-	errHandler := func(tok token.Token, msg string) {
+	errHandler := func(tok token.Token, format string, args ...interface{}) {
 		p.lastErrPos = tok.Start
-		p.errs.AddFromToken(tok, msg)
+		p.errs.AddFromToken(tok, format, args...)
 	}
 	lexer.SetErrorHandler(errHandler)
 
