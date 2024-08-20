@@ -1,8 +1,7 @@
 package interpreter
 
 import (
-	"fmt" //nolint:gci
-	"iter"
+	"fmt"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/lox"
@@ -417,44 +416,4 @@ func (r *resolver) resolveAssignmentExpr(expr ast.AssignmentExpr) {
 func (r *resolver) resolveSetExpr(expr ast.SetExpr) {
 	r.resolveExpr(expr.Value)
 	r.resolveExpr(expr.Object)
-}
-
-type stack[E any] []E
-
-func newStack[E any]() *stack[E] {
-	return &stack[E]{}
-}
-
-func (s *stack[E]) Push(v E) {
-	*s = append(*s, v)
-}
-
-func (s *stack[E]) Pop() E {
-	if len(*s) == 0 {
-		panic("pop from empty stack")
-	}
-	v := (*s)[len(*s)-1]
-	*s = (*s)[:len(*s)-1]
-	return v
-}
-
-func (s *stack[E]) Peek() E {
-	if len(*s) == 0 {
-		panic("peek of empty stack")
-	}
-	return (*s)[len(*s)-1]
-}
-
-func (s *stack[E]) Len() int {
-	return len(*s)
-}
-
-func (s *stack[E]) Backward() iter.Seq2[int, E] {
-	return func(yield func(int, E) bool) {
-		for i := s.Len() - 1; i >= 0; i-- {
-			if !yield(i, (*s)[i]) {
-				return
-			}
-		}
-	}
 }

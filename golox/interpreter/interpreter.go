@@ -14,8 +14,10 @@ import (
 
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
-	globals              *environment
-	declDistancesByTok   map[token.Token]int
+	globals            *environment
+	declDistancesByTok map[token.Token]int
+	callStack          *stack[stackFrame]
+
 	printExprStmtResults bool
 }
 
@@ -39,6 +41,7 @@ func New(opts ...Option) *Interpreter {
 	interpreter := &Interpreter{
 		globals:            globals,
 		declDistancesByTok: map[token.Token]int{},
+		callStack:          newStack[stackFrame](),
 	}
 	for _, opt := range opts {
 		opt(interpreter)
@@ -52,7 +55,8 @@ func (i *Interpreter) Interpret(program ast.Program) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if loxErr, ok := r.(*lox.Error); ok {
-				err = loxErr
+				err = fmt.Errorf("%w\n%s", loxErr, i.formatStackTrace(i.callStack))
+				i.callStack.Clear()
 			} else {
 				panic(r)
 			}
@@ -65,6 +69,22 @@ func (i *Interpreter) Interpret(program ast.Program) (err error) {
 	maps.Copy(i.declDistancesByTok, declDistancesByTok)
 	i.interpretProgram(program)
 	return nil
+}
+
+func (i *Interpreter) formatStackTrace(callStack *stack[stackFrame]) string {
+	var b strings.Builder
+	fmt.Fprintln(&b, "Stack Trace:")
+	for _, frame := range callStack.Backward() {
+		fmt.Fprintf(&b, "  %s(", frame.Function)
+		for i, arg := range frame.Args {
+			fmt.Fprint(&b, arg)
+			if i < len(frame.Args)-1 {
+				fmt.Fprint(&b, ", ")
+			}
+		}
+		fmt.Fprintf(&b, ") at %s\n", frame.Location)
+	}
+	return b.String()
 }
 
 type stmtResult interface {
@@ -312,6 +332,12 @@ func (i *Interpreter) resolveIdent(env *environment, tok token.Token) loxObject 
 	return i.globals.Get(tok)
 }
 
+type stackFrame struct {
+	Function string
+	Args     []loxObject
+	Location token.Position
+}
+
 func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObject {
 	callee := i.evalExpr(env, expr.Callee)
 	args := make([]loxObject, len(expr.Args))
@@ -354,7 +380,15 @@ func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObjec
 		))
 	}
 
-	return callable.Call(i, args)
+	i.callStack.Push(stackFrame{
+		Function: callable.Name(),
+		Args:     args,
+		Location: expr.Start(),
+	})
+	result := callable.Call(i, args)
+	i.callStack.Pop()
+
+	return result
 }
 
 func (i *Interpreter) evalGetExpr(env *environment, expr ast.GetExpr) loxObject {

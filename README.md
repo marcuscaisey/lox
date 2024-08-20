@@ -37,6 +37,8 @@ either from challenges in the book or my own ideas.
 - [`%` operator](#Binary-Expression)
 - [`continue` statement](#Continue-Statement)
 - [`type` built-in function](#Built-in-Functions)
+- [Error messages point to location of error in source code](#Errors)
+- [Runtime error message includes stack trace](#Errors)
 
 ### Types
 
@@ -497,6 +499,54 @@ This is a multi line comment
  */
 
 print 1 /* Multi line comments can be used anywhere */ + 2;
+```
+
+### Errors
+
+If any errors are found before execution of a program has begun, they will be reported and execution
+will not begin.
+
+```lox
+fun f(x, y) {
+  var z;
+  print x + z;
+}
+
+f(1, 2);
+```
+
+```
+test.lox:1:10: error: y has been declared but is never used
+fun f(x, y) {
+         ~
+test.lox:3:13: error: z has not been defined
+  print x + z;
+            ~
+```
+
+If an error occurs during the execution of a program, execution will halt and the error will be
+reported along with a stack trace.
+
+```lox
+fun divide(x, y) {
+    return x / y;
+}
+
+fun main() {
+    print divide(1, 0);
+    print divide(2, 0);
+}
+
+main();
+```
+
+```
+test.lox:2:14: error: cannot divide by 0
+    return x / y;
+             ~
+Stack Trace:
+  divide(1, 0) at test.lox:6:11
+  main() at test.lox:10:1
 ```
 
 ### Built-in Functions
