@@ -263,7 +263,7 @@ type loxFunction struct {
 	name       string
 	params     []string
 	body       []ast.Stmt
-	nativeBody func(args []loxObject) loxObject
+	nativeBody func(i *Interpreter, args []loxObject) loxObject
 	typ        funType
 	closure    *environment
 }
@@ -283,7 +283,7 @@ func newLoxFunction(name string, params []token.Token, body []ast.Stmt, typ funT
 	return f
 }
 
-func newBuiltinLoxFunction(name string, params []string, body func(args []loxObject) loxObject) *loxFunction {
+func newBuiltinLoxFunction(name string, params []string, body func(i *Interpreter, args []loxObject) loxObject) *loxFunction {
 	return &loxFunction{
 		name:       name,
 		params:     params,
@@ -320,16 +320,16 @@ func (f *loxFunction) Params() []string {
 	return f.params
 }
 
-func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject {
+func (f *loxFunction) Call(i *Interpreter, args []loxObject) loxObject {
 	if f.nativeBody != nil {
-		return f.nativeBody(args)
+		return f.nativeBody(i, args)
 	}
 
 	childEnv := f.closure.Child()
 	for i, param := range f.params {
 		childEnv.Set(param, args[i])
 	}
-	result := interpreter.executeBlock(childEnv, f.body)
+	result := i.executeBlock(childEnv, f.body)
 	if f.typ.IsConstructor() {
 		return f.closure.GetByIdent(token.CurrentInstanceIdent)
 	}

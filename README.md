@@ -39,6 +39,7 @@ either from challenges in the book or my own ideas.
 - [`type` built-in function](#Built-in-Functions)
 - [Error messages point to location of error in source code](#Errors)
 - [Runtime error message includes stack trace](#Errors)
+- [`error` built-in function](#Built-in-Functions)
 
 ### Types
 
@@ -557,6 +558,7 @@ Lox has the following built-in functions.
 | -------------- | -------- | --------------------------------------------------- |
 | `clock()`      | `number` | Returns the number of seconds since the Unix epoch. |
 | `type(object)` | `string` | Returns the type of the object.                     |
+| `error(msg)`   | `nil`    | Throws a runtime error with the message.            |
 
 ### Grammar
 

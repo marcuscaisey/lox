@@ -85,7 +85,7 @@ func (i *Interpreter) formatStackTrace(callStack *stack[stackFrame]) string {
 				fmt.Fprint(&b, ", ")
 			}
 		}
-		fmt.Fprintf(&b, ") at %s\n", frame.Location)
+		fmt.Fprintf(&b, ") at %s\n", frame.CallStart)
 	}
 	return b.String()
 }
@@ -336,9 +336,10 @@ func (i *Interpreter) resolveIdent(env *environment, tok token.Token) loxObject 
 }
 
 type stackFrame struct {
-	Function string
-	Args     []loxObject
-	Location token.Position
+	Function  string
+	Args      []loxObject
+	CallStart token.Position
+	CallEnd   token.Position
 }
 
 func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObject {
@@ -384,9 +385,10 @@ func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObjec
 	}
 
 	i.callStack.Push(stackFrame{
-		Function: callable.Name(),
-		Args:     args,
-		Location: expr.Start(),
+		Function:  callable.Name(),
+		Args:      args,
+		CallStart: expr.Start(),
+		CallEnd:   expr.End(),
 	})
 	result := callable.Call(i, args)
 	i.callStack.Pop()

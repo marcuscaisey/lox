@@ -74,6 +74,8 @@ clock;
 // <- function.builtin
 type;
 // <- function.builtin
+error;
+// <- function.builtin
 
 // Unary Expression
 !1;
