@@ -55,7 +55,10 @@ func (i *Interpreter) Interpret(program ast.Program) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if loxErr, ok := r.(*lox.Error); ok {
-				err = fmt.Errorf("%w\n%s", loxErr, i.formatStackTrace(i.callStack))
+				err = loxErr
+				if i.callStack.Len() > 0 {
+					err = fmt.Errorf("%w\n\n%s", err, i.formatStackTrace(i.callStack))
+				}
 				i.callStack.Clear()
 			} else {
 				panic(r)
