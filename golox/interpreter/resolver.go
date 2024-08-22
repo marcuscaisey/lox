@@ -246,6 +246,26 @@ func (r *resolver) resolveClassDecl(stmt ast.ClassDecl) {
 	for _, methodDecl := range stmt.Methods {
 		r.resolveFun(methodDecl.Params, methodDecl.Body, methodFunType(methodDecl))
 	}
+	r.checkNoWriteOnlyProperties(stmt)
+}
+
+// TODO: Move this to a semantic analysis phase
+func (r *resolver) checkNoWriteOnlyProperties(stmt ast.ClassDecl) {
+	gettersByName := map[string]bool{}
+	setterNameToksByName := map[string]token.Token{}
+	for _, methodDecl := range stmt.Methods {
+		switch {
+		case methodDecl.HasModifier(token.Get):
+			gettersByName[methodDecl.Name.Lexeme] = true
+		case methodDecl.HasModifier(token.Set):
+			setterNameToksByName[methodDecl.Name.Lexeme] = methodDecl.Name
+		}
+	}
+	for name, nameTok := range setterNameToksByName {
+		if !gettersByName[name] {
+			r.errs.AddFromToken(nameTok, "write-only properties are not allowed")
+		}
+	}
 }
 
 func (r *resolver) resolveExprStmt(stmt ast.ExprStmt) {

@@ -30,6 +30,7 @@ either from challenges in the book or my own ideas.
 - [Function expression](#Function-Expression) - [Functions](https://craftinginterpreters.com/functions.html#challenges)
 - Reporting of [unused variables](#Blank-Identifier) - [Resolving and Binding](https://craftinginterpreters.com/resolving-and-binding.html#challenges)
 - [Static method](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
+- [Property getter method](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
 
 #### Own Ideas
 
@@ -40,6 +41,7 @@ either from challenges in the book or my own ideas.
 - [Error messages point to location of error in source code](#Errors)
 - [Runtime error message includes stack trace](#Errors)
 - [`error` built-in function](#Built-in-Functions)
+- [Property setter method](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
 
 ### Types
 
@@ -473,6 +475,41 @@ class Math {
 print Math.square(2); // prints: 4
 ```
 
+Methods can be declared as property getters and setters by prefixing the declaration with `get` and
+`set` respectively. Property getters and setters are accessed like properties but are actually calls
+to the getter and setter methods. Property getters and setters can also be static.
+
+```lox
+var PI = 3;
+
+class Circle {
+  init(radius) {
+    this._radius = radius;
+  }
+
+  get radius() {
+    return this._radius;
+  }
+
+  set radius(value) {
+    if (value <= 0) {
+      error("radius must be positive");
+    }
+    this._radius = value;
+  }
+
+  get area() {
+    return PI * this.radius * this.radius;
+  }
+}
+
+var c = Circle(2);
+print c.radius; // prints: 2
+print c.area; // prints: 12
+c.radius = -1;
+print c.radius; // error: radius must be positive
+```
+
 #### Blank Identifier
 
 The blank identifier `_` is a special identifier which:
@@ -575,7 +612,7 @@ fun_decl   = "fun" function ;
 function   = IDENT "(" parameters? ")" block_stmt ;
 parameters = IDENT ( "," IDENT )* ;
 class_decl = "class" IDENT "{" method* "}" ;
-method     = "static"? function ;
+method     = "static"? ( "get" | "set" )? function ;
 
 stmt          = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | for_stmt | break_stmt
               | continue_stmt ;

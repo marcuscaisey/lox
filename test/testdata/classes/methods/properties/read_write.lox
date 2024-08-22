@@ -1,0 +1,23 @@
+class Circle {
+  init(radius) {
+    this.radius = radius;
+  }
+
+  get radius() {
+    return this._radius;
+  }
+
+  set radius(value) {
+    if (value <= 0) {
+      error("radius must be positive");
+    }
+    this._radius = value;
+  }
+}
+
+var c = Circle(2);
+print c.radius; // prints: 2
+c.radius = 3;
+print c.radius; // prints: 3
+c.radius = -1;
+print c.radius; // error: radius must be positive

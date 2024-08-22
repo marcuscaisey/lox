@@ -30,41 +30,43 @@ func _() {
 	_ = x[This-19]
 	_ = x[Super-20]
 	_ = x[Static-21]
-	_ = x[keywordsEnd-22]
-	_ = x[Ident-23]
-	_ = x[String-24]
-	_ = x[Number-25]
-	_ = x[Semicolon-26]
-	_ = x[Comma-27]
-	_ = x[Dot-28]
-	_ = x[Equal-29]
-	_ = x[Plus-30]
-	_ = x[Minus-31]
-	_ = x[Asterisk-32]
-	_ = x[Slash-33]
-	_ = x[Percent-34]
-	_ = x[Less-35]
-	_ = x[LessEqual-36]
-	_ = x[Greater-37]
-	_ = x[GreaterEqual-38]
-	_ = x[EqualEqual-39]
-	_ = x[BangEqual-40]
-	_ = x[Bang-41]
-	_ = x[Question-42]
-	_ = x[Colon-43]
-	_ = x[LeftParen-44]
-	_ = x[RightParen-45]
-	_ = x[LeftBrace-46]
-	_ = x[RightBrace-47]
-	_ = x[typesEnd-48]
+	_ = x[Get-22]
+	_ = x[Set-23]
+	_ = x[keywordsEnd-24]
+	_ = x[Ident-25]
+	_ = x[String-26]
+	_ = x[Number-27]
+	_ = x[Semicolon-28]
+	_ = x[Comma-29]
+	_ = x[Dot-30]
+	_ = x[Equal-31]
+	_ = x[Plus-32]
+	_ = x[Minus-33]
+	_ = x[Asterisk-34]
+	_ = x[Slash-35]
+	_ = x[Percent-36]
+	_ = x[Less-37]
+	_ = x[LessEqual-38]
+	_ = x[Greater-39]
+	_ = x[GreaterEqual-40]
+	_ = x[EqualEqual-41]
+	_ = x[BangEqual-42]
+	_ = x[Bang-43]
+	_ = x[Question-44]
+	_ = x[Colon-45]
+	_ = x[LeftParen-46]
+	_ = x[RightParen-47]
+	_ = x[LeftBrace-48]
+	_ = x[RightBrace-49]
+	_ = x[typesEnd-50]
 }
 
-const _Type_name = "IllegalEOFkeywordsStartPrintVarTrueFalseNilIfElseAndOrWhileForBreakContinueFunReturnClassThisSuperStatickeywordsEndIdentStringNumberSemicolonCommaDotEqualPlusMinusAsteriskSlashPercentLessLessEqualGreaterGreaterEqualEqualEqualBangEqualBangQuestionColonLeftParenRightParenLeftBraceRightBracetypesEnd"
+const _Type_name = "IllegalEOFkeywordsStartPrintVarTrueFalseNilIfElseAndOrWhileForBreakContinueFunReturnClassThisSuperStaticGetSetkeywordsEndIdentStringNumberSemicolonCommaDotEqualPlusMinusAsteriskSlashPercentLessLessEqualGreaterGreaterEqualEqualEqualBangEqualBangQuestionColonLeftParenRightParenLeftBraceRightBracetypesEnd"
 
-var _Type_index = [...]uint16{0, 7, 10, 23, 28, 31, 35, 40, 43, 45, 49, 52, 54, 59, 62, 67, 75, 78, 84, 89, 93, 98, 104, 115, 120, 126, 132, 141, 146, 149, 154, 158, 163, 171, 176, 183, 187, 196, 203, 215, 225, 234, 238, 246, 251, 260, 270, 279, 289, 297}
+var _Type_index = [...]uint16{0, 7, 10, 23, 28, 31, 35, 40, 43, 45, 49, 52, 54, 59, 62, 67, 75, 78, 84, 89, 93, 98, 104, 107, 110, 121, 126, 132, 138, 147, 152, 155, 160, 164, 169, 177, 182, 189, 193, 202, 209, 221, 231, 240, 244, 252, 257, 266, 276, 285, 295, 303}
 
 func (i Type) String() string {
-	if i >= Type(len(_Type_index)-1) {
+	if i < 0 || i >= Type(len(_Type_index)-1) {
 		return "Type(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 	return _Type_name[_Type_index[i]:_Type_index[i+1]]

@@ -288,3 +288,105 @@ class Math {
             (binary_expression
               left: (identifier)
               right: (identifier))))))))
+
+================================================================================
+Class Declaration - Getter
+================================================================================
+
+class Circle {
+  get area() {
+    return (PI * this.radius) * this.radius;
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        (modifiers)
+        name: (identifier)
+        parameters: (parameters)
+        body: (block_statement
+          (return_statement
+            (binary_expression
+              left: (group_expression
+                expression: (binary_expression
+                  left: (identifier)
+                  right: (get_expression
+                    object: (this_expression)
+                    name: (identifier))))
+              right: (get_expression
+                object: (this_expression)
+                name: (identifier)))))))))
+
+================================================================================
+Class Declaration - Setter
+================================================================================
+
+class Circle {
+  set radius(value) {
+    if (value <= 0) {
+      error("Circle radius must be positive.");
+    }
+    this._radius = value;
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        (modifiers)
+        name: (identifier)
+        parameters: (parameters
+          (identifier))
+        body: (block_statement
+          (if_statement
+            condition: (binary_expression
+              left: (identifier)
+              right: (number))
+            then: (block_statement
+              (expression_statement
+                (call_expression
+                  callee: (identifier)
+                  arguments: (arguments
+                    (string))))))
+          (expression_statement
+            (assignment_expression
+              left: (get_expression
+                object: (this_expression)
+                name: (identifier))
+              right: (identifier))))))))
+
+================================================================================
+Class Declaration - Static Getter and Setter
+================================================================================
+
+class Foo {
+  static get bar() {}
+  static set baz(value) {}
+}
+
+--------------------------------------------------------------------------------
+
+(program
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        (modifiers)
+        name: (identifier)
+        parameters: (parameters)
+        body: (block_statement))
+      (method_declaration
+        (modifiers)
+        name: (identifier)
+        parameters: (parameters
+          (identifier))
+        body: (block_statement)))))

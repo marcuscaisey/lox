@@ -1,0 +1,14 @@
+var PI = 3;
+
+class Circle {
+  init(radius) {
+    this.radius = radius;
+  }
+
+  get area() {
+    return PI * this.radius * this.radius;
+  }
+}
+
+var c = Circle(2);
+print c.area; // prints: 12

@@ -1,0 +1,16 @@
+class Config {
+  static get VALUE() {
+    return this._value;
+  }
+
+  static set VALUE(value) {
+    if (value <= 0) {
+      error("VALUE must be positive");
+    }
+    this._value = value;
+  }
+}
+
+Config.VALUE = 1;
+print Config.VALUE; // prints: 1
+Config.VALUE = -1; // error: VALUE must be positive

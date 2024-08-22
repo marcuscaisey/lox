@@ -168,6 +168,14 @@
           {
             "type": "STRING",
             "value": "static"
+          },
+          {
+            "type": "STRING",
+            "value": "get"
+          },
+          {
+            "type": "STRING",
+            "value": "set"
           }
         ]
       }

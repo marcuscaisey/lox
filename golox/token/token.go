@@ -60,6 +60,8 @@ const (
 	This
 	Super
 	Static
+	Get
+	Set
 	keywordsEnd
 
 	// Literals
@@ -116,6 +118,8 @@ var typeStrings = map[Type]string{
 	This:         thisIdent,
 	Super:        "super",
 	Static:       "static",
+	Get:          "get",
+	Set:          "set",
 	Ident:        "identifier",
 	String:       "string",
 	Number:       "number",

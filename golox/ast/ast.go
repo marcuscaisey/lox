@@ -74,18 +74,11 @@ func (c ClassDecl) End() token.Position   { return c.RightBrace.End }
 
 // MethodDecl is a method declaration, such as
 //
-//	bar() {
-//	  return "baz";
-//	}
-//
-// or
-//
 //	static bar() {
 //	  return "baz";
 //	}
 type MethodDecl struct {
-	StartPos   token.Position
-	IsStatic   bool          `print:"named"`
+	Modifiers  []token.Token `print:"named"`
 	Name       token.Token   `print:"named"`
 	Params     []token.Token `print:"named"`
 	Body       []Stmt        `print:"named"`
@@ -93,8 +86,23 @@ type MethodDecl struct {
 	stmt
 }
 
-func (m MethodDecl) Start() token.Position { return m.StartPos }
-func (m MethodDecl) End() token.Position   { return m.RightBrace.End }
+func (m MethodDecl) Start() token.Position {
+	if len(m.Modifiers) > 0 {
+		return m.Modifiers[0].Start
+	}
+	return m.Name.Start
+}
+func (m MethodDecl) End() token.Position { return m.RightBrace.End }
+
+// HasModifier reports whether the declaration has a modifier of the target type.
+func (m MethodDecl) HasModifier(target token.Type) bool {
+	for _, modifier := range m.Modifiers {
+		if modifier.Type == target {
+			return true
+		}
+	}
+	return false
+}
 
 // ExprStmt is an expression statement, such as a function call.
 type ExprStmt struct {

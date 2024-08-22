@@ -163,18 +163,7 @@ func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
 }
 
 func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
-	instanceMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
-	staticMethodsByName := make(map[string]*loxFunction, len(stmt.Methods))
-	for _, methodDecl := range stmt.Methods {
-		name := stmt.Name.Lexeme + "." + methodDecl.Name.Lexeme
-		method := newLoxFunction(name, methodDecl.Params, methodDecl.Body, methodFunType(methodDecl), env)
-		if methodDecl.IsStatic {
-			staticMethodsByName[methodDecl.Name.Lexeme] = method
-		} else {
-			instanceMethodsByName[methodDecl.Name.Lexeme] = method
-		}
-	}
-	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, instanceMethodsByName, staticMethodsByName))
+	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, stmt.Methods, env))
 }
 
 func (i *Interpreter) execExprStmt(env *environment, stmt ast.ExprStmt) {
@@ -402,7 +391,7 @@ func (i *Interpreter) evalGetExpr(env *environment, expr ast.GetExpr) loxObject 
 	if !ok {
 		panic(lox.NewErrorFromNode(expr, "property access is not valid for %m object", object.Type()))
 	}
-	return getter.Get(expr.Name)
+	return getter.Get(i, expr.Name)
 }
 
 func (i *Interpreter) evalUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
@@ -490,7 +479,7 @@ func (i *Interpreter) evalSetExpr(env *environment, expr ast.SetExpr) loxObject 
 		panic(lox.NewErrorFromNode(expr, "property assignment is not valid for %m object", object.Type()))
 	}
 	value := i.evalExpr(env, expr.Value)
-	setter.Set(expr.Name, value)
+	setter.Set(i, expr.Name, value)
 	return value
 }
 

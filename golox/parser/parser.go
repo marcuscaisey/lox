@@ -129,22 +129,11 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	p.expect(token.LeftBrace)
 	var methods []ast.MethodDecl
 	for {
-		isStatic := false
-		name, ok := p.match2(token.Ident)
-		if !ok && p.match(token.Static) {
-			isStatic = true
-			name = p.expectf(token.Ident, "expected method name")
-		} else if !ok {
+		if decl, ok := p.parseMethodDecl(); ok {
+			methods = append(methods, decl)
+		} else {
 			break
 		}
-		params, body := p.parseFunParamsAndBody()
-		methods = append(methods, ast.MethodDecl{
-			IsStatic:   isStatic,
-			Name:       name,
-			Params:     params,
-			Body:       body.Stmts,
-			RightBrace: body.RightBrace,
-		})
 	}
 	rightBrace := p.expect(token.RightBrace)
 	return ast.ClassDecl{
@@ -153,6 +142,43 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 		Methods:    methods,
 		RightBrace: rightBrace,
 	}
+}
+
+func (p *parser) parseMethodDecl() (ast.MethodDecl, bool) {
+	var decl ast.MethodDecl
+
+	if tok, ok := p.match2(token.Static); ok {
+		decl.Modifiers = append(decl.Modifiers, tok)
+	}
+	if tok, ok := p.match2(token.Get, token.Set); ok {
+		decl.Modifiers = append(decl.Modifiers, tok)
+	}
+
+	if len(decl.Modifiers) > 0 {
+		decl.Name = p.expectf(token.Ident, "expected method name")
+	} else if tok, ok := p.match2(token.Ident); ok {
+		decl.Name = tok
+	} else {
+		return ast.MethodDecl{}, false
+	}
+
+	params, body := p.parseFunParamsAndBody()
+	decl.Params = params
+	decl.Body = body.Stmts
+	decl.RightBrace = body.RightBrace
+
+	switch {
+	case decl.HasModifier(token.Get) && len(params) > 0:
+		p.addError(params[0].Start, params[len(params)-1].End, "property getter cannot have parameters")
+	case decl.HasModifier(token.Set):
+		if len(params) == 0 {
+			p.addTokenError(decl.Name, "property setter must have a parameter")
+		} else if len(params) > 1 {
+			p.addError(params[1].Start, params[len(params)-1].End, "property setter can only have one parameter")
+		}
+	}
+
+	return decl, true
 }
 
 func (p *parser) parseFunParamsAndBody() ([]token.Token, ast.BlockStmt) {
@@ -485,7 +511,7 @@ func (p *parser) parseFunExpr(funTok token.Token) ast.FunExpr {
 	}
 }
 
-// match returns whether the current token is one of the given types and advances the parser if so.
+// match reports whether the current token is one of the given types and advances the parser if so.
 func (p *parser) match(types ...token.Type) bool {
 	for _, t := range types {
 		if p.tok.Type == t {

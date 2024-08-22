@@ -1929,6 +1929,10 @@
     "named": false
   },
   {
+    "type": "get",
+    "named": false
+  },
+  {
     "type": "identifier",
     "named": true
   },
@@ -1954,6 +1958,10 @@
   },
   {
     "type": "return",
+    "named": false
+  },
+  {
+    "type": "set",
     "named": false
   },
   {

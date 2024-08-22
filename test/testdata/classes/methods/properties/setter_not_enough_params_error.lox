@@ -1,0 +1,4 @@
+class Foo {
+  // error: property setter must have a parameter
+  set bar() {}
+}

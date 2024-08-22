@@ -44,3 +44,35 @@ class Math {
     return x * x;
   }
 }
+
+class Circle {
+  init(radius) {
+    this.radius = radius;
+  }
+
+  set radius(value) {
+// ^ keyword.modifier
+//    ^ function.method
+    if (value <= 0) {
+      error("Circle radius must be positive.");
+    }
+    this._radius = value;
+  }
+
+  get area() {
+// ^ keyword.modifier
+//    ^ function.method
+    return PI * this.radius * this.radius;
+  }
+}
+
+class Foo {
+  static get bar() {}
+// ^ keyword.modifier
+//       ^ keyword.modifier
+//           ^ function.method
+  static set baz(value) {}
+// ^ keyword.modifier
+//       ^ keyword.modifier
+//           ^ function.method
+}
