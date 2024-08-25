@@ -484,7 +484,7 @@ var PI = 3;
 
 class Circle {
   init(radius) {
-    this._radius = radius;
+    this.radius = radius;
   }
 
   get radius() {
