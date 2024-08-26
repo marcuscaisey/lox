@@ -50,6 +50,13 @@ func NewErrorFromNodeRange(start, end ast.Node, format string, args ...any) erro
 	return NewError(start.Start(), end.End(), format, args...)
 }
 
+var (
+	bold     = color.New(color.Bold)
+	faint    = color.New(color.Faint)
+	red      = color.New(color.FgRed)
+	faintRed = color.New(color.Faint, color.FgRed)
+)
+
 // Error formats the error by displaying the error message and highlighting the range of characters in the source code
 // that the error applies to.
 //
@@ -59,15 +66,13 @@ func NewErrorFromNodeRange(start, end ast.Node, format string, args ...any) erro
 //	print "bar;
 //	      ~~~~~
 func (e *Error) Error() string {
-	bold := color.New(color.Bold)
-	red := color.New(color.FgRed)
-
 	var b strings.Builder
 	buildString := func() string {
 		return strings.TrimSuffix(b.String(), "\n")
 	}
 
-	bold.Fprint(&b, e.start, ": ", red.Sprint("error: "), e.msg, "\n")
+	// red.Sprint resets the style, so we need to reapply bold to the message
+	bold.Fprint(&b, e.start, ": ", red.Sprint("error: "), bold.Sprint(e.msg), "\n")
 
 	lines := make([]string, e.end.Line-e.start.Line+1)
 	for i := e.start.Line; i <= e.end.Line; i++ {
@@ -79,7 +84,7 @@ func (e *Error) Error() string {
 		}
 		lines[i-e.start.Line] = string(line)
 	}
-	fmt.Fprintln(&b, lines[0])
+	faint.Fprintln(&b, lines[0])
 	if e.start == e.end {
 		// There's nothing to highlight
 		return buildString()
@@ -87,17 +92,17 @@ func (e *Error) Error() string {
 
 	if len(lines) == 1 {
 		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.start.Column]))))
-		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:e.end.Column]))))
+		faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:e.end.Column]))))
 	} else {
 		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.start.Column]))))
-		red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:]))))
+		faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:]))))
 		for _, line := range lines[1 : len(lines)-1] {
-			fmt.Fprintln(&b, string(line))
-			red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(line))))
+			faint.Fprintln(&b, string(line))
+			faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(line))))
 		}
 		if lastLine := lines[len(lines)-1]; len(lastLine) > 0 {
-			fmt.Fprintln(&b, string(lastLine))
-			red.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
+			faint.Fprintln(&b, string(lastLine))
+			faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
 		}
 	}
 
