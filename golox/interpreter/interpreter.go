@@ -91,32 +91,18 @@ func (i *Interpreter) formatStackTrace(callStack *stack[stackFrame]) string {
 }
 
 type stmtResult interface {
-	stmtResult()
+	isStmtResult()
 }
 
-type stmtResultNone struct{}
-
-func (stmtResultNone) stmtResult() {}
-
-type stmtResultBreak struct{}
-
-func (stmtResultBreak) stmtResult() {}
-
-type stmtResultContinue struct{}
-
-func (stmtResultContinue) stmtResult() {}
-
-type stmtResultReturn struct {
-	Value loxObject
-}
-
-func (stmtResultReturn) stmtResult() {}
-
-func (i *Interpreter) interpretProgram(node ast.Program) {
-	for _, stmt := range node.Stmts {
-		i.execStmt(i.globals, stmt)
+type (
+	stmtResultNone     struct{ stmtResult }
+	stmtResultBreak    struct{ stmtResult }
+	stmtResultContinue struct{ stmtResult }
+	stmtResultReturn   struct {
+		Value loxObject
+		stmtResult
 	}
-}
+)
 
 func (i *Interpreter) execStmt(env *environment, stmt ast.Stmt) stmtResult {
 	switch stmt := stmt.(type) {
