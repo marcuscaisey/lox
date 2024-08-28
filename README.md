@@ -566,25 +566,47 @@ If an error occurs during the execution of a program, execution will halt and th
 reported along with a stack trace.
 
 ```lox
-fun divide(x, y) {
-    return x / y;
+var PI = 3;
+
+class Circle {
+  init(radius) {
+    this.radius = radius;
+  }
+
+  get radius() {
+    return this._radius;
+  }
+
+  set radius(value) {
+    if (value <= 0) {
+      error("radius must be positive");
+    }
+    this._radius = value;
+  }
+
+  get area() {
+    return PI * this.radius * this.radius;
+  }
 }
 
 fun main() {
-    print divide(1, 0);
-    print divide(2, 0);
+  var c = Circle(-1);
+  print c.area;
 }
 
 main();
 ```
 
 ```
-test.lox:2:14: error: cannot divide by 0
-    return x / y;
-             ~
-Stack Trace:
-  divide(1, 0) at test.lox:6:11
-  main() at test.lox:10:1
+test.lox:14:7: error: radius must be positive
+      error("radius must be positive");
+      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Stack Trace (most recent call first):
+  test.lox:14:7  in set Circle.radius error("radius must be positive");
+  test.lox:5:10  in Circle.init       this.radius = radius;
+  test.lox:25:11 in main              var c = Circle(-1);
+  test.lox:29:1                       main();
 ```
 
 ### Built-in Functions

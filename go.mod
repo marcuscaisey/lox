@@ -21,7 +21,9 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	golang.org/x/mod v0.19.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
+
+replace github.com/fatih/color v1.17.0 => github.com/marcuscaisey/color v0.0.0-20240827185637-a96106a1b132

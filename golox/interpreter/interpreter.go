@@ -16,7 +16,7 @@ import (
 type Interpreter struct {
 	globals            *environment
 	declDistancesByTok map[token.Token]int
-	callStack          *stack[stackFrame]
+	callStack          *callStack
 
 	printExprStmtResults bool
 }
@@ -41,7 +41,7 @@ func New(opts ...Option) *Interpreter {
 	interpreter := &Interpreter{
 		globals:            globals,
 		declDistancesByTok: map[token.Token]int{},
-		callStack:          newStack[stackFrame](),
+		callStack:          newCallStack(),
 	}
 	for _, opt := range opts {
 		opt(interpreter)
@@ -51,43 +51,34 @@ func New(opts ...Option) *Interpreter {
 
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
-func (i *Interpreter) Interpret(program ast.Program) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			if loxErr, ok := r.(*lox.Error); ok {
-				err = loxErr
-				if i.callStack.Len() > 0 {
-					err = fmt.Errorf("%w\n\n%s", err, i.formatStackTrace(i.callStack))
-				}
-				i.callStack.Clear()
-			} else {
-				panic(r)
-			}
-		}
-	}()
+func (i *Interpreter) Interpret(program ast.Program) error {
 	declDistancesByTok, err := resolve(program)
 	if err != nil {
 		return err
 	}
 	maps.Copy(i.declDistancesByTok, declDistancesByTok)
-	i.interpretProgram(program)
-	return nil
+	return i.interpretProgram(program)
 }
 
-func (i *Interpreter) formatStackTrace(callStack *stack[stackFrame]) string {
-	var b strings.Builder
-	fmt.Fprintln(&b, "Stack Trace:")
-	for _, frame := range callStack.Backward() {
-		fmt.Fprintf(&b, "  %s(", frame.Function)
-		for i, arg := range frame.Args {
-			fmt.Fprint(&b, arg)
-			if i < len(frame.Args)-1 {
-				fmt.Fprint(&b, ", ")
+func (i *Interpreter) interpretProgram(node ast.Program) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if loxErr, ok := r.(*lox.Error); ok {
+				err = loxErr
+				if i.callStack.Len() > 0 {
+					i.callStack.Push("", loxErr.Start)
+					err = fmt.Errorf("%w\n\n%s", err, i.callStack.StackTrace())
+					i.callStack.Clear()
+				}
+			} else {
+				panic(r)
 			}
 		}
-		fmt.Fprintf(&b, ") at %s\n", frame.CallStart)
+	}()
+	for _, stmt := range node.Stmts {
+		i.execStmt(i.globals, stmt)
 	}
-	return b.String()
+	return nil
 }
 
 type stmtResult interface {
@@ -310,13 +301,6 @@ func (i *Interpreter) resolveIdent(env *environment, tok token.Token) loxObject 
 	return i.globals.Get(tok)
 }
 
-type stackFrame struct {
-	Function  string
-	Args      []loxObject
-	CallStart token.Position
-	CallEnd   token.Position
-}
-
 func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObject {
 	callee := i.evalExpr(env, expr.Callee)
 	args := make([]loxObject, len(expr.Args))
@@ -349,25 +333,27 @@ func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObjec
 		}
 		panic(lox.NewErrorFromNode(
 			expr,
-			"%s() missing %d argument%s: %s", callable.Name(), arity-len(args), argumentSuffix, missingArgsStr,
+			"%s() missing %d argument%s: %s", callable.CallableName(), arity-len(args), argumentSuffix, missingArgsStr,
 		))
 	case len(args) > arity:
 		panic(lox.NewErrorFromNodeRange(
 			expr.Args[arity],
 			expr.Args[len(args)-1],
-			"%s() accepts %d arguments but %d were given", callable.Name(), arity, len(args),
+			"%s() accepts %d arguments but %d were given", callable.CallableName(), arity, len(args),
 		))
 	}
 
-	i.callStack.Push(stackFrame{
-		Function:  callable.Name(),
-		Args:      args,
-		CallStart: expr.Start(),
-		CallEnd:   expr.End(),
-	})
+	result := i.call(expr.Start(), callable, args)
+	if errorMsg, ok := result.(errorMsg); ok {
+		panic(lox.NewErrorFromNode(expr, "%s", string(errorMsg)))
+	}
+	return result
+}
+
+func (i *Interpreter) call(location token.Position, callable loxCallable, args []loxObject) loxObject {
+	i.callStack.Push(callable.CallableName(), location)
 	result := callable.Call(i, args)
 	i.callStack.Pop()
-
 	return result
 }
 

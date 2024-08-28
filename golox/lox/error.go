@@ -18,9 +18,9 @@ import (
 // Error describes an error that occurred during the execution of a Lox program.
 // It can describe any error which can be attributed to a range of characters in the source code.
 type Error struct {
-	msg   string
-	start token.Position
-	end   token.Position
+	Msg   string
+	Start token.Position
+	End   token.Position
 }
 
 // NewError creates a [*Error].
@@ -28,9 +28,9 @@ type Error struct {
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
 func NewError(start token.Position, end token.Position, format string, args ...any) error {
 	return &Error{
-		msg:   fmt.Sprintf(format, args...),
-		start: start,
-		end:   end,
+		Msg:   fmt.Sprintf(format, args...),
+		Start: start,
+		End:   end,
 	}
 }
 
@@ -71,38 +71,37 @@ func (e *Error) Error() string {
 		return strings.TrimSuffix(b.String(), "\n")
 	}
 
-	// red.Sprint resets the style, so we need to reapply bold to the message
-	bold.Fprint(&b, e.start, ": ", red.Sprint("error: "), bold.Sprint(e.msg), "\n")
+	bold.Fprint(&b, fmt.Sprintf("%m", e.Start), ": ", red.Sprint("error"), ": ", e.Msg, "\n")
 
-	lines := make([]string, e.end.Line-e.start.Line+1)
-	for i := e.start.Line; i <= e.end.Line; i++ {
-		line := e.start.File.Line(i)
+	lines := make([]string, e.End.Line-e.Start.Line+1)
+	for i := e.Start.Line; i <= e.End.Line; i++ {
+		line := e.Start.File.Line(i)
 		if !utf8.Valid(line) {
 			// If any of the lines are not valid UTF-8 then we can't display the source code, so just return the error
 			// message on its own. This is a very rare case and it's not worth the effort to handle it any better.
 			return buildString()
 		}
-		lines[i-e.start.Line] = string(line)
+		lines[i-e.Start.Line] = string(line)
 	}
 	faint.Fprintln(&b, lines[0])
-	if e.start == e.end {
+	if e.Start == e.End {
 		// There's nothing to highlight
 		return buildString()
 	}
 
 	if len(lines) == 1 {
-		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.start.Column]))))
-		faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:e.end.Column]))))
+		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.Start.Column]))))
+		faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.Start.Column:e.End.Column]))))
 	} else {
-		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.start.Column]))))
-		faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.start.Column:]))))
+		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.Start.Column]))))
+		faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.Start.Column:]))))
 		for _, line := range lines[1 : len(lines)-1] {
 			faint.Fprintln(&b, string(line))
 			faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(line))))
 		}
 		if lastLine := lines[len(lines)-1]; len(lastLine) > 0 {
 			faint.Fprintln(&b, string(lastLine))
-			faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.end.Column]))))
+			faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.End.Column]))))
 		}
 	}
 
@@ -116,9 +115,9 @@ type Errors []*Error
 // The parameters are the same as for [NewError].
 func (e *Errors) Add(start token.Position, end token.Position, format string, args ...any) {
 	*e = append(*e, &Error{
-		msg:   fmt.Sprintf(format, args...),
-		start: start,
-		end:   end,
+		Msg:   fmt.Sprintf(format, args...),
+		Start: start,
+		End:   end,
 	})
 }
 
@@ -146,7 +145,7 @@ func (e Errors) Err() error {
 		return nil
 	}
 	slices.SortFunc([]*Error(e), func(e1, e2 *Error) int {
-		return e1.start.Compare(e2.start)
+		return e1.Start.Compare(e2.Start)
 	})
 	var errs []error
 	for _, err := range e {

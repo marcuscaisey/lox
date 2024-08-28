@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"unicode"
 
+	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 )
 
@@ -214,6 +215,28 @@ func (p Position) String() string {
 	line := p.File.Line(p.Line)
 	col := runewidth.StringWidth(string(line[:p.Column])) + 1
 	return fmt.Sprintf("%s%d:%d", prefix, p.Line, col)
+}
+
+var (
+	cyan   = color.New(color.FgCyan).SprintFunc()
+	yellow = color.New(color.FgYellow).SprintFunc()
+)
+
+// Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
+// position for use in an error message.
+func (p Position) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'm':
+		var prefix string
+		if p.File != nil && p.File.Name != "" {
+			prefix = cyan(p.File.Name) + ":"
+		}
+		line := p.File.Line(p.Line)
+		col := yellow(runewidth.StringWidth(string(line[:p.Column])) + 1)
+		fmt.Fprint(f, prefix, yellow(p.Line), ":", yellow(col))
+	default:
+		fmt.Fprintf(f, fmt.FormatString(f, verb), p.Line, p.Column)
+	}
 }
 
 // File is a simple representation of a file.

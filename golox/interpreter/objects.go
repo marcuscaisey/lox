@@ -55,7 +55,7 @@ type loxTruther interface {
 }
 
 type loxCallable interface {
-	Name() string
+	CallableName() string
 	Params() []string
 	Call(interpreter *Interpreter, args []loxObject) loxObject
 }
@@ -259,7 +259,7 @@ func methodFunType(decl ast.MethodDecl) funType {
 	return typ
 }
 
-type nativeFunBody func(interpreter *Interpreter, args []loxObject) loxObject
+type nativeFunBody func(args []loxObject) loxObject
 
 type loxFunction struct {
 	name       string
@@ -314,7 +314,7 @@ func (f *loxFunction) Type() loxType {
 	return loxTypeFunction
 }
 
-func (f *loxFunction) Name() string {
+func (f *loxFunction) CallableName() string {
 	return f.name
 }
 
@@ -324,7 +324,7 @@ func (f *loxFunction) Params() []string {
 
 func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject {
 	if f.nativeBody != nil {
-		return f.nativeBody(interpreter, args)
+		return f.nativeBody(args)
 	}
 
 	childEnv := f.closure.Child()
@@ -357,20 +357,20 @@ func newProperty(getter, setter *loxFunction) *property {
 	return &property{getter: getter, setter: setter}
 }
 
-func (p *property) Get(interpreter *Interpreter, instance *loxInstance) loxObject {
-	return p.getter.Bind(instance).Call(interpreter, nil)
+func (p *property) Get(interpreter *Interpreter, instance *loxInstance, name token.Token) loxObject {
+	return interpreter.call(name.Start, p.getter.Bind(instance), nil)
 }
 
 func (p *property) Set(interpreter *Interpreter, instance *loxInstance, name token.Token, value loxObject) {
 	if p.setter == nil {
 		panic(lox.NewErrorFromToken(name, "property '%s' of %m object is read-only", name.Lexeme, instance.Type()))
 	}
-	p.setter.Bind(instance).Call(interpreter, []loxObject{value})
+	interpreter.call(name.Start, p.setter.Bind(instance), []loxObject{value})
 }
 
 type loxClass struct {
 	*loxInstance     // instance of the metaclass or nil for the metaclass itself
-	name             string
+	Name             string
 	methodsByName    map[string]*loxFunction
 	propertiesByName map[string]*property
 }
@@ -386,16 +386,19 @@ func newLoxClass(name string, methods []ast.MethodDecl, env *environment) *loxCl
 			continue
 		}
 		var funcMap map[string]*loxFunction
+		methodName := name + "." + decl.Name.Lexeme
 		switch {
 		case decl.HasModifier(token.Get):
 			funcMap = gettersByName
+			// TODO: don't duplicate this logic between here and newLoxMetaclass
+			methodName = "get " + methodName
 		case decl.HasModifier(token.Set):
 			funcMap = settersByName
+			methodName = "set " + methodName
 		default:
 			funcMap = methodsByName
 		}
-		name := name + "." + decl.Name.Lexeme
-		funcMap[decl.Name.Lexeme] = newLoxFunction(name, decl.Params, decl.Body, methodFunType(decl), env)
+		funcMap[decl.Name.Lexeme] = newLoxFunction(methodName, decl.Params, decl.Body, methodFunType(decl), env)
 	}
 	// Every setter must have a corresponding getter so we can just iterate over the getters
 	propertiesByName := make(map[string]*property, len(gettersByName))
@@ -404,7 +407,7 @@ func newLoxClass(name string, methods []ast.MethodDecl, env *environment) *loxCl
 	}
 	metaclass := newLoxMetaclass(name, staticMethods, env)
 	return &loxClass{
-		name:             name,
+		Name:             name,
 		methodsByName:    methodsByName,
 		propertiesByName: propertiesByName,
 		loxInstance:      metaclass.Call(nil, nil).(*loxInstance),
@@ -417,16 +420,18 @@ func newLoxMetaclass(className string, methods []ast.MethodDecl, env *environmen
 	settersByName := make(map[string]*loxFunction, len(methods))
 	for _, decl := range methods {
 		var funcMap map[string]*loxFunction
+		methodName := className + "." + decl.Name.Lexeme
 		switch {
 		case decl.HasModifier(token.Get):
 			funcMap = gettersByName
+			methodName = "get " + methodName
 		case decl.HasModifier(token.Set):
 			funcMap = settersByName
+			methodName = "set " + methodName
 		default:
 			funcMap = methodsByName
 		}
-		name := className + "." + decl.Name.Lexeme
-		funcMap[decl.Name.Lexeme] = newLoxFunction(name, decl.Params, decl.Body, funTypeFunction|funTypeMethodFlag, env)
+		funcMap[decl.Name.Lexeme] = newLoxFunction(methodName, decl.Params, decl.Body, funTypeFunction|funTypeMethodFlag, env)
 	}
 	// Every setter must have a corresponding getter so we can just iterate over the getters
 	propertiesByName := make(map[string]*property, len(gettersByName))
@@ -434,7 +439,7 @@ func newLoxMetaclass(className string, methods []ast.MethodDecl, env *environmen
 		propertiesByName[name] = newProperty(getter, settersByName[name])
 	}
 	return &loxClass{
-		name:             fmt.Sprintf("%s class", className),
+		Name:             fmt.Sprintf("%s class", className),
 		methodsByName:    methodsByName,
 		propertiesByName: propertiesByName,
 	}
@@ -443,14 +448,19 @@ func newLoxMetaclass(className string, methods []ast.MethodDecl, env *environmen
 var (
 	_ loxObject   = &loxClass{}
 	_ loxCallable = &loxClass{}
+	_ loxGetter   = &loxClass{}
+	_ loxSetter   = &loxClass{}
 )
 
 func (c *loxClass) String() string {
-	return fmt.Sprintf("[class %s]", c.name)
+	return fmt.Sprintf("[class %s]", c.Name)
 }
 
-func (c *loxClass) Name() string {
-	return c.name
+func (c *loxClass) CallableName() string {
+	if init, ok := c.GetMethod(token.ConstructorIdent); ok {
+		return init.CallableName()
+	}
+	return c.Name
 }
 
 func (c *loxClass) Params() []string {
@@ -497,16 +507,16 @@ var (
 )
 
 func (i *loxInstance) String() string {
-	return fmt.Sprintf("[%s object]", i.class.Name())
+	return fmt.Sprintf("[%s object]", i.class.Name)
 }
 
 func (i *loxInstance) Type() loxType {
-	return loxType(i.class.Name())
+	return loxType(i.class.Name)
 }
 
 func (i *loxInstance) Get(interpreter *Interpreter, name token.Token) loxObject {
 	if property, ok := i.class.GetProperty(name.Lexeme); ok {
-		return property.Get(interpreter, i)
+		return property.Get(interpreter, i, name)
 	}
 
 	if value, ok := i.fieldValuesByName[name.Lexeme]; ok {
@@ -527,4 +537,16 @@ func (i *loxInstance) Set(interpreter *Interpreter, name token.Token, value loxO
 	}
 
 	i.fieldValuesByName[name.Lexeme] = value
+}
+
+// errorMsg is a special object which is returned by the built-in error function. It will be caught by the interpreter
+// and converted into a runtime error.
+type errorMsg string
+
+func (errorMsg) String() string {
+	panic("errorMsg is not a real loxObject")
+}
+
+func (errorMsg) Type() loxType {
+	panic("errorMsg is not a real loxObject")
 }

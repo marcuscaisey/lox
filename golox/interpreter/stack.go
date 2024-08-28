@@ -1,6 +1,10 @@
 package interpreter
 
-import "iter"
+import (
+	"fmt"
+	"iter"    //nolint:gci
+	"strings" //nolint:gci
+)
 
 type stack[E any] []E
 
@@ -44,4 +48,17 @@ func (s *stack[E]) Backward() iter.Seq2[int, E] {
 			}
 		}
 	}
+}
+
+func (s *stack[E]) String() string {
+	var b strings.Builder
+	fmt.Fprint(&b, "stack([")
+	for i, v := range *s {
+		fmt.Fprintf(&b, "%v", v)
+		if i < len(*s)-1 {
+			fmt.Fprint(&b, ", ")
+		}
+	}
+	fmt.Fprint(&b, "])")
+	return b.String()
 }
