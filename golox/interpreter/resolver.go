@@ -14,16 +14,17 @@ import (
 // parent scope, and so on.
 // If a token is not present in the map, then the identifier that it refers to was either declared globally or not at
 // all.
-func resolve(program ast.Program) (map[token.Token]int, error) {
+// Addtionally, for local variables, checks that they are not:
+//   - declared and never used
+//   - declared more than once in the same scope
+//   - used before they are defined
+func resolve(program ast.Program) (map[token.Token]int, lox.Errors) {
 	r := newResolver()
 	return r.Resolve(program)
 }
 
 type resolver struct {
 	scopes     *stack[scope]
-	inLoop     bool
-	curFunType funType
-
 	// map of identifier tokens to the distance to the declaration of the identifier that they refer to
 	declDistancesByTok map[token.Token]int
 
@@ -37,12 +38,9 @@ func newResolver() *resolver {
 	}
 }
 
-func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, error) {
+func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, lox.Errors) {
 	r.resolveProgram(program)
-	if err := r.errs.Err(); err != nil {
-		return nil, err
-	}
-	return r.declDistancesByTok, nil
+	return r.declDistancesByTok, r.errs
 }
 
 type identStatus int
@@ -187,9 +185,8 @@ func (r *resolver) resolveStmt(stmt ast.Stmt) {
 	case ast.ForStmt:
 		r.resolveForStmt(stmt)
 	case ast.BreakStmt:
-		r.resolveBreakStmt(stmt)
 	case ast.ContinueStmt:
-		r.resolveContinueStmt(stmt)
+		// Nothing to resolve
 	case ast.ReturnStmt:
 		r.resolveReturnStmt(stmt)
 	default:
@@ -214,15 +211,6 @@ func (r *resolver) resolveFunDecl(stmt ast.FunDecl) {
 }
 
 func (r *resolver) resolveFun(params []token.Token, body []ast.Stmt, funType funType) {
-	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
-	prevInLoop := r.inLoop
-	r.inLoop = false
-	defer func() { r.inLoop = prevInLoop }()
-
-	prevFunType := r.curFunType
-	r.curFunType = funType
-	defer func() { r.curFunType = prevFunType }()
-
 	endScope := r.beginScope()
 	defer endScope()
 	for _, param := range params {
@@ -245,26 +233,6 @@ func (r *resolver) resolveClassDecl(stmt ast.ClassDecl) {
 	scope.Use(token.CurrentInstanceIdent)
 	for _, methodDecl := range stmt.Methods {
 		r.resolveFun(methodDecl.Params, methodDecl.Body, methodFunType(methodDecl))
-	}
-	r.checkNoWriteOnlyProperties(stmt)
-}
-
-// TODO: Move this to a semantic analysis phase
-func (r *resolver) checkNoWriteOnlyProperties(stmt ast.ClassDecl) {
-	gettersByName := map[string]bool{}
-	setterNameToksByName := map[string]token.Token{}
-	for _, methodDecl := range stmt.Methods {
-		switch {
-		case methodDecl.HasModifier(token.Get):
-			gettersByName[methodDecl.Name.Lexeme] = true
-		case methodDecl.HasModifier(token.Set):
-			setterNameToksByName[methodDecl.Name.Lexeme] = methodDecl.Name
-		}
-	}
-	for name, nameTok := range setterNameToksByName {
-		if !gettersByName[name] {
-			r.errs.Add(lox.FromToken(nameTok), "write-only properties are not allowed")
-		}
 	}
 }
 
@@ -294,8 +262,6 @@ func (r *resolver) resolveIfStmt(stmt ast.IfStmt) {
 
 func (r *resolver) resolveWhileStmt(stmt ast.WhileStmt) {
 	r.resolveExpr(stmt.Condition)
-	endLoop := r.beginLoop()
-	defer endLoop()
 	r.resolveStmt(stmt.Body)
 }
 
@@ -311,38 +277,11 @@ func (r *resolver) resolveForStmt(stmt ast.ForStmt) {
 	if stmt.Update != nil {
 		r.resolveExpr(stmt.Update)
 	}
-	endLoop := r.beginLoop()
-	defer endLoop()
 	r.resolveStmt(stmt.Body)
 }
 
-// beginLoop sets the inLoop flag to true and returns a function which resets it to its previous value
-func (r *resolver) beginLoop() func() {
-	prev := r.inLoop
-	r.inLoop = true
-	return func() { r.inLoop = prev }
-}
-
-func (r *resolver) resolveBreakStmt(stmt ast.BreakStmt) {
-	if !r.inLoop {
-		r.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a loop", token.Break)
-	}
-}
-
-func (r *resolver) resolveContinueStmt(stmt ast.ContinueStmt) {
-	if !r.inLoop {
-		r.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a loop", token.Continue)
-	}
-}
-
 func (r *resolver) resolveReturnStmt(stmt ast.ReturnStmt) {
-	if r.curFunType == funTypeNone {
-		r.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a function definition", token.Return)
-	}
 	if stmt.Value != nil {
-		if r.curFunType.IsConstructor() {
-			r.errs.Addf(lox.FromNode(stmt), "%s() cannot return a value", token.ConstructorIdent)
-		}
 		r.resolveExpr(stmt.Value)
 	}
 }
@@ -387,17 +326,12 @@ func (r *resolver) resolveGroupExpr(expr ast.GroupExpr) {
 }
 
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
-	if expr.Name.Lexeme == token.PlaceholderIdent {
-		r.errs.Addf(lox.FromToken(expr.Name), "identifier %s cannot be used in a non-assignment expression", token.PlaceholderIdent)
-	} else {
+	if expr.Name.Lexeme != token.PlaceholderIdent {
 		r.resolveIdent(expr.Name, identOpRead)
 	}
 }
 
 func (r *resolver) resolveThisExpr(expr ast.ThisExpr) {
-	if !r.curFunType.IsMethod() {
-		r.errs.Addf(lox.FromNode(expr), "%m can only be used inside a method definition", token.This)
-	}
 	r.resolveIdent(expr.This, identOpRead)
 }
 
