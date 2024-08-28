@@ -8,7 +8,7 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-// resolve resolves the identifier tokens in a program to the declarations that they refer to.
+// resolveIdents resolves the identifier tokens in a program to the declarations that they refer to.
 // It returns a map from identifier tokens to the distance to the declaration of the identifier that they refer to.
 // A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
 // parent scope, and so on.
@@ -18,27 +18,27 @@ import (
 //   - declared and never used
 //   - declared more than once in the same scope
 //   - used before they are defined
-func resolve(program ast.Program) (map[token.Token]int, lox.Errors) {
-	r := newResolver()
+func resolveIdents(program ast.Program) (map[token.Token]int, lox.Errors) {
+	r := newIdentResolver()
 	return r.Resolve(program)
 }
 
-type resolver struct {
-	scopes     *stack[scope]
+type identResolver struct {
+	scopes *stack[scope]
 	// map of identifier tokens to the distance to the declaration of the identifier that they refer to
 	declDistancesByTok map[token.Token]int
 
 	errs lox.Errors
 }
 
-func newResolver() *resolver {
-	return &resolver{
+func newIdentResolver() *identResolver {
+	return &identResolver{
 		scopes:             newStack[scope](),
 		declDistancesByTok: map[token.Token]int{},
 	}
 }
 
-func (r *resolver) Resolve(program ast.Program) (map[token.Token]int, lox.Errors) {
+func (r *identResolver) Resolve(program ast.Program) (map[token.Token]int, lox.Errors) {
 	r.resolveProgram(program)
 	return r.declDistancesByTok, r.errs
 }
@@ -105,7 +105,7 @@ func (s scope) UnusedIdents() []token.Token {
 }
 
 // beginScope creates a new scope and returns a function that ends the scope
-func (r *resolver) beginScope() func() {
+func (r *identResolver) beginScope() func() {
 	r.scopes.Push(scope{})
 	return func() {
 		scope := r.scopes.Pop()
@@ -115,7 +115,7 @@ func (r *resolver) beginScope() func() {
 	}
 }
 
-func (r *resolver) declareIdent(tok token.Token) {
+func (r *identResolver) declareIdent(tok token.Token) {
 	if r.scopes.Len() == 0 {
 		return
 	}
@@ -126,7 +126,7 @@ func (r *resolver) declareIdent(tok token.Token) {
 	}
 }
 
-func (r *resolver) defineIdent(tok token.Token) {
+func (r *identResolver) defineIdent(tok token.Token) {
 	for _, scope := range r.scopes.Backward() {
 		if scope.IsDeclared(tok.Lexeme) {
 			scope.Define(tok.Lexeme)
@@ -143,7 +143,7 @@ const (
 	identOpWrite
 )
 
-func (r *resolver) resolveIdent(tok token.Token, op identOp) {
+func (r *identResolver) resolveIdent(tok token.Token, op identOp) {
 	for i, scope := range r.scopes.Backward() {
 		if scope.IsDeclared(tok.Lexeme) {
 			scope.Use(tok.Lexeme)
@@ -158,13 +158,13 @@ func (r *resolver) resolveIdent(tok token.Token, op identOp) {
 	// The identifier will either be declared globally later in the program or not at all
 }
 
-func (r *resolver) resolveProgram(program ast.Program) {
+func (r *identResolver) resolveProgram(program ast.Program) {
 	for _, stmt := range program.Stmts {
 		r.resolveStmt(stmt)
 	}
 }
 
-func (r *resolver) resolveStmt(stmt ast.Stmt) {
+func (r *identResolver) resolveStmt(stmt ast.Stmt) {
 	switch stmt := stmt.(type) {
 	case ast.VarDecl:
 		r.resolveVarDecl(stmt)
@@ -194,7 +194,7 @@ func (r *resolver) resolveStmt(stmt ast.Stmt) {
 	}
 }
 
-func (r *resolver) resolveVarDecl(stmt ast.VarDecl) {
+func (r *identResolver) resolveVarDecl(stmt ast.VarDecl) {
 	if stmt.Initialiser != nil {
 		r.resolveExpr(stmt.Initialiser)
 		r.declareIdent(stmt.Name)
@@ -204,13 +204,13 @@ func (r *resolver) resolveVarDecl(stmt ast.VarDecl) {
 	}
 }
 
-func (r *resolver) resolveFunDecl(stmt ast.FunDecl) {
+func (r *identResolver) resolveFunDecl(stmt ast.FunDecl) {
 	r.declareIdent(stmt.Name)
 	r.defineIdent(stmt.Name)
-	r.resolveFun(stmt.Params, stmt.Body, funTypeFunction)
+	r.resolveFun(stmt.Params, stmt.Body)
 }
 
-func (r *resolver) resolveFun(params []token.Token, body []ast.Stmt, funType funType) {
+func (r *identResolver) resolveFun(params []token.Token, body []ast.Stmt) {
 	endScope := r.beginScope()
 	defer endScope()
 	for _, param := range params {
@@ -222,7 +222,7 @@ func (r *resolver) resolveFun(params []token.Token, body []ast.Stmt, funType fun
 	}
 }
 
-func (r *resolver) resolveClassDecl(stmt ast.ClassDecl) {
+func (r *identResolver) resolveClassDecl(stmt ast.ClassDecl) {
 	r.declareIdent(stmt.Name)
 	r.defineIdent(stmt.Name)
 	endScope := r.beginScope()
@@ -232,19 +232,19 @@ func (r *resolver) resolveClassDecl(stmt ast.ClassDecl) {
 	scope.Define(token.CurrentInstanceIdent)
 	scope.Use(token.CurrentInstanceIdent)
 	for _, methodDecl := range stmt.Methods {
-		r.resolveFun(methodDecl.Params, methodDecl.Body, methodFunType(methodDecl))
+		r.resolveFun(methodDecl.Params, methodDecl.Body)
 	}
 }
 
-func (r *resolver) resolveExprStmt(stmt ast.ExprStmt) {
+func (r *identResolver) resolveExprStmt(stmt ast.ExprStmt) {
 	r.resolveExpr(stmt.Expr)
 }
 
-func (r *resolver) resolvePrintStmt(stmt ast.PrintStmt) {
+func (r *identResolver) resolvePrintStmt(stmt ast.PrintStmt) {
 	r.resolveExpr(stmt.Expr)
 }
 
-func (r *resolver) resolveBlockStmt(stmt ast.BlockStmt) {
+func (r *identResolver) resolveBlockStmt(stmt ast.BlockStmt) {
 	exitScope := r.beginScope()
 	defer exitScope()
 	for _, stmt := range stmt.Stmts {
@@ -252,7 +252,7 @@ func (r *resolver) resolveBlockStmt(stmt ast.BlockStmt) {
 	}
 }
 
-func (r *resolver) resolveIfStmt(stmt ast.IfStmt) {
+func (r *identResolver) resolveIfStmt(stmt ast.IfStmt) {
 	r.resolveExpr(stmt.Condition)
 	r.resolveStmt(stmt.Then)
 	if stmt.Else != nil {
@@ -260,12 +260,12 @@ func (r *resolver) resolveIfStmt(stmt ast.IfStmt) {
 	}
 }
 
-func (r *resolver) resolveWhileStmt(stmt ast.WhileStmt) {
+func (r *identResolver) resolveWhileStmt(stmt ast.WhileStmt) {
 	r.resolveExpr(stmt.Condition)
 	r.resolveStmt(stmt.Body)
 }
 
-func (r *resolver) resolveForStmt(stmt ast.ForStmt) {
+func (r *identResolver) resolveForStmt(stmt ast.ForStmt) {
 	endScope := r.beginScope()
 	defer endScope()
 	if stmt.Initialise != nil {
@@ -280,13 +280,13 @@ func (r *resolver) resolveForStmt(stmt ast.ForStmt) {
 	r.resolveStmt(stmt.Body)
 }
 
-func (r *resolver) resolveReturnStmt(stmt ast.ReturnStmt) {
+func (r *identResolver) resolveReturnStmt(stmt ast.ReturnStmt) {
 	if stmt.Value != nil {
 		r.resolveExpr(stmt.Value)
 	}
 }
 
-func (r *resolver) resolveExpr(expr ast.Expr) {
+func (r *identResolver) resolveExpr(expr ast.Expr) {
 	switch expr := expr.(type) {
 	case ast.FunExpr:
 		r.resolveFunExpr(expr)
@@ -317,57 +317,57 @@ func (r *resolver) resolveExpr(expr ast.Expr) {
 	}
 }
 
-func (r *resolver) resolveFunExpr(expr ast.FunExpr) {
-	r.resolveFun(expr.Params, expr.Body, funTypeFunction)
+func (r *identResolver) resolveFunExpr(expr ast.FunExpr) {
+	r.resolveFun(expr.Params, expr.Body)
 }
 
-func (r *resolver) resolveGroupExpr(expr ast.GroupExpr) {
+func (r *identResolver) resolveGroupExpr(expr ast.GroupExpr) {
 	r.resolveExpr(expr.Expr)
 }
 
-func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
+func (r *identResolver) resolveVariableExpr(expr ast.VariableExpr) {
 	if expr.Name.Lexeme != token.PlaceholderIdent {
 		r.resolveIdent(expr.Name, identOpRead)
 	}
 }
 
-func (r *resolver) resolveThisExpr(expr ast.ThisExpr) {
+func (r *identResolver) resolveThisExpr(expr ast.ThisExpr) {
 	r.resolveIdent(expr.This, identOpRead)
 }
 
-func (r *resolver) resolveBinaryExpr(expr ast.BinaryExpr) {
+func (r *identResolver) resolveBinaryExpr(expr ast.BinaryExpr) {
 	r.resolveExpr(expr.Left)
 	r.resolveExpr(expr.Right)
 }
 
-func (r *resolver) resolveTernaryExpr(expr ast.TernaryExpr) {
+func (r *identResolver) resolveTernaryExpr(expr ast.TernaryExpr) {
 	r.resolveExpr(expr.Condition)
 	r.resolveExpr(expr.Then)
 	r.resolveExpr(expr.Else)
 }
 
-func (r *resolver) resolveCallExpr(expr ast.CallExpr) {
+func (r *identResolver) resolveCallExpr(expr ast.CallExpr) {
 	r.resolveExpr(expr.Callee)
 	for _, arg := range expr.Args {
 		r.resolveExpr(arg)
 	}
 }
 
-func (r *resolver) resolveGetExpr(expr ast.GetExpr) {
+func (r *identResolver) resolveGetExpr(expr ast.GetExpr) {
 	r.resolveExpr(expr.Object)
 }
 
-func (r *resolver) resolveUnaryExpr(expr ast.UnaryExpr) {
+func (r *identResolver) resolveUnaryExpr(expr ast.UnaryExpr) {
 	r.resolveExpr(expr.Right)
 }
 
-func (r *resolver) resolveAssignmentExpr(expr ast.AssignmentExpr) {
+func (r *identResolver) resolveAssignmentExpr(expr ast.AssignmentExpr) {
 	r.resolveExpr(expr.Right)
 	r.resolveIdent(expr.Left, identOpWrite)
 	r.defineIdent(expr.Left)
 }
 
-func (r *resolver) resolveSetExpr(expr ast.SetExpr) {
+func (r *identResolver) resolveSetExpr(expr ast.SetExpr) {
 	r.resolveExpr(expr.Value)
 	r.resolveExpr(expr.Object)
 }

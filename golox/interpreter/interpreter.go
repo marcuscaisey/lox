@@ -52,7 +52,7 @@ func New(opts ...Option) *Interpreter {
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program ast.Program) error {
-	declDistancesByTok, errs := resolve(program)
+	declDistancesByTok, errs := resolveIdents(program)
 	errs = append(errs, checkSemantics(program)...)
 	if err := errs.Err(); err != nil {
 		return err
