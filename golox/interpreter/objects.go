@@ -104,12 +104,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 			return n * right
 		case token.Slash:
 			if right == 0 {
-				panic(lox.NewErrorFromToken(op, "cannot divide by 0"))
+				panic(lox.NewError(lox.FromToken(op), "cannot divide by 0"))
 			}
 			return n / right
 		case token.Percent:
 			if right == 0 {
-				panic(lox.NewErrorFromToken(op, "cannot modulo by 0"))
+				panic(lox.NewError(lox.FromToken(op), "cannot modulo by 0"))
 			}
 			return loxNumber(math.Mod(float64(n), float64(right)))
 		case token.Plus:
@@ -136,10 +136,10 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
 	if math.Floor(float64(n)) != float64(n) {
-		panic(lox.NewErrorFromToken(op, "cannot multiply %m by non-integer %m", loxTypeString, loxTypeNumber))
+		panic(lox.NewErrorf(lox.FromToken(op), "cannot multiply %m by non-integer %m", loxTypeString, loxTypeNumber))
 	}
 	if n < 0 {
-		panic(lox.NewErrorFromToken(op, "cannot multiply %m by negative %m", loxTypeString, loxTypeNumber))
+		panic(lox.NewErrorf(lox.FromToken(op), "cannot multiply %m by negative %m", loxTypeString, loxTypeNumber))
 	}
 	return loxString(strings.Repeat(string(s), int(n)))
 }
@@ -363,7 +363,7 @@ func (p *property) Get(interpreter *Interpreter, instance *loxInstance, name tok
 
 func (p *property) Set(interpreter *Interpreter, instance *loxInstance, name token.Token, value loxObject) {
 	if p.setter == nil {
-		panic(lox.NewErrorFromToken(name, "property '%s' of %m object is read-only", name.Lexeme, instance.Type()))
+		panic(lox.NewErrorf(lox.FromToken(name), "property '%s' of %m object is read-only", name.Lexeme, instance.Type()))
 	}
 	interpreter.call(name.Start, p.setter.Bind(instance), []loxObject{value})
 }
@@ -527,7 +527,7 @@ func (i *loxInstance) Get(interpreter *Interpreter, name token.Token) loxObject 
 		return method.Bind(i)
 	}
 
-	panic(lox.NewErrorFromToken(name, "%m object has no property %s", i.Type(), name.Lexeme))
+	panic(lox.NewErrorf(lox.FromToken(name), "%m object has no property %s", i.Type(), name.Lexeme))
 }
 
 func (i *loxInstance) Set(interpreter *Interpreter, name token.Token, value loxObject) {

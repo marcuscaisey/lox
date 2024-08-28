@@ -112,7 +112,7 @@ func (r *resolver) beginScope() func() {
 	return func() {
 		scope := r.scopes.Pop()
 		for _, tok := range scope.UnusedIdents() {
-			r.errs.AddFromToken(tok, "%s has been declared but is never used", tok.Lexeme)
+			r.errs.Addf(lox.FromToken(tok), "%s has been declared but is never used", tok.Lexeme)
 		}
 	}
 }
@@ -122,7 +122,7 @@ func (r *resolver) declareIdent(tok token.Token) {
 		return
 	}
 	if scope := r.scopes.Peek(); scope.IsDeclared(tok.Lexeme) {
-		r.errs.AddFromToken(tok, "%s has already been declared", tok.Lexeme)
+		r.errs.Addf(lox.FromToken(tok), "%s has already been declared", tok.Lexeme)
 	} else {
 		scope.DeclareFromToken(tok)
 	}
@@ -150,7 +150,7 @@ func (r *resolver) resolveIdent(tok token.Token, op identOp) {
 		if scope.IsDeclared(tok.Lexeme) {
 			scope.Use(tok.Lexeme)
 			if !scope.IsDefined(tok.Lexeme) && op == identOpRead {
-				r.errs.AddFromToken(tok, "%s has not been defined", tok.Lexeme)
+				r.errs.Addf(lox.FromToken(tok), "%s has not been defined", tok.Lexeme)
 			} else {
 				r.declDistancesByTok[tok] = r.scopes.Len() - 1 - i
 			}
@@ -263,7 +263,7 @@ func (r *resolver) checkNoWriteOnlyProperties(stmt ast.ClassDecl) {
 	}
 	for name, nameTok := range setterNameToksByName {
 		if !gettersByName[name] {
-			r.errs.AddFromToken(nameTok, "write-only properties are not allowed")
+			r.errs.Add(lox.FromToken(nameTok), "write-only properties are not allowed")
 		}
 	}
 }
@@ -325,23 +325,23 @@ func (r *resolver) beginLoop() func() {
 
 func (r *resolver) resolveBreakStmt(stmt ast.BreakStmt) {
 	if !r.inLoop {
-		r.errs.AddFromNode(stmt, "%m can only be used inside a loop", token.Break)
+		r.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a loop", token.Break)
 	}
 }
 
 func (r *resolver) resolveContinueStmt(stmt ast.ContinueStmt) {
 	if !r.inLoop {
-		r.errs.AddFromNode(stmt, "%m can only be used inside a loop", token.Continue)
+		r.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a loop", token.Continue)
 	}
 }
 
 func (r *resolver) resolveReturnStmt(stmt ast.ReturnStmt) {
 	if r.curFunType == funTypeNone {
-		r.errs.AddFromNode(stmt, "%m can only be used inside a function definition", token.Return)
+		r.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a function definition", token.Return)
 	}
 	if stmt.Value != nil {
 		if r.curFunType.IsConstructor() {
-			r.errs.AddFromNode(stmt, "%s() cannot return a value", token.ConstructorIdent)
+			r.errs.Addf(lox.FromNode(stmt), "%s() cannot return a value", token.ConstructorIdent)
 		}
 		r.resolveExpr(stmt.Value)
 	}
@@ -388,7 +388,7 @@ func (r *resolver) resolveGroupExpr(expr ast.GroupExpr) {
 
 func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
 	if expr.Name.Lexeme == token.PlaceholderIdent {
-		r.errs.AddFromToken(expr.Name, "identifier %s cannot be used in a non-assignment expression", token.PlaceholderIdent)
+		r.errs.Addf(lox.FromToken(expr.Name), "identifier %s cannot be used in a non-assignment expression", token.PlaceholderIdent)
 	} else {
 		r.resolveIdent(expr.Name, identOpRead)
 	}
@@ -396,7 +396,7 @@ func (r *resolver) resolveVariableExpr(expr ast.VariableExpr) {
 
 func (r *resolver) resolveThisExpr(expr ast.ThisExpr) {
 	if !r.curFunType.IsMethod() {
-		r.errs.AddFromNode(expr, "%m can only be used inside a method definition", token.This)
+		r.errs.Addf(lox.FromNode(expr), "%m can only be used inside a method definition", token.This)
 	}
 	r.resolveIdent(expr.This, identOpRead)
 }

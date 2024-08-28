@@ -26,7 +26,7 @@ func Parse(r io.Reader) (ast.Program, error) {
 	p := &parser{lexer: lexer}
 	errHandler := func(tok token.Token, format string, args ...any) {
 		p.lastErrPos = tok.Start
-		p.errs.AddFromToken(tok, format, args...)
+		p.errs.Addf(lox.FromToken(tok), format, args...)
 	}
 	lexer.SetErrorHandler(errHandler)
 
@@ -169,12 +169,12 @@ func (p *parser) parseMethodDecl() (ast.MethodDecl, bool) {
 
 	switch {
 	case decl.HasModifier(token.Get) && len(params) > 0:
-		p.addError(params[0].Start, params[len(params)-1].End, "property getter cannot have parameters")
+		p.addError(lox.FromTokens(params[0], params[len(params)-1]), "property getter cannot have parameters")
 	case decl.HasModifier(token.Set):
 		if len(params) == 0 {
-			p.addTokenError(decl.Name, "property setter must have a parameter")
+			p.addError(lox.FromToken(decl.Name), "property setter must have a parameter")
 		} else if len(params) > 1 {
-			p.addError(params[1].Start, params[len(params)-1].End, "property setter can only have one parameter")
+			p.addError(lox.FromTokens(params[1], params[len(params)-1]), "property setter can only have one parameter")
 		}
 	}
 
@@ -201,7 +201,7 @@ func (p *parser) parseParams() []token.Token {
 	for p.match(token.Comma) {
 		param := p.expectf(token.Ident, "expected parameter name")
 		if seen[param.Lexeme] {
-			p.addTokenError(param, "duplicate parameter %s", param.Lexeme)
+			p.addErrorf(lox.FromToken(param), "duplicate parameter %s", param.Lexeme)
 		}
 		params = append(params, param)
 		if param.Lexeme != token.PlaceholderIdent {
@@ -209,7 +209,7 @@ func (p *parser) parseParams() []token.Token {
 		}
 	}
 	if len(params) > maxParams {
-		p.addTokenError(params[maxParams], "cannot define more than %d function parameters", maxParams)
+		p.addErrorf(lox.FromToken(params[maxParams]), "cannot define more than %d function parameters", maxParams)
 	}
 	return params
 }
@@ -348,7 +348,7 @@ func (p *parser) parseAssignmentExpr() ast.Expr {
 				Value:  right,
 			}
 		default:
-			p.addNodeError(expr, "invalid assignment target")
+			p.addError(lox.FromNode(expr), "invalid assignment target")
 		}
 	}
 	return expr
@@ -458,7 +458,7 @@ func (p *parser) parseArgs() []ast.Expr {
 		args = append(args, p.parseAssignmentExpr())
 	}
 	if len(args) > maxArgs {
-		p.addNodeError(args[maxArgs], "cannot pass more than %d arguments to function", maxArgs)
+		p.addErrorf(lox.FromNode(args[maxArgs]), "cannot pass more than %d arguments to function", maxArgs)
 	}
 	return args
 }
@@ -479,7 +479,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 		return ast.GroupExpr{LeftParen: tok, Expr: expr, RightParen: rightParen}
 	// Error productions
 	case p.match(token.EqualEqual, token.BangEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus):
-		p.addTokenError(tok, "binary operator %m must have left and right operands", tok.Type)
+		p.addErrorf(lox.FromToken(tok), "binary operator %m must have left and right operands", tok.Type)
 		var right ast.Expr
 		switch tok.Type {
 		case token.EqualEqual, token.BangEqual:
@@ -496,7 +496,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			Right: right,
 		}
 	default:
-		p.addTokenError(tok, "expected expression")
+		p.addError(lox.FromToken(tok), "expected expression")
 		panic(unwind{})
 	}
 }
@@ -541,7 +541,7 @@ func (p *parser) expectf(t token.Type, format string, a ...any) token.Token {
 		p.next()
 		return tok
 	}
-	p.addTokenError(p.tok, format, a...)
+	p.addErrorf(lox.FromToken(p.tok), format, a...)
 	panic(unwind{})
 }
 
@@ -551,19 +551,16 @@ func (p *parser) next() {
 	p.nextTok = p.lexer.Next()
 }
 
-func (p *parser) addError(start token.Position, end token.Position, format string, args ...any) {
+func (p *parser) addError(rang lox.ErrorRange, message string) {
+	p.addErrorf(rang, "%s", message)
+}
+
+func (p *parser) addErrorf(rang lox.ErrorRange, format string, args ...any) {
+	start, _ := rang()
 	if len(p.errs) > 0 && start == p.lastErrPos {
 		return
 	}
-	p.errs.Add(start, end, format, args...)
-}
-
-func (p *parser) addTokenError(tok token.Token, format string, a ...any) {
-	p.addError(tok.Start, tok.End, format, a...)
-}
-
-func (p *parser) addNodeError(node ast.Node, format string, a ...any) {
-	p.addError(node.Start(), node.End(), format, a...)
+	p.errs.Addf(rang, format, args...)
 }
 
 // unwind is used as a panic value so that we can unwind the stack and recover from a parsing error without having to

@@ -70,7 +70,7 @@ func (e *environment) Declare(tok token.Token) {
 		return
 	}
 	if _, ok := e.valuesByIdent[tok.Lexeme]; ok {
-		panic(lox.NewErrorFromToken(tok, "%s has already been declared", tok.Lexeme))
+		panic(lox.NewErrorf(lox.FromToken(tok), "%s has already been declared", tok.Lexeme))
 	}
 	e.valuesByIdent[tok.Lexeme] = nil
 }
@@ -88,7 +88,7 @@ func (e *environment) Define(tok token.Token, value loxObject) {
 		panic(fmt.Sprintf("attempt to define %s to nil", tok.Lexeme))
 	}
 	if _, ok := e.valuesByIdent[tok.Lexeme]; ok {
-		panic(lox.NewErrorFromToken(tok, "%s has already been declared", tok.Lexeme))
+		panic(lox.NewErrorf(lox.FromToken(tok), "%s has already been declared", tok.Lexeme))
 	}
 	e.valuesByIdent[tok.Lexeme] = value
 }
@@ -125,7 +125,7 @@ func (e *environment) Assign(tok token.Token, value loxObject) {
 	}
 	_, ok := e.valuesByIdent[tok.Lexeme]
 	if !ok {
-		panic(lox.NewErrorFromToken(tok, "%s has not been declared", tok.Lexeme))
+		panic(lox.NewErrorf(lox.FromToken(tok), "%s has not been declared", tok.Lexeme))
 	}
 	e.valuesByIdent[tok.Lexeme] = value
 }
@@ -140,10 +140,10 @@ func (e *environment) AssignAt(distance int, tok token.Token, value loxObject) {
 func (e *environment) Get(tok token.Token) loxObject {
 	value, ok := e.valuesByIdent[tok.Lexeme]
 	if !ok {
-		panic(lox.NewErrorFromToken(tok, "%s has not been declared", tok.Lexeme))
+		panic(lox.NewErrorf(lox.FromToken(tok), "%s has not been declared", tok.Lexeme))
 	}
 	if value == nil {
-		panic(lox.NewErrorFromToken(tok, "%s has not been defined", tok.Lexeme))
+		panic(lox.NewErrorf(lox.FromToken(tok), "%s has not been defined", tok.Lexeme))
 	}
 	return value
 }
