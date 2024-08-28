@@ -376,21 +376,30 @@ type loxClass struct {
 }
 
 func newLoxClass(name string, methods []ast.MethodDecl, env *environment) *loxClass {
-	methodsByName := make(map[string]*loxFunction, len(methods))
-	gettersByName := make(map[string]*loxFunction, len(methods))
-	settersByName := make(map[string]*loxFunction, len(methods))
+	instanceMethods := make([]ast.MethodDecl, 0, len(methods))
 	staticMethods := make([]ast.MethodDecl, 0, len(methods))
 	for _, decl := range methods {
 		if decl.HasModifier(token.Static) {
 			staticMethods = append(staticMethods, decl)
-			continue
+		} else {
+			instanceMethods = append(instanceMethods, decl)
 		}
+	}
+	metaclass := newLoxClassWithMetaclass(name, staticMethods, env, nil)
+	metaclass.Name = fmt.Sprintf("%s class", name)
+	return newLoxClassWithMetaclass(name, instanceMethods, env, metaclass)
+}
+
+func newLoxClassWithMetaclass(name string, methods []ast.MethodDecl, env *environment, metaclass *loxClass) *loxClass {
+	methodsByName := make(map[string]*loxFunction, len(methods))
+	gettersByName := make(map[string]*loxFunction, len(methods))
+	settersByName := make(map[string]*loxFunction, len(methods))
+	for _, decl := range methods {
 		var funcMap map[string]*loxFunction
 		methodName := name + "." + decl.Name.Lexeme
 		switch {
 		case decl.HasModifier(token.Get):
 			funcMap = gettersByName
-			// TODO: don't duplicate this logic between here and newLoxMetaclass
 			methodName = "get " + methodName
 		case decl.HasModifier(token.Set):
 			funcMap = settersByName
@@ -405,44 +414,15 @@ func newLoxClass(name string, methods []ast.MethodDecl, env *environment) *loxCl
 	for name, getter := range gettersByName {
 		propertiesByName[name] = newProperty(getter, settersByName[name])
 	}
-	metaclass := newLoxMetaclass(name, staticMethods, env)
-	return &loxClass{
+	class := &loxClass{
 		Name:             name,
 		methodsByName:    methodsByName,
 		propertiesByName: propertiesByName,
-		loxInstance:      metaclass.Call(nil, nil).(*loxInstance),
 	}
-}
-
-func newLoxMetaclass(className string, methods []ast.MethodDecl, env *environment) *loxClass {
-	methodsByName := make(map[string]*loxFunction, len(methods))
-	gettersByName := make(map[string]*loxFunction, len(methods))
-	settersByName := make(map[string]*loxFunction, len(methods))
-	for _, decl := range methods {
-		var funcMap map[string]*loxFunction
-		methodName := className + "." + decl.Name.Lexeme
-		switch {
-		case decl.HasModifier(token.Get):
-			funcMap = gettersByName
-			methodName = "get " + methodName
-		case decl.HasModifier(token.Set):
-			funcMap = settersByName
-			methodName = "set " + methodName
-		default:
-			funcMap = methodsByName
-		}
-		funcMap[decl.Name.Lexeme] = newLoxFunction(methodName, decl.Params, decl.Body, funTypeFunction|funTypeMethodFlag, env)
+	if metaclass != nil {
+		class.loxInstance = newLoxInstance(metaclass)
 	}
-	// Every setter must have a corresponding getter so we can just iterate over the getters
-	propertiesByName := make(map[string]*property, len(gettersByName))
-	for name, getter := range gettersByName {
-		propertiesByName[name] = newProperty(getter, settersByName[name])
-	}
-	return &loxClass{
-		Name:             fmt.Sprintf("%s class", className),
-		methodsByName:    methodsByName,
-		propertiesByName: propertiesByName,
-	}
+	return class
 }
 
 var (
