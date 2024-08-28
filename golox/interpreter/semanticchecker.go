@@ -105,7 +105,6 @@ func (c *semanticChecker) checkClassDecl(stmt ast.ClassDecl) {
 	c.checkNoWriteOnlyProperties(stmt)
 }
 
-// TODO: Move this to a semantic analysis phase
 func (c *semanticChecker) checkNoWriteOnlyProperties(stmt ast.ClassDecl) {
 	gettersByName := map[string]bool{}
 	setterNameToksByName := map[string]token.Token{}
