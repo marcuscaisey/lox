@@ -1,3 +1,7 @@
-// error: duplicate parameter x
-// error: duplicate parameter y
-fun f(x, y, z, x, y) {}
+// error: x has already been declared
+// error: y has already been declared
+fun f(x, y, z, x, y) {
+  _ = x;
+  _ = y;
+  _ = z;
+}

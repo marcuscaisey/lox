@@ -1,6 +1,7 @@
 class Foo {
   // error: property getter cannot have parameters
   get bar(x, y) {
-    return 0;
+    _ = x;
+    _ = y;
   }
 }

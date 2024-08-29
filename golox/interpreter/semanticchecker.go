@@ -6,6 +6,11 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
+const (
+	maxParams = 255
+	maxArgs   = maxParams
+)
+
 // checkSemantics checks that the following rules have been followed:
 //   - Write-only properties are not allowed
 //   - break and continue can only be used inside a loop
@@ -13,6 +18,10 @@ import (
 //   - init() cannot return a value
 //   - _ cannot be used in a non-assignment expression
 //   - this can only be used inside a method definition
+//   - property getter cannot have parameters
+//   - property setter must have exactly one parameter
+//   - functions cannot have more than 255 parameters
+//   - function calls cannot have more than 255 arguments
 func checkSemantics(program ast.Program) lox.Errors {
 	c := newSemanticChecker()
 	return c.Check(program)
@@ -37,12 +46,13 @@ func (c *semanticChecker) Check(program ast.Program) lox.Errors {
 func (c *semanticChecker) walk(node ast.Node) bool {
 	switch node := node.(type) {
 	case ast.FunDecl:
-		c.walkFun(node.Body, funTypeFunction)
+		c.walkFun(node.Params, node.Body, funTypeFunction)
 		return false
 	case ast.ClassDecl:
 		c.checkNoWriteOnlyProperties(node.Methods)
 	case ast.MethodDecl:
-		c.walkFun(node.Body, methodFunType(node))
+		c.checkNumPropertyParams(node)
+		c.walkFun(node.Params, node.Body, methodFunType(node))
 		return false
 	case ast.WhileStmt:
 		c.walkWhileStmt(node)
@@ -58,17 +68,21 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.checkReturnInFun(node)
 		c.checkNoConstructorReturn(node)
 	case ast.FunExpr:
-		c.walkFun(node.Body, funTypeFunction)
+		c.walkFun(node.Params, node.Body, funTypeFunction)
 		return false
 	case ast.VariableExpr:
 		c.checkNoPlaceholderAssignment(node)
 	case ast.ThisExpr:
 		c.checkThisInMethod(node)
+	case ast.CallExpr:
+		c.checkNumArgs(node.Args)
 	}
 	return true
 }
 
-func (c *semanticChecker) walkFun(body []ast.Stmt, funType funType) {
+func (c *semanticChecker) walkFun(params []token.Token, body []ast.Stmt, funType funType) {
+	c.checkNumParams(params)
+
 	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
 	prevInLoop := c.inLoop
 	c.inLoop = false
@@ -80,6 +94,12 @@ func (c *semanticChecker) walkFun(body []ast.Stmt, funType funType) {
 
 	for _, stmt := range body {
 		ast.Walk(stmt, c.walk)
+	}
+}
+
+func (c *semanticChecker) checkNumParams(params []token.Token) {
+	if len(params) > maxParams {
+		c.errs.Addf(lox.FromToken(params[maxParams]), "cannot define more than %d function parameters", maxParams)
 	}
 }
 
@@ -130,6 +150,20 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []ast.MethodDecl) {
 	}
 }
 
+func (c *semanticChecker) checkNumPropertyParams(decl ast.MethodDecl) {
+	switch {
+	case decl.HasModifier(token.Get) && len(decl.Params) > 0:
+		c.errs.Addf(lox.FromTokens(decl.Params[0], decl.Params[len(decl.Params)-1]), "property getter cannot have parameters")
+	case decl.HasModifier(token.Set):
+		if len(decl.Params) == 0 {
+			c.errs.Addf(lox.FromToken(decl.Name), "property setter must have a parameter")
+		} else if len(decl.Params) > 1 {
+			c.errs.Addf(lox.FromTokens(decl.Params[1], decl.Params[len(decl.Params)-1]), "property setter can only have one parameter")
+		}
+	}
+
+}
+
 func (c *semanticChecker) checkBreakInLoop(stmt ast.BreakStmt) {
 	if !c.inLoop {
 		c.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a loop", token.Break)
@@ -163,5 +197,11 @@ func (c *semanticChecker) checkNoPlaceholderAssignment(expr ast.VariableExpr) {
 func (c *semanticChecker) checkThisInMethod(expr ast.ThisExpr) {
 	if !c.curFunType.IsMethod() {
 		c.errs.Addf(lox.FromNode(expr), "%m can only be used inside a method definition", token.This)
+	}
+}
+
+func (c *semanticChecker) checkNumArgs(args []ast.Expr) {
+	if len(args) > maxArgs {
+		c.errs.Addf(lox.FromNode(args[maxArgs]), "cannot pass more than %d arguments to function", maxArgs)
 	}
 }

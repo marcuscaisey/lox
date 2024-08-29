@@ -1,4 +1,9 @@
 class Foo {
+  get bar() {}
+
   // error: property setter can only have one parameter
-  set bar(x, y, z) {}
+  set bar(x, y) {
+    _ = x;
+    _ = y;
+  }
 }

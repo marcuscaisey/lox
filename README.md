@@ -541,25 +541,29 @@ print 1 /* Multi line comments can be used anywhere */ + 2;
 
 ### Errors
 
-If any errors are found before execution of a program has begun, they will be reported and execution
-will not begin.
+If any errors are found before execution of a program has begun, they will all be reported and
+execution will not begin.
 
 ```lox
-fun f(x, y) {
-  var z;
-  print x + z;
+class Foo {
+  init(a) {
+    this.a = a;
+    return this;
+  }
 }
 
-f(1, 2);
+fun add(y) {
+  return this.x + y;
+}
 ```
 
 ```
-test.lox:1:10: error: y has been declared but is never used
-fun f(x, y) {
-         ~
-test.lox:3:13: error: z has not been defined
-  print x + z;
-            ~
+test.lox:4:5: error: init() cannot return a value
+    return this;
+    ~~~~~~~~~~~~
+test.lox:9:10: error: 'this' can only be used inside a method definition
+  return this.x + y;
+         ~~~~
 ```
 
 If an error occurs during the execution of a program, execution will halt and the error will be

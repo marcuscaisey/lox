@@ -10,11 +10,6 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-const (
-	maxParams = 255
-	maxArgs   = maxParams
-)
-
 // Parse parses the source code read from r.
 // If an error is returned then an incomplete AST will still be returned along with it.
 func Parse(r io.Reader) (ast.Program, error) {
@@ -145,40 +140,32 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 }
 
 func (p *parser) parseMethodDecl() (ast.MethodDecl, bool) {
-	var decl ast.MethodDecl
-
+	var modifiers []token.Token
 	if tok, ok := p.match2(token.Static); ok {
-		decl.Modifiers = append(decl.Modifiers, tok)
+		modifiers = append(modifiers, tok)
 	}
 	if tok, ok := p.match2(token.Get, token.Set); ok {
-		decl.Modifiers = append(decl.Modifiers, tok)
+		modifiers = append(modifiers, tok)
 	}
 
-	if len(decl.Modifiers) > 0 {
-		decl.Name = p.expectf(token.Ident, "expected method name")
+	var name token.Token
+	if len(modifiers) > 0 {
+		name = p.expectf(token.Ident, "expected method name")
 	} else if tok, ok := p.match2(token.Ident); ok {
-		decl.Name = tok
+		name = tok
 	} else {
 		return ast.MethodDecl{}, false
 	}
 
 	params, body := p.parseFunParamsAndBody()
-	decl.Params = params
-	decl.Body = body.Stmts
-	decl.RightBrace = body.RightBrace
 
-	switch {
-	case decl.HasModifier(token.Get) && len(params) > 0:
-		p.addError(lox.FromTokens(params[0], params[len(params)-1]), "property getter cannot have parameters")
-	case decl.HasModifier(token.Set):
-		if len(params) == 0 {
-			p.addError(lox.FromToken(decl.Name), "property setter must have a parameter")
-		} else if len(params) > 1 {
-			p.addError(lox.FromTokens(params[1], params[len(params)-1]), "property setter can only have one parameter")
-		}
-	}
-
-	return decl, true
+	return ast.MethodDecl{
+		Modifiers:  modifiers,
+		Name:       name,
+		Params:     params,
+		Body:       body.Stmts,
+		RightBrace: body.RightBrace,
+	}, true
 }
 
 func (p *parser) parseFunParamsAndBody() ([]token.Token, ast.BlockStmt) {
@@ -195,21 +182,11 @@ func (p *parser) parseFunParamsAndBody() ([]token.Token, ast.BlockStmt) {
 
 func (p *parser) parseParams() []token.Token {
 	var params []token.Token
-	seen := map[string]bool{}
-	params = append(params, p.expectf(token.Ident, "expected parameter name"))
-	seen[params[0].Lexeme] = true
-	for p.match(token.Comma) {
-		param := p.expectf(token.Ident, "expected parameter name")
-		if seen[param.Lexeme] {
-			p.addErrorf(lox.FromToken(param), "duplicate parameter %s", param.Lexeme)
+	for {
+		params = append(params, p.expectf(token.Ident, "expected parameter name"))
+		if !p.match(token.Comma) {
+			break
 		}
-		params = append(params, param)
-		if param.Lexeme != token.PlaceholderIdent {
-			seen[param.Lexeme] = true
-		}
-	}
-	if len(params) > maxParams {
-		p.addErrorf(lox.FromToken(params[maxParams]), "cannot define more than %d function parameters", maxParams)
 	}
 	return params
 }
@@ -453,12 +430,11 @@ func (p *parser) parseCallExpr() ast.Expr {
 
 func (p *parser) parseArgs() []ast.Expr {
 	var args []ast.Expr
-	args = append(args, p.parseAssignmentExpr())
-	for p.match(token.Comma) {
+	for {
 		args = append(args, p.parseAssignmentExpr())
-	}
-	if len(args) > maxArgs {
-		p.addErrorf(lox.FromNode(args[maxArgs]), "cannot pass more than %d arguments to function", maxArgs)
+		if !p.match(token.Comma) {
+			break
+		}
 	}
 	return args
 }
