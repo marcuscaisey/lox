@@ -234,8 +234,10 @@ func (p Position) Format(f fmt.State, verb rune) {
 		line := p.File.Line(p.Line)
 		col := yellow(runewidth.StringWidth(string(line[:p.Column])) + 1)
 		fmt.Fprint(f, prefix, yellow(p.Line), ":", yellow(col))
+	case 's':
+		fmt.Fprint(f, p.String())
 	default:
-		fmt.Fprintf(f, fmt.FormatString(f, verb), p.Line, p.Column)
+		fmt.Fprintf(f, fmt.FormatString(f, verb), p)
 	}
 }
 
