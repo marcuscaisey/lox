@@ -1,8 +1,6 @@
 package interpreter
 
 import (
-	"fmt"
-
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
@@ -39,7 +37,7 @@ func newIdentResolver() *identResolver {
 }
 
 func (r *identResolver) Resolve(program ast.Program) (map[token.Token]int, lox.Errors) {
-	r.resolveProgram(program)
+	ast.Walk(program, r.walk)
 	return r.declDistancesByTok, r.errs
 }
 
@@ -158,59 +156,49 @@ func (r *identResolver) resolveIdent(tok token.Token, op identOp) {
 	// The identifier will either be declared globally later in the program or not at all
 }
 
-func (r *identResolver) resolveProgram(program ast.Program) {
-	for _, stmt := range program.Stmts {
-		r.resolveStmt(stmt)
-	}
-}
-
-func (r *identResolver) resolveStmt(stmt ast.Stmt) {
-	switch stmt := stmt.(type) {
+func (r *identResolver) walk(node ast.Node) bool {
+	switch node := node.(type) {
 	case ast.VarDecl:
-		r.resolveVarDecl(stmt)
+		r.walkVarDecl(node)
 	case ast.FunDecl:
-		r.resolveFunDecl(stmt)
+		r.walkFunDecl(node)
 	case ast.ClassDecl:
-		r.resolveClassDecl(stmt)
-	case ast.ExprStmt:
-		r.resolveExprStmt(stmt)
-	case ast.PrintStmt:
-		r.resolvePrintStmt(stmt)
+		r.walkClassDecl(node)
 	case ast.BlockStmt:
-		r.resolveBlockStmt(stmt)
-	case ast.IfStmt:
-		r.resolveIfStmt(stmt)
-	case ast.WhileStmt:
-		r.resolveWhileStmt(stmt)
+		r.walkBlockStmt(node)
 	case ast.ForStmt:
-		r.resolveForStmt(stmt)
-	case ast.BreakStmt:
-	case ast.ContinueStmt:
-		// Nothing to resolve
-	case ast.ReturnStmt:
-		r.resolveReturnStmt(stmt)
+		r.walkForStmt(node)
+	case ast.FunExpr:
+		r.walkFunExpr(node)
+	case ast.VariableExpr:
+		r.resolveVariableExpr(node)
+	case ast.ThisExpr:
+		r.resolveThisExpr(node)
+	case ast.AssignmentExpr:
+		r.walkAssignmentExpr(node)
 	default:
-		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
+		return true
 	}
+	return false
 }
 
-func (r *identResolver) resolveVarDecl(stmt ast.VarDecl) {
-	if stmt.Initialiser != nil {
-		r.resolveExpr(stmt.Initialiser)
-		r.declareIdent(stmt.Name)
-		r.defineIdent(stmt.Name)
+func (r *identResolver) walkVarDecl(decl ast.VarDecl) {
+	if decl.Initialiser != nil {
+		ast.Walk(decl.Initialiser, r.walk)
+		r.declareIdent(decl.Name)
+		r.defineIdent(decl.Name)
 	} else {
-		r.declareIdent(stmt.Name)
+		r.declareIdent(decl.Name)
 	}
 }
 
-func (r *identResolver) resolveFunDecl(stmt ast.FunDecl) {
-	r.declareIdent(stmt.Name)
-	r.defineIdent(stmt.Name)
-	r.resolveFun(stmt.Params, stmt.Body)
+func (r *identResolver) walkFunDecl(decl ast.FunDecl) {
+	r.declareIdent(decl.Name)
+	r.defineIdent(decl.Name)
+	r.walkFun(decl.Params, decl.Body)
 }
 
-func (r *identResolver) resolveFun(params []token.Token, body []ast.Stmt) {
+func (r *identResolver) walkFun(params []token.Token, body []ast.Stmt) {
 	endScope := r.beginScope()
 	defer endScope()
 	for _, param := range params {
@@ -218,111 +206,49 @@ func (r *identResolver) resolveFun(params []token.Token, body []ast.Stmt) {
 		r.defineIdent(param)
 	}
 	for _, stmt := range body {
-		r.resolveStmt(stmt)
+		ast.Walk(stmt, r.walk)
 	}
 }
 
-func (r *identResolver) resolveClassDecl(stmt ast.ClassDecl) {
-	r.declareIdent(stmt.Name)
-	r.defineIdent(stmt.Name)
+func (r *identResolver) walkClassDecl(decl ast.ClassDecl) {
+	r.declareIdent(decl.Name)
+	r.defineIdent(decl.Name)
 	endScope := r.beginScope()
 	defer endScope()
 	scope := r.scopes.Peek()
 	scope.Declare(token.CurrentInstanceIdent)
 	scope.Define(token.CurrentInstanceIdent)
 	scope.Use(token.CurrentInstanceIdent)
-	for _, methodDecl := range stmt.Methods {
-		r.resolveFun(methodDecl.Params, methodDecl.Body)
+	for _, methodDecl := range decl.Methods {
+		r.walkFun(methodDecl.Params, methodDecl.Body)
 	}
 }
 
-func (r *identResolver) resolveExprStmt(stmt ast.ExprStmt) {
-	r.resolveExpr(stmt.Expr)
-}
-
-func (r *identResolver) resolvePrintStmt(stmt ast.PrintStmt) {
-	r.resolveExpr(stmt.Expr)
-}
-
-func (r *identResolver) resolveBlockStmt(stmt ast.BlockStmt) {
+func (r *identResolver) walkBlockStmt(block ast.BlockStmt) {
 	exitScope := r.beginScope()
 	defer exitScope()
-	for _, stmt := range stmt.Stmts {
-		r.resolveStmt(stmt)
+	for _, stmt := range block.Stmts {
+		ast.Walk(stmt, r.walk)
 	}
 }
 
-func (r *identResolver) resolveIfStmt(stmt ast.IfStmt) {
-	r.resolveExpr(stmt.Condition)
-	r.resolveStmt(stmt.Then)
-	if stmt.Else != nil {
-		r.resolveStmt(stmt.Else)
-	}
-}
-
-func (r *identResolver) resolveWhileStmt(stmt ast.WhileStmt) {
-	r.resolveExpr(stmt.Condition)
-	r.resolveStmt(stmt.Body)
-}
-
-func (r *identResolver) resolveForStmt(stmt ast.ForStmt) {
+func (r *identResolver) walkForStmt(stmt ast.ForStmt) {
 	endScope := r.beginScope()
 	defer endScope()
 	if stmt.Initialise != nil {
-		r.resolveStmt(stmt.Initialise)
+		ast.Walk(stmt.Initialise, r.walk)
 	}
 	if stmt.Condition != nil {
-		r.resolveExpr(stmt.Condition)
+		ast.Walk(stmt.Condition, r.walk)
 	}
 	if stmt.Update != nil {
-		r.resolveExpr(stmt.Update)
+		ast.Walk(stmt.Update, r.walk)
 	}
-	r.resolveStmt(stmt.Body)
+	ast.Walk(stmt.Body, r.walk)
 }
 
-func (r *identResolver) resolveReturnStmt(stmt ast.ReturnStmt) {
-	if stmt.Value != nil {
-		r.resolveExpr(stmt.Value)
-	}
-}
-
-func (r *identResolver) resolveExpr(expr ast.Expr) {
-	switch expr := expr.(type) {
-	case ast.FunExpr:
-		r.resolveFunExpr(expr)
-	case ast.GroupExpr:
-		r.resolveGroupExpr(expr)
-	case ast.LiteralExpr:
-		// Nothing to resolve
-	case ast.VariableExpr:
-		r.resolveVariableExpr(expr)
-	case ast.ThisExpr:
-		r.resolveThisExpr(expr)
-	case ast.CallExpr:
-		r.resolveCallExpr(expr)
-	case ast.GetExpr:
-		r.resolveGetExpr(expr)
-	case ast.UnaryExpr:
-		r.resolveUnaryExpr(expr)
-	case ast.BinaryExpr:
-		r.resolveBinaryExpr(expr)
-	case ast.TernaryExpr:
-		r.resolveTernaryExpr(expr)
-	case ast.AssignmentExpr:
-		r.resolveAssignmentExpr(expr)
-	case ast.SetExpr:
-		r.resolveSetExpr(expr)
-	default:
-		panic(fmt.Sprintf("unexpected expression type: %T", expr))
-	}
-}
-
-func (r *identResolver) resolveFunExpr(expr ast.FunExpr) {
-	r.resolveFun(expr.Params, expr.Body)
-}
-
-func (r *identResolver) resolveGroupExpr(expr ast.GroupExpr) {
-	r.resolveExpr(expr.Expr)
+func (r *identResolver) walkFunExpr(expr ast.FunExpr) {
+	r.walkFun(expr.Params, expr.Body)
 }
 
 func (r *identResolver) resolveVariableExpr(expr ast.VariableExpr) {
@@ -335,39 +261,8 @@ func (r *identResolver) resolveThisExpr(expr ast.ThisExpr) {
 	r.resolveIdent(expr.This, identOpRead)
 }
 
-func (r *identResolver) resolveBinaryExpr(expr ast.BinaryExpr) {
-	r.resolveExpr(expr.Left)
-	r.resolveExpr(expr.Right)
-}
-
-func (r *identResolver) resolveTernaryExpr(expr ast.TernaryExpr) {
-	r.resolveExpr(expr.Condition)
-	r.resolveExpr(expr.Then)
-	r.resolveExpr(expr.Else)
-}
-
-func (r *identResolver) resolveCallExpr(expr ast.CallExpr) {
-	r.resolveExpr(expr.Callee)
-	for _, arg := range expr.Args {
-		r.resolveExpr(arg)
-	}
-}
-
-func (r *identResolver) resolveGetExpr(expr ast.GetExpr) {
-	r.resolveExpr(expr.Object)
-}
-
-func (r *identResolver) resolveUnaryExpr(expr ast.UnaryExpr) {
-	r.resolveExpr(expr.Right)
-}
-
-func (r *identResolver) resolveAssignmentExpr(expr ast.AssignmentExpr) {
-	r.resolveExpr(expr.Right)
+func (r *identResolver) walkAssignmentExpr(expr ast.AssignmentExpr) {
+	ast.Walk(expr.Right, r.walk)
 	r.resolveIdent(expr.Left, identOpWrite)
 	r.defineIdent(expr.Left)
-}
-
-func (r *identResolver) resolveSetExpr(expr ast.SetExpr) {
-	r.resolveExpr(expr.Value)
-	r.resolveExpr(expr.Object)
 }
