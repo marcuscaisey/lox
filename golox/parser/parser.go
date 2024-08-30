@@ -19,11 +19,9 @@ func Parse(r io.Reader) (ast.Program, error) {
 	}
 
 	p := &parser{lexer: lexer}
-	errHandler := func(tok token.Token, format string, args ...any) {
-		p.lastErrPos = tok.Start
-		p.errs.Addf(lox.FromToken(tok), format, args...)
-	}
-	lexer.SetErrorHandler(errHandler)
+	lexer.SetErrorHandler(func(tok token.Token, format string, args ...any) {
+		p.addErrorf(lox.FromToken(tok), format, args...)
+	})
 
 	return p.Parse()
 }
@@ -536,6 +534,7 @@ func (p *parser) addErrorf(rang lox.ErrorRange, format string, args ...any) {
 	if len(p.errs) > 0 && start == p.lastErrPos {
 		return
 	}
+	p.lastErrPos = start
 	p.errs.Addf(rang, format, args...)
 }
 
