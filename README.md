@@ -6,6 +6,7 @@ Interpreters](https://craftinginterpreters.com). This repository contains:
 - A Go implementation of the language: [golox](golox)
 - A grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter):
   [tree-sitter-lox](tree-sitter-lox)
+- A formatter for the language: [loxfmt](loxfmt)
 
 Working Lox code examples can be found under [test/testdata](test/testdata).
 
