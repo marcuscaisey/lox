@@ -108,12 +108,12 @@ func formatFun(params []token.Token, body []ast.Stmt) string {
 			fmt.Fprint(&b, ", ")
 		}
 	}
-	fmt.Fprintf(&b, ") {\n%s\n}", indent(formatStmts(body)))
+	fmt.Fprintf(&b, ") %s", formatBlock(body))
 	return b.String()
 }
 
 func formatClassDecl(decl ast.ClassDecl) string {
-	return fmt.Sprintf("class %s {\n%s\n}", decl.Name.Lexeme, indent(formatStmts(decl.Methods)))
+	return fmt.Sprintf("class %s %s", decl.Name.Lexeme, formatBlock(decl.Methods))
 }
 
 func formatMethodDecl(decl ast.MethodDecl) string {
@@ -134,9 +134,15 @@ func formatPrintStmt(stmt ast.PrintStmt) string {
 }
 
 func formatBlockStmt(stmt ast.BlockStmt) string {
-	var b strings.Builder
-	fmt.Fprint(&b, "{\n", indent(formatStmts(stmt.Stmts)), "\n}")
-	return b.String()
+	return formatBlock(stmt.Stmts)
+}
+
+func formatBlock[T ast.Stmt](stmts []T) string {
+	if len(stmts) > 0 {
+		return fmt.Sprintf("{\n%s\n}", indent(formatStmts(stmts)))
+	} else {
+		return "{}"
+	}
 }
 
 func formatIfStmt(stmt ast.IfStmt) string {
