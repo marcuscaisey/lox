@@ -79,6 +79,9 @@ func formatStmts[T ast.Stmt](stmts []T) string {
 		fmt.Fprint(&b, format(stmt))
 		if i < len(stmts)-1 {
 			fmt.Fprintln(&b)
+			if stmts[i+1].Start().Line-stmts[i].End().Line > 1 {
+				fmt.Fprintln(&b)
+			}
 		}
 	}
 	return b.String()
