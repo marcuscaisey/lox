@@ -88,13 +88,11 @@ func formatStmts[T ast.Stmt](stmts []T) string {
 }
 
 func formatVarDecl(decl ast.VarDecl) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "var %s", decl.Name.Lexeme)
 	if decl.Initialiser != nil {
-		fmt.Fprintf(&b, " = %s", format(decl.Initialiser))
+		return fmt.Sprintf("var %s = %s;", decl.Name.Lexeme, format(decl.Initialiser))
+	} else {
+		return fmt.Sprintf("var %s;", decl.Name.Lexeme)
 	}
-	fmt.Fprint(&b, ";")
-	return b.String()
 }
 
 func formatFunDecl(decl ast.FunDecl) string {
@@ -132,9 +130,7 @@ func formatExprStmt(stmt ast.ExprStmt) string {
 }
 
 func formatPrintStmt(stmt ast.PrintStmt) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "print %s;", format(stmt.Expr))
-	return b.String()
+	return fmt.Sprintf("print %s;", format(stmt.Expr))
 }
 
 func formatBlockStmt(stmt ast.BlockStmt) string {
@@ -169,14 +165,11 @@ func formatIfStmt(stmt ast.IfStmt) string {
 }
 
 func formatWhileStmt(stmt ast.WhileStmt) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "while (%s)", format(stmt.Condition))
 	if _, ok := stmt.Body.(ast.BlockStmt); ok {
-		fmt.Fprintf(&b, " %s", format(stmt.Body))
+		return fmt.Sprintf("while (%s) %s", format(stmt.Condition), format(stmt.Body))
 	} else {
-		fmt.Fprintf(&b, "\n%s", indent(format(stmt.Body)))
+		return fmt.Sprintf("while (%s)\n%s", format(stmt.Condition), indent(format(stmt.Body)))
 	}
-	return b.String()
 }
 
 func formatForStmt(stmt ast.ForStmt) string {
@@ -212,13 +205,11 @@ func formatContinueStmt(ast.ContinueStmt) string {
 }
 
 func formatReturnStmt(stmt ast.ReturnStmt) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "return")
 	if stmt.Value != nil {
-		fmt.Fprintf(&b, " %s", format(stmt.Value))
+		return fmt.Sprintf("return %s;", format(stmt.Value))
+	} else {
+		return "return;"
 	}
-	fmt.Fprintf(&b, ";")
-	return b.String()
 }
 
 func formatFunExpr(expr ast.FunExpr) string {
