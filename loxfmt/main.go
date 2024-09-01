@@ -53,7 +53,7 @@ func run(path string) error {
 	formatted := format(program)
 	if *write {
 		if err := os.WriteFile(path, []byte(formatted), 0644); err != nil {
-			return err
+			return fmt.Errorf("failed to write formatted source to file: %w", err)
 		}
 	} else {
 		fmt.Print(formatted)
