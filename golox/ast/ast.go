@@ -158,7 +158,13 @@ type IfStmt struct {
 }
 
 func (i IfStmt) Start() token.Position { return i.If.Start }
-func (i IfStmt) End() token.Position   { return i.Else.End() }
+func (i IfStmt) End() token.Position {
+	if i.Else != nil {
+		return i.Else.End()
+	} else {
+		return i.Then.End()
+	}
+}
 
 // WhileStmt is a while statement, such as
 //
