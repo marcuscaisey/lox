@@ -171,6 +171,8 @@ func (t Type) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'm':
 		fmt.Fprintf(f, "'%s'", typeStrings[t])
+	case 's':
+		fmt.Fprint(f, t.String())
 	default:
 		fmt.Fprintf(f, fmt.FormatString(f, verb), uint8(t))
 	}
