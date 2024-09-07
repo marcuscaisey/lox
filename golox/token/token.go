@@ -187,7 +187,7 @@ type Token struct {
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("%s: %s", t.Start, t.Lexeme)
+	return fmt.Sprintf("%s: %s [%s]", t.Start, t.Lexeme, t.Type)
 }
 
 // Position is a position in a file.
