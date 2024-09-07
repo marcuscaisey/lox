@@ -8,11 +8,13 @@ import (
 	"log"
 	"os"
 
+	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/parser"
 )
 
 var (
-	write = flag.Bool("w", false, "Write result to (source) file instead of stdout")
+	write    = flag.Bool("w", false, "Write result to (source) file instead of stdout")
+	printAST = flag.Bool("p", false, "Print the AST only")
 )
 
 // nolint:revive
@@ -48,6 +50,11 @@ func run(path string) error {
 	program, err := parser.Parse(bytes.NewReader(data))
 	if err != nil {
 		return err
+	}
+
+	if *printAST {
+		ast.Print(program)
+		return nil
 	}
 
 	formatted := format(program)
