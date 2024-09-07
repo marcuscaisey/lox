@@ -195,17 +195,17 @@ func (r *identResolver) walkVarDecl(decl ast.VarDecl) {
 func (r *identResolver) walkFunDecl(decl ast.FunDecl) {
 	r.declareIdent(decl.Name)
 	r.defineIdent(decl.Name)
-	r.walkFun(decl.Params, decl.Body)
+	r.walkFun(decl.Function)
 }
 
-func (r *identResolver) walkFun(params []token.Token, body []ast.Stmt) {
+func (r *identResolver) walkFun(fun ast.Function) {
 	endScope := r.beginScope()
 	defer endScope()
-	for _, param := range params {
+	for _, param := range fun.Params {
 		r.declareIdent(param)
 		r.defineIdent(param)
 	}
-	for _, stmt := range body {
+	for _, stmt := range fun.Body.Stmts {
 		ast.Walk(stmt, r.walk)
 	}
 }
@@ -220,7 +220,7 @@ func (r *identResolver) walkClassDecl(decl ast.ClassDecl) {
 	scope.Define(token.CurrentInstanceIdent)
 	scope.Use(token.CurrentInstanceIdent)
 	for _, methodDecl := range decl.Methods {
-		r.walkFun(methodDecl.Params, methodDecl.Body)
+		r.walkFun(methodDecl.Function)
 	}
 }
 
@@ -248,7 +248,7 @@ func (r *identResolver) walkForStmt(stmt ast.ForStmt) {
 }
 
 func (r *identResolver) walkFunExpr(expr ast.FunExpr) {
-	r.walkFun(expr.Params, expr.Body)
+	r.walkFun(expr.Function)
 }
 
 func (r *identResolver) resolveVariableExpr(expr ast.VariableExpr) {

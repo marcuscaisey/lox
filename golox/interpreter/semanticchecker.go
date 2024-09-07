@@ -46,13 +46,13 @@ func (c *semanticChecker) Check(program ast.Program) lox.Errors {
 func (c *semanticChecker) walk(node ast.Node) bool {
 	switch node := node.(type) {
 	case ast.FunDecl:
-		c.walkFun(node.Params, node.Body, funTypeFunction)
+		c.walkFun(node.Function, funTypeFunction)
 		return false
 	case ast.ClassDecl:
 		c.checkNoWriteOnlyProperties(node.Methods)
 	case ast.MethodDecl:
 		c.checkNumPropertyParams(node)
-		c.walkFun(node.Params, node.Body, methodFunType(node))
+		c.walkFun(node.Function, methodFunType(node))
 		return false
 	case ast.WhileStmt:
 		c.walkWhileStmt(node)
@@ -68,7 +68,7 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.checkReturnInFun(node)
 		c.checkNoConstructorReturn(node)
 	case ast.FunExpr:
-		c.walkFun(node.Params, node.Body, funTypeFunction)
+		c.walkFun(node.Function, funTypeFunction)
 		return false
 	case ast.VariableExpr:
 		c.checkNoPlaceholderAssignment(node)
@@ -80,8 +80,8 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 	return true
 }
 
-func (c *semanticChecker) walkFun(params []token.Token, body []ast.Stmt, funType funType) {
-	c.checkNumParams(params)
+func (c *semanticChecker) walkFun(fun ast.Function, funType funType) {
+	c.checkNumParams(fun.Params)
 
 	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
 	prevInLoop := c.inLoop
@@ -92,7 +92,7 @@ func (c *semanticChecker) walkFun(params []token.Token, body []ast.Stmt, funType
 	c.curFunType = funType
 	defer func() { c.curFunType = prevFunType }()
 
-	for _, stmt := range body {
+	for _, stmt := range fun.Body.Stmts {
 		ast.Walk(stmt, c.walk)
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/token"
 )
 
 const indentSize = 2
@@ -96,19 +95,19 @@ func formatVarDecl(decl ast.VarDecl) string {
 }
 
 func formatFunDecl(decl ast.FunDecl) string {
-	return fmt.Sprintf("fun %s%s", decl.Name.Lexeme, formatFun(decl.Params, decl.Body))
+	return fmt.Sprintf("fun %s%s", decl.Name.Lexeme, formatFun(decl.Function))
 }
 
-func formatFun(params []token.Token, body []ast.Stmt) string {
+func formatFun(fun ast.Function) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "(")
-	for i, param := range params {
+	for i, param := range fun.Params {
 		fmt.Fprintf(&b, "%s", param.Lexeme)
-		if i < len(params)-1 {
+		if i < len(fun.Params)-1 {
 			fmt.Fprint(&b, ", ")
 		}
 	}
-	fmt.Fprintf(&b, ") %s", formatBlock(body))
+	fmt.Fprintf(&b, ") %s", formatBlock(fun.Body.Stmts))
 	return b.String()
 }
 
@@ -121,7 +120,7 @@ func formatMethodDecl(decl ast.MethodDecl) string {
 	for _, modifier := range decl.Modifiers {
 		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
 	}
-	fmt.Fprintf(&b, "%s%s", decl.Name.Lexeme, formatFun(decl.Params, decl.Body))
+	fmt.Fprintf(&b, "%s%s", decl.Name.Lexeme, formatFun(decl.Function))
 	return b.String()
 }
 
@@ -219,7 +218,7 @@ func formatReturnStmt(stmt ast.ReturnStmt) string {
 }
 
 func formatFunExpr(expr ast.FunExpr) string {
-	return fmt.Sprintf("fun%s", formatFun(expr.Params, expr.Body))
+	return fmt.Sprintf("fun%s", formatFun(expr.Function))
 }
 
 func formatGroupExpr(expr ast.GroupExpr) string {

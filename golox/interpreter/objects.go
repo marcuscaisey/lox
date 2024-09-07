@@ -270,15 +270,15 @@ type loxFunction struct {
 	closure    *environment
 }
 
-func newLoxFunction(name string, params []token.Token, body []ast.Stmt, typ funType, closure *environment) *loxFunction {
-	paramNames := make([]string, len(params))
-	for i, param := range params {
+func newLoxFunction(name string, fun ast.Function, typ funType, closure *environment) *loxFunction {
+	paramNames := make([]string, len(fun.Params))
+	for i, param := range fun.Params {
 		paramNames[i] = param.Lexeme
 	}
 	f := &loxFunction{
 		name:    name,
 		params:  paramNames,
-		body:    body,
+		body:    fun.Body.Stmts,
 		typ:     typ,
 		closure: closure,
 	}
@@ -407,7 +407,7 @@ func newLoxClassWithMetaclass(name string, methods []ast.MethodDecl, env *enviro
 		default:
 			funcMap = methodsByName
 		}
-		funcMap[decl.Name.Lexeme] = newLoxFunction(methodName, decl.Params, decl.Body, methodFunType(decl), env)
+		funcMap[decl.Name.Lexeme] = newLoxFunction(methodName, decl.Function, methodFunType(decl), env)
 	}
 	// Every setter must have a corresponding getter so we can just iterate over the getters
 	propertiesByName := make(map[string]*property, len(gettersByName))

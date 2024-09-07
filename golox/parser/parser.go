@@ -107,13 +107,10 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
 
 func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 	name := p.expectf(token.Ident, "expected function name")
-	params, body := p.parseFunParamsAndBody()
 	return ast.FunDecl{
-		Fun:        funTok,
-		Name:       name,
-		Params:     params,
-		Body:       body.Stmts,
-		RightBrace: body.RightBrace,
+		Fun:      funTok,
+		Name:     name,
+		Function: p.parseFun(),
 	}
 }
 
@@ -155,19 +152,15 @@ func (p *parser) parseMethodDecl() (ast.MethodDecl, bool) {
 		return ast.MethodDecl{}, false
 	}
 
-	params, body := p.parseFunParamsAndBody()
-
 	return ast.MethodDecl{
-		Modifiers:  modifiers,
-		Name:       name,
-		Params:     params,
-		Body:       body.Stmts,
-		RightBrace: body.RightBrace,
+		Modifiers: modifiers,
+		Name:      name,
+		Function:  p.parseFun(),
 	}, true
 }
 
-func (p *parser) parseFunParamsAndBody() ([]token.Token, ast.BlockStmt) {
-	p.expect(token.LeftParen)
+func (p *parser) parseFun() ast.Function {
+	leftParen := p.expect(token.LeftParen)
 	var params []token.Token
 	if !p.match(token.RightParen) {
 		params = p.parseParams()
@@ -175,7 +168,11 @@ func (p *parser) parseFunParamsAndBody() ([]token.Token, ast.BlockStmt) {
 	}
 	leftBrace := p.expect(token.LeftBrace)
 	body := p.parseBlock(leftBrace)
-	return params, body
+	return ast.Function{
+		LeftParen: leftParen,
+		Params:    params,
+		Body:      body,
+	}
 }
 
 func (p *parser) parseParams() []token.Token {
@@ -476,12 +473,9 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 }
 
 func (p *parser) parseFunExpr(funTok token.Token) ast.FunExpr {
-	params, body := p.parseFunParamsAndBody()
 	return ast.FunExpr{
-		Fun:        funTok,
-		Params:     params,
-		Body:       body.Stmts,
-		RightBrace: body.RightBrace,
+		Fun:      funTok,
+		Function: p.parseFun(),
 	}
 }
 

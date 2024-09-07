@@ -137,7 +137,7 @@ func (i *Interpreter) execVarDecl(env *environment, stmt ast.VarDecl) {
 }
 
 func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
-	env.Define(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Params, stmt.Body, funTypeFunction, env))
+	env.Define(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Function, funTypeFunction, env))
 }
 
 func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
@@ -260,7 +260,7 @@ func (i *Interpreter) evalExpr(env *environment, expr ast.Expr) loxObject {
 }
 
 func (i *Interpreter) evalFunExpr(env *environment, expr ast.FunExpr) loxObject {
-	return newLoxFunction("(anonymous)", expr.Params, expr.Body, funTypeFunction, env)
+	return newLoxFunction("(anonymous)", expr.Function, funTypeFunction, env)
 }
 
 func (i *Interpreter) evalGroupExpr(env *environment, expr ast.GroupExpr) loxObject {
