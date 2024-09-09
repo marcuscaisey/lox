@@ -1,4 +1,0 @@
-// error: unterminated multi-line comment
-/*
- * Unterminated comment
-print "this won't be printed";

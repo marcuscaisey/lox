@@ -101,17 +101,6 @@ func (l *lexer) Next() token.Token {
 			l.skipSingleLineComment()
 			return l.Next()
 		}
-		if l.peek() == '*' {
-			l.next()
-			l.next()
-			if comment, terminated := l.consumeMultiLineComment(); !terminated {
-				tok.End = l.pos
-				tok.Type = token.Illegal
-				tok.Lexeme = comment
-				l.errHandler(tok, "unterminated multi-line comment")
-			}
-			return l.Next()
-		}
 	case l.ch == '%':
 		tok.Type = token.Percent
 	case l.ch == '<':
@@ -193,25 +182,6 @@ func (l *lexer) skipSingleLineComment() {
 	for l.ch != '\n' && l.ch != eof {
 		l.next()
 	}
-}
-
-func (l *lexer) consumeMultiLineComment() (comment string, terminated bool) {
-	var b strings.Builder
-	b.WriteString("/*")
-	// Multi-line comments can be nested
-	openComments := 1 // There's already a comment open when this method is called
-	for openComments > 0 && l.ch != eof {
-		b.WriteRune(l.ch)
-		if l.ch == '/' && l.peek() == '*' {
-			l.next()
-			openComments++
-		} else if l.ch == '*' && l.peek() == '/' {
-			l.next()
-			openComments--
-		}
-		l.next()
-	}
-	return b.String(), openComments == 0
 }
 
 func (l *lexer) consumeNumber() string {

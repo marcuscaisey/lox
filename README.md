@@ -19,7 +19,6 @@ either from challenges in the book or my own ideas.
 
 #### Challenges
 
-- Multi-line comments - [Scanning](https://craftinginterpreters.com/scanning.html#challenges)
 - [Comma expression](#Binary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
 - [Ternary expression](#Ternary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
 - Error productions for [binary expressions](#Grammar) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
@@ -521,22 +520,11 @@ The blank identifier `_` is a special identifier which:
 
 ### Comments
 
-Comments are bits of text in the source code that are ignored when evaluating the program. Both
-single line and multi line comments are supported.
+Comments are bits of text in the source code that are ignored when evaluating the program.
 
 ```lox
-// This is a single line comment
-print "Hello, World!"; // This is also a single line comment
-
-/*
-This is a multi line comment
-*/
-
-/*
- * /* Nested multi-line are also supported */
- */
-
-print 1 /* Multi line comments can be used anywhere */ + 2;
+// This is a comment
+print "Hello, World!"; // This is also a comment
 ```
 
 ### Errors
