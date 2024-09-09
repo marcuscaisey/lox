@@ -42,7 +42,7 @@ either from challenges in the book or my own ideas.
 - [Error messages point to location of error in source code](#Errors)
 - [Runtime error message includes stack trace](#Errors)
 - [`error` built-in function](#Built-in-Functions)
-- [Property setter method](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
+- [Property setter method](#Class-Declaration)
 
 ### Types
 
