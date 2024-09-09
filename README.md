@@ -35,7 +35,6 @@ either from challenges in the book or my own ideas.
 
 #### Own Ideas
 
-- AST printer in [golox](golox/ast/print.go)
 - [`%` operator](#Binary-Expression)
 - [`continue` statement](#Continue-Statement)
 - [`type` built-in function](#Built-in-Functions)
