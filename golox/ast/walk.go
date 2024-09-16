@@ -20,7 +20,7 @@ func Walk(node Node, f func(Node) bool) {
 	case FunDecl:
 		walkSlice(node.Body.Stmts, f)
 	case ClassDecl:
-		walkSlice(node.Methods, f)
+		walkSlice(node.Body, f)
 	case MethodDecl:
 		walkSlice(node.Body.Stmts, f)
 	case ExprStmt:

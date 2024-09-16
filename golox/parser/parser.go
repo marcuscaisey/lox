@@ -117,10 +117,10 @@ func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	name := p.expectf(token.Ident, "expected class name")
 	p.expect(token.LeftBrace)
-	var methods []ast.MethodDecl
+	var body []ast.Stmt
 	for {
 		if decl, ok := p.parseMethodDecl(); ok {
-			methods = append(methods, decl)
+			body = append(body, decl)
 		} else {
 			break
 		}
@@ -129,7 +129,7 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	return ast.ClassDecl{
 		Class:      classTok,
 		Name:       name,
-		Methods:    methods,
+		Body:       body,
 		RightBrace: rightBrace,
 	}
 }

@@ -219,7 +219,7 @@ func (r *identResolver) walkClassDecl(decl ast.ClassDecl) {
 	scope.Declare(token.CurrentInstanceIdent)
 	scope.Define(token.CurrentInstanceIdent)
 	scope.Use(token.CurrentInstanceIdent)
-	for _, methodDecl := range decl.Methods {
+	for _, methodDecl := range decl.Methods() {
 		r.walkFun(methodDecl.Function)
 	}
 }

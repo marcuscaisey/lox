@@ -112,7 +112,7 @@ func formatFun(fun ast.Function) string {
 }
 
 func formatClassDecl(decl ast.ClassDecl) string {
-	return fmt.Sprintf("class %s %s", decl.Name.Lexeme, formatBlock(decl.Methods))
+	return fmt.Sprintf("class %s %s", decl.Name.Lexeme, formatBlock(decl.Body))
 }
 
 func formatMethodDecl(decl ast.MethodDecl) string {

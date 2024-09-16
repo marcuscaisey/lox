@@ -49,7 +49,7 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.walkFun(node.Function, funTypeFunction)
 		return false
 	case ast.ClassDecl:
-		c.checkNoWriteOnlyProperties(node.Methods)
+		c.checkNoWriteOnlyProperties(node.Methods())
 	case ast.MethodDecl:
 		c.checkNumPropertyParams(node)
 		c.walkFun(node.Function, methodFunType(node))

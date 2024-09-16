@@ -71,14 +71,25 @@ func (f Function) End() token.Position   { return f.Body.End() }
 //	}
 type ClassDecl struct {
 	Class      token.Token
-	Name       token.Token  `print:"named"`
-	Methods    []MethodDecl `print:"named"`
+	Name       token.Token `print:"named"`
+	Body       []Stmt      `print:"named"`
 	RightBrace token.Token
 	stmt
 }
 
 func (c ClassDecl) Start() token.Position { return c.Class.Start }
 func (c ClassDecl) End() token.Position   { return c.RightBrace.End }
+
+// Methods returns the methods of the class.
+func (c ClassDecl) Methods() []MethodDecl {
+	methods := make([]MethodDecl, 0, len(c.Body))
+	for _, stmt := range c.Body {
+		if method, ok := stmt.(MethodDecl); ok {
+			methods = append(methods, method)
+		}
+	}
+	return methods
+}
 
 // MethodDecl is a method declaration, such as
 //

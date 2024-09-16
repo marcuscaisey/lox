@@ -141,7 +141,7 @@ func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
 }
 
 func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
-	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, stmt.Methods, env))
+	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, stmt.Methods(), env))
 }
 
 func (i *Interpreter) execExprStmt(env *environment, stmt ast.ExprStmt) {
