@@ -289,7 +289,9 @@ func formatSetExpr(expr ast.SetExpr) string {
 func indent(s string) string {
 	lines := strings.Split(s, "\n")
 	for i, line := range lines {
-		lines[i] = strings.Repeat(" ", indentSize) + line
+		if line != "" {
+			lines[i] = strings.Repeat(" ", indentSize) + line
+		}
 	}
 	return strings.Join(lines, "\n")
 }
