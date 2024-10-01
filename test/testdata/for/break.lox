@@ -8,7 +8,6 @@ for (var i = 0;; i = i + 1) {
   print i;
 }
 
-
 for (var j = 0; j < 3; j = j + 1) {
   for (var k = 0;; k = k + 1) {
     if (k == 1) {
