@@ -1,1 +1,2 @@
+// noformat
 print "invalid utf8 character -> ÿ <-"; // error: invalid UTF-8 byte 0xff

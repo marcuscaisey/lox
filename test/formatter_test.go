@@ -2,6 +2,7 @@ package test
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"os"
 	"os/exec"
@@ -11,7 +12,11 @@ import (
 	"testing"
 )
 
-var formatter = flag.String("formatter", "", "path to the formatter to test")
+var (
+	formatter = flag.String("formatter", "", "path to the formatter to test")
+
+	noFormatComment = "// noformat"
+)
 
 func TestFormatter(t *testing.T) {
 	if *formatter == "" {
@@ -27,6 +32,10 @@ func (r formatterRunner) Test(t *testing.T, path string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if bytes.HasPrefix(want, []byte(noFormatComment)) {
+		t.Skipf("file is marked with %s", noFormatComment)
+	}
+
 	got := r.runFormatter(t, path)
 
 	if !bytes.Equal(want, got) {
@@ -45,6 +54,10 @@ func (r formatterRunner) runFormatter(t *testing.T, path string, flags ...string
 	t.Logf("%s %s", *formatter, strings.Join(argsWithAbsPath, " "))
 
 	stdout, err := cmd.Output()
+	exitErr := &exec.ExitError{}
+	if errors.As(err, &exitErr) {
+		t.Fatalf("%s\n%s", err, exitErr.Stderr)
+	}
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -53,5 +66,12 @@ func (r formatterRunner) runFormatter(t *testing.T, path string, flags ...string
 }
 
 func (r formatterRunner) Update(t *testing.T, path string) {
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.HasPrefix(contents, []byte(noFormatComment)) {
+		t.Skipf("file is marked with %s", noFormatComment)
+	}
 	r.runFormatter(t, path, "-w")
 }

@@ -1,1 +1,2 @@
+// noformat
 print 1 $ 2; // error: illegal character U+0024 '$'

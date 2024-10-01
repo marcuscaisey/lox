@@ -1,3 +1,4 @@
+// noformat
 // error: invalid UTF-8 byte 0xc2
 // error: invalid UTF-8 byte 0xff
 print Âÿ2;
