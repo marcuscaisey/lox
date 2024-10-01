@@ -127,10 +127,8 @@ func (p *parser) parseDecl() ast.Stmt {
 		stmt = p.parseStmt()
 	}
 
-	if comment, ok := p.matchFunc(func(tok token.Token) bool {
-		return tok.Type == token.Comment && tok.Start.Line == stmt.End().Line
-	}); ok && p.parseComments {
-		return ast.InlineCommentStmt{Stmt: stmt, Comment: comment}
+	if inlineCommentStmt, ok := p.parseInlineCommentStmt(stmt); ok {
+		return inlineCommentStmt
 	}
 
 	return stmt
@@ -243,26 +241,43 @@ func (p *parser) parseParams() []token.Token {
 }
 
 func (p *parser) parseStmt() ast.Stmt {
+	var stmt ast.Stmt
 	switch tok := p.tok; {
 	case p.match(token.Print):
-		return p.parsePrintStmt(tok)
+		stmt = p.parsePrintStmt(tok)
 	case p.match(token.LeftBrace):
-		return p.parseBlock(tok)
+		stmt = p.parseBlock(tok)
 	case p.match(token.If):
-		return p.parseIfStmt(tok)
+		stmt = p.parseIfStmt(tok)
 	case p.match(token.While):
-		return p.parseWhileStmt(tok)
+		stmt = p.parseWhileStmt(tok)
 	case p.match(token.For):
-		return p.parseForStmt(tok)
+		stmt = p.parseForStmt(tok)
 	case p.match(token.Break):
-		return p.parseBreakStmt(tok)
+		stmt = p.parseBreakStmt(tok)
 	case p.match(token.Continue):
-		return p.parseContinueStmt(tok)
+		stmt = p.parseContinueStmt(tok)
 	case p.match(token.Return):
-		return p.parseReturnStmt(tok)
+		stmt = p.parseReturnStmt(tok)
 	default:
-		return p.parseExprStmt()
+		stmt = p.parseExprStmt()
 	}
+
+	if inlineCommentStmt, ok := p.parseInlineCommentStmt(stmt); ok {
+		return inlineCommentStmt
+	}
+
+	return stmt
+}
+
+func (p *parser) parseInlineCommentStmt(stmt ast.Stmt) (ast.InlineCommentStmt, bool) {
+	comment, ok := p.matchFunc(func(tok token.Token) bool {
+		return tok.Type == token.Comment && tok.Start.Line == stmt.End().Line
+	})
+	if ok && p.parseComments {
+		return ast.InlineCommentStmt{Stmt: stmt, Comment: comment}, true
+	}
+	return ast.InlineCommentStmt{}, false
 }
 
 func (p *parser) parseExprStmt() ast.ExprStmt {
