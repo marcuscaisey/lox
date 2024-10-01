@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 const indentSize = 2
@@ -271,7 +272,13 @@ func formatUnaryExpr(expr ast.UnaryExpr) string {
 }
 
 func formatBinaryExpr(expr ast.BinaryExpr) string {
-	return fmt.Sprintf("%s %s %s", format(expr.Left), expr.Op.Lexeme, format(expr.Right))
+	leftSpace := " "
+	if expr.Op.Type == token.Comma {
+		// Comma operator is a special case where we don't want a space before it. A binary expression with a comma
+		// operator should be formatted as "a, b" rather than "a , b".
+		leftSpace = ""
+	}
+	return fmt.Sprintf("%s%s%s %s", format(expr.Left), leftSpace, expr.Op.Lexeme, format(expr.Right))
 }
 
 func formatTernaryExpr(expr ast.TernaryExpr) string {
