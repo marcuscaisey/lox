@@ -6,6 +6,7 @@ require (
 	github.com/chzyer/readline v1.5.1
 	github.com/fatih/color v1.17.0
 	github.com/google/go-cmp v0.6.0
+	github.com/hexops/gotextdiff v1.0.3
 	github.com/mattn/go-runewidth v0.0.15
 	golang.org/x/tools v0.23.0
 	gotest.tools/gotestsum v1.12.0

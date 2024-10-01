@@ -17,13 +17,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Build
-        run: make golox
       - name: Test
         run: make test_golox
 
-  golangci-lint:
-    name: Lint Go
+  test-loxfmt:
+    name: Test loxfmt
     runs-on: ubuntu-latest
     steps:
       - name: Checkout commit
@@ -32,10 +30,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
+      - name: Test
+        run: make test_loxfmt
 
   test-tree-sitter-lox:
     name: Test tree-sitter-lox
@@ -56,3 +52,18 @@ jobs:
         run: npm ci
       - name: Test
         run: npm test
+
+  golangci-lint:
+    name: Lint Go
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout commit
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
