@@ -4,15 +4,26 @@ package parser
 import (
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
+// Option can be passed to [Parse] to configure its behaviour.
+type Option func(*parser)
+
+// WithComments enables the parsing of comments.
+func WithComments() Option {
+	return func(p *parser) {
+		p.parseComments = true
+	}
+}
+
 // Parse parses the source code read from r.
 // If an error is returned then an incomplete AST will still be returned along with it.
-func Parse(r io.Reader) (ast.Program, error) {
+func Parse(r io.Reader, opts ...Option) (ast.Program, error) {
 	lexer, err := newLexer(r)
 	if err != nil {
 		return ast.Program{}, fmt.Errorf("constructing parser: %s", err)
@@ -22,6 +33,9 @@ func Parse(r io.Reader) (ast.Program, error) {
 	lexer.SetErrorHandler(func(tok token.Token, format string, args ...any) {
 		p.addErrorf(lox.FromToken(tok), format, args...)
 	})
+	for _, opt := range opts {
+		opt(p)
+	}
 
 	return p.Parse()
 }
@@ -33,6 +47,8 @@ type parser struct {
 
 	errs       lox.Errors
 	lastErrPos token.Position
+
+	parseComments bool
 }
 
 // Parse parses the source code and returns the root node of the abstract syntax tree.
@@ -41,11 +57,25 @@ func (p *parser) Parse() (ast.Program, error) {
 	// Populate tok and nextTok
 	p.next()
 	p.next()
-	program := ast.Program{}
-	for p.tok.Type != token.EOF {
-		program.Stmts = append(program.Stmts, p.safelyParseDecl())
+	return p.parseProgram(), p.errs.Err()
+}
+
+func (p *parser) parseProgram() ast.Program {
+	return ast.Program{
+		Stmts: p.parseDeclsUntil(token.EOF),
 	}
-	return program, p.errs.Err()
+}
+
+func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
+	var stmts []ast.Stmt
+	for !slices.Contains(types, p.tok.Type) {
+		stmt := p.safelyParseDecl()
+		if _, ok := stmt.(ast.CommentStmt); ok && !p.parseComments {
+			continue
+		}
+		stmts = append(stmts, stmt)
+	}
+	return stmts
 }
 
 func (p *parser) safelyParseDecl() (stmt ast.Stmt) {
@@ -82,17 +112,32 @@ func (p *parser) sync() token.Token {
 }
 
 func (p *parser) parseDecl() ast.Stmt {
+	var stmt ast.Stmt
 	switch tok := p.tok; {
+	case p.match(token.Comment):
+		stmt = p.parseCommentStmt(tok)
 	case p.match(token.Var):
-		return p.parseVarDecl(tok)
+		stmt = p.parseVarDecl(tok)
 	case p.tok.Type == token.Fun && p.nextTok.Type == token.Ident:
 		p.match(token.Fun)
-		return p.parseFunDecl(tok)
+		stmt = p.parseFunDecl(tok)
 	case p.match(token.Class):
-		return p.parseClassDecl(tok)
+		stmt = p.parseClassDecl(tok)
 	default:
-		return p.parseStmt()
+		stmt = p.parseStmt()
 	}
+
+	if comment, ok := p.matchFunc(func(tok token.Token) bool {
+		return tok.Type == token.Comment && tok.Start.Line == stmt.End().Line
+	}); ok && p.parseComments {
+		return ast.InlineCommentStmt{Stmt: stmt, Comment: comment}
+	}
+
+	return stmt
+}
+
+func (p *parser) parseCommentStmt(commentTok token.Token) ast.CommentStmt {
+	return ast.CommentStmt{Comment: commentTok}
 }
 
 func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
@@ -119,6 +164,17 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	p.expect(token.LeftBrace)
 	var body []ast.Stmt
 	for {
+		for {
+			tok, ok := p.match2(token.Comment)
+			if !ok {
+				break
+			}
+			comment := p.parseCommentStmt(tok)
+			if p.parseComments {
+				body = append(body, comment)
+			}
+		}
+
 		if decl, ok := p.parseMethodDecl(); ok {
 			body = append(body, decl)
 		} else {
@@ -222,10 +278,7 @@ func (p *parser) parsePrintStmt(printTok token.Token) ast.PrintStmt {
 }
 
 func (p *parser) parseBlock(leftBrace token.Token) ast.BlockStmt {
-	var stmts []ast.Stmt
-	for p.tok.Type != token.RightBrace && p.tok.Type != token.EOF {
-		stmts = append(stmts, p.safelyParseDecl())
-	}
+	stmts := p.parseDeclsUntil(token.RightBrace, token.EOF)
 	rightBrace := p.expect(token.RightBrace)
 	return ast.BlockStmt{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
 }
@@ -467,7 +520,11 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			Right: right,
 		}
 	default:
-		p.addError(lox.FromToken(tok), "expected expression")
+		if tok.Type == token.Comment {
+			p.addError(lox.FromToken(tok), "comments can only appear where declarations can appear or at the end of statements")
+		} else {
+			p.addError(lox.FromToken(tok), "expected expression")
+		}
 		panic(unwind{})
 	}
 }
@@ -494,6 +551,16 @@ func (p *parser) match(types ...token.Type) bool {
 func (p *parser) match2(types ...token.Type) (token.Token, bool) {
 	tok := p.tok
 	return tok, p.match(types...)
+}
+
+// matchFunc reports whether the current token satisfies the given predicate and advances the parser if so.
+func (p *parser) matchFunc(f func(token.Token) bool) (token.Token, bool) {
+	tok := p.tok
+	if f(tok) {
+		p.next()
+		return tok, true
+	}
+	return tok, false
 }
 
 // expect returns the current token and advances the parser if it has the given type. Otherwise, an "expected %m" error

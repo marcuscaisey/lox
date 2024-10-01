@@ -47,14 +47,13 @@ func run(path string) error {
 		return err
 	}
 
-	program, err := parser.Parse(bytes.NewReader(data))
-	if err != nil {
-		return err
-	}
-
+	program, err := parser.Parse(bytes.NewReader(data), parser.WithComments())
 	if *printAST {
 		ast.Print(program)
-		return nil
+		return err
+	}
+	if err != nil {
+		return err
 	}
 
 	formatted := format(program)

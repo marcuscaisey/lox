@@ -13,6 +13,10 @@ func format(node ast.Node) string {
 	switch node := node.(type) {
 	case ast.Program:
 		return formatProgram(node)
+	case ast.CommentStmt:
+		return formatCommentStmt(node)
+	case ast.InlineCommentStmt:
+		return formatCommentedStmt(node)
 	case ast.VarDecl:
 		return formatVarDecl(node)
 	case ast.FunDecl:
@@ -84,6 +88,14 @@ func formatStmts[T ast.Stmt](stmts []T) string {
 		}
 	}
 	return b.String()
+}
+
+func formatCommentStmt(stmt ast.CommentStmt) string {
+	return stmt.Comment.Lexeme
+}
+
+func formatCommentedStmt(stmt ast.InlineCommentStmt) string {
+	return fmt.Sprintf("%s %s", format(stmt.Stmt), stmt.Comment.Lexeme)
 }
 
 func formatVarDecl(decl ast.VarDecl) string {

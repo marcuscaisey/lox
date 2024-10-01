@@ -69,6 +69,7 @@ const (
 	Ident
 	String
 	Number
+	Comment
 
 	// Symbols
 	Semicolon
@@ -124,6 +125,7 @@ var typeStrings = map[Type]string{
 	Ident:        "identifier",
 	String:       "string",
 	Number:       "number",
+	Comment:      "comment",
 	Semicolon:    ";",
 	Comma:        ",",
 	Dot:          ".",

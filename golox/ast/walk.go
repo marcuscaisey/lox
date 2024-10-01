@@ -13,6 +13,9 @@ func Walk(node Node, f func(Node) bool) {
 	switch node := node.(type) {
 	case Program:
 		walkSlice(node.Stmts, f)
+	case CommentStmt:
+	case InlineCommentStmt:
+		Walk(node.Stmt, f)
 	case VarDecl:
 		if node.Initialiser != nil {
 			Walk(node.Initialiser, f)

@@ -29,6 +29,29 @@ type stmt struct{}
 
 func (stmt) isStmt() {}
 
+// CommentStmt is a comment on its own line, such as
+//
+//	// comment
+type CommentStmt struct {
+	Comment token.Token `print:"unnamed"`
+	stmt
+}
+
+func (c CommentStmt) Start() token.Position { return c.Comment.Start }
+func (c CommentStmt) End() token.Position   { return c.Comment.End }
+
+// InlineCommentStmt is a statement with a comment on the same line, such as
+//
+//	print 1; // comment
+type InlineCommentStmt struct {
+	Stmt    Stmt        `print:"unnamed"`
+	Comment token.Token `print:"named"`
+	stmt
+}
+
+func (s InlineCommentStmt) Start() token.Position { return s.Stmt.Start() }
+func (s InlineCommentStmt) End() token.Position   { return s.Comment.End }
+
 // VarDecl is a variable declaration, such as var a = 123 or var b.
 type VarDecl struct {
 	Var         token.Token

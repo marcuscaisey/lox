@@ -520,7 +520,11 @@ The blank identifier `_` is a special identifier which:
 
 ### Comments
 
-Comments are bits of text in the source code that are ignored when evaluating the program.
+Comments are bits of text in the source code that are ignored when evaluating the program. They can
+appear:
+
+- anywhere a declaration can appear.
+- at the end of a statement.
 
 ```lox
 // This is a comment

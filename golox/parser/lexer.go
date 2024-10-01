@@ -94,12 +94,14 @@ func (l *lexer) Next() token.Token {
 	case l.ch == '*':
 		tok.Type = token.Asterisk
 	case l.ch == '/':
-		tok.Type = token.Slash
 		if l.peek() == '/' {
-			l.next()
-			l.next()
-			l.skipSingleLineComment()
-			return l.Next()
+			tok.Type = token.Comment
+			tok.Lexeme = l.consumeSingleLineComment()
+			tok.End = l.pos
+			return tok
+		} else {
+			tok.Type = token.Slash
+			break
 		}
 	case l.ch == '%':
 		tok.Type = token.Percent
@@ -178,10 +180,16 @@ func (l *lexer) skipWhitespace() {
 	}
 }
 
-func (l *lexer) skipSingleLineComment() {
+func (l *lexer) consumeSingleLineComment() string {
+	l.next() // /
+	l.next() // /
+	var b strings.Builder
+	b.WriteString("//")
 	for l.ch != '\n' && l.ch != eof {
+		b.WriteRune(l.ch)
 		l.next()
 	}
+	return b.String()
 }
 
 func (l *lexer) consumeNumber() string {
