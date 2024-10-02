@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -18,36 +17,48 @@ var (
 	printAST = flag.Bool("p", false, "Print the AST only")
 )
 
-// nolint:revive
-func Usage() {
+func usage() {
 	fmt.Fprintf(flag.CommandLine.Output(), "Usage: loxfmt [flags] [path]\n")
 	fmt.Fprintf(flag.CommandLine.Output(), "\n")
 	fmt.Fprintf(flag.CommandLine.Output(), "Options:\n")
 	flag.PrintDefaults()
 }
 
-func main() {
-	log.SetFlags(0)
+func exitWithUsageErr(msg string) {
+	fmt.Fprintf(flag.CommandLine.Output(), "error: %s\n\n", msg)
+	flag.Usage()
+	os.Exit(2)
+}
 
-	flag.Usage = Usage
+func main() {
+	flag.Usage = usage
 	flag.Parse()
 
-	if len(flag.Args()) != 1 {
-		flag.Usage()
-		os.Exit(2)
+	if len(flag.Args()) > 1 {
+		exitWithUsageErr("at most one path can be provided")
+	}
+
+	path := flag.Arg(0)
+
+	if path == "" && *write {
+		exitWithUsageErr("error: cannot use -w with standard input")
 	}
 
 	if err := run(flag.Arg(0)); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
 	}
 }
 
 func run(path string) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
+	var reader io.Reader = os.Stdin
+	if path != "" {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		reader = newNamedReader(bytes.NewReader(data), path)
 	}
-	reader := newNamedReader(bytes.NewReader(data), path)
 
 	program, err := parser.Parse(reader, parser.WithComments())
 	if *printAST {
