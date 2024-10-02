@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -46,8 +47,9 @@ func run(path string) error {
 	if err != nil {
 		return err
 	}
+	reader := newNamedReader(bytes.NewReader(data), path)
 
-	program, err := parser.Parse(bytes.NewReader(data), parser.WithComments())
+	program, err := parser.Parse(reader, parser.WithComments())
 	if *printAST {
 		ast.Print(program)
 		return err
@@ -66,4 +68,17 @@ func run(path string) error {
 	}
 
 	return nil
+}
+
+type namedReader struct {
+	io.Reader
+	name string
+}
+
+func newNamedReader(r io.Reader, name string) io.Reader {
+	return namedReader{Reader: r, name: name}
+}
+
+func (n namedReader) Name() string {
+	return n.name
 }
