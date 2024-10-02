@@ -1,12 +1,12 @@
 var i = 0;
 while (i < 3) {
-  // prints: 0
-  // prints: 1
-  // prints: 2
-  print i;
-  i = i + 1;
+    // prints: 0
+    // prints: 1
+    // prints: 2
+    print i;
+    i = i + 1;
 }
 
 while ("") {
-  print "this should not be printed";
+    print "this should not be printed";
 }

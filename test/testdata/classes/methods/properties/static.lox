@@ -1,14 +1,14 @@
 class Config {
-  static get VALUE() {
-    return this._value;
-  }
-
-  static set VALUE(value) {
-    if (value <= 0) {
-      error("VALUE must be positive");
+    static get VALUE() {
+        return this._value;
     }
-    this._value = value;
-  }
+
+    static set VALUE(value) {
+        if (value <= 0) {
+            error("VALUE must be positive");
+        }
+        this._value = value;
+    }
 }
 
 Config.VALUE = 1;

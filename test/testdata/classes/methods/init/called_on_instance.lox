@@ -1,14 +1,14 @@
 class ReturnsNoValue {
-  init(x) {
-    this.x = x;
-    return;
-  }
+    init(x) {
+        this.x = x;
+        return;
+    }
 }
 
 class NoReturn {
-  init(x) {
-    this.x = x;
-  }
+    init(x) {
+        this.x = x;
+    }
 }
 
 var returnsNoValue = ReturnsNoValue(1);

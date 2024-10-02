@@ -6,32 +6,32 @@ var e = "global e";
 var f = "global f";
 
 {
-  var d = "block d";
-  var e;
-  var f = "block f";
-  _ = f;
+    var d = "block d";
+    var e;
+    var f = "block f";
+    _ = f;
 
-  class G {
-    g() {
-      print a; // prints: global a
-      b = "global b";
-      print b; // prints: global b
-      var c = "fun c";
-      print c; // prints: fun c
-      print d; // prints: block d
-      e = "block e";
-      print e; // prints: block e
-      var f = "fun f";
-      print f; // prints: fun f
+    class G {
+        g() {
+            print a; // prints: global a
+            b = "global b";
+            print b; // prints: global b
+            var c = "fun c";
+            print c; // prints: fun c
+            print d; // prints: block d
+            e = "block e";
+            print e; // prints: block e
+            var f = "fun f";
+            print f; // prints: fun f
+        }
     }
-  }
 
-  var a = "block a";
-  _ = a;
-  var b = "block b";
-  G().g();
-  print b; // prints: block b
-  print e; // prints: block e
+    var a = "block a";
+    _ = a;
+    var b = "block b";
+    G().g();
+    print b; // prints: block b
+    print e; // prints: block e
 }
 
 print b; // prints: global b

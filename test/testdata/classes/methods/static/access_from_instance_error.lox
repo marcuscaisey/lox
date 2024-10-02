@@ -1,5 +1,5 @@
 class Foo {
-  static bar() {}
+    static bar() {}
 }
 
 Foo().bar(); // error: 'Foo' object has no property bar

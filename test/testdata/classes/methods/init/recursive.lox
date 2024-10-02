@@ -1,19 +1,19 @@
 class CountCallsThis {
-  init(start, end) {
-    if (start <= end) {
-      print start;
-      this.init(start + 1, end);
+    init(start, end) {
+        if (start <= end) {
+            print start;
+            this.init(start + 1, end);
+        }
     }
-  }
 }
 
 class CountCallsClass {
-  init(start, end) {
-    if (start <= end) {
-      print start;
-      CountCallsClass(start + 1, end);
+    init(start, end) {
+        if (start <= end) {
+            print start;
+            CountCallsClass(start + 1, end);
+        }
     }
-  }
 }
 
 // prints: 1

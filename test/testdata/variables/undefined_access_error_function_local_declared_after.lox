@@ -1,5 +1,5 @@
 fun f() {
-  print a; // error: a has not been defined
+    print a; // error: a has not been defined
 }
 
 var a;

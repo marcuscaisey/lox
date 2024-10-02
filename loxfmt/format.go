@@ -8,7 +8,7 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-const indentSize = 2
+const indentSize = 4
 
 func format(node ast.Node) string {
 	switch node := node.(type) {

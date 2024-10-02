@@ -1,5 +1,5 @@
 fun f() {
-  print a; // error: a has not been declared
+    print a; // error: a has not been declared
 }
 
 f();

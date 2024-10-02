@@ -1,9 +1,9 @@
 fun newCounter() {
-  var i = 0;
-  return fun() {
-    i = i + 1;
-    return i;
-  };
+    var i = 0;
+    return fun() {
+        i = i + 1;
+        return i;
+    };
 }
 
 var counter = newCounter();

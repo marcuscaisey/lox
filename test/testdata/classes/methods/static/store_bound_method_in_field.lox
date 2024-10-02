@@ -1,13 +1,13 @@
 class Foo {
-  init(x) {
-    this.x = x;
-  }
+    init(x) {
+        this.x = x;
+    }
 }
 
 class Bar {
-  static setX(x) {
-    this.x = x;
-  }
+    static setX(x) {
+        this.x = x;
+    }
 }
 
 var foo = Foo("instance x");

@@ -1,8 +1,8 @@
 class Foo {
-  init() {
-    fun() {
-      return 1;
-    }();
-    return 2; // error: init() cannot return a value
-  }
+    init() {
+        fun() {
+            return 1;
+        }();
+        return 2; // error: init() cannot return a value
+    }
 }

@@ -1,7 +1,7 @@
 class Foo {
-  bar() {
-    print a;
-  }
+    bar() {
+        print a;
+    }
 }
 
 var a = "global";

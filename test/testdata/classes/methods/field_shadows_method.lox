@@ -1,11 +1,11 @@
 class Foo {
-  init(bar) {
-    this.bar = bar;
-  }
+    init(bar) {
+        this.bar = bar;
+    }
 
-  bar() {
-    return "bar method";
-  }
+    bar() {
+        return "bar method";
+    }
 }
 
 var foo = Foo("bar field");

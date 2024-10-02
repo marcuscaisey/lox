@@ -1,7 +1,7 @@
 if (1 < 2) {
-  print "1 is less than 2"; // prints: 1 is less than 2
+    print "1 is less than 2"; // prints: 1 is less than 2
 }
 
 if (1 > 2) {
-  print "1 is greater than 2";
+    print "1 is greater than 2";
 }

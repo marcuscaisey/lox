@@ -1,10 +1,10 @@
 class AdderFactory {
-  newAdder(n) {
-    fun adder(x) {
-      return x + n;
+    newAdder(n) {
+        fun adder(x) {
+            return x + n;
+        }
+        return adder;
     }
-    return adder;
-  }
 }
 
 var adderFactory = AdderFactory();

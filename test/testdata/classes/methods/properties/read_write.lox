@@ -1,18 +1,18 @@
 class Circle {
-  init(radius) {
-    this.radius = radius;
-  }
-
-  get radius() {
-    return this._radius;
-  }
-
-  set radius(value) {
-    if (value <= 0) {
-      error("radius must be positive");
+    init(radius) {
+        this.radius = radius;
     }
-    this._radius = value;
-  }
+
+    get radius() {
+        return this._radius;
+    }
+
+    set radius(value) {
+        if (value <= 0) {
+            error("radius must be positive");
+        }
+        this._radius = value;
+    }
 }
 
 var c = Circle(2);

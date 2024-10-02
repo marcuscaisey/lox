@@ -1,5 +1,5 @@
 {
-  var a; // error: a has been declared but is never used
-  var b = "used";
-  print b;
+    var a; // error: a has been declared but is never used
+    var b = "used";
+    print b;
 }

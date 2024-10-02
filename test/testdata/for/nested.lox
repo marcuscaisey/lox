@@ -1,11 +1,11 @@
 for (var i = 0; i < 3; i = i + 1) {
-  for (var j = 0; j < 2; j = j + 1) {
-    // prints: 0
-    // prints: 1
-    // prints: 2
-    // prints: 3
-    // prints: 4
-    // prints: 5
-    print j + 2 * i;
-  }
+    for (var j = 0; j < 2; j = j + 1) {
+        // prints: 0
+        // prints: 1
+        // prints: 2
+        // prints: 3
+        // prints: 4
+        // prints: 5
+        print j + 2 * i;
+    }
 }

@@ -1,13 +1,13 @@
 var PI = 3;
 
 class Circle {
-  init(radius) {
-    this.radius = radius;
-  }
+    init(radius) {
+        this.radius = radius;
+    }
 
-  get area() {
-    return PI * this.radius * this.radius;
-  }
+    get area() {
+        return PI * this.radius * this.radius;
+    }
 }
 
 var c = Circle(2);

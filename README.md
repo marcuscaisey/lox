@@ -223,7 +223,7 @@ A call expression calls a function with arguments.
 
 ```lox
 fun add(a, b) {
-  return a + b;
+    return a + b;
 }
 
 print add(1, 2); // prints: 3
@@ -235,9 +235,9 @@ A get expression produces the value of a property of an object.
 
 ```lox
 class Foo {
-  init(bar) {
-    this.bar = bar;
-  }
+    init(bar) {
+        this.bar = bar;
+    }
 }
 var foo = Foo(1);
 
@@ -264,7 +264,7 @@ A function expression creates an anonymous function.
 
 ```lox
 var add = fun(a, b) {
-  return a + b;
+    return a + b;
 };
 
 print add(1, 2); // prints: 3
@@ -317,9 +317,9 @@ lexical scope.
 var a = "global a";
 var b = "global b";
 {
-  var a = "outer a";
-  print a; // prints: outer a
-  print b; // prints: global b
+    var a = "outer a";
+    print a; // prints: outer a
+    print b; // prints: global b
 }
 print a; // prints: global a
 print b; // prints: global b
@@ -332,20 +332,19 @@ optional else statement can be provided to execute a statement if the expression
 
 ```lox
 if (1 < 2) {
-  print "1 is less than 2"; // prints: 1 is less than 2
+    print "1 is less than 2"; // prints: 1 is less than 2
 }
 
-
 if (1 > 2) {
-  print "1 is greater than 2";
+    print "1 is greater than 2";
 } else {
-  print "1 is not greater than 2"; // prints: 1 is not greater than 2
+    print "1 is not greater than 2"; // prints: 1 is not greater than 2
 }
 
 if (1 > 2) {
-  print "1 is greater than 2";
+    print "1 is greater than 2";
 } else if (3 < 4) {
-  print "3 is less than 4"; // prints: 3 is less than 4
+    print "3 is less than 4"; // prints: 3 is less than 4
 }
 ```
 
@@ -356,11 +355,11 @@ A while statement repeatedly executes a statement while the provided expression 
 ```lox
 var i = 0;
 while (i < 3) {
-  // prints: 0
-  // prints: 1
-  // prints: 2
-  print i;
-  i = i + 1;
+    // prints: 0
+    // prints: 1
+    // prints: 2
+    print i;
+    i = i + 1;
 }
 ```
 
@@ -374,11 +373,11 @@ The following while statement:
 ```lox
 var i = 0;
 while (i < 3) {
-  // prints: 0
-  // prints: 1
-  // prints: 2
-  print i;
-  i = i + 1;
+    // prints: 0
+    // prints: 1
+    // prints: 2
+    print i;
+    i = i + 1;
 }
 ```
 
@@ -386,10 +385,10 @@ is equivalent to the following for statement:
 
 ```lox
 for (var i = 0; i < 3; i = i + 1) {
-  // prints: 0
-  // prints: 1
-  // prints: 2
-  print i;
+    // prints: 0
+    // prints: 1
+    // prints: 2
+    print i;
 }
 ```
 
@@ -397,7 +396,7 @@ All three sections of the for statement are optional. The following is an infini
 
 ```lox
 for (;;) {
-  print "infinite loop";
+    print "infinite loop";
 }
 ```
 
@@ -406,10 +405,10 @@ The initialisation section can either be a variable declaration or an expression
 ```lox
 var i;
 for (i = 0; i < 3; i = i + 1) {
-  // prints: 0
-  // prints: 1
-  // prints: 2
-  print i;
+    // prints: 0
+    // prints: 1
+    // prints: 2
+    print i;
 }
 ```
 
@@ -418,11 +417,11 @@ for (i = 0; i < 3; i = i + 1) {
 A break statement immediately exits the innermost enclosing loop.
 
 ```lox
-for (var i = 0; i < 3; i++) {
-  if (i == 1) {
-    break;
-  }
-  print i; // prints: 0
+for (var i = 0; i < 3; i = i + 1) {
+    if (i == 1) {
+        break;
+    }
+    print i; // prints: 0
 }
 ```
 
@@ -431,14 +430,14 @@ for (var i = 0; i < 3; i++) {
 A continue statement immediately jumps to the end of the innermost enclosing for or while loop.
 
 ```lox
-for (var i = 0; i < 5; i++) {
-  if (i % 2 == 1) {
-    continue;
-  }
-  // prints: 0
-  // prints: 2
-  // prints: 4
-  print i;
+for (var i = 0; i < 5; i = i + 1) {
+    if (i % 2 == 1) {
+        continue;
+    }
+    // prints: 0
+    // prints: 2
+    // prints: 4
+    print i;
 }
 ```
 
@@ -449,13 +448,13 @@ caller.
 
 ```lox
 fun add(a, b) {
-  return a + b;
+    return a + b;
 }
 
 fun greet() {
-  print "Hello, World!";
-  return;
-  print "This is unreachable";
+    print "Hello, World!";
+    return;
+    print "This is unreachable";
 }
 
 print add(1, 2); // prints: 3
@@ -491,7 +490,7 @@ implicitly returns `nil`.
 
 ```lox
 fun add(a, b) {
-  return a + b;
+    return a + b;
 }
 
 print add(1, 2); // prints: 3
@@ -506,15 +505,15 @@ is a special method which is called when an object is instantiated.
 
 ```lox
 class Point {
-  init(x, y) {
-    this.x = x;
-    this.y = y;
-  }
+    init(x, y) {
+        this.x = x;
+        this.y = y;
+    }
 
-  move(dx, dy) {
-    this.x = this.x + dx;
-    this.y = this.y + dy;
-  }
+    move(dx, dy) {
+        this.x = this.x + dx;
+        this.y = this.y + dy;
+    }
 }
 
 var p1 = Point(1, 2);
@@ -533,9 +532,9 @@ class.
 
 ```lox
 class Math {
-  static square(x) {
-    return x * x;
-  }
+    static square(x) {
+        return x * x;
+    }
 }
 
 print Math.square(2); // prints: 4
@@ -549,24 +548,24 @@ to the getter and setter methods. Property getters and setters can also be stati
 var PI = 3;
 
 class Circle {
-  init(radius) {
-    this.radius = radius;
-  }
-
-  get radius() {
-    return this._radius;
-  }
-
-  set radius(value) {
-    if (value <= 0) {
-      error("radius must be positive");
+    init(radius) {
+        this.radius = radius;
     }
-    this._radius = value;
-  }
 
-  get area() {
-    return PI * this.radius * this.radius;
-  }
+    get radius() {
+        return this._radius;
+    }
+
+    set radius(value) {
+        if (value <= 0) {
+            error("radius must be positive");
+        }
+        this._radius = value;
+    }
+
+    get area() {
+        return PI * this.radius * this.radius;
+    }
 }
 
 var c = Circle(2);
@@ -605,14 +604,14 @@ execution will not begin.
 
 ```lox
 class Foo {
-  init(a) {
-    this.a = a;
-    return this;
-  }
+    init(a) {
+        this.a = a;
+        return this;
+    }
 }
 
 fun add(y) {
-  return this.x + y;
+    return this.x + y;
 }
 ```
 
@@ -632,29 +631,29 @@ reported along with a stack trace.
 var PI = 3;
 
 class Circle {
-  init(radius) {
-    this.radius = radius;
-  }
-
-  get radius() {
-    return this._radius;
-  }
-
-  set radius(value) {
-    if (value <= 0) {
-      error("radius must be positive");
+    init(radius) {
+        this.radius = radius;
     }
-    this._radius = value;
-  }
 
-  get area() {
-    return PI * this.radius * this.radius;
-  }
+    get radius() {
+        return this._radius;
+    }
+
+    set radius(value) {
+        if (value <= 0) {
+            error("radius must be positive");
+        }
+        this._radius = value;
+    }
+
+    get area() {
+        return PI * this.radius * this.radius;
+    }
 }
 
 fun main() {
-  var c = Circle(-1);
-  print c.area;
+    var c = Circle(-1);
+    print c.area;
 }
 
 main();

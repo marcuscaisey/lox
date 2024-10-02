@@ -1,5 +1,5 @@
 fun add(a, b, c) {
-  print a + b + c;
+    print a + b + c;
 }
 
 add(); // error: add() missing 3 arguments: a, b, and c
