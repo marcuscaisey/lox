@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"unicode/utf8"
@@ -34,7 +33,7 @@ type lexer struct {
 func newLexer(r io.Reader) (*lexer, error) {
 	src, err := io.ReadAll(r)
 	if err != nil {
-		return nil, fmt.Errorf("constructing lexer: %s", err)
+		return nil, err
 	}
 	filename := name(r)
 

@@ -26,7 +26,7 @@ func WithComments() Option {
 func Parse(r io.Reader, opts ...Option) (ast.Program, error) {
 	lexer, err := newLexer(r)
 	if err != nil {
-		return ast.Program{}, fmt.Errorf("constructing parser: %s", err)
+		return ast.Program{}, fmt.Errorf("parsing lox source: %w", err)
 	}
 
 	p := &parser{lexer: lexer}
