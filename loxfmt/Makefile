@@ -11,7 +11,7 @@ ifdef RUN
 endif
 
 test: loxfmt
-	go run gotest.tools/gotestsum --format=testname ../test -formatter=${BUILD_PATH} ${extra_test_args}
+	go run gotest.tools/gotestsum ../test -formatter=${BUILD_PATH} ${extra_test_args}
 
 update_tests: loxfmt
-	go run gotest.tools/gotestsum --format=testname ../test -formatter=${BUILD_PATH} -update ${extra_test_args}
+	go run gotest.tools/gotestsum ../test -formatter=${BUILD_PATH} -update ${extra_test_args}
