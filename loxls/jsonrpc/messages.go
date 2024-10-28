@@ -163,7 +163,7 @@ func (is *intOrStr) UnmarshalJSON(b []byte) error {
 		if math.Trunc(v) != v {
 			return &json.UnmarshalTypeError{
 				Value: fmt.Sprint(v),
-				Type:  reflect.TypeOf(intOrStr{}),
+				Type:  reflect.TypeFor[intOrStr](),
 			}
 		}
 		is.isInt = true
@@ -171,7 +171,7 @@ func (is *intOrStr) UnmarshalJSON(b []byte) error {
 	default:
 		return &json.UnmarshalTypeError{
 			Value: fmt.Sprint(v),
-			Type:  reflect.TypeOf(intOrStr{}),
+			Type:  reflect.TypeFor[intOrStr](),
 		}
 	}
 	return nil
@@ -212,7 +212,7 @@ func (o *optional[T]) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return &json.UnmarshalTypeError{
 			Value: "null",
-			Type:  reflect.TypeOf(new(T)).Elem(),
+			Type:  reflect.TypeFor[T](),
 		}
 	}
 	var v T
