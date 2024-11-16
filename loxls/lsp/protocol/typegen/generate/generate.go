@@ -372,6 +372,7 @@ var baseTypeTypes = map[metamodel.BaseTypes]string{
 	metamodel.BaseTypesRegExp:      "*regexp.Regexp",
 	metamodel.BaseTypesString:      "string",
 	metamodel.BaseTypesBoolean:     "bool",
+	metamodel.BaseTypesNull:        "",
 }
 
 func (g *generator) genBaseTypeDecl(baseType metamodel.BaseTypes) string {

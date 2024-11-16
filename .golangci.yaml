@@ -3,7 +3,15 @@ linters:
     - gci
     - revive
     - gofmt
+    - exhaustive
 linters-settings:
+  exhaustive:
+    # Program elements to check for exhaustiveness.
+    check:
+      - switch
+      - map
+    # Presence of "default" case in switch statements satisfies exhaustiveness, even if all enum members are not listed.
+    default-signifies-exhaustive: true
   gci:
     sections:
       - standard # Standard section: captures all standard packages.

@@ -105,6 +105,7 @@ func (p *parser) sync() token.Token {
 			return finalTok
 		case token.Print, token.Var, token.If, token.LeftBrace, token.While, token.For, token.Break, token.Continue, token.EOF:
 			return finalTok
+		default:
 		}
 		finalTok = p.tok
 		p.next()
@@ -529,6 +530,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			right = p.parseMultiplicativeExpr()
 		case token.Asterisk, token.Slash:
 			right = p.parseUnaryExpr()
+		default:
 		}
 		return ast.BinaryExpr{
 			Op:    tok,

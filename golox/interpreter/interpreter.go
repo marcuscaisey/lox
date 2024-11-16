@@ -400,6 +400,7 @@ func (i *Interpreter) evalBinaryExpr(env *environment, expr ast.BinaryExpr) loxO
 		} else {
 			return i.evalExpr(env, expr.Right)
 		}
+	default:
 	}
 
 	right := i.evalExpr(env, expr.Right)
