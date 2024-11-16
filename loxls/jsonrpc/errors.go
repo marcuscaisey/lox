@@ -28,18 +28,18 @@ func NewMethodNotFoundError(method string) error {
 	return NewError(MethodNotFound, "Method not found", map[string]string{"method": method})
 }
 
-func newParseError(error string) error {
-	return newErrorWithErrorField(ParseError, "Parse error", error)
+func newParseError(errorMsg string) error {
+	return newErrorWithErrorField(ParseError, "Parse error", errorMsg)
 }
 
-func newInvalidRequestError(error string) error {
-	return newErrorWithErrorField(InvalidRequest, "Invalid Request", error)
+func newInvalidRequestError(errorMsg string) error {
+	return newErrorWithErrorField(InvalidRequest, "Invalid Request", errorMsg)
 }
 
-func newInternalError(error string) *responseError {
-	return newErrorWithErrorField(InternalError, "Internal error", error).(*responseError)
+func newInternalError(errorMsg string) *responseError {
+	return newErrorWithErrorField(InternalError, "Internal error", errorMsg).(*responseError)
 }
 
-func newErrorWithErrorField(code ErrorCode, message, error string) error {
-	return NewError(code, message, map[string]string{"error": error})
+func newErrorWithErrorField(code ErrorCode, message, errorMsg string) error {
+	return NewError(code, message, map[string]string{"error": errorMsg})
 }
