@@ -1,4 +1,4 @@
-# loxfmt
+# loxls
 
 loxls is a language server for the Lox programming language which implements the language server
 protocol (LSP) as defined at
