@@ -69,7 +69,7 @@ func (l *lexer) Next() token.Token {
 	l.skipWhitespace()
 
 	startOffset := l.offset
-	tok := token.Token{Start: l.pos}
+	tok := token.Token{StartPos: l.pos}
 
 	switch {
 	case l.ch == eof:
@@ -96,7 +96,7 @@ func (l *lexer) Next() token.Token {
 		if l.peek() == '/' {
 			tok.Type = token.Comment
 			tok.Lexeme = l.consumeSingleLineComment()
-			tok.End = l.pos
+			tok.EndPos = l.pos
 			return tok
 		} else {
 			tok.Type = token.Slash
@@ -136,7 +136,7 @@ func (l *lexer) Next() token.Token {
 		tok.Type = token.RightBrace
 	case l.ch == '"':
 		lit, terminated := l.consumeString()
-		tok.End = l.pos
+		tok.EndPos = l.pos
 		tok.Lexeme = lit
 		if terminated {
 			tok.Type = token.String
@@ -148,18 +148,18 @@ func (l *lexer) Next() token.Token {
 	case isDigit(l.ch):
 		tok.Type = token.Number
 		tok.Lexeme = l.consumeNumber()
-		tok.End = l.pos
+		tok.EndPos = l.pos
 		return tok
 	case isAlpha(l.ch):
 		ident := l.consumeIdent()
-		tok.End = l.pos
+		tok.EndPos = l.pos
 		tok.Type = token.IdentType(ident)
 		tok.Lexeme = ident
 		return tok
 	default:
 		ch := l.ch
 		l.next()
-		tok.End = l.pos
+		tok.EndPos = l.pos
 		tok.Type = token.Illegal
 		tok.Lexeme = string(ch)
 		l.errHandler(tok, "illegal character %#U", ch)
@@ -167,7 +167,7 @@ func (l *lexer) Next() token.Token {
 	}
 
 	l.next()
-	tok.End = l.pos
+	tok.EndPos = l.pos
 	tok.Lexeme = string(l.src[startOffset:l.offset])
 
 	return tok
@@ -285,12 +285,12 @@ func (l *lexer) next() {
 	if r == utf8.RuneError {
 		// If we get here then we've read exactly one invalid UTF-8 byte
 		tok := token.Token{
-			Start:  l.pos,
-			End:    l.pos,
-			Type:   token.Illegal,
-			Lexeme: string(l.src[l.offset : l.offset+1]),
+			StartPos: l.pos,
+			EndPos:   l.pos,
+			Type:     token.Illegal,
+			Lexeme:   string(l.src[l.offset : l.offset+1]),
 		}
-		tok.End.Column++
+		tok.EndPos.Column++
 		l.errHandler(tok, "invalid UTF-8 byte %#x", l.src[l.offset])
 		l.next()
 		return

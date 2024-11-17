@@ -185,14 +185,43 @@ func (t Type) Format(f fmt.State, verb rune) {
 
 // Token is a lexical token of Lox code.
 type Token struct {
-	Start  Position // Position of the first character of the token
-	End    Position // Position of the character immediately after the token
-	Type   Type
-	Lexeme string
+	StartPos Position // Position of the first character of the token
+	EndPos   Position // Position of the character immediately after the token
+	Type     Type
+	Lexeme   string
+}
+
+// Start returns the position of the first character of the token.
+func (t Token) Start() Position {
+	return t.StartPos
+}
+
+// End returns the position of the character immediately after the token.
+func (t Token) End() Position {
+	return t.EndPos
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("%s: %s [%s]", t.Start, t.Lexeme, t.Type)
+	return fmt.Sprintf("%s: %s [%s]", t.StartPos, t.Lexeme, t.Type)
+}
+
+// Tokens is a slice of tokens.
+type Tokens []Token
+
+// Start returns the position of the first character of the first token.
+func (t Tokens) Start() Position {
+	if len(t) == 0 {
+		return Position{}
+	}
+	return t[0].Start()
+}
+
+// End returns the position of the character immediately after the last token.
+func (t Tokens) End() Position {
+	if len(t) == 0 {
+		return Position{}
+	}
+	return t[len(t)-1].End()
 }
 
 // Position is a position in a file.
@@ -222,6 +251,12 @@ func (p Position) String() string {
 	line := p.File.Line(p.Line)
 	col := runewidth.StringWidth(string(line[:p.Column])) + 1
 	return fmt.Sprintf("%s%d:%d", prefix, p.Line, col)
+}
+
+// CharacterRange is an interface which describes a range of characters in the source code.
+type CharacterRange interface {
+	Start() Position // Start returns the position of the first character of the range.
+	End() Position   // End returns the position of the character immediately after the range.
 }
 
 var (

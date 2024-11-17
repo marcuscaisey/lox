@@ -11,40 +11,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 
-	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/token"
 )
-
-// ErrorRange is a function which returns the range of characters that an error applies to.
-type ErrorRange func() (start, end token.Position)
-
-// FromToken returns an [ErrorRange] which describes the range of characters in a token.
-func FromToken(tok token.Token) ErrorRange {
-	return func() (start, end token.Position) {
-		return tok.Start, tok.End
-	}
-}
-
-// FromTokens returns an [ErrorRange] which describes the range of characters between two tokens.
-func FromTokens(start, end token.Token) ErrorRange {
-	return func() (star, en token.Position) {
-		return start.Start, end.End
-	}
-}
-
-// FromNode returns an [ErrorRange] which describes the range of characters in a node.
-func FromNode(node ast.Node) ErrorRange {
-	return func() (start, end token.Position) {
-		return node.Start(), node.End()
-	}
-}
-
-// FromNodes returns an [ErrorRange] which describes the range of characters between two nodes.
-func FromNodes(start, end ast.Node) ErrorRange {
-	return func() (star, en token.Position) {
-		return start.Start(), end.End()
-	}
-}
 
 // Error describes an error that occurred during the execution of a Lox program.
 // It can describe any error which can be attributed to a range of characters in the source code.
@@ -55,17 +23,18 @@ type Error struct {
 }
 
 // NewError creates a [*Error] with the given message and range.
-func NewError(rang ErrorRange, message string) error {
-	return NewErrorf(rang, "%s", message)
+func NewError(charRange token.CharacterRange, message string) error {
+	return NewErrorf(charRange, "%s", message)
 }
 
 // NewErrorf creates a [*Error].
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
-func NewErrorf(rang ErrorRange, format string, args ...any) error {
+func NewErrorf(charRange token.CharacterRange, format string, args ...any) error {
 	e := &Error{
 		Msg: fmt.Sprintf(format, args...),
 	}
-	e.Start, e.End = rang()
+	e.Start = charRange.Start()
+	e.End = charRange.End()
 	return e
 
 }
@@ -133,14 +102,14 @@ type Errors []*Error
 
 // Add adds a [*Error] to the list of errors.
 // The parameters are the same as for [NewError].
-func (e *Errors) Add(rang ErrorRange, message string) {
-	*e = append(*e, NewError(rang, message).(*Error))
+func (e *Errors) Add(charRange token.CharacterRange, message string) {
+	*e = append(*e, NewError(charRange, message).(*Error))
 }
 
 // Addf adds a [*Error] to the list of errors.
 // The parameters are the same as for [NewErrorf].
-func (e *Errors) Addf(rang ErrorRange, format string, args ...any) {
-	*e = append(*e, NewErrorf(rang, format, args...).(*Error))
+func (e *Errors) Addf(charRange token.CharacterRange, format string, args ...any) {
+	*e = append(*e, NewErrorf(charRange, format, args...).(*Error))
 }
 
 // Err orders the errors in the list by their position in the source code and returns them as a single error.

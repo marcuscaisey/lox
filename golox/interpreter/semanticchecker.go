@@ -99,7 +99,7 @@ func (c *semanticChecker) walkFun(fun ast.Function, funType funType) {
 
 func (c *semanticChecker) checkNumParams(params []token.Token) {
 	if len(params) > maxParams {
-		c.errs.Addf(lox.FromToken(params[maxParams]), "cannot define more than %d function parameters", maxParams)
+		c.errs.Addf(params[maxParams], "cannot define more than %d function parameters", maxParams)
 	}
 }
 
@@ -145,7 +145,7 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []ast.MethodDecl) {
 	}
 	for name, nameTok := range setterNameToksByName {
 		if !gettersByName[name] {
-			c.errs.Add(lox.FromToken(nameTok), "write-only properties are not allowed")
+			c.errs.Add(nameTok, "write-only properties are not allowed")
 		}
 	}
 }
@@ -153,12 +153,12 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []ast.MethodDecl) {
 func (c *semanticChecker) checkNumPropertyParams(decl ast.MethodDecl) {
 	switch {
 	case decl.HasModifier(token.Get) && len(decl.Params) > 0:
-		c.errs.Addf(lox.FromTokens(decl.Params[0], decl.Params[len(decl.Params)-1]), "property getter cannot have parameters")
+		c.errs.Add(decl.Params[0:], "property getter cannot have parameters")
 	case decl.HasModifier(token.Set):
 		if len(decl.Params) == 0 {
-			c.errs.Addf(lox.FromToken(decl.Name), "property setter must have a parameter")
+			c.errs.Add(decl.Name, "property setter must have a parameter")
 		} else if len(decl.Params) > 1 {
-			c.errs.Addf(lox.FromTokens(decl.Params[1], decl.Params[len(decl.Params)-1]), "property setter can only have one parameter")
+			c.errs.Add(decl.Params[1:], "property setter can only have one parameter")
 		}
 	}
 
@@ -166,42 +166,42 @@ func (c *semanticChecker) checkNumPropertyParams(decl ast.MethodDecl) {
 
 func (c *semanticChecker) checkBreakInLoop(stmt ast.BreakStmt) {
 	if !c.inLoop {
-		c.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a loop", token.Break)
+		c.errs.Addf(stmt, "%m can only be used inside a loop", token.Break)
 	}
 }
 
 func (c *semanticChecker) checkContinueInLoop(stmt ast.ContinueStmt) {
 	if !c.inLoop {
-		c.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a loop", token.Continue)
+		c.errs.Addf(stmt, "%m can only be used inside a loop", token.Continue)
 	}
 }
 
 func (c *semanticChecker) checkReturnInFun(stmt ast.ReturnStmt) {
 	if c.curFunType == funTypeNone {
-		c.errs.Addf(lox.FromNode(stmt), "%m can only be used inside a function definition", token.Return)
+		c.errs.Addf(stmt, "%m can only be used inside a function definition", token.Return)
 	}
 }
 
 func (c *semanticChecker) checkNoConstructorReturn(stmt ast.ReturnStmt) {
 	if stmt.Value != nil && c.curFunType.IsConstructor() {
-		c.errs.Addf(lox.FromNode(stmt), "%s() cannot return a value", token.ConstructorIdent)
+		c.errs.Addf(stmt, "%s() cannot return a value", token.ConstructorIdent)
 	}
 }
 
 func (c *semanticChecker) checkNoPlaceholderAssignment(expr ast.VariableExpr) {
 	if expr.Name.Lexeme == token.PlaceholderIdent {
-		c.errs.Addf(lox.FromToken(expr.Name), "identifier %s cannot be used in a non-assignment expression", token.PlaceholderIdent)
+		c.errs.Addf(expr.Name, "identifier %s cannot be used in a non-assignment expression", token.PlaceholderIdent)
 	}
 }
 
 func (c *semanticChecker) checkThisInMethod(expr ast.ThisExpr) {
 	if !c.curFunType.IsMethod() {
-		c.errs.Addf(lox.FromNode(expr), "%m can only be used inside a method definition", token.This)
+		c.errs.Addf(expr, "%m can only be used inside a method definition", token.This)
 	}
 }
 
 func (c *semanticChecker) checkNumArgs(args []ast.Expr) {
 	if len(args) > maxArgs {
-		c.errs.Addf(lox.FromNode(args[maxArgs]), "cannot pass more than %d arguments to function", maxArgs)
+		c.errs.Addf(args[maxArgs], "cannot pass more than %d arguments to function", maxArgs)
 	}
 }

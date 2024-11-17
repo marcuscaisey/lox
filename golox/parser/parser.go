@@ -31,7 +31,7 @@ func Parse(r io.Reader, opts ...Option) (ast.Program, error) {
 
 	p := &parser{lexer: lexer}
 	lexer.SetErrorHandler(func(tok token.Token, format string, args ...any) {
-		p.addErrorf(lox.FromToken(tok), format, args...)
+		p.addErrorf(tok, format, args...)
 	})
 	for _, opt := range opts {
 		opt(p)
@@ -273,7 +273,7 @@ func (p *parser) parseStmt() ast.Stmt {
 
 func (p *parser) parseInlineCommentStmt(stmt ast.Stmt) (ast.InlineCommentStmt, bool) {
 	comment, ok := p.matchFunc(func(tok token.Token) bool {
-		return tok.Type == token.Comment && tok.Start.Line == stmt.End().Line
+		return tok.Type == token.Comment && tok.StartPos.Line == stmt.End().Line
 	})
 	if ok && p.parseComments {
 		return ast.InlineCommentStmt{Stmt: stmt, Comment: comment}, true
@@ -389,7 +389,7 @@ func (p *parser) parseAssignmentExpr() ast.Expr {
 				Value:  right,
 			}
 		default:
-			p.addError(lox.FromNode(expr), "invalid assignment target")
+			p.addError(expr, "invalid assignment target")
 		}
 	}
 	return expr
@@ -519,7 +519,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 		return ast.GroupExpr{LeftParen: tok, Expr: expr, RightParen: rightParen}
 	// Error productions
 	case p.match(token.EqualEqual, token.BangEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus):
-		p.addErrorf(lox.FromToken(tok), "binary operator %m must have left and right operands", tok.Type)
+		p.addErrorf(tok, "binary operator %m must have left and right operands", tok.Type)
 		var right ast.Expr
 		switch tok.Type {
 		case token.EqualEqual, token.BangEqual:
@@ -538,9 +538,9 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 		}
 	default:
 		if tok.Type == token.Comment {
-			p.addError(lox.FromToken(tok), "comments can only appear where declarations can appear or at the end of statements")
+			p.addError(tok, "comments can only appear where declarations can appear or at the end of statements")
 		} else {
-			p.addError(lox.FromToken(tok), "expected expression")
+			p.addError(tok, "expected expression")
 		}
 		panic(unwind{})
 	}
@@ -593,7 +593,7 @@ func (p *parser) expectf(t token.Type, format string, a ...any) token.Token {
 		p.next()
 		return tok
 	}
-	p.addErrorf(lox.FromToken(p.tok), format, a...)
+	p.addErrorf(p.tok, format, a...)
 	panic(unwind{})
 }
 
@@ -603,17 +603,17 @@ func (p *parser) next() {
 	p.nextTok = p.lexer.Next()
 }
 
-func (p *parser) addError(rang lox.ErrorRange, message string) {
-	p.addErrorf(rang, "%s", message)
+func (p *parser) addError(charRange token.CharacterRange, message string) {
+	p.addErrorf(charRange, "%s", message)
 }
 
-func (p *parser) addErrorf(rang lox.ErrorRange, format string, args ...any) {
-	start, _ := rang()
+func (p *parser) addErrorf(charRange token.CharacterRange, format string, args ...any) {
+	start := charRange.Start()
 	if len(p.errs) > 0 && start == p.lastErrPos {
 		return
 	}
 	p.lastErrPos = start
-	p.errs.Addf(rang, format, args...)
+	p.errs.Addf(charRange, format, args...)
 }
 
 // unwind is used as a panic value so that we can unwind the stack and recover from a parsing error without having to

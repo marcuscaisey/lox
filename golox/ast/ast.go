@@ -7,13 +7,12 @@ import (
 
 // Node is the interface which all AST nodes implement.
 type Node interface {
-	Start() token.Position // Start returns the position of the first character of the node
-	End() token.Position   // End returns the position of the character immediately after the node
+	token.CharacterRange
 }
 
 // Program is the root node of the AST.
 type Program struct {
-	Stmts []Stmt `print:"unnamed"`
+	Stmts Stmts `print:"unnamed"`
 }
 
 func (p Program) Start() token.Position { return p.Stmts[0].Start() }
@@ -24,6 +23,12 @@ type Stmt interface {
 	Node
 	isStmt()
 }
+
+// Stmts is a slice of statements.
+type Stmts []Stmt
+
+func (s Stmts) Start() token.Position { return s[0].Start() }
+func (s Stmts) End() token.Position   { return s[len(s)-1].End() }
 
 type stmt struct{}
 
@@ -37,8 +42,8 @@ type CommentStmt struct {
 	stmt
 }
 
-func (c CommentStmt) Start() token.Position { return c.Comment.Start }
-func (c CommentStmt) End() token.Position   { return c.Comment.End }
+func (c CommentStmt) Start() token.Position { return c.Comment.StartPos }
+func (c CommentStmt) End() token.Position   { return c.Comment.EndPos }
 
 // InlineCommentStmt is a statement with a comment on the same line, such as
 //
@@ -50,7 +55,7 @@ type InlineCommentStmt struct {
 }
 
 func (s InlineCommentStmt) Start() token.Position { return s.Stmt.Start() }
-func (s InlineCommentStmt) End() token.Position   { return s.Comment.End }
+func (s InlineCommentStmt) End() token.Position   { return s.Comment.EndPos }
 
 // VarDecl is a variable declaration, such as var a = 123 or var b.
 type VarDecl struct {
@@ -61,8 +66,8 @@ type VarDecl struct {
 	stmt
 }
 
-func (d VarDecl) Start() token.Position { return d.Name.Start }
-func (d VarDecl) End() token.Position   { return d.Semicolon.End }
+func (d VarDecl) Start() token.Position { return d.Name.StartPos }
+func (d VarDecl) End() token.Position   { return d.Semicolon.EndPos }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {
@@ -72,17 +77,17 @@ type FunDecl struct {
 	stmt
 }
 
-func (d FunDecl) Start() token.Position { return d.Fun.Start }
+func (d FunDecl) Start() token.Position { return d.Fun.StartPos }
 func (d FunDecl) End() token.Position   { return d.Body.End() }
 
 // Function is a function's parameters and body.
 type Function struct {
 	LeftParen token.Token
-	Params    []token.Token `print:"named"`
-	Body      BlockStmt     `print:"named"`
+	Params    token.Tokens `print:"named"`
+	Body      BlockStmt    `print:"named"`
 }
 
-func (f Function) Start() token.Position { return f.LeftParen.Start }
+func (f Function) Start() token.Position { return f.LeftParen.StartPos }
 func (f Function) End() token.Position   { return f.Body.End() }
 
 // ClassDecl is a class declaration, such as
@@ -95,13 +100,13 @@ func (f Function) End() token.Position   { return f.Body.End() }
 type ClassDecl struct {
 	Class      token.Token
 	Name       token.Token `print:"named"`
-	Body       []Stmt      `print:"named"`
+	Body       Stmts       `print:"named"`
 	RightBrace token.Token
 	stmt
 }
 
-func (c ClassDecl) Start() token.Position { return c.Class.Start }
-func (c ClassDecl) End() token.Position   { return c.RightBrace.End }
+func (c ClassDecl) Start() token.Position { return c.Class.StartPos }
+func (c ClassDecl) End() token.Position   { return c.RightBrace.EndPos }
 
 // Methods returns the methods of the class.
 func (c ClassDecl) Methods() []MethodDecl {
@@ -128,9 +133,9 @@ type MethodDecl struct {
 
 func (m MethodDecl) Start() token.Position {
 	if len(m.Modifiers) > 0 {
-		return m.Modifiers[0].Start
+		return m.Modifiers[0].StartPos
 	}
-	return m.Name.Start
+	return m.Name.StartPos
 }
 func (m MethodDecl) End() token.Position { return m.Body.End() }
 
@@ -152,7 +157,7 @@ type ExprStmt struct {
 }
 
 func (s ExprStmt) Start() token.Position { return s.Expr.Start() }
-func (s ExprStmt) End() token.Position   { return s.Semicolon.End }
+func (s ExprStmt) End() token.Position   { return s.Semicolon.EndPos }
 
 // PrintStmt is a print statement, such as print "abc".
 type PrintStmt struct {
@@ -162,8 +167,8 @@ type PrintStmt struct {
 	stmt
 }
 
-func (p PrintStmt) Start() token.Position { return p.Print.Start }
-func (p PrintStmt) End() token.Position   { return p.Semicolon.End }
+func (p PrintStmt) Start() token.Position { return p.Print.StartPos }
+func (p PrintStmt) End() token.Position   { return p.Semicolon.EndPos }
 
 // BlockStmt is a block statement, such as
 //
@@ -173,13 +178,13 @@ func (p PrintStmt) End() token.Position   { return p.Semicolon.End }
 //	}
 type BlockStmt struct {
 	LeftBrace  token.Token
-	Stmts      []Stmt `print:"unnamed"`
+	Stmts      Stmts `print:"unnamed"`
 	RightBrace token.Token
 	stmt
 }
 
-func (b BlockStmt) Start() token.Position { return b.LeftBrace.Start }
-func (b BlockStmt) End() token.Position   { return b.RightBrace.End }
+func (b BlockStmt) Start() token.Position { return b.LeftBrace.StartPos }
+func (b BlockStmt) End() token.Position   { return b.RightBrace.EndPos }
 
 // IfStmt is an if statement, such as
 //
@@ -197,7 +202,7 @@ type IfStmt struct {
 	stmt
 }
 
-func (i IfStmt) Start() token.Position { return i.If.Start }
+func (i IfStmt) Start() token.Position { return i.If.StartPos }
 func (i IfStmt) End() token.Position {
 	if i.Else != nil {
 		return i.Else.End()
@@ -218,7 +223,7 @@ type WhileStmt struct {
 	stmt
 }
 
-func (w WhileStmt) Start() token.Position { return w.While.Start }
+func (w WhileStmt) Start() token.Position { return w.While.StartPos }
 func (w WhileStmt) End() token.Position   { return w.Body.End() }
 
 // ForStmt is a for statement, such as
@@ -235,7 +240,7 @@ type ForStmt struct {
 	stmt
 }
 
-func (f ForStmt) Start() token.Position { return f.For.Start }
+func (f ForStmt) Start() token.Position { return f.For.StartPos }
 func (f ForStmt) End() token.Position   { return f.Body.End() }
 
 // IllegalStmt is an illegal statement, used as a placeholder when parsing fails.
@@ -244,8 +249,8 @@ type IllegalStmt struct {
 	stmt
 }
 
-func (i IllegalStmt) Start() token.Position { return i.From.Start }
-func (i IllegalStmt) End() token.Position   { return i.To.End }
+func (i IllegalStmt) Start() token.Position { return i.From.StartPos }
+func (i IllegalStmt) End() token.Position   { return i.To.EndPos }
 
 // BreakStmt is a break statement
 type BreakStmt struct {
@@ -254,8 +259,8 @@ type BreakStmt struct {
 	stmt
 }
 
-func (b BreakStmt) Start() token.Position { return b.Break.Start }
-func (b BreakStmt) End() token.Position   { return b.Semicolon.End }
+func (b BreakStmt) Start() token.Position { return b.Break.StartPos }
+func (b BreakStmt) End() token.Position   { return b.Semicolon.EndPos }
 
 // ContinueStmt is a continue statement
 type ContinueStmt struct {
@@ -264,8 +269,8 @@ type ContinueStmt struct {
 	stmt
 }
 
-func (c ContinueStmt) Start() token.Position { return c.Continue.Start }
-func (c ContinueStmt) End() token.Position   { return c.Semicolon.End }
+func (c ContinueStmt) Start() token.Position { return c.Continue.StartPos }
+func (c ContinueStmt) End() token.Position   { return c.Semicolon.EndPos }
 
 // ReturnStmt is a return statement
 type ReturnStmt struct {
@@ -275,14 +280,20 @@ type ReturnStmt struct {
 	stmt
 }
 
-func (c ReturnStmt) Start() token.Position { return c.Return.Start }
-func (c ReturnStmt) End() token.Position   { return c.Semicolon.End }
+func (c ReturnStmt) Start() token.Position { return c.Return.StartPos }
+func (c ReturnStmt) End() token.Position   { return c.Semicolon.EndPos }
 
 // Expr is the interface which all expression nodes implement.
 type Expr interface {
 	Node
 	isExpr()
 }
+
+// Exprs is a slice of expressions.
+type Exprs []Expr
+
+func (e Exprs) Start() token.Position { return e[0].Start() }
+func (e Exprs) End() token.Position   { return e[len(e)-1].End() }
 
 type expr struct{}
 
@@ -295,7 +306,7 @@ type FunExpr struct {
 	expr
 }
 
-func (d FunExpr) Start() token.Position { return d.Fun.Start }
+func (d FunExpr) Start() token.Position { return d.Fun.StartPos }
 func (d FunExpr) End() token.Position   { return d.Body.End() }
 
 // GroupExpr is a group expression, such as (a + b).
@@ -306,8 +317,8 @@ type GroupExpr struct {
 	expr
 }
 
-func (g GroupExpr) Start() token.Position { return g.LeftParen.Start }
-func (g GroupExpr) End() token.Position   { return g.RightParen.End }
+func (g GroupExpr) Start() token.Position { return g.LeftParen.StartPos }
+func (g GroupExpr) End() token.Position   { return g.RightParen.EndPos }
 
 // LiteralExpr is a literal expression, such as 123 or "abc".
 type LiteralExpr struct {
@@ -315,8 +326,8 @@ type LiteralExpr struct {
 	expr
 }
 
-func (l LiteralExpr) Start() token.Position { return l.Value.Start }
-func (l LiteralExpr) End() token.Position   { return l.Value.End }
+func (l LiteralExpr) Start() token.Position { return l.Value.StartPos }
+func (l LiteralExpr) End() token.Position   { return l.Value.EndPos }
 
 // VariableExpr is a variable expression, such as a or b.
 type VariableExpr struct {
@@ -324,8 +335,8 @@ type VariableExpr struct {
 	expr
 }
 
-func (v VariableExpr) Start() token.Position { return v.Name.Start }
-func (v VariableExpr) End() token.Position   { return v.Name.End }
+func (v VariableExpr) Start() token.Position { return v.Name.StartPos }
+func (v VariableExpr) End() token.Position   { return v.Name.EndPos }
 
 // ThisExpr represents usage of the 'this' keyword.
 type ThisExpr struct {
@@ -333,19 +344,19 @@ type ThisExpr struct {
 	expr
 }
 
-func (t ThisExpr) Start() token.Position { return t.This.Start }
-func (t ThisExpr) End() token.Position   { return t.This.End }
+func (t ThisExpr) Start() token.Position { return t.This.StartPos }
+func (t ThisExpr) End() token.Position   { return t.This.EndPos }
 
 // CallExpr is a call expression, such as add(x, 1).
 type CallExpr struct {
-	Callee     Expr   `print:"named"`
-	Args       []Expr `print:"named"`
+	Callee     Expr  `print:"named"`
+	Args       Exprs `print:"named"`
 	RightParen token.Token
 	expr
 }
 
 func (c CallExpr) Start() token.Position { return c.Callee.Start() }
-func (c CallExpr) End() token.Position   { return c.RightParen.End }
+func (c CallExpr) End() token.Position   { return c.RightParen.EndPos }
 
 // GetExpr is a property access expression, such as a.b.
 type GetExpr struct {
@@ -355,7 +366,7 @@ type GetExpr struct {
 }
 
 func (g GetExpr) Start() token.Position { return g.Object.Start() }
-func (g GetExpr) End() token.Position   { return g.Name.End }
+func (g GetExpr) End() token.Position   { return g.Name.EndPos }
 
 // UnaryExpr is a unary operator expression, such as !a.
 type UnaryExpr struct {
@@ -364,7 +375,7 @@ type UnaryExpr struct {
 	expr
 }
 
-func (u UnaryExpr) Start() token.Position { return u.Op.Start }
+func (u UnaryExpr) Start() token.Position { return u.Op.StartPos }
 func (u UnaryExpr) End() token.Position   { return u.Right.End() }
 
 // BinaryExpr is a binary operator expression, such as a + b.
@@ -396,7 +407,7 @@ type AssignmentExpr struct {
 	expr
 }
 
-func (a AssignmentExpr) Start() token.Position { return a.Left.Start }
+func (a AssignmentExpr) Start() token.Position { return a.Left.StartPos }
 func (a AssignmentExpr) End() token.Position   { return a.Right.End() }
 
 // SetExpr is a property assignment expression, such as a.b = 2.

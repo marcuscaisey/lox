@@ -108,7 +108,7 @@ func (r *identResolver) beginScope() func() {
 	return func() {
 		scope := r.scopes.Pop()
 		for _, tok := range scope.UnusedIdents() {
-			r.errs.Addf(lox.FromToken(tok), "%s has been declared but is never used", tok.Lexeme)
+			r.errs.Addf(tok, "%s has been declared but is never used", tok.Lexeme)
 		}
 	}
 }
@@ -118,7 +118,7 @@ func (r *identResolver) declareIdent(tok token.Token) {
 		return
 	}
 	if scope := r.scopes.Peek(); scope.IsDeclared(tok.Lexeme) {
-		r.errs.Addf(lox.FromToken(tok), "%s has already been declared", tok.Lexeme)
+		r.errs.Addf(tok, "%s has already been declared", tok.Lexeme)
 	} else {
 		scope.DeclareFromToken(tok)
 	}
@@ -146,7 +146,7 @@ func (r *identResolver) resolveIdent(tok token.Token, op identOp) {
 		if scope.IsDeclared(tok.Lexeme) {
 			scope.Use(tok.Lexeme)
 			if !scope.IsDefined(tok.Lexeme) && op == identOpRead {
-				r.errs.Addf(lox.FromToken(tok), "%s has not been defined", tok.Lexeme)
+				r.errs.Addf(tok, "%s has not been defined", tok.Lexeme)
 			} else {
 				r.declDistancesByTok[tok] = r.scopes.Len() - 1 - i
 			}

@@ -311,7 +311,7 @@ func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObjec
 
 	callable, ok := callee.(loxCallable)
 	if !ok {
-		panic(lox.NewErrorf(lox.FromNode(expr.Callee), "%m object is not callable", callee.Type()))
+		panic(lox.NewErrorf(expr.Callee, "%m object is not callable", callee.Type()))
 	}
 
 	params := callable.Params()
@@ -333,19 +333,19 @@ func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObjec
 			missingArgsStr = strings.Join(missingArgs[:len(missingArgs)-1], ", ") + ", and " + missingArgs[len(missingArgs)-1]
 		}
 		panic(lox.NewErrorf(
-			lox.FromNode(expr),
+			expr,
 			"%s() missing %d argument%s: %s", callable.CallableName(), arity-len(args), argumentSuffix, missingArgsStr,
 		))
 	case len(args) > arity:
 		panic(lox.NewErrorf(
-			lox.FromNodes(expr.Args[arity], expr.Args[len(args)-1]),
+			expr.Args[arity:],
 			"%s() accepts %d arguments but %d were given", callable.CallableName(), arity, len(args),
 		))
 	}
 
 	result := i.call(expr.Start(), callable, args)
 	if errorMsg, ok := result.(errorMsg); ok {
-		panic(lox.NewError(lox.FromNode(expr), string(errorMsg)))
+		panic(lox.NewError(expr, string(errorMsg)))
 	}
 	return result
 }
@@ -361,7 +361,7 @@ func (i *Interpreter) evalGetExpr(env *environment, expr ast.GetExpr) loxObject 
 	object := i.evalExpr(env, expr.Object)
 	getter, ok := object.(loxGetter)
 	if !ok {
-		panic(lox.NewErrorf(lox.FromNode(expr), "property access is not valid for %m object", object.Type()))
+		panic(lox.NewErrorf(expr, "property access is not valid for %m object", object.Type()))
 	}
 	return getter.Get(i, expr.Name)
 }
@@ -378,7 +378,7 @@ func (i *Interpreter) evalUnaryExpr(env *environment, expr ast.UnaryExpr) loxObj
 			return result
 		}
 	}
-	panic(lox.NewErrorf(lox.FromToken(expr.Op), "%m operator cannot be used with type %m", expr.Op.Type, right.Type()))
+	panic(lox.NewErrorf(expr.Op, "%m operator cannot be used with type %m", expr.Op.Type, right.Type()))
 }
 
 func (i *Interpreter) evalBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
@@ -422,7 +422,7 @@ func (i *Interpreter) evalBinaryExpr(env *environment, expr ast.BinaryExpr) loxO
 				return result
 			}
 		}
-		panic(lox.NewErrorf(lox.FromToken(expr.Op), "%m operator cannot be used with types %m and %m", expr.Op.Type, left.Type(), right.Type()))
+		panic(lox.NewErrorf(expr.Op, "%m operator cannot be used with types %m and %m", expr.Op.Type, left.Type(), right.Type()))
 	}
 }
 
@@ -449,7 +449,7 @@ func (i *Interpreter) evalSetExpr(env *environment, expr ast.SetExpr) loxObject 
 	object := i.evalExpr(env, expr.Object)
 	setter, ok := object.(loxSetter)
 	if !ok {
-		panic(lox.NewErrorf(lox.FromNode(expr), "property assignment is not valid for %m object", object.Type()))
+		panic(lox.NewErrorf(expr, "property assignment is not valid for %m object", object.Type()))
 	}
 	value := i.evalExpr(env, expr.Value)
 	setter.Set(i, expr.Name, value)
