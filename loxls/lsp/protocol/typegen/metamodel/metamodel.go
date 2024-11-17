@@ -181,6 +181,18 @@ const (
 	BaseMapKeyTypeNameInteger     BaseMapKeyTypeName = "integer"
 )
 
+var baseTypesByBaseMapKeyTypeName = map[BaseMapKeyTypeName]BaseTypes{
+	BaseMapKeyTypeNameURI:         BaseTypesURI,
+	BaseMapKeyTypeNameDocumentURI: BaseTypesDocumentURI,
+	BaseMapKeyTypeNameString:      BaseTypesString,
+	BaseMapKeyTypeNameInteger:     BaseTypesInteger,
+}
+
+// BaseTypes returns the equivalent [BaseTypes] value.
+func (b BaseMapKeyTypeName) BaseTypes() BaseTypes {
+	return baseTypesByBaseMapKeyTypeName[b]
+}
+
 // MapType represents a JSON object map (e.g. `interface Map<K extends string | integer, V> { [key: K] => V; }`).
 type MapType struct {
 	Key   MapKeyType `json:"key"`

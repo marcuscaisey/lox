@@ -434,7 +434,7 @@ func (g *generator) genMapDecl(namespace string, keyType metamodel.MapKeyType, v
 	var goKeyType string
 	switch key := keyType.Value.(type) {
 	case metamodel.BaseMapKeyType:
-		goKeyType = g.genBaseTypeDecl(metamodel.BaseTypes(key.Name))
+		goKeyType = g.genBaseTypeDecl(key.Name.BaseTypes())
 	case metamodel.ReferenceType:
 		goKeyType = g.genRefTypeDecl(key.Name)
 	}
