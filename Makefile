@@ -1,4 +1,4 @@
-.PHONY: test test_golox test_loxfmt update_golox_tests update_loxfmt_tests
+.PHONY: test test_golox test_loxfmt update_golox_tests update_loxfmt_tests lint lint_golangci_lint lint_go_sumtype
 
 test: test_golox test_loxfmt
 
@@ -13,3 +13,11 @@ update_golox_tests:
 
 update_loxfmt_tests:
 	$(MAKE) -C loxfmt update_tests
+
+lint: lint_golangci_lint lint_go_sumtype
+
+lint_golangci_lint:
+	golangci-lint run
+
+lint_go_sumtype:
+	go run github.com/BurntSushi/go-sumtype $$(go list ./...)

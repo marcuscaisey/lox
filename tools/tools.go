@@ -4,6 +4,7 @@
 package tools
 
 import (
+	_ "github.com/BurntSushi/go-sumtype"
 	_ "golang.org/x/tools/cmd/stringer"
 	_ "gotest.tools/gotestsum"
 )

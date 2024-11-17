@@ -6,19 +6,29 @@ import (
 )
 
 // Node is the interface which all AST nodes implement.
+//
+//gosumtype:decl Node
 type Node interface {
 	token.CharacterRange
+	isNode()
 }
+
+type node struct{}
+
+func (node) isNode() {}
 
 // Program is the root node of the AST.
 type Program struct {
 	Stmts Stmts `print:"unnamed"`
+	node
 }
 
 func (p Program) Start() token.Position { return p.Stmts[0].Start() }
 func (p Program) End() token.Position   { return p.Stmts[len(p.Stmts)-1].End() }
 
 // Stmt is the interface which all statement nodes implement.
+//
+//gosumtype:decl Stmt
 type Stmt interface {
 	Node
 	isStmt()
@@ -30,7 +40,9 @@ type Stmts []Stmt
 func (s Stmts) Start() token.Position { return s[0].Start() }
 func (s Stmts) End() token.Position   { return s[len(s)-1].End() }
 
-type stmt struct{}
+type stmt struct {
+	node
+}
 
 func (stmt) isStmt() {}
 
@@ -284,6 +296,8 @@ func (c ReturnStmt) Start() token.Position { return c.Return.StartPos }
 func (c ReturnStmt) End() token.Position   { return c.Semicolon.EndPos }
 
 // Expr is the interface which all expression nodes implement.
+//
+//gosumtype:decl Expr
 type Expr interface {
 	Node
 	isExpr()
@@ -295,7 +309,9 @@ type Exprs []Expr
 func (e Exprs) Start() token.Position { return e[0].Start() }
 func (e Exprs) End() token.Position   { return e[len(e)-1].End() }
 
-type expr struct{}
+type expr struct {
+	node
+}
 
 func (expr) isExpr() {}
 

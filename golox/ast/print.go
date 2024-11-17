@@ -25,6 +25,7 @@ func sprint(node Node, depth int) string {
 		return node.Value.Lexeme
 	case VariableExpr:
 		return node.Name.Lexeme
+	default:
 	}
 
 	nodeType := reflect.TypeOf(node)

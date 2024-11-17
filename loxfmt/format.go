@@ -68,9 +68,10 @@ func format(node ast.Node) string {
 		return formatAssignmentExpr(node)
 	case ast.SetExpr:
 		return formatSetExpr(node)
-	default:
-		panic(fmt.Sprintf("unexpected node type: %T", node))
+	case ast.IllegalStmt:
+		panic("IllegalStmt cannot be formatted")
 	}
+	panic("unreachable")
 }
 
 func formatProgram(program ast.Program) string {

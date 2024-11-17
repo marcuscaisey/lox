@@ -82,6 +82,7 @@ func (i *Interpreter) interpretProgram(node ast.Program) (err error) {
 	return nil
 }
 
+//gosumtype:decl stmtResult
 type stmtResult interface {
 	isStmtResult()
 }
@@ -122,7 +123,7 @@ func (i *Interpreter) execStmt(env *environment, stmt ast.Stmt) stmtResult {
 		return i.execContinueStmt()
 	case ast.ReturnStmt:
 		return i.execReturnStmt(env, stmt)
-	default:
+	case ast.CommentStmt, ast.InlineCommentStmt, ast.IllegalStmt, ast.MethodDecl:
 		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
 	}
 	return stmtResultNone{}
@@ -188,6 +189,7 @@ func (i *Interpreter) execWhileStmt(env *environment, stmt ast.WhileStmt) stmtRe
 			return stmtResultNone{}
 		case stmtResultReturn:
 			return result
+		case stmtResultContinue, stmtResultNone:
 		}
 	}
 	return stmtResultNone{}
@@ -204,6 +206,7 @@ func (i *Interpreter) execForStmt(env *environment, stmt ast.ForStmt) stmtResult
 			return stmtResultNone{}
 		case stmtResultReturn:
 			return result
+		case stmtResultContinue, stmtResultNone:
 		}
 		if stmt.Update != nil {
 			i.evalExpr(childEnv, stmt.Update)
@@ -254,9 +257,8 @@ func (i *Interpreter) evalExpr(env *environment, expr ast.Expr) loxObject {
 		return i.evalAssignmentExpr(env, expr)
 	case ast.SetExpr:
 		return i.evalSetExpr(env, expr)
-	default:
-		panic(fmt.Sprintf("unexpected expression type: %T", expr))
 	}
+	panic("unreachable")
 }
 
 func (i *Interpreter) evalFunExpr(env *environment, expr ast.FunExpr) loxObject {

@@ -1,9 +1,5 @@
 package ast
 
-import (
-	"fmt"
-)
-
 // Walk traverses an AST in depth-first order: It starts by calling f(node); node must not be nil. If f returns true,
 // Walk invokes f recursively for each of the non-nil children of node.
 func Walk(node Node, f func(Node) bool) {
@@ -85,8 +81,6 @@ func Walk(node Node, f func(Node) bool) {
 	case SetExpr:
 		Walk(node.Object, f)
 		Walk(node.Value, f)
-	default:
-		panic(fmt.Sprintf("unexpected node type: %T", node))
 	}
 }
 

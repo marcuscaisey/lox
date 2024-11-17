@@ -119,6 +119,8 @@ type MapKeyType struct {
 // MapKeyTypeValue is either of the following types:
 //   - [BaseMapKeyType]
 //   - [ReferenceType]
+//
+//gosumtype:decl MapKeyTypeValue
 type MapKeyTypeValue interface {
 	isMapKeyTypeValue()
 }
@@ -339,14 +341,15 @@ func (t *TypeOrTypeSlice) Flatten() []*Type {
 		return []*Type{value}
 	case TypeSlice:
 		return value
-	default:
-		panic("unreachable")
 	}
+	panic("unreachable")
 }
 
 // TypeOrTypeSliceValue is either of the following types:
 //   - [*Type]
 //   - [TypeSlice]
+//
+//gosumtype:decl TypeOrTypeSliceValue
 type TypeOrTypeSliceValue interface {
 	isParamsValue()
 }
@@ -512,6 +515,8 @@ type Type struct {
 //   - [StringLiteralType]
 //   - [StructureLiteralType]
 //   - [TupleType]
+//
+//gosumtype:decl TypeValue
 type TypeValue interface {
 	isTypeValue()
 }
@@ -673,6 +678,8 @@ type IntOrString struct {
 // IntOrStringValue is either of the following types:
 //   - [Int]
 //   - [String]
+//
+//gosumtype:decl IntOrStringValue
 type IntOrStringValue interface {
 	isIntOrStringValue()
 }

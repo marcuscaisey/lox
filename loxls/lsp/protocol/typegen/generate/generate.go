@@ -89,9 +89,10 @@ func (g *generator) genTypeDecl(namespace string, typ *metamodel.Type) string {
 		return g.genSliceDecl(namespace, typ.Element)
 	case metamodel.MapType:
 		return g.genMapDecl(namespace, typ.Key, typ.Value)
-	default:
+	case metamodel.AndType, metamodel.BooleanLiteralType, metamodel.IntegerLiteralType, metamodel.StringLiteralType, metamodel.TupleType:
 		panic(fmt.Sprintf("unhandled type: %T", typ))
 	}
+	panic("unreachable")
 }
 
 func (g *generator) genRefTypeDecl(name string) string {
@@ -321,6 +322,8 @@ type {{$.name}} struct {
 // {{$interface}} is either of the following types:{{- range $.variants}}
 //   - [{{.}}]
 {{- end}}
+//
+//gosumtype:decl ` + /* Directive split up so that it doesn't get picked up as an actual declaration. */ `{{$interface}}
 type {{$interface}} interface {
 	{{$interfaceMethod}}()
 }

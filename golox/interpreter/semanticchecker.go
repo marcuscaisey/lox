@@ -76,6 +76,7 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.checkThisInMethod(node)
 	case ast.CallExpr:
 		c.checkNumArgs(node.Args)
+	default:
 	}
 	return true
 }
