@@ -101,6 +101,7 @@ const (
 var typeStrings = map[Type]string{
 	Illegal:       "illegal",
 	EOF:           "EOF",
+	keywordsStart: "keywordsStart",
 	Print:         "print",
 	Var:           "var",
 	True:          "true",
@@ -122,6 +123,7 @@ var typeStrings = map[Type]string{
 	Static:        "static",
 	Get:           "get",
 	Set:           "set",
+	typesEnd:      "typesEnd",
 	Ident:         "identifier",
 	String:        "string",
 	Number:        "number",
@@ -148,9 +150,7 @@ var typeStrings = map[Type]string{
 	RightParen:    ")",
 	LeftBrace:     "{",
 	RightBrace:    "}",
-	keywordsStart: "",
-	keywordsEnd:   "",
-	typesEnd:      "",
+	keywordsEnd:   "keywordsEnd",
 }
 
 var keywordTypesByIdent = func() map[string]Type {

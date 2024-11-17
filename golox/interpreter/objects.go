@@ -125,15 +125,20 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.GreaterEqual:
 			return loxBool(n >= right)
 		default:
+			return nil
 		}
+
 	case loxString:
 		switch op.Type {
 		case token.Asterisk:
 			return numberTimesString(n, op, right)
 		default:
+			return nil
 		}
+
+	default:
+		return nil
 	}
-	return nil
 }
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
@@ -181,15 +186,20 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.GreaterEqual:
 			return loxBool(s >= right)
 		default:
+			return nil
 		}
+
 	case loxNumber:
 		switch op.Type {
 		case token.Asterisk:
 			return numberTimesString(right, op, s)
 		default:
+			return nil
 		}
+
+	default:
+		return nil
 	}
-	return nil
 }
 
 type loxBool bool

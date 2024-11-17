@@ -376,8 +376,8 @@ var baseTypeTypes = map[metamodel.BaseTypes]string{
 }
 
 func (g *generator) genBaseTypeDecl(baseType metamodel.BaseTypes) string {
-	typ, ok := baseTypeTypes[baseType]
-	if !ok {
+	typ := baseTypeTypes[baseType]
+	if typ == "" {
 		panic(fmt.Sprintf("unhandled base type: %s", baseType))
 	}
 	name := upperFirstLetter(string(baseType))
