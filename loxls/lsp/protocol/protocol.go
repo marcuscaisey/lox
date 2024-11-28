@@ -80,8 +80,10 @@ type ResourceOperationKind string
 
 const (
 	// Supports creating new files and folders.
-	ResourceOperationKindCreate ResourceOperationKind = "create" // Supports renaming existing files and folders.
-	ResourceOperationKindRename ResourceOperationKind = "rename" // Supports deleting existing files and folders.
+	ResourceOperationKindCreate ResourceOperationKind = "create"
+	// Supports renaming existing files and folders.
+	ResourceOperationKindRename ResourceOperationKind = "rename"
+	// Supports deleting existing files and folders.
 	ResourceOperationKindDelete ResourceOperationKind = "delete"
 )
 
@@ -124,12 +126,15 @@ type FailureHandlingKind string
 const (
 	// Applying the workspace change is simply aborted if one of the changes provided
 	// fails. All operations executed before the failing operation stay executed.
-	FailureHandlingKindAbort FailureHandlingKind = "abort" // All operations are executed transactional. That means they either all
+	FailureHandlingKindAbort FailureHandlingKind = "abort"
+	// All operations are executed transactional. That means they either all
 	// succeed or no changes at all are applied to the workspace.
-	FailureHandlingKindTransactional FailureHandlingKind = "transactional" // If the workspace edit contains only textual file changes they are executed transactional.
+	FailureHandlingKindTransactional FailureHandlingKind = "transactional"
+	// If the workspace edit contains only textual file changes they are executed transactional.
 	// If resource changes (create, rename or delete file) are part of the change the failure
 	// handling strategy is abort.
-	FailureHandlingKindTextOnlyTransactional FailureHandlingKind = "textOnlyTransactional" // The client tries to undo the operations already executed. But there is no
+	FailureHandlingKindTextOnlyTransactional FailureHandlingKind = "textOnlyTransactional"
+	// The client tries to undo the operations already executed. But there is no
 	// guarantee that this is succeeding.
 	FailureHandlingKindUndo FailureHandlingKind = "undo"
 )
@@ -616,8 +621,9 @@ type MarkupKind string
 
 const (
 	// Plain text is supported as a content format
-	MarkupKindPlainText MarkupKind = "plaintext" // Markdown is supported as a content format
-	MarkupKindMarkdown  MarkupKind = "markdown"
+	MarkupKindPlainText MarkupKind = "plaintext"
+	// Markdown is supported as a content format
+	MarkupKindMarkdown MarkupKind = "markdown"
 )
 
 var validMarkupKindValues = map[string]bool{
@@ -720,7 +726,8 @@ const (
 	// inserted using the indentation defined in the string value.
 	// The client will not apply any kind of adjustments to the
 	// string.
-	InsertTextModeasIs InsertTextMode = 1 // The editor adjusts leading whitespace of new lines so that
+	InsertTextModeasIs InsertTextMode = 1
+	// The editor adjusts leading whitespace of new lines so that
 	// they match the indentation up to the cursor of the line for
 	// which the item is accepted.
 	//
@@ -1117,9 +1124,12 @@ type CodeActionKind string
 
 const (
 	// Empty kind.
-	CodeActionKindEmpty    CodeActionKind = ""         // Base kind for quickfix actions: 'quickfix'
-	CodeActionKindQuickFix CodeActionKind = "quickfix" // Base kind for refactoring actions: 'refactor'
-	CodeActionKindRefactor CodeActionKind = "refactor" // Base kind for refactoring extraction actions: 'refactor.extract'
+	CodeActionKindEmpty CodeActionKind = ""
+	// Base kind for quickfix actions: 'quickfix'
+	CodeActionKindQuickFix CodeActionKind = "quickfix"
+	// Base kind for refactoring actions: 'refactor'
+	CodeActionKindRefactor CodeActionKind = "refactor"
+	// Base kind for refactoring extraction actions: 'refactor.extract'
 	//
 	// Example extract actions:
 	//
@@ -1128,7 +1138,8 @@ const (
 	// - Extract variable
 	// - Extract interface from class
 	// - ...
-	CodeActionKindRefactorExtract CodeActionKind = "refactor.extract" // Base kind for refactoring inline actions: 'refactor.inline'
+	CodeActionKindRefactorExtract CodeActionKind = "refactor.extract"
+	// Base kind for refactoring inline actions: 'refactor.inline'
 	//
 	// Example inline actions:
 	//
@@ -1136,7 +1147,8 @@ const (
 	// - Inline variable
 	// - Inline constant
 	// - ...
-	CodeActionKindRefactorInline CodeActionKind = "refactor.inline" // Base kind for refactoring rewrite actions: 'refactor.rewrite'
+	CodeActionKindRefactorInline CodeActionKind = "refactor.inline"
+	// Base kind for refactoring rewrite actions: 'refactor.rewrite'
 	//
 	// Example rewrite actions:
 	//
@@ -1146,11 +1158,14 @@ const (
 	// - Make method static
 	// - Move method to base class
 	// - ...
-	CodeActionKindRefactorRewrite CodeActionKind = "refactor.rewrite" // Base kind for source actions: `source`
+	CodeActionKindRefactorRewrite CodeActionKind = "refactor.rewrite"
+	// Base kind for source actions: `source`
 	//
 	// Source code actions apply to the entire file.
-	CodeActionKindSource                CodeActionKind = "source"                 // Base kind for an organize imports source action: `source.organizeImports`
-	CodeActionKindSourceOrganizeImports CodeActionKind = "source.organizeImports" // Base kind for auto-fix source actions: `source.fixAll`.
+	CodeActionKindSource CodeActionKind = "source"
+	// Base kind for an organize imports source action: `source.organizeImports`
+	CodeActionKindSourceOrganizeImports CodeActionKind = "source.organizeImports"
+	// Base kind for auto-fix source actions: `source.fixAll`.
 	//
 	// Fix all actions automatically fix errors that have a clear fix that do not require user input.
 	// They should not suppress errors or perform unsafe fixes such as generating new types or classes.
@@ -1351,9 +1366,11 @@ type FoldingRangeKind string
 
 const (
 	// Folding range for a comment
-	FoldingRangeKindComment FoldingRangeKind = "comment" // Folding range for an import or include
-	FoldingRangeKindImports FoldingRangeKind = "imports" // Folding range for a region (e.g. `#region`)
-	FoldingRangeKindRegion  FoldingRangeKind = "region"
+	FoldingRangeKindComment FoldingRangeKind = "comment"
+	// Folding range for an import or include
+	FoldingRangeKindImports FoldingRangeKind = "imports"
+	// Folding range for a region (e.g. `#region`)
+	FoldingRangeKindRegion FoldingRangeKind = "region"
 )
 
 type FoldingRangeKindSlice []FoldingRangeKind
@@ -1419,7 +1436,8 @@ const (
 	//
 	// Clients are allowed to render diagnostics with this tag faded out instead of having
 	// an error squiggle.
-	DiagnosticTagUnnecessary DiagnosticTag = 1 // Deprecated or obsolete code.
+	DiagnosticTagUnnecessary DiagnosticTag = 1
+	// Deprecated or obsolete code.
 	//
 	// Clients are allowed to rendered diagnostics with this tag strike through.
 	DiagnosticTagDeprecated DiagnosticTag = 2
@@ -2000,11 +2018,13 @@ type PositionEncodingKind string
 
 const (
 	// Character offsets count UTF-8 code units (e.g. bytes).
-	PositionEncodingKindUTF8 PositionEncodingKind = "utf-8" // Character offsets count UTF-16 code units.
+	PositionEncodingKindUTF8 PositionEncodingKind = "utf-8"
+	// Character offsets count UTF-16 code units.
 	//
 	// This is the default and must always be supported
 	// by servers
-	PositionEncodingKindUTF16 PositionEncodingKind = "utf-16" // Character offsets count UTF-32 code units.
+	PositionEncodingKindUTF16 PositionEncodingKind = "utf-16"
+	// Character offsets count UTF-32 code units.
 	//
 	// Implementation note: these are the same as Unicode codepoints,
 	// so this `PositionEncodingKind` may also be used for an
@@ -2194,9 +2214,11 @@ type TraceValues string
 
 const (
 	// Turn tracing off.
-	TraceValuesOff      TraceValues = "off"      // Trace messages only.
-	TraceValuesMessages TraceValues = "messages" // Verbose message tracing.
-	TraceValuesVerbose  TraceValues = "verbose"
+	TraceValuesOff TraceValues = "off"
+	// Trace messages only.
+	TraceValuesMessages TraceValues = "messages"
+	// Verbose message tracing.
+	TraceValuesVerbose TraceValues = "verbose"
 )
 
 var validTraceValuesValues = map[string]bool{
@@ -2314,9 +2336,11 @@ type TextDocumentSyncKind uint32
 
 const (
 	// Documents should not be synced at all.
-	TextDocumentSyncKindNone TextDocumentSyncKind = 0 // Documents are synced by always sending the full content
+	TextDocumentSyncKindNone TextDocumentSyncKind = 0
+	// Documents are synced by always sending the full content
 	// of the document.
-	TextDocumentSyncKindFull TextDocumentSyncKind = 1 // Documents are synced by sending the full content on open.
+	TextDocumentSyncKindFull TextDocumentSyncKind = 1
+	// Documents are synced by sending the full content on open.
 	// After that only incremental updates to the document are
 	// send.
 	TextDocumentSyncKindIncremental TextDocumentSyncKind = 2
@@ -4756,7 +4780,8 @@ type FileOperationPatternKind string
 
 const (
 	// The pattern matches a file only.
-	FileOperationPatternKindfile   FileOperationPatternKind = "file" // The pattern matches a folder only.
+	FileOperationPatternKindfile FileOperationPatternKind = "file"
+	// The pattern matches a folder only.
 	FileOperationPatternKindfolder FileOperationPatternKind = "folder"
 )
 
@@ -5245,7 +5270,8 @@ const (
 	ErrorCodesInvalidRequest ErrorCodes = -32600
 	ErrorCodesMethodNotFound ErrorCodes = -32601
 	ErrorCodesInvalidParams  ErrorCodes = -32602
-	ErrorCodesInternalError  ErrorCodes = -32603 // Error code indicating that a server received a notification or
+	ErrorCodesInternalError  ErrorCodes = -32603
+	// Error code indicating that a server received a notification or
 	// request before the server has received the `initialize` request.
 	ErrorCodesServerNotInitialized ErrorCodes = -32002
 	ErrorCodesUnknownErrorCode     ErrorCodes = -32001

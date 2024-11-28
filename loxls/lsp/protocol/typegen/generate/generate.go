@@ -231,8 +231,10 @@ func (g *generator) genEnumDecl(enum *metamodel.Enumeration) string {
 type {{.name}} {{.type}}
 
 const (
-	{{range .members}}
-	{{- .Comment}}
+	{{- range .members}}
+	{{- if ne .Comment ""}}
+	{{.Comment}}
+	{{- end}}
 	{{.Name}} {{$.name}} = {{.Value}}
 	{{- end}}
 )
