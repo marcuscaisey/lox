@@ -58,6 +58,13 @@ func typeGen(methods []string, lspVersion string, pkg string, ouptut string) err
 		return err
 	}
 
+	types = append(types, &metamodel.Type{
+		Value: metamodel.ReferenceType{
+			Kind: "",
+			Name: "ErrorCodes",
+		},
+	})
+
 	src := generate.Source(types, metaModel, pkg)
 
 	formattedSrc, err := format.Source([]byte(src))

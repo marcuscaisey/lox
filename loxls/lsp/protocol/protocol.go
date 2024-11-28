@@ -5234,3 +5234,19 @@ type DidCloseTextDocumentParams struct {
 	// The document that was closed.
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
+
+// Predefined error codes.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#errorCodes
+type ErrorCodes int32
+
+const (
+	ErrorCodesParseError     ErrorCodes = -32700
+	ErrorCodesInvalidRequest ErrorCodes = -32600
+	ErrorCodesMethodNotFound ErrorCodes = -32601
+	ErrorCodesInvalidParams  ErrorCodes = -32602
+	ErrorCodesInternalError  ErrorCodes = -32603 // Error code indicating that a server received a notification or
+	// request before the server has received the `initialize` request.
+	ErrorCodesServerNotInitialized ErrorCodes = -32002
+	ErrorCodesUnknownErrorCode     ErrorCodes = -32001
+)
