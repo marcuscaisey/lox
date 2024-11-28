@@ -294,7 +294,7 @@ func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type)
 
 	variantTypes := make([]string, len(nonNullVariants))
 	for i, item := range nonNullVariants {
-		variantTypes[i] = g.genTypeDecl(fmt.Sprintf("%sOr%d", namespace, i), item)
+		variantTypes[i] = g.genTypeDecl(fmt.Sprintf("%sOr%d", namespace, i+1), item)
 	}
 	if len(variantTypes) == 1 {
 		return variantTypes[0]

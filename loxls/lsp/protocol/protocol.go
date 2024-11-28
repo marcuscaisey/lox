@@ -1500,30 +1500,30 @@ type CallHierarchyClientCapabilities struct {
 	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
 }
 
-type SemanticTokensClientCapabilitiesRequestsRangeOr1 struct {
+type SemanticTokensClientCapabilitiesRequestsRangeOr2 struct {
 }
 
-// BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1 contains either of the following types:
+// BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2 contains either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensClientCapabilitiesRequestsRangeOr1]
-type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1 struct {
-	Value BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1Value
+//   - [SemanticTokensClientCapabilitiesRequestsRangeOr2]
+type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2 struct {
+	Value BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value
 }
 
-// BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1Value is either of the following types:
+// BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value is either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensClientCapabilitiesRequestsRangeOr1]
+//   - [SemanticTokensClientCapabilitiesRequestsRangeOr2]
 //
-//gosumtype:decl BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1Value
-type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1Value interface {
-	isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1Value()
+//gosumtype:decl BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value
+type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value interface {
+	isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value()
 }
 
-func (Boolean) isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1Value() {}
-func (SemanticTokensClientCapabilitiesRequestsRangeOr1) isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1Value() {
+func (Boolean) isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value() {}
+func (SemanticTokensClientCapabilitiesRequestsRangeOr2) isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value() {
 }
 
-func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1) UnmarshalJSON(data []byte) error {
+func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
@@ -1532,48 +1532,48 @@ func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1) UnmarshalJSO
 		b.Value = booleanValue
 		return nil
 	}
-	var semanticTokensClientCapabilitiesRequestsRangeOr1Value SemanticTokensClientCapabilitiesRequestsRangeOr1
-	if err := json.Unmarshal(data, &semanticTokensClientCapabilitiesRequestsRangeOr1Value); err == nil {
-		b.Value = semanticTokensClientCapabilitiesRequestsRangeOr1Value
+	var semanticTokensClientCapabilitiesRequestsRangeOr2Value SemanticTokensClientCapabilitiesRequestsRangeOr2
+	if err := json.Unmarshal(data, &semanticTokensClientCapabilitiesRequestsRangeOr2Value); err == nil {
+		b.Value = semanticTokensClientCapabilitiesRequestsRangeOr2Value
 		return nil
 	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1](),
+		Type:  reflect.TypeFor[*BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2](),
 	}
 }
 
-func (b BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1) MarshalJSON() ([]byte, error) {
+func (b BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
-type SemanticTokensClientCapabilitiesRequestsFullOr1 struct {
+type SemanticTokensClientCapabilitiesRequestsFullOr2 struct {
 	// The client will send the `textDocument/semanticTokens/full/delta` request if
 	// the server provides a corresponding handler.
 	Delta *Boolean `json:"delta,omitempty"`
 }
 
-// BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1 contains either of the following types:
+// BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 contains either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensClientCapabilitiesRequestsFullOr1]
-type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1 struct {
-	Value BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1Value
+//   - [SemanticTokensClientCapabilitiesRequestsFullOr2]
+type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 struct {
+	Value BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value
 }
 
-// BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1Value is either of the following types:
+// BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value is either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensClientCapabilitiesRequestsFullOr1]
+//   - [SemanticTokensClientCapabilitiesRequestsFullOr2]
 //
-//gosumtype:decl BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1Value
-type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1Value interface {
-	isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1Value()
+//gosumtype:decl BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value
+type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value interface {
+	isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value()
 }
 
-func (Boolean) isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1Value() {}
-func (SemanticTokensClientCapabilitiesRequestsFullOr1) isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1Value() {
+func (Boolean) isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value() {}
+func (SemanticTokensClientCapabilitiesRequestsFullOr2) isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value() {
 }
 
-func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1) UnmarshalJSON(data []byte) error {
+func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
@@ -1582,28 +1582,28 @@ func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1) UnmarshalJSON
 		b.Value = booleanValue
 		return nil
 	}
-	var semanticTokensClientCapabilitiesRequestsFullOr1Value SemanticTokensClientCapabilitiesRequestsFullOr1
-	if err := json.Unmarshal(data, &semanticTokensClientCapabilitiesRequestsFullOr1Value); err == nil {
-		b.Value = semanticTokensClientCapabilitiesRequestsFullOr1Value
+	var semanticTokensClientCapabilitiesRequestsFullOr2Value SemanticTokensClientCapabilitiesRequestsFullOr2
+	if err := json.Unmarshal(data, &semanticTokensClientCapabilitiesRequestsFullOr2Value); err == nil {
+		b.Value = semanticTokensClientCapabilitiesRequestsFullOr2Value
 		return nil
 	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1](),
+		Type:  reflect.TypeFor[*BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2](),
 	}
 }
 
-func (b BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1) MarshalJSON() ([]byte, error) {
+func (b BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
 type SemanticTokensClientCapabilitiesRequests struct {
 	// The client will send the `textDocument/semanticTokens/range` request if
 	// the server provides a corresponding handler.
-	Range *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr1 `json:"range,omitempty"`
+	Range *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2 `json:"range,omitempty"`
 	// The client will send the `textDocument/semanticTokens/full` request if
 	// the server provides a corresponding handler.
-	Full *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr1 `json:"full,omitempty"`
+	Full *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 `json:"full,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#tokenFormat
@@ -2466,7 +2466,7 @@ func (t TextDocumentSyncKindOrTextDocumentSyncOptions) MarshalJSON() ([]byte, er
 	return json.Marshal(t.Value)
 }
 
-type NotebookDocumentFilterOr0 struct {
+type NotebookDocumentFilterOr1 struct {
 	// The type of the enclosing notebook.
 	NotebookType String `json:"notebookType"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
@@ -2475,7 +2475,7 @@ type NotebookDocumentFilterOr0 struct {
 	Pattern *String `json:"pattern,omitempty"`
 }
 
-type NotebookDocumentFilterOr1 struct {
+type NotebookDocumentFilterOr2 struct {
 	// The type of the enclosing notebook.
 	NotebookType *String `json:"notebookType,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
@@ -2484,7 +2484,7 @@ type NotebookDocumentFilterOr1 struct {
 	Pattern *String `json:"pattern,omitempty"`
 }
 
-type NotebookDocumentFilterOr2 struct {
+type NotebookDocumentFilterOr3 struct {
 	// The type of the enclosing notebook.
 	NotebookType *String `json:"notebookType,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
@@ -2493,38 +2493,33 @@ type NotebookDocumentFilterOr2 struct {
 	Pattern String `json:"pattern"`
 }
 
-// NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2 contains either of the following types:
-//   - [NotebookDocumentFilterOr0]
+// NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3 contains either of the following types:
 //   - [NotebookDocumentFilterOr1]
 //   - [NotebookDocumentFilterOr2]
-type NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2 struct {
-	Value NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2Value
+//   - [NotebookDocumentFilterOr3]
+type NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3 struct {
+	Value NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value
 }
 
-// NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2Value is either of the following types:
-//   - [NotebookDocumentFilterOr0]
+// NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value is either of the following types:
 //   - [NotebookDocumentFilterOr1]
 //   - [NotebookDocumentFilterOr2]
+//   - [NotebookDocumentFilterOr3]
 //
-//gosumtype:decl NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2Value
-type NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2Value interface {
-	isNotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2Value()
+//gosumtype:decl NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value
+type NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value interface {
+	isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value()
 }
 
-func (NotebookDocumentFilterOr0) isNotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2Value() {
+func (NotebookDocumentFilterOr1) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
 }
-func (NotebookDocumentFilterOr1) isNotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2Value() {
+func (NotebookDocumentFilterOr2) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
 }
-func (NotebookDocumentFilterOr2) isNotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2Value() {
+func (NotebookDocumentFilterOr3) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
 }
 
-func (n *NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2) UnmarshalJSON(data []byte) error {
+func (n *NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
-		return nil
-	}
-	var notebookDocumentFilterOr0Value NotebookDocumentFilterOr0
-	if err := json.Unmarshal(data, &notebookDocumentFilterOr0Value); err == nil {
-		n.Value = notebookDocumentFilterOr0Value
 		return nil
 	}
 	var notebookDocumentFilterOr1Value NotebookDocumentFilterOr1
@@ -2537,13 +2532,18 @@ func (n *NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentF
 		n.Value = notebookDocumentFilterOr2Value
 		return nil
 	}
+	var notebookDocumentFilterOr3Value NotebookDocumentFilterOr3
+	if err := json.Unmarshal(data, &notebookDocumentFilterOr3Value); err == nil {
+		n.Value = notebookDocumentFilterOr3Value
+		return nil
+	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2](),
+		Type:  reflect.TypeFor[*NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3](),
 	}
 }
 
-func (n NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2) MarshalJSON() ([]byte, error) {
+func (n NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n.Value)
 }
 
@@ -2554,7 +2554,7 @@ func (n NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFi
 // @since 3.17.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#notebookDocumentFilter
-type NotebookDocumentFilter = NotebookDocumentFilterOr0OrNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2
+type NotebookDocumentFilter = NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3
 
 // NotebookDocumentFilterOrString contains either of the following types:
 //   - [NotebookDocumentFilter]
@@ -2599,21 +2599,6 @@ func (n NotebookDocumentFilterOrString) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n.Value)
 }
 
-type NotebookDocumentSyncOptionsNotebookSelectorOr0Cells struct {
-	Language String `json:"language"`
-}
-
-type NotebookDocumentSyncOptionsNotebookSelectorOr0CellsSlice []NotebookDocumentSyncOptionsNotebookSelectorOr0Cells
-
-type NotebookDocumentSyncOptionsNotebookSelectorOr0 struct {
-	// The notebook to be synced If a string
-	// value is provided it matches against the
-	// notebook type. '*' matches every notebook.
-	Notebook NotebookDocumentFilterOrString `json:"notebook"`
-	// The cells of the matching notebook to be synced.
-	Cells *NotebookDocumentSyncOptionsNotebookSelectorOr0CellsSlice `json:"cells,omitempty"`
-}
-
 type NotebookDocumentSyncOptionsNotebookSelectorOr1Cells struct {
 	Language String `json:"language"`
 }
@@ -2624,39 +2609,49 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1 struct {
 	// The notebook to be synced If a string
 	// value is provided it matches against the
 	// notebook type. '*' matches every notebook.
+	Notebook NotebookDocumentFilterOrString `json:"notebook"`
+	// The cells of the matching notebook to be synced.
+	Cells *NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice `json:"cells,omitempty"`
+}
+
+type NotebookDocumentSyncOptionsNotebookSelectorOr2Cells struct {
+	Language String `json:"language"`
+}
+
+type NotebookDocumentSyncOptionsNotebookSelectorOr2CellsSlice []NotebookDocumentSyncOptionsNotebookSelectorOr2Cells
+
+type NotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
+	// The notebook to be synced If a string
+	// value is provided it matches against the
+	// notebook type. '*' matches every notebook.
 	Notebook *NotebookDocumentFilterOrString `json:"notebook,omitempty"`
 	// The cells of the matching notebook to be synced.
-	Cells NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice `json:"cells"`
+	Cells NotebookDocumentSyncOptionsNotebookSelectorOr2CellsSlice `json:"cells"`
 }
 
-// NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1 contains either of the following types:
-//   - [NotebookDocumentSyncOptionsNotebookSelectorOr0]
+// NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 contains either of the following types:
 //   - [NotebookDocumentSyncOptionsNotebookSelectorOr1]
-type NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1 struct {
-	Value NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Value
+//   - [NotebookDocumentSyncOptionsNotebookSelectorOr2]
+type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
+	Value NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value
 }
 
-// NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Value is either of the following types:
-//   - [NotebookDocumentSyncOptionsNotebookSelectorOr0]
+// NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value is either of the following types:
 //   - [NotebookDocumentSyncOptionsNotebookSelectorOr1]
+//   - [NotebookDocumentSyncOptionsNotebookSelectorOr2]
 //
-//gosumtype:decl NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Value
-type NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Value interface {
-	isNotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Value()
+//gosumtype:decl NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value
+type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value interface {
+	isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value()
 }
 
-func (NotebookDocumentSyncOptionsNotebookSelectorOr0) isNotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Value() {
+func (NotebookDocumentSyncOptionsNotebookSelectorOr1) isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value() {
 }
-func (NotebookDocumentSyncOptionsNotebookSelectorOr1) isNotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Value() {
+func (NotebookDocumentSyncOptionsNotebookSelectorOr2) isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value() {
 }
 
-func (n *NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1) UnmarshalJSON(data []byte) error {
+func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
-		return nil
-	}
-	var notebookDocumentSyncOptionsNotebookSelectorOr0Value NotebookDocumentSyncOptionsNotebookSelectorOr0
-	if err := json.Unmarshal(data, &notebookDocumentSyncOptionsNotebookSelectorOr0Value); err == nil {
-		n.Value = notebookDocumentSyncOptionsNotebookSelectorOr0Value
 		return nil
 	}
 	var notebookDocumentSyncOptionsNotebookSelectorOr1Value NotebookDocumentSyncOptionsNotebookSelectorOr1
@@ -2664,17 +2659,22 @@ func (n *NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOpt
 		n.Value = notebookDocumentSyncOptionsNotebookSelectorOr1Value
 		return nil
 	}
+	var notebookDocumentSyncOptionsNotebookSelectorOr2Value NotebookDocumentSyncOptionsNotebookSelectorOr2
+	if err := json.Unmarshal(data, &notebookDocumentSyncOptionsNotebookSelectorOr2Value); err == nil {
+		n.Value = notebookDocumentSyncOptionsNotebookSelectorOr2Value
+		return nil
+	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1](),
+		Type:  reflect.TypeFor[*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2](),
 	}
 }
 
-func (n NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1) MarshalJSON() ([]byte, error) {
+func (n NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n.Value)
 }
 
-type NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Slice []NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1
+type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Slice []NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2
 
 // Options specific to a notebook plus its cells
 // to be synced to the server.
@@ -2693,7 +2693,7 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptions
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#notebookDocumentSyncOptions
 type NotebookDocumentSyncOptions struct {
 	// The notebooks to be synced
-	NotebookSelector NotebookDocumentSyncOptionsNotebookSelectorOr0OrNotebookDocumentSyncOptionsNotebookSelectorOr1Slice `json:"notebookSelector"`
+	NotebookSelector NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Slice `json:"notebookSelector"`
 	// Whether save notification should be forwarded to
 	// the server. Will only be honored if mode === `notebook`.
 	Save *Boolean `json:"save,omitempty"`
@@ -2882,7 +2882,7 @@ type DeclarationOptions struct {
 	WorkDoneProgressOptions
 }
 
-type TextDocumentFilterOr0 struct {
+type TextDocumentFilterOr1 struct {
 	// A language id, like `typescript`.
 	Language String `json:"language"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
@@ -2891,7 +2891,7 @@ type TextDocumentFilterOr0 struct {
 	Pattern *String `json:"pattern,omitempty"`
 }
 
-type TextDocumentFilterOr1 struct {
+type TextDocumentFilterOr2 struct {
 	// A language id, like `typescript`.
 	Language *String `json:"language,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
@@ -2900,7 +2900,7 @@ type TextDocumentFilterOr1 struct {
 	Pattern *String `json:"pattern,omitempty"`
 }
 
-type TextDocumentFilterOr2 struct {
+type TextDocumentFilterOr3 struct {
 	// A language id, like `typescript`.
 	Language *String `json:"language,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
@@ -2909,38 +2909,33 @@ type TextDocumentFilterOr2 struct {
 	Pattern String `json:"pattern"`
 }
 
-// TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2 contains either of the following types:
-//   - [TextDocumentFilterOr0]
+// TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3 contains either of the following types:
 //   - [TextDocumentFilterOr1]
 //   - [TextDocumentFilterOr2]
-type TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2 struct {
-	Value TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2Value
+//   - [TextDocumentFilterOr3]
+type TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3 struct {
+	Value TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value
 }
 
-// TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2Value is either of the following types:
-//   - [TextDocumentFilterOr0]
+// TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value is either of the following types:
 //   - [TextDocumentFilterOr1]
 //   - [TextDocumentFilterOr2]
+//   - [TextDocumentFilterOr3]
 //
-//gosumtype:decl TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2Value
-type TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2Value interface {
-	isTextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2Value()
+//gosumtype:decl TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value
+type TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value interface {
+	isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value()
 }
 
-func (TextDocumentFilterOr0) isTextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2Value() {
+func (TextDocumentFilterOr1) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
 }
-func (TextDocumentFilterOr1) isTextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2Value() {
+func (TextDocumentFilterOr2) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
 }
-func (TextDocumentFilterOr2) isTextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2Value() {
+func (TextDocumentFilterOr3) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
 }
 
-func (t *TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2) UnmarshalJSON(data []byte) error {
+func (t *TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
-		return nil
-	}
-	var textDocumentFilterOr0Value TextDocumentFilterOr0
-	if err := json.Unmarshal(data, &textDocumentFilterOr0Value); err == nil {
-		t.Value = textDocumentFilterOr0Value
 		return nil
 	}
 	var textDocumentFilterOr1Value TextDocumentFilterOr1
@@ -2953,13 +2948,18 @@ func (t *TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2) Un
 		t.Value = textDocumentFilterOr2Value
 		return nil
 	}
+	var textDocumentFilterOr3Value TextDocumentFilterOr3
+	if err := json.Unmarshal(data, &textDocumentFilterOr3Value); err == nil {
+		t.Value = textDocumentFilterOr3Value
+		return nil
+	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2](),
+		Type:  reflect.TypeFor[*TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3](),
 	}
 }
 
-func (t TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2) MarshalJSON() ([]byte, error) {
+func (t TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Value)
 }
 
@@ -2981,7 +2981,7 @@ func (t TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2) Mar
 // @since 3.17.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentFilter
-type TextDocumentFilter = TextDocumentFilterOr0OrTextDocumentFilterOr1OrTextDocumentFilterOr2
+type TextDocumentFilter = TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3
 
 // A notebook cell text document filter denotes a cell text
 // document by different properties.
@@ -4120,29 +4120,29 @@ type SemanticTokensLegend struct {
 	TokenModifiers StringSlice `json:"tokenModifiers"`
 }
 
-type SemanticTokensOptionsRangeOr1 struct {
+type SemanticTokensOptionsRangeOr2 struct {
 }
 
-// BooleanOrSemanticTokensOptionsRangeOr1 contains either of the following types:
+// BooleanOrSemanticTokensOptionsRangeOr2 contains either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensOptionsRangeOr1]
-type BooleanOrSemanticTokensOptionsRangeOr1 struct {
-	Value BooleanOrSemanticTokensOptionsRangeOr1Value
+//   - [SemanticTokensOptionsRangeOr2]
+type BooleanOrSemanticTokensOptionsRangeOr2 struct {
+	Value BooleanOrSemanticTokensOptionsRangeOr2Value
 }
 
-// BooleanOrSemanticTokensOptionsRangeOr1Value is either of the following types:
+// BooleanOrSemanticTokensOptionsRangeOr2Value is either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensOptionsRangeOr1]
+//   - [SemanticTokensOptionsRangeOr2]
 //
-//gosumtype:decl BooleanOrSemanticTokensOptionsRangeOr1Value
-type BooleanOrSemanticTokensOptionsRangeOr1Value interface {
-	isBooleanOrSemanticTokensOptionsRangeOr1Value()
+//gosumtype:decl BooleanOrSemanticTokensOptionsRangeOr2Value
+type BooleanOrSemanticTokensOptionsRangeOr2Value interface {
+	isBooleanOrSemanticTokensOptionsRangeOr2Value()
 }
 
-func (Boolean) isBooleanOrSemanticTokensOptionsRangeOr1Value()                       {}
-func (SemanticTokensOptionsRangeOr1) isBooleanOrSemanticTokensOptionsRangeOr1Value() {}
+func (Boolean) isBooleanOrSemanticTokensOptionsRangeOr2Value()                       {}
+func (SemanticTokensOptionsRangeOr2) isBooleanOrSemanticTokensOptionsRangeOr2Value() {}
 
-func (b *BooleanOrSemanticTokensOptionsRangeOr1) UnmarshalJSON(data []byte) error {
+func (b *BooleanOrSemanticTokensOptionsRangeOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
@@ -4151,46 +4151,46 @@ func (b *BooleanOrSemanticTokensOptionsRangeOr1) UnmarshalJSON(data []byte) erro
 		b.Value = booleanValue
 		return nil
 	}
-	var semanticTokensOptionsRangeOr1Value SemanticTokensOptionsRangeOr1
-	if err := json.Unmarshal(data, &semanticTokensOptionsRangeOr1Value); err == nil {
-		b.Value = semanticTokensOptionsRangeOr1Value
+	var semanticTokensOptionsRangeOr2Value SemanticTokensOptionsRangeOr2
+	if err := json.Unmarshal(data, &semanticTokensOptionsRangeOr2Value); err == nil {
+		b.Value = semanticTokensOptionsRangeOr2Value
 		return nil
 	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*BooleanOrSemanticTokensOptionsRangeOr1](),
+		Type:  reflect.TypeFor[*BooleanOrSemanticTokensOptionsRangeOr2](),
 	}
 }
 
-func (b BooleanOrSemanticTokensOptionsRangeOr1) MarshalJSON() ([]byte, error) {
+func (b BooleanOrSemanticTokensOptionsRangeOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
-type SemanticTokensOptionsFullOr1 struct {
+type SemanticTokensOptionsFullOr2 struct {
 	// The server supports deltas for full documents.
 	Delta *Boolean `json:"delta,omitempty"`
 }
 
-// BooleanOrSemanticTokensOptionsFullOr1 contains either of the following types:
+// BooleanOrSemanticTokensOptionsFullOr2 contains either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensOptionsFullOr1]
-type BooleanOrSemanticTokensOptionsFullOr1 struct {
-	Value BooleanOrSemanticTokensOptionsFullOr1Value
+//   - [SemanticTokensOptionsFullOr2]
+type BooleanOrSemanticTokensOptionsFullOr2 struct {
+	Value BooleanOrSemanticTokensOptionsFullOr2Value
 }
 
-// BooleanOrSemanticTokensOptionsFullOr1Value is either of the following types:
+// BooleanOrSemanticTokensOptionsFullOr2Value is either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensOptionsFullOr1]
+//   - [SemanticTokensOptionsFullOr2]
 //
-//gosumtype:decl BooleanOrSemanticTokensOptionsFullOr1Value
-type BooleanOrSemanticTokensOptionsFullOr1Value interface {
-	isBooleanOrSemanticTokensOptionsFullOr1Value()
+//gosumtype:decl BooleanOrSemanticTokensOptionsFullOr2Value
+type BooleanOrSemanticTokensOptionsFullOr2Value interface {
+	isBooleanOrSemanticTokensOptionsFullOr2Value()
 }
 
-func (Boolean) isBooleanOrSemanticTokensOptionsFullOr1Value()                      {}
-func (SemanticTokensOptionsFullOr1) isBooleanOrSemanticTokensOptionsFullOr1Value() {}
+func (Boolean) isBooleanOrSemanticTokensOptionsFullOr2Value()                      {}
+func (SemanticTokensOptionsFullOr2) isBooleanOrSemanticTokensOptionsFullOr2Value() {}
 
-func (b *BooleanOrSemanticTokensOptionsFullOr1) UnmarshalJSON(data []byte) error {
+func (b *BooleanOrSemanticTokensOptionsFullOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
@@ -4199,18 +4199,18 @@ func (b *BooleanOrSemanticTokensOptionsFullOr1) UnmarshalJSON(data []byte) error
 		b.Value = booleanValue
 		return nil
 	}
-	var semanticTokensOptionsFullOr1Value SemanticTokensOptionsFullOr1
-	if err := json.Unmarshal(data, &semanticTokensOptionsFullOr1Value); err == nil {
-		b.Value = semanticTokensOptionsFullOr1Value
+	var semanticTokensOptionsFullOr2Value SemanticTokensOptionsFullOr2
+	if err := json.Unmarshal(data, &semanticTokensOptionsFullOr2Value); err == nil {
+		b.Value = semanticTokensOptionsFullOr2Value
 		return nil
 	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*BooleanOrSemanticTokensOptionsFullOr1](),
+		Type:  reflect.TypeFor[*BooleanOrSemanticTokensOptionsFullOr2](),
 	}
 }
 
-func (b BooleanOrSemanticTokensOptionsFullOr1) MarshalJSON() ([]byte, error) {
+func (b BooleanOrSemanticTokensOptionsFullOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4223,9 +4223,9 @@ type SemanticTokensOptions struct {
 	Legend SemanticTokensLegend `json:"legend"`
 	// Server supports providing semantic tokens for a specific range
 	// of a document.
-	Range *BooleanOrSemanticTokensOptionsRangeOr1 `json:"range,omitempty"`
+	Range *BooleanOrSemanticTokensOptionsRangeOr2 `json:"range,omitempty"`
 	// Server supports providing semantic tokens for a full document.
-	Full *BooleanOrSemanticTokensOptionsFullOr1 `json:"full,omitempty"`
+	Full *BooleanOrSemanticTokensOptionsFullOr2 `json:"full,omitempty"`
 }
 
 // @since 3.16.0
@@ -5136,7 +5136,7 @@ type Range struct {
 	End Position `json:"end"`
 }
 
-type TextDocumentContentChangeEventOr0 struct {
+type TextDocumentContentChangeEventOr1 struct {
 	// The range of the document that changed.
 	Range Range `json:"range"`
 	// The optional length of the range that got replaced.
@@ -5147,39 +5147,34 @@ type TextDocumentContentChangeEventOr0 struct {
 	Text String `json:"text"`
 }
 
-type TextDocumentContentChangeEventOr1 struct {
+type TextDocumentContentChangeEventOr2 struct {
 	// The new text of the whole document.
 	Text String `json:"text"`
 }
 
-// TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1 contains either of the following types:
-//   - [TextDocumentContentChangeEventOr0]
+// TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2 contains either of the following types:
 //   - [TextDocumentContentChangeEventOr1]
-type TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1 struct {
-	Value TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1Value
+//   - [TextDocumentContentChangeEventOr2]
+type TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2 struct {
+	Value TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value
 }
 
-// TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1Value is either of the following types:
-//   - [TextDocumentContentChangeEventOr0]
+// TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value is either of the following types:
 //   - [TextDocumentContentChangeEventOr1]
+//   - [TextDocumentContentChangeEventOr2]
 //
-//gosumtype:decl TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1Value
-type TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1Value interface {
-	isTextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1Value()
+//gosumtype:decl TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value
+type TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value interface {
+	isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value()
 }
 
-func (TextDocumentContentChangeEventOr0) isTextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1Value() {
+func (TextDocumentContentChangeEventOr1) isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value() {
 }
-func (TextDocumentContentChangeEventOr1) isTextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1Value() {
+func (TextDocumentContentChangeEventOr2) isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value() {
 }
 
-func (t *TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1) UnmarshalJSON(data []byte) error {
+func (t *TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
-		return nil
-	}
-	var textDocumentContentChangeEventOr0Value TextDocumentContentChangeEventOr0
-	if err := json.Unmarshal(data, &textDocumentContentChangeEventOr0Value); err == nil {
-		t.Value = textDocumentContentChangeEventOr0Value
 		return nil
 	}
 	var textDocumentContentChangeEventOr1Value TextDocumentContentChangeEventOr1
@@ -5187,13 +5182,18 @@ func (t *TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1) U
 		t.Value = textDocumentContentChangeEventOr1Value
 		return nil
 	}
+	var textDocumentContentChangeEventOr2Value TextDocumentContentChangeEventOr2
+	if err := json.Unmarshal(data, &textDocumentContentChangeEventOr2Value); err == nil {
+		t.Value = textDocumentContentChangeEventOr2Value
+		return nil
+	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1](),
+		Type:  reflect.TypeFor[*TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2](),
 	}
 }
 
-func (t TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1) MarshalJSON() ([]byte, error) {
+func (t TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Value)
 }
 
@@ -5201,7 +5201,7 @@ func (t TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1) Ma
 // it is considered to be the full content of the document.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
-type TextDocumentContentChangeEvent = TextDocumentContentChangeEventOr0OrTextDocumentContentChangeEventOr1
+type TextDocumentContentChangeEvent = TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2
 
 type TextDocumentContentChangeEventSlice []TextDocumentContentChangeEvent
 
