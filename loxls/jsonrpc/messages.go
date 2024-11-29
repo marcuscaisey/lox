@@ -87,15 +87,15 @@ func unmarshalMessage(content []byte) (message, error) {
 		if errors.As(err, &syntaxErr) {
 			return nil, newParseError(err.Error())
 		}
-		return nil, newInvalidRequestError(err.Error())
+		return nil, NewInvalidRequestError(err.Error())
 	}
 
 	if !combinedMsg.JSONRPC.IsPresent() {
-		return nil, newInvalidRequestError("jsonrpc is required")
+		return nil, NewInvalidRequestError("jsonrpc is required")
 	}
 	jsonrpc := combinedMsg.JSONRPC.Get()
 	if jsonrpc != validJSONRPC {
-		return nil, newInvalidRequestError(fmt.Sprintf("invalid jsonrpc value %q, must be %q", jsonrpc, validJSONRPC))
+		return nil, NewInvalidRequestError(fmt.Sprintf("invalid jsonrpc value %q, must be %q", jsonrpc, validJSONRPC))
 	}
 
 	// We read requests (including notifications) and responses from the same stream. If we can't determine which one it
@@ -117,7 +117,7 @@ func unmarshalMessage(content []byte) (message, error) {
 
 	// Message is a request or notification
 	if !combinedMsg.Method.IsPresent() {
-		return nil, newInvalidRequestError("method is required")
+		return nil, NewInvalidRequestError("method is required")
 	}
 	method := combinedMsg.Method.Get()
 	var params *json.RawMessage
@@ -127,17 +127,17 @@ func unmarshalMessage(content []byte) (message, error) {
 	var msg message
 	if combinedMsg.ID.IsPresent() {
 		if combinedMsg.ID.IsNull() {
-			return nil, newInvalidRequestError("id cannot be null")
+			return nil, NewInvalidRequestError("id cannot be null")
 		}
 		msg = &request{JSONRPC: jsonrpc, ID: *combinedMsg.ID.Get(), Method: method, Params: params}
 	} else {
 		msg = &notification{JSONRPC: jsonrpc, Method: method, Params: params}
 	}
 	if combinedMsg.Result.IsPresent() {
-		return nil, newInvalidRequestError("result is not a valid request field")
+		return nil, NewInvalidRequestError("result is not a valid request field")
 	}
 	if combinedMsg.Error.IsPresent() {
-		return nil, newInvalidRequestError("error is not a valid request field")
+		return nil, NewInvalidRequestError("error is not a valid request field")
 	}
 	return msg, nil
 }

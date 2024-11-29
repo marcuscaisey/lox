@@ -28,12 +28,13 @@ func NewMethodNotFoundError(method string) error {
 	return NewError(MethodNotFound, "Method not found", map[string]string{"method": method})
 }
 
-func newParseError(errorMsg string) error {
-	return newErrorWithErrorField(ParseError, "Parse error", errorMsg)
+// NewInvalidRequestError returns an error indicating that the provided request is invalid.
+func NewInvalidRequestError(errorMsg string) error {
+	return newErrorWithErrorField(InvalidRequest, "Invalid Request", errorMsg)
 }
 
-func newInvalidRequestError(errorMsg string) error {
-	return newErrorWithErrorField(InvalidRequest, "Invalid Request", errorMsg)
+func newParseError(errorMsg string) error {
+	return newErrorWithErrorField(ParseError, "Parse error", errorMsg)
 }
 
 func newInternalError(errorMsg string) *responseError {
