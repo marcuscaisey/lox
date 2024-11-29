@@ -54,6 +54,7 @@ func (h *Handler) HandleNotification(method string, _ *json.RawMessage) error {
 }
 
 func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeResult, error) {
+	h.initialized = true
 	return &protocol.InitializeResult{
 		Capabilities: protocol.ServerCapabilities{},
 		ServerInfo: &protocol.InitializeResultServerInfo{
