@@ -24,6 +24,9 @@ var serverNotInitializedErr = jsonrpc.NewError(jsonrpc.ErrorCode(protocol.ErrorC
 
 // HandleRequest responds to a JSON-RPC request.
 func (h *Handler) HandleRequest(method string, params *json.RawMessage) (any, error) {
+	if !h.initialized && method != "initialize" {
+		return nil, serverNotInitializedErr
+	}
 	switch method {
 	case "initialize":
 		var initializeParams *protocol.InitializeParams
@@ -32,29 +35,27 @@ func (h *Handler) HandleRequest(method string, params *json.RawMessage) (any, er
 		}
 		return h.initialize(initializeParams)
 	default:
-		if !h.initialized {
-			return nil, serverNotInitializedErr
-		}
 		return nil, jsonrpc.NewMethodNotFoundError(method)
 	}
 }
 
 // HandleNotification responds to a JSON-RPC notification.
 func (h *Handler) HandleNotification(method string, _ *json.RawMessage) error {
+	if !h.initialized && method != "initialized" && method != "exit" {
+		return serverNotInitializedErr
+	}
 	switch method {
 	case "initialized":
 		// No further initialisation needed
 		return nil
 	default:
-		if !h.initialized {
-			return serverNotInitializedErr
-		}
 		return jsonrpc.NewMethodNotFoundError(method)
 	}
 }
 
 func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeResult, error) {
 	h.initialized = true
+	// TODO: populate this result properly
 	return &protocol.InitializeResult{
 		Capabilities: protocol.ServerCapabilities{},
 		ServerInfo: &protocol.InitializeResultServerInfo{
