@@ -14,12 +14,12 @@ import (
 	"strings"
 )
 
-// Handler responds to JSON-RPC requests and notifications.
+// Handler handles JSON-RPC requests and notifications.
 type Handler interface {
 	// HandleRequest responds to a JSON-RPC request.
 	HandleRequest(method string, params *json.RawMessage) (any, error)
-	// HandleNotification responds to a JSON-RPC notification.
-	HandleNotification(method string, params *json.RawMessage) error
+	// HandleNotification handles a JSON-RPC notification.
+	HandleNotification(method string, params *json.RawMessage)
 	// SetClient sets the client that the handler can use to send requests and notifications to the server's client.
 	SetClient(*Client)
 }
@@ -210,9 +210,7 @@ func (s *server) handle(msg message) error {
 		}
 
 	case *notification:
-		if err := s.handler.HandleNotification(msg.Method, msg.Params); err != nil {
-			slog.Error("Error handling notification", "error", err.Error())
-		}
+		s.handler.HandleNotification(msg.Method, msg.Params)
 
 	case *response:
 		var msgJSON string

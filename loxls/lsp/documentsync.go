@@ -1,6 +1,8 @@
 package lsp
 
-import "github.com/marcuscaisey/lox/loxls/lsp/protocol"
+import (
+	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
+)
 
 func (h *Handler) textDocumentDidOpen(*protocol.DidOpenTextDocumentParams) error {
 	return nil
