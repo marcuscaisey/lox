@@ -6,8 +6,6 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
-const version = "0.0.1"
-
 func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeResult, error) {
 	h.initialized = true
 	return &protocol.InitializeResult{

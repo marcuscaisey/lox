@@ -14,8 +14,6 @@ func main() {
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
 
-	slog.Info("Starting lox language server. Reading from stdin, writing to stdout.")
-
 	if err := jsonrpc.Serve(os.Stdin, os.Stdout, lsp.NewHandler()); err != nil {
 		slog.Error("Something went wrong", "error", err.Error())
 		os.Exit(1)
