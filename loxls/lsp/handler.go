@@ -12,6 +12,7 @@ import (
 type Handler struct {
 	initialized  bool
 	shuttingDown bool
+	client       *client
 }
 
 // NewHandler returns a new Handler.
@@ -81,6 +82,11 @@ func (h *Handler) HandleNotification(method string, jsonParams *json.RawMessage)
 	default:
 		return jsonrpc.NewMethodNotFoundError(method)
 	}
+}
+
+// SetClient sets the client that the handler can use to send requests and notifications to the server's client.
+func (h *Handler) SetClient(client *jsonrpc.Client) {
+	h.client = newClient(client)
 }
 
 func ptrTo[T any](v T) *T {

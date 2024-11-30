@@ -16,8 +16,12 @@ import (
 
 // Handler responds to JSON-RPC requests and notifications.
 type Handler interface {
+	// HandleRequest responds to a JSON-RPC request.
 	HandleRequest(method string, params *json.RawMessage) (any, error)
+	// HandleNotification responds to a JSON-RPC notification.
 	HandleNotification(method string, params *json.RawMessage) error
+	// SetClient sets the client that the handler can use to send requests and notifications to the server's client.
+	SetClient(*Client)
 }
 
 // Serve reads JSON-RPC messages from in, passes them to handler, and writes the responses to out.
@@ -30,14 +34,19 @@ type server struct {
 	in      *bufio.Reader
 	out     io.Writer
 	handler Handler
+	client  *Client
 }
 
 func newServer(in io.Reader, out io.Writer, handler Handler) *server {
-	return &server{
+	server := &server{
 		in:      bufio.NewReader(in),
 		out:     out,
 		handler: handler,
 	}
+	client := newClient(in, out, server)
+	handler.SetClient(client)
+	server.client = client
+	return server
 }
 
 func (s *server) Serve() error {
