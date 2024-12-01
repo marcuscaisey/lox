@@ -52,7 +52,8 @@ type parser struct {
 }
 
 // Parse parses the source code and returns the root node of the abstract syntax tree.
-// If an error is returned then an incomplete AST will still be returned along with it.
+// If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
+// this error will be a [lox.Errors] containing all of the errors.
 func (p *parser) Parse() (ast.Program, error) {
 	// Populate tok and nextTok
 	p.next()

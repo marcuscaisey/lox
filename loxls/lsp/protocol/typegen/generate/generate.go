@@ -2,6 +2,7 @@
 package generate
 
 import (
+	"cmp"
 	"fmt"
 	"maps"
 	"os"
@@ -286,6 +287,16 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 	return name
 }
 
+// sumTypeVariantUnmarshalOrders stores the relative order that variants of each sum type will be unmarshaled in.
+// If a sum type does not have an order, its variants will be unmarshaled in the order they are defined.
+// Unlisted variants will be unmarshaled before listed variants in the order they are defined.
+var sumTypeVariantUnmarshalOrders = map[string][]string{
+	"TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2": {
+		"TextDocumentContentChangeEventOr2",
+		"TextDocumentContentChangeEventOr1",
+	},
+}
+
 func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type) (name string) {
 	nonNullVariants := slices.DeleteFunc(slices.Clone(variants), isNullBaseType)
 	defer func() {
@@ -302,8 +313,15 @@ func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type)
 		return variantTypes[0]
 	}
 
-	slices.Sort(variantTypes)
 	name = strings.Join(variantTypes, "Or")
+	sortedVariantTypes := slices.Clone(variantTypes)
+	unmarshalOrderPositions := map[string]int{}
+	for i, variant := range sumTypeVariantUnmarshalOrders[name] {
+		unmarshalOrderPositions[variant] = i + 1
+	}
+	slices.SortStableFunc(sortedVariantTypes, func(x, y string) int {
+		return cmp.Compare(unmarshalOrderPositions[x], unmarshalOrderPositions[y])
+	})
 
 	if g.gennedTypes[name] {
 		return name
@@ -340,7 +358,7 @@ func ({{$receiver}} *{{$.name}}) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	{{- range $i, $variant := $.variants}}
+	{{- range $i, $variant := $.sortedVariants}}
 	{{- with $var := lowerFirstLetter $variant | printf "%sValue"}}
 	var {{$var}} {{$variant}}
 	if err := json.Unmarshal(data, &{{$var}}); err == nil {
@@ -361,7 +379,7 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 {{end}}
 `
 	g.importPkgs("bytes", "encoding/json", "reflect")
-	data := map[string]any{"name": name, "variants": variantTypes}
+	data := map[string]any{"name": name, "variants": variantTypes, "sortedVariants": sortedVariantTypes}
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 

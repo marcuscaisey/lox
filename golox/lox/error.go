@@ -2,7 +2,6 @@
 package lox
 
 import (
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -112,17 +111,27 @@ func (e *Errors) Addf(charRange token.CharacterRange, format string, args ...any
 	*e = append(*e, NewErrorf(charRange, format, args...).(*Error))
 }
 
-// Err orders the errors in the list by their position in the source code and returns them as a single error.
-func (e Errors) Err() error {
+// Error formats the errors by concatenating their messages after sorting them by their start position.
+func (e Errors) Error() string {
 	if len(e) == 0 {
-		return nil
+		panic("Error called on empty error list")
 	}
 	slices.SortFunc([]*Error(e), func(e1, e2 *Error) int {
 		return e1.Start.Compare(e2.Start)
 	})
-	var errs []error
-	for _, err := range e {
-		errs = append(errs, err)
+	msgs := make([]string, len(e))
+	for i, err := range e {
+		msgs[i] = err.Error()
 	}
-	return errors.Join(errs...)
+	return strings.Join(msgs, "\n")
+}
+
+// Err returns the error list unchanged if its non-empty, otherwise nil.
+// This should be used to return an [Errors] from a function as an [error] so that it becomes an untyped nil if there
+// are no errors.
+func (e Errors) Err() error {
+	if len(e) == 0 {
+		return nil
+	}
+	return e
 }
