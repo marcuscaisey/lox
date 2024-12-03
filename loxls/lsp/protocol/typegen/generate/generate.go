@@ -156,7 +156,7 @@ func (g *generator) structField(namespace string, prop *metamodel.Property) stri
 	fieldName := upperFirstLetter(prop.Name)
 	data := map[string]any{
 		"comment":   g.comment(prop.Documentation, prop.Deprecated),
-		"optional":  prop.Optional != nil && *prop.Optional,
+		"optional":  prop.Optional,
 		"fieldName": fieldName,
 		"type":      g.genTypeDecl(namespace+fieldName, prop.Type),
 		"jsonName":  prop.Name,
@@ -478,19 +478,16 @@ func (g *generator) importPkgs(pkgs ...string) {
 	}
 }
 
-func (g *generator) comment(documentation, deprecationMsg *string) string {
-	comment := ""
-	if documentation != nil {
-		comment = *documentation
-	}
-	if deprecationMsg != nil {
+func (g *generator) comment(documentation, deprecationMsg string) string {
+	comment := documentation
+	if deprecationMsg != "" {
 		if strings.Contains(comment, "@deprecated") {
 			comment = strings.ReplaceAll(comment, "@deprecated", "Deprecated:")
 		} else {
 			if comment != "" {
 				comment += "\n\n"
 			}
-			comment += "Deprecated: " + *deprecationMsg
+			comment += "Deprecated: " + deprecationMsg
 		}
 	}
 	if comment != "" {
@@ -500,7 +497,7 @@ func (g *generator) comment(documentation, deprecationMsg *string) string {
 	}
 }
 
-func (g *generator) commentForType(name string, documentation, deprecationMsg *string) string {
+func (g *generator) commentForType(name, documentation, deprecationMsg string) string {
 	comment := g.comment(documentation, deprecationMsg)
 	versionParts := strings.Split(g.metaModel.MetaData.Version, ".")
 	major, minor := versionParts[0], versionParts[1]

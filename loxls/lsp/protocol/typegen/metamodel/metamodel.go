@@ -54,18 +54,18 @@ type BooleanLiteralType struct {
 // Enumeration defines an Enumeration.
 type Enumeration struct {
 	// Whether the enumeration is deprecated or not. If deprecated the property contains the deprecation message.
-	Deprecated *string `json:"deprecated,omitempty"`
+	Deprecated string `json:"deprecated,omitempty"`
 	// An optional documentation.
-	Documentation *string `json:"documentation,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
 	// The name of the enumeration.
 	Name string `json:"name"`
 	// Whether this is a proposed enumeration. If omitted, the enumeration is final.
-	Proposed *bool `json:"proposed,omitempty"`
+	Proposed bool `json:"proposed,omitempty"`
 	// Since when (release number) this enumeration is available. Is undefined if not known.
-	Since *string `json:"since,omitempty"`
+	Since string `json:"since,omitempty"`
 	// Whether the enumeration supports custom values (e.g. values which are not part of the set defined in `values`).
 	// If omitted no custom values are supported.
-	SupportsCustomValues *bool `json:"supportsCustomValues,omitempty"`
+	SupportsCustomValues bool `json:"supportsCustomValues,omitempty"`
 	// The type of the elements.
 	Type EnumerationType `json:"type"`
 	// The enum values.
@@ -75,15 +75,15 @@ type Enumeration struct {
 // EnumerationEntry defines an enumeration entry.
 type EnumerationEntry struct {
 	// Whether the enum entry is deprecated or not. If deprecated the property contains the deprecation message.
-	Deprecated *string `json:"deprecated,omitempty"`
+	Deprecated string `json:"deprecated,omitempty"`
 	// An optional documentation.
-	Documentation *string `json:"documentation,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
 	// The name of the enum item.
 	Name string `json:"name"`
 	// Whether this is a proposed enumeration entry. If omitted, the enumeration entry is final.
-	Proposed *bool `json:"proposed,omitempty"`
+	Proposed bool `json:"proposed,omitempty"`
 	// Since when (release number) this enumeration entry is available. Is undefined if not known.
-	Since *string `json:"since,omitempty"`
+	Since string `json:"since,omitempty"`
 	// The value.
 	Value IntOrString `json:"value"`
 }
@@ -305,9 +305,9 @@ func (m *MetaModel) Enumeration(name string) (value *Enumeration, ok bool) {
 // Notification represents a LSP Notification
 type Notification struct {
 	// Whether the notification is deprecated or not. If deprecated the property contains the deprecation message.
-	Deprecated *string `json:"deprecated,omitempty"`
+	Deprecated string `json:"deprecated,omitempty"`
 	// An optional documentation;
-	Documentation *string `json:"documentation,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
 	// The direction in which this notification is sent in the protocol.
 	MessageDirection MessageDirection `json:"messageDirection"`
 	// The request's method name.
@@ -315,13 +315,13 @@ type Notification struct {
 	// The parameter type(s) if any.
 	Params *TypeOrTypeSlice `json:"params,omitempty"`
 	// Whether this is a proposed notification. If omitted the notification is final.
-	Proposed *bool `json:"proposed,omitempty"`
+	Proposed bool `json:"proposed,omitempty"`
 	// Optional a dynamic registration method if it different from the request's method.
-	RegistrationMethod *string `json:"registrationMethod,omitempty"`
+	RegistrationMethod string `json:"registrationMethod,omitempty"`
 	// Optional registration options if the notification supports dynamic registration.
 	RegistrationOptions *Type `json:"registrationOptions,omitempty"`
 	// Since when (release number) this notification is available. Is undefined if not known.
-	Since *string `json:"since,omitempty"`
+	Since string `json:"since,omitempty"`
 }
 
 // TypeOrTypeSlice contains either of the following types:
@@ -395,17 +395,17 @@ type OrType struct {
 // Property represents an object Property.
 type Property struct {
 	// Whether the property is deprecated or not. If deprecated the property contains the deprecation message.
-	Deprecated *string `json:"deprecated,omitempty"`
+	Deprecated string `json:"deprecated,omitempty"`
 	// An optional documentation.
-	Documentation *string `json:"documentation,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
 	// The property name;
 	Name string `json:"name"`
 	// Whether the property is optional. If omitted, the property is mandatory.
-	Optional *bool `json:"optional,omitempty"`
+	Optional bool `json:"optional,omitempty"`
 	// Whether this is a proposed property. If omitted, the structure is final.
-	Proposed *bool `json:"proposed,omitempty"`
+	Proposed bool `json:"proposed,omitempty"`
 	// Since when (release number) this property is available. Is undefined if not known.
-	Since *string `json:"since,omitempty"`
+	Since string `json:"since,omitempty"`
 	// The type of the property
 	Type *Type `json:"type"`
 }
@@ -420,9 +420,9 @@ type ReferenceType struct {
 // Request represents a LSP Request
 type Request struct {
 	// Whether the request is deprecated or not. If deprecated the property contains the deprecation message.
-	Deprecated *string `json:"deprecated,omitempty"`
+	Deprecated string `json:"deprecated,omitempty"`
 	// An optional documentation;
-	Documentation *string `json:"documentation,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
 	// An optional error data type.
 	ErrorData *Type `json:"errorData,omitempty"`
 	// The direction in which this request is sent in the protocol.
@@ -434,15 +434,15 @@ type Request struct {
 	// Optional partial result type if the request supports partial result reporting.
 	PartialResult *Type `json:"partialResult,omitempty"`
 	// Whether this is a proposed feature. If omitted the feature is final.
-	Proposed *bool `json:"proposed,omitempty"`
+	Proposed bool `json:"proposed,omitempty"`
 	// Optional a dynamic registration method if it different from the request's method.
-	RegistrationMethod *string `json:"registrationMethod,omitempty"`
+	RegistrationMethod string `json:"registrationMethod,omitempty"`
 	// Optional registration options if the request supports dynamic registration.
 	RegistrationOptions *Type `json:"registrationOptions,omitempty"`
 	// The result type.
 	Result *Type `json:"result"`
 	// Since when (release number) this request is available. Is undefined if not known.
-	Since *string `json:"since,omitempty"`
+	Since string `json:"since,omitempty"`
 }
 
 // StringLiteralType represents a string literal type (e.g. `kind: 'rename'`).
@@ -454,9 +454,9 @@ type StringLiteralType struct {
 // Structure defines the Structure of an object literal.
 type Structure struct {
 	// Whether the structure is deprecated or not. If deprecated the property contains the deprecation message.
-	Deprecated *string `json:"deprecated,omitempty"`
+	Deprecated string `json:"deprecated,omitempty"`
 	// An optional documentation;
-	Documentation *string `json:"documentation,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
 	// Structures extended from. This structures form a polymorphic type hierarchy.
 	Extends []*Type `json:"extends,omitempty"`
 	// Structures to mix in. The properties of these structures are `copied` into this structure. Mixins don't form a
@@ -467,23 +467,23 @@ type Structure struct {
 	// The properties.
 	Properties []*Property `json:"properties"`
 	// Whether this is a proposed structure. If omitted, the structure is final.
-	Proposed *bool `json:"proposed,omitempty"`
+	Proposed bool `json:"proposed,omitempty"`
 	// Since when (release number) this structure is available. Is undefined if not known.
-	Since *string `json:"since,omitempty"`
+	Since string `json:"since,omitempty"`
 }
 
 // StructureLiteral defines an unnamed structure of an object literal.
 type StructureLiteral struct {
 	// Whether the literal is deprecated or not. If deprecated the property contains the deprecation message.
-	Deprecated *string `json:"deprecated,omitempty"`
+	Deprecated string `json:"deprecated,omitempty"`
 	// An optional documentation.
-	Documentation *string `json:"documentation,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
 	// The properties.
 	Properties []*Property `json:"properties"`
 	// Whether this is a proposed structure. If omitted, the structure is final.
-	Proposed *bool `json:"proposed,omitempty"`
+	Proposed bool `json:"proposed,omitempty"`
 	// Since when (release number) this structure is available. Is undefined if not known.
-	Since *string `json:"since,omitempty"`
+	Since string `json:"since,omitempty"`
 }
 
 // StructureLiteralType represents a literal structure (e.g. `property: { start: uinteger; end: uinteger; }`).
@@ -637,15 +637,15 @@ func (t *Type) MarshalJSON() ([]byte, error) {
 // TypeAlias defines a type alias. (e.g. `type Definition = Location | LocationLink`)
 type TypeAlias struct {
 	// Whether the type alias is deprecated or not. If deprecated the property contains the deprecation message.
-	Deprecated *string `json:"deprecated,omitempty"`
+	Deprecated string `json:"deprecated,omitempty"`
 	// An optional documentation.
-	Documentation *string `json:"documentation,omitempty"`
+	Documentation string `json:"documentation,omitempty"`
 	// The name of the type alias.
 	Name string `json:"name"`
 	// Whether this is a proposed type alias. If omitted, the type alias is final.
-	Proposed *bool `json:"proposed,omitempty"`
+	Proposed bool `json:"proposed,omitempty"`
 	// Since when (release number) this structure is available. Is undefined if not known.
-	Since *string `json:"since,omitempty"`
+	Since string `json:"since,omitempty"`
 	// The aliased type.
 	Type *Type `json:"type"`
 }
