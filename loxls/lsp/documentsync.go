@@ -19,8 +19,8 @@ type document struct {
 }
 
 // document returns the document with the given URI, or an error if it doesn't exist.
-func (h *Handler) document(uri protocol.DocumentUri) (*document, error) {
-	doc, ok := h.docs[uri]
+func (h *Handler) document(uri string) (*document, error) {
+	doc, ok := h.docsByURI[uri]
 	if !ok {
 		return nil, jsonrpc.NewError(jsonrpc.InvalidParams, "Document not found", map[string]any{"uri": uri})
 	}
@@ -51,7 +51,7 @@ func (h *Handler) textDocumentDidChange(params *protocol.DidChangeTextDocumentPa
 	return nil
 }
 
-func (h *Handler) updateDoc(uri protocol.DocumentUri, version protocol.Integer, src string) error {
+func (h *Handler) updateDoc(uri string, version int32, src string) error {
 	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithComments())
 	diagnostics := protocol.DiagnosticSlice{}
 	if err != nil {
@@ -64,21 +64,21 @@ func (h *Handler) updateDoc(uri protocol.DocumentUri, version protocol.Integer, 
 			diagnostics[i] = protocol.Diagnostic{
 				Range: protocol.Range{
 					Start: protocol.Position{
-						Line:      protocol.Uinteger(e.Start.Line - 1),
-						Character: protocol.Uinteger(e.Start.ColumnUTF16()),
+						Line:      uint32(e.Start.Line - 1),
+						Character: uint32(e.Start.ColumnUTF16()),
 					},
 					End: protocol.Position{
-						Line:      protocol.Uinteger(e.End.Line - 1),
-						Character: protocol.Uinteger(e.End.ColumnUTF16()),
+						Line:      uint32(e.End.Line - 1),
+						Character: uint32(e.End.ColumnUTF16()),
 					},
 				},
 				Severity: ptrTo(protocol.DiagnosticSeverityError),
-				Source:   ptrTo(protocol.String("loxls")),
-				Message:  protocol.String(e.Msg),
+				Source:   ptrTo("loxls"),
+				Message:  e.Msg,
 			}
 		}
 	}
-	h.docs[uri] = &document{
+	h.docsByURI[uri] = &document{
 		Text:      src,
 		Program:   program,
 		HasErrors: err != nil,

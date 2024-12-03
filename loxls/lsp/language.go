@@ -29,9 +29,9 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 		{
 			Range: protocol.Range{
 				Start: protocol.Position{Line: 0},
-				End:   protocol.Position{Line: protocol.Uinteger(len(textLines))},
+				End:   protocol.Position{Line: uint32(len(textLines))},
 			},
-			NewText: protocol.String(formatted),
+			NewText: formatted,
 		},
 	}, nil
 }

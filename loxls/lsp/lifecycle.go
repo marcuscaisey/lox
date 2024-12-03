@@ -14,7 +14,7 @@ func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeRe
 			PositionEncoding: ptrTo(protocol.PositionEncodingKindUTF16),
 			TextDocumentSync: &protocol.TextDocumentSyncOptionsOrTextDocumentSyncKind{
 				Value: protocol.TextDocumentSyncOptions{
-					OpenClose: ptrTo(protocol.Boolean(true)),
+					OpenClose: ptrTo(true),
 					Change:    ptrTo(protocol.TextDocumentSyncKindFull),
 				},
 			},
@@ -24,7 +24,7 @@ func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeRe
 		},
 		ServerInfo: &protocol.InitializeResultServerInfo{
 			Name:    "loxls",
-			Version: ptrTo(protocol.String(version)),
+			Version: ptrTo(version),
 		},
 	}, nil
 }

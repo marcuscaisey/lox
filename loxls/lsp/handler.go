@@ -19,13 +19,13 @@ type Handler struct {
 
 	initialized  bool
 	shuttingDown bool
-	docs         map[protocol.DocumentUri]*document
+	docsByURI         map[string]*document
 }
 
 // NewHandler returns a new Handler.
 func NewHandler() *Handler {
 	return &Handler{
-		docs: map[protocol.DocumentUri]*document{},
+		docsByURI: map[string]*document{},
 	}
 }
 
@@ -136,7 +136,7 @@ func (l *logger) Errorf(format string, a ...any) {
 func (l *logger) log(typ protocol.MessageType, msg string) {
 	err := l.client.WindowLogMessage(&protocol.LogMessageParams{
 		Type:    typ,
-		Message: protocol.String(msg),
+		Message: msg,
 	})
 	if err != nil {
 		slog.Warn("Failed to log", "error", err)

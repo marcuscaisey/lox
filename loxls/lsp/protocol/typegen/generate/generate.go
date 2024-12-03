@@ -96,6 +96,15 @@ func (g *generator) genTypeDecl(namespace string, typ *metamodel.Type) string {
 	panic("unreachable")
 }
 
+func (g *generator) genTypeDeclForSumType(namespace string, typ *metamodel.Type) string {
+	switch typValue := typ.Value.(type) {
+	case metamodel.BaseType:
+		return g.genBaseTypeDeclForSumType(typValue.Name)
+	default:
+		return g.genTypeDecl(namespace, typ)
+	}
+}
+
 func (g *generator) genRefTypeDecl(name string) string {
 	if structure, ok := g.metaModel.Structure(name); ok {
 		return g.genStructDecl(structure)
@@ -307,7 +316,7 @@ func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type)
 
 	variantTypes := make([]string, len(nonNullVariants))
 	for i, item := range nonNullVariants {
-		variantTypes[i] = g.genTypeDecl(fmt.Sprintf("%sOr%d", namespace, i+1), item)
+		variantTypes[i] = g.genTypeDeclForSumType(fmt.Sprintf("%sOr%d", namespace, i+1), item)
 	}
 	if len(variantTypes) == 1 {
 		return variantTypes[0]
@@ -399,6 +408,14 @@ var baseTypeTypes = map[metamodel.BaseTypes]string{
 }
 
 func (g *generator) genBaseTypeDecl(baseType metamodel.BaseTypes) string {
+	typ := baseTypeTypes[baseType]
+	if typ == "" {
+		panic(fmt.Sprintf("unhandled base type: %s", baseType))
+	}
+	return typ
+}
+
+func (g *generator) genBaseTypeDeclForSumType(baseType metamodel.BaseTypes) string {
 	typ := baseTypeTypes[baseType]
 	if typ == "" {
 		panic(fmt.Sprintf("unhandled base type: %s", baseType))

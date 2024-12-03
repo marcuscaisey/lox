@@ -66,14 +66,12 @@ type WorkDoneProgressParams struct {
 
 type _InitializeParamsClientInfo struct {
 	// The name of the client as defined by the client.
-	Name String `json:"name"`
+	Name string `json:"name"`
 	// The client's version as defined by the client.
-	Version *String `json:"version,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 type DocumentUri string
-
-type Boolean bool
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#resourceOperationKind
 type ResourceOperationKind string
@@ -175,13 +173,13 @@ type WorkspaceEditClientCapabilitiesChangeAnnotationSupport struct {
 	// Whether the client groups edits with equal labels into tree nodes,
 	// for instance all edits labelled with "Changes in Strings" would
 	// be a tree node.
-	GroupsOnLabel *Boolean `json:"groupsOnLabel,omitempty"`
+	GroupsOnLabel *bool `json:"groupsOnLabel,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceEditClientCapabilities
 type WorkspaceEditClientCapabilities struct {
 	// The client supports versioned document changes in `WorkspaceEdit`s
-	DocumentChanges *Boolean `json:"documentChanges,omitempty"`
+	DocumentChanges *bool `json:"documentChanges,omitempty"`
 	// The resource operations the client supports. Clients should at least
 	// support 'create', 'rename' and 'delete' files and folders.
 	//
@@ -199,7 +197,7 @@ type WorkspaceEditClientCapabilities struct {
 	// character.
 	//
 	// @since 3.16.0
-	NormalizesLineEndings *Boolean `json:"normalizesLineEndings,omitempty"`
+	NormalizesLineEndings *bool `json:"normalizesLineEndings,omitempty"`
 	// Whether the client in general supports change annotations on text edits,
 	// create file, rename file and delete file changes.
 	//
@@ -210,7 +208,7 @@ type WorkspaceEditClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didChangeConfigurationClientCapabilities
 type DidChangeConfigurationClientCapabilities struct {
 	// Did change configuration notification supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didChangeWatchedFilesClientCapabilities
@@ -218,12 +216,12 @@ type DidChangeWatchedFilesClientCapabilities struct {
 	// Did change watched files notification supports dynamic registration. Please note
 	// that the current protocol doesn't support static configuration for file changes
 	// from the server side.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Whether the client has support for {@link  RelativePattern relative pattern}
 	// or not.
 	//
 	// @since 3.17.0
-	RelativePatternSupport *Boolean `json:"relativePatternSupport,omitempty"`
+	RelativePatternSupport *bool `json:"relativePatternSupport,omitempty"`
 }
 
 // A symbol kind.
@@ -376,12 +374,12 @@ type WorkspaceSymbolClientCapabilitiesTagSupport struct {
 	ValueSet SymbolTagSlice `json:"valueSet"`
 }
 
-type StringSlice []String
+type stringSlice []string
 
 type WorkspaceSymbolClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily. Usually
 	// `location.range`
-	Properties StringSlice `json:"properties"`
+	Properties stringSlice `json:"properties"`
 }
 
 // Client capabilities for a {@link WorkspaceSymbolRequest}.
@@ -389,7 +387,7 @@ type WorkspaceSymbolClientCapabilitiesResolveSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceSymbolClientCapabilities
 type WorkspaceSymbolClientCapabilities struct {
 	// Symbol request supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
 	SymbolKind *WorkspaceSymbolClientCapabilitiesSymbolKind `json:"symbolKind,omitempty"`
 	// The client supports tags on `SymbolInformation`.
@@ -410,7 +408,7 @@ type WorkspaceSymbolClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#executeCommandClientCapabilities
 type ExecuteCommandClientCapabilities struct {
 	// Execute command supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // @since 3.16.0
@@ -424,7 +422,7 @@ type SemanticTokensWorkspaceClientCapabilities struct {
 	// semantic tokens currently shown. It should be used with absolute care
 	// and is useful for situation where a server for example detects a project
 	// wide change that requires such a calculation.
-	RefreshSupport *Boolean `json:"refreshSupport,omitempty"`
+	RefreshSupport *bool `json:"refreshSupport,omitempty"`
 }
 
 // @since 3.16.0
@@ -438,7 +436,7 @@ type CodeLensWorkspaceClientCapabilities struct {
 	// code lenses currently shown. It should be used with absolute care and is
 	// useful for situation where a server for example detect a project wide
 	// change that requires such a calculation.
-	RefreshSupport *Boolean `json:"refreshSupport,omitempty"`
+	RefreshSupport *bool `json:"refreshSupport,omitempty"`
 }
 
 // Capabilities relating to events from file operations by the user in the client.
@@ -451,19 +449,19 @@ type CodeLensWorkspaceClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#fileOperationClientCapabilities
 type FileOperationClientCapabilities struct {
 	// Whether the client supports dynamic registration for file requests/notifications.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client has support for sending didCreateFiles notifications.
-	DidCreate *Boolean `json:"didCreate,omitempty"`
+	DidCreate *bool `json:"didCreate,omitempty"`
 	// The client has support for sending willCreateFiles requests.
-	WillCreate *Boolean `json:"willCreate,omitempty"`
+	WillCreate *bool `json:"willCreate,omitempty"`
 	// The client has support for sending didRenameFiles notifications.
-	DidRename *Boolean `json:"didRename,omitempty"`
+	DidRename *bool `json:"didRename,omitempty"`
 	// The client has support for sending willRenameFiles requests.
-	WillRename *Boolean `json:"willRename,omitempty"`
+	WillRename *bool `json:"willRename,omitempty"`
 	// The client has support for sending didDeleteFiles notifications.
-	DidDelete *Boolean `json:"didDelete,omitempty"`
+	DidDelete *bool `json:"didDelete,omitempty"`
 	// The client has support for sending willDeleteFiles requests.
-	WillDelete *Boolean `json:"willDelete,omitempty"`
+	WillDelete *bool `json:"willDelete,omitempty"`
 }
 
 // Client workspace capabilities specific to inline values.
@@ -479,7 +477,7 @@ type InlineValueWorkspaceClientCapabilities struct {
 	// inline values currently shown. It should be used with absolute care and is
 	// useful for situation where a server for example detects a project wide
 	// change that requires such a calculation.
-	RefreshSupport *Boolean `json:"refreshSupport,omitempty"`
+	RefreshSupport *bool `json:"refreshSupport,omitempty"`
 }
 
 // Client workspace capabilities specific to inlay hints.
@@ -495,7 +493,7 @@ type InlayHintWorkspaceClientCapabilities struct {
 	// inlay hints currently shown. It should be used with absolute care and
 	// is useful for situation where a server for example detects a project wide
 	// change that requires such a calculation.
-	RefreshSupport *Boolean `json:"refreshSupport,omitempty"`
+	RefreshSupport *bool `json:"refreshSupport,omitempty"`
 }
 
 // Workspace client capabilities specific to diagnostic pull requests.
@@ -511,7 +509,7 @@ type DiagnosticWorkspaceClientCapabilities struct {
 	// pulled diagnostics currently shown. It should be used with absolute care and
 	// is useful for situation where a server for example detects a project wide
 	// change that requires such a calculation.
-	RefreshSupport *Boolean `json:"refreshSupport,omitempty"`
+	RefreshSupport *bool `json:"refreshSupport,omitempty"`
 }
 
 // Client workspace capabilities specific to folding ranges
@@ -531,7 +529,7 @@ type FoldingRangeWorkspaceClientCapabilities struct {
 	//
 	// @since 3.18.0
 	// @proposed
-	RefreshSupport *Boolean `json:"refreshSupport,omitempty"`
+	RefreshSupport *bool `json:"refreshSupport,omitempty"`
 }
 
 // Workspace specific client capabilities.
@@ -541,7 +539,7 @@ type WorkspaceClientCapabilities struct {
 	// The client supports applying batch edits
 	// to the workspace by supporting the request
 	// 'workspace/applyEdit'
-	ApplyEdit *Boolean `json:"applyEdit,omitempty"`
+	ApplyEdit *bool `json:"applyEdit,omitempty"`
 	// Capabilities specific to `WorkspaceEdit`s.
 	WorkspaceEdit *WorkspaceEditClientCapabilities `json:"workspaceEdit,omitempty"`
 	// Capabilities specific to the `workspace/didChangeConfiguration` notification.
@@ -555,11 +553,11 @@ type WorkspaceClientCapabilities struct {
 	// The client has support for workspace folders.
 	//
 	// @since 3.6.0
-	WorkspaceFolders *Boolean `json:"workspaceFolders,omitempty"`
+	WorkspaceFolders *bool `json:"workspaceFolders,omitempty"`
 	// The client supports `workspace/configuration` requests.
 	//
 	// @since 3.6.0
-	Configuration *Boolean `json:"configuration,omitempty"`
+	Configuration *bool `json:"configuration,omitempty"`
 	// Capabilities specific to the semantic token requests scoped to the
 	// workspace.
 	//
@@ -599,15 +597,15 @@ type WorkspaceClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentSyncClientCapabilities
 type TextDocumentSyncClientCapabilities struct {
 	// Whether text document synchronization supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client supports sending will save notifications.
-	WillSave *Boolean `json:"willSave,omitempty"`
+	WillSave *bool `json:"willSave,omitempty"`
 	// The client supports sending a will save request and
 	// waits for a response providing text edits which will
 	// be applied to the document before it is saved.
-	WillSaveWaitUntil *Boolean `json:"willSaveWaitUntil,omitempty"`
+	WillSaveWaitUntil *bool `json:"willSaveWaitUntil,omitempty"`
 	// The client supports did save notifications.
-	DidSave *Boolean `json:"didSave,omitempty"`
+	DidSave *bool `json:"didSave,omitempty"`
 }
 
 // Describes the content type that a client supports in various
@@ -709,7 +707,7 @@ type CompletionClientCapabilitiesCompletionItemTagSupport struct {
 
 type CompletionClientCapabilitiesCompletionItemResolveSupport struct {
 	// The properties that a client can resolve lazily.
-	Properties StringSlice `json:"properties"`
+	Properties stringSlice `json:"properties"`
 }
 
 // How whitespace and indentation is handled during completion
@@ -780,16 +778,16 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	// and `${3:foo}`. `$0` defines the final tab stop, it defaults to
 	// the end of the snippet. Placeholders with equal identifiers are linked,
 	// that is typing in one will update others too.
-	SnippetSupport *Boolean `json:"snippetSupport,omitempty"`
+	SnippetSupport *bool `json:"snippetSupport,omitempty"`
 	// Client supports commit characters on a completion item.
-	CommitCharactersSupport *Boolean `json:"commitCharactersSupport,omitempty"`
+	CommitCharactersSupport *bool `json:"commitCharactersSupport,omitempty"`
 	// Client supports the following content formats for the documentation
 	// property. The order describes the preferred format of the client.
 	DocumentationFormat *MarkupKindSlice `json:"documentationFormat,omitempty"`
 	// Client supports the deprecated property on a completion item.
-	DeprecatedSupport *Boolean `json:"deprecatedSupport,omitempty"`
+	DeprecatedSupport *bool `json:"deprecatedSupport,omitempty"`
 	// Client supports the preselect property on a completion item.
-	PreselectSupport *Boolean `json:"preselectSupport,omitempty"`
+	PreselectSupport *bool `json:"preselectSupport,omitempty"`
 	// Client supports the tag property on a completion item. Clients supporting
 	// tags have to handle unknown tags gracefully. Clients especially need to
 	// preserve unknown tags when sending a completion item back to the server in
@@ -801,7 +799,7 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	// completion item is inserted in the text or should replace text.
 	//
 	// @since 3.16.0
-	InsertReplaceSupport *Boolean `json:"insertReplaceSupport,omitempty"`
+	InsertReplaceSupport *bool `json:"insertReplaceSupport,omitempty"`
 	// Indicates which properties a client can resolve lazily on a completion
 	// item. Before version 3.16.0 only the predefined properties `documentation`
 	// and `details` could be resolved lazily.
@@ -818,7 +816,7 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	// details (see also `CompletionItemLabelDetails`).
 	//
 	// @since 3.17.0
-	LabelDetailsSupport *Boolean `json:"labelDetailsSupport,omitempty"`
+	LabelDetailsSupport *bool `json:"labelDetailsSupport,omitempty"`
 }
 
 // The kind of a completion entry.
@@ -930,7 +928,7 @@ type CompletionClientCapabilitiesCompletionList struct {
 	// no properties are supported.
 	//
 	// @since 3.17.0
-	ItemDefaults *StringSlice `json:"itemDefaults,omitempty"`
+	ItemDefaults *stringSlice `json:"itemDefaults,omitempty"`
 }
 
 // Completion client capabilities
@@ -938,7 +936,7 @@ type CompletionClientCapabilitiesCompletionList struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionClientCapabilities
 type CompletionClientCapabilities struct {
 	// Whether completion supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client supports the following `CompletionItem` specific
 	// capabilities.
 	CompletionItem *CompletionClientCapabilitiesCompletionItem `json:"completionItem,omitempty"`
@@ -952,7 +950,7 @@ type CompletionClientCapabilities struct {
 	InsertTextMode *InsertTextMode `json:"insertTextMode,omitempty"`
 	// The client supports to send additional context information for a
 	// `textDocument/completion` request.
-	ContextSupport *Boolean `json:"contextSupport,omitempty"`
+	ContextSupport *bool `json:"contextSupport,omitempty"`
 	// The client supports the following `CompletionList` specific
 	// capabilities.
 	//
@@ -963,7 +961,7 @@ type CompletionClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hoverClientCapabilities
 type HoverClientCapabilities struct {
 	// Whether hover supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Client supports the following content formats for the content
 	// property. The order describes the preferred format of the client.
 	ContentFormat *MarkupKindSlice `json:"contentFormat,omitempty"`
@@ -974,7 +972,7 @@ type SignatureHelpClientCapabilitiesSignatureInformationParameterInformation str
 	// simple label string.
 	//
 	// @since 3.14.0
-	LabelOffsetSupport *Boolean `json:"labelOffsetSupport,omitempty"`
+	LabelOffsetSupport *bool `json:"labelOffsetSupport,omitempty"`
 }
 
 type SignatureHelpClientCapabilitiesSignatureInformation struct {
@@ -987,7 +985,7 @@ type SignatureHelpClientCapabilitiesSignatureInformation struct {
 	// literal.
 	//
 	// @since 3.16.0
-	ActiveParameterSupport *Boolean `json:"activeParameterSupport,omitempty"`
+	ActiveParameterSupport *bool `json:"activeParameterSupport,omitempty"`
 }
 
 // Client Capabilities for a {@link SignatureHelpRequest}.
@@ -995,7 +993,7 @@ type SignatureHelpClientCapabilitiesSignatureInformation struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#signatureHelpClientCapabilities
 type SignatureHelpClientCapabilities struct {
 	// Whether signature help supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client supports the following `SignatureInformation`
 	// specific properties.
 	SignatureInformation *SignatureHelpClientCapabilitiesSignatureInformation `json:"signatureInformation,omitempty"`
@@ -1005,7 +1003,7 @@ type SignatureHelpClientCapabilities struct {
 	// `SignatureHelpOptions`.
 	//
 	// @since 3.15.0
-	ContextSupport *Boolean `json:"contextSupport,omitempty"`
+	ContextSupport *bool `json:"contextSupport,omitempty"`
 }
 
 // @since 3.14.0
@@ -1015,9 +1013,9 @@ type DeclarationClientCapabilities struct {
 	// Whether declaration supports dynamic registration. If this is set to `true`
 	// the client supports the new `DeclarationRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client supports additional metadata in the form of declaration links.
-	LinkSupport *Boolean `json:"linkSupport,omitempty"`
+	LinkSupport *bool `json:"linkSupport,omitempty"`
 }
 
 // Client Capabilities for a {@link DefinitionRequest}.
@@ -1025,11 +1023,11 @@ type DeclarationClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionClientCapabilities
 type DefinitionClientCapabilities struct {
 	// Whether definition supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client supports additional metadata in the form of definition links.
 	//
 	// @since 3.14.0
-	LinkSupport *Boolean `json:"linkSupport,omitempty"`
+	LinkSupport *bool `json:"linkSupport,omitempty"`
 }
 
 // Since 3.6.0
@@ -1039,11 +1037,11 @@ type TypeDefinitionClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `TypeDefinitionRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client supports additional metadata in the form of definition links.
 	//
 	// Since 3.14.0
-	LinkSupport *Boolean `json:"linkSupport,omitempty"`
+	LinkSupport *bool `json:"linkSupport,omitempty"`
 }
 
 // @since 3.6.0
@@ -1053,11 +1051,11 @@ type ImplementationClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `ImplementationRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client supports additional metadata in the form of definition links.
 	//
 	// @since 3.14.0
-	LinkSupport *Boolean `json:"linkSupport,omitempty"`
+	LinkSupport *bool `json:"linkSupport,omitempty"`
 }
 
 // Client Capabilities for a {@link ReferencesRequest}.
@@ -1065,7 +1063,7 @@ type ImplementationClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceClientCapabilities
 type ReferenceClientCapabilities struct {
 	// Whether references supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client Capabilities for a {@link DocumentHighlightRequest}.
@@ -1073,7 +1071,7 @@ type ReferenceClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentHighlightClientCapabilities
 type DocumentHighlightClientCapabilities struct {
 	// Whether document highlight supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 type DocumentSymbolClientCapabilitiesSymbolKind struct {
@@ -1098,12 +1096,12 @@ type DocumentSymbolClientCapabilitiesTagSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolClientCapabilities
 type DocumentSymbolClientCapabilities struct {
 	// Whether document symbol supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Specific capabilities for the `SymbolKind` in the
 	// `textDocument/documentSymbol` request.
 	SymbolKind *DocumentSymbolClientCapabilitiesSymbolKind `json:"symbolKind,omitempty"`
 	// The client supports hierarchical document symbols.
-	HierarchicalDocumentSymbolSupport *Boolean `json:"hierarchicalDocumentSymbolSupport,omitempty"`
+	HierarchicalDocumentSymbolSupport *bool `json:"hierarchicalDocumentSymbolSupport,omitempty"`
 	// The client supports tags on `SymbolInformation`. Tags are supported on
 	// `DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.
 	// Clients supporting tags have to handle unknown tags gracefully.
@@ -1114,7 +1112,7 @@ type DocumentSymbolClientCapabilities struct {
 	// registering a document symbol provider.
 	//
 	// @since 3.16.0
-	LabelSupport *Boolean `json:"labelSupport,omitempty"`
+	LabelSupport *bool `json:"labelSupport,omitempty"`
 }
 
 // A set of predefined code action kinds
@@ -1192,7 +1190,7 @@ type CodeActionClientCapabilitiesCodeActionLiteralSupport struct {
 
 type CodeActionClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily.
-	Properties StringSlice `json:"properties"`
+	Properties stringSlice `json:"properties"`
 }
 
 // The Client Capabilities of a {@link CodeActionRequest}.
@@ -1200,7 +1198,7 @@ type CodeActionClientCapabilitiesResolveSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionClientCapabilities
 type CodeActionClientCapabilities struct {
 	// Whether code action supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client support code action literals of type `CodeAction` as a valid
 	// response of the `textDocument/codeAction` request. If the property is not
 	// set the request can only return `Command` literals.
@@ -1210,17 +1208,17 @@ type CodeActionClientCapabilities struct {
 	// Whether code action supports the `isPreferred` property.
 	//
 	// @since 3.15.0
-	IsPreferredSupport *Boolean `json:"isPreferredSupport,omitempty"`
+	IsPreferredSupport *bool `json:"isPreferredSupport,omitempty"`
 	// Whether code action supports the `disabled` property.
 	//
 	// @since 3.16.0
-	DisabledSupport *Boolean `json:"disabledSupport,omitempty"`
+	DisabledSupport *bool `json:"disabledSupport,omitempty"`
 	// Whether code action supports the `data` property which is
 	// preserved between a `textDocument/codeAction` and a
 	// `codeAction/resolve` request.
 	//
 	// @since 3.16.0
-	DataSupport *Boolean `json:"dataSupport,omitempty"`
+	DataSupport *bool `json:"dataSupport,omitempty"`
 	// Whether the client supports resolving additional code action
 	// properties via a separate `codeAction/resolve` request.
 	//
@@ -1233,7 +1231,7 @@ type CodeActionClientCapabilities struct {
 	// for confirmation.
 	//
 	// @since 3.16.0
-	HonorsChangeAnnotations *Boolean `json:"honorsChangeAnnotations,omitempty"`
+	HonorsChangeAnnotations *bool `json:"honorsChangeAnnotations,omitempty"`
 }
 
 // The client capabilities  of a {@link CodeLensRequest}.
@@ -1241,7 +1239,7 @@ type CodeActionClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLensClientCapabilities
 type CodeLensClientCapabilities struct {
 	// Whether code lens supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // The client capabilities of a {@link DocumentLinkRequest}.
@@ -1249,11 +1247,11 @@ type CodeLensClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentLinkClientCapabilities
 type DocumentLinkClientCapabilities struct {
 	// Whether document link supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Whether the client supports the `tooltip` property on `DocumentLink`.
 	//
 	// @since 3.15.0
-	TooltipSupport *Boolean `json:"tooltipSupport,omitempty"`
+	TooltipSupport *bool `json:"tooltipSupport,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentColorClientCapabilities
@@ -1261,7 +1259,7 @@ type DocumentColorClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `DocumentColorRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client capabilities of a {@link DocumentFormattingRequest}.
@@ -1269,7 +1267,7 @@ type DocumentColorClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFormattingClientCapabilities
 type DocumentFormattingClientCapabilities struct {
 	// Whether formatting supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client capabilities of a {@link DocumentRangeFormattingRequest}.
@@ -1277,12 +1275,12 @@ type DocumentFormattingClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentRangeFormattingClientCapabilities
 type DocumentRangeFormattingClientCapabilities struct {
 	// Whether range formatting supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Whether the client supports formatting multiple ranges at once.
 	//
 	// @since 3.18.0
 	// @proposed
-	RangesSupport *Boolean `json:"rangesSupport,omitempty"`
+	RangesSupport *bool `json:"rangesSupport,omitempty"`
 }
 
 // Client capabilities of a {@link DocumentOnTypeFormattingRequest}.
@@ -1290,7 +1288,7 @@ type DocumentRangeFormattingClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentOnTypeFormattingClientCapabilities
 type DocumentOnTypeFormattingClientCapabilities struct {
 	// Whether on type formatting supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#prepareSupportDefaultBehavior
@@ -1334,12 +1332,12 @@ func (p PrepareSupportDefaultBehavior) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#renameClientCapabilities
 type RenameClientCapabilities struct {
 	// Whether rename supports dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Client supports testing for validity of rename operations
 	// before execution.
 	//
 	// @since 3.12.0
-	PrepareSupport *Boolean `json:"prepareSupport,omitempty"`
+	PrepareSupport *bool `json:"prepareSupport,omitempty"`
 	// Client supports the default behavior result.
 	//
 	// The value indicates the default behavior used by the
@@ -1354,10 +1352,8 @@ type RenameClientCapabilities struct {
 	// for confirmation.
 	//
 	// @since 3.16.0
-	HonorsChangeAnnotations *Boolean `json:"honorsChangeAnnotations,omitempty"`
+	HonorsChangeAnnotations *bool `json:"honorsChangeAnnotations,omitempty"`
 }
-
-type Uinteger uint32
 
 // A set of predefined range kinds.
 //
@@ -1388,7 +1384,7 @@ type FoldingRangeClientCapabilitiesFoldingRange struct {
 	// folding ranges to display custom labels instead of the default text.
 	//
 	// @since 3.17.0
-	CollapsedText *Boolean `json:"collapsedText,omitempty"`
+	CollapsedText *bool `json:"collapsedText,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#foldingRangeClientCapabilities
@@ -1397,15 +1393,15 @@ type FoldingRangeClientCapabilities struct {
 	// providers. If this is set to `true` the client supports the new
 	// `FoldingRangeRegistrationOptions` return value for the corresponding
 	// server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The maximum number of folding ranges that the client prefers to receive
 	// per document. The value serves as a hint, servers are free to follow the
 	// limit.
-	RangeLimit *Uinteger `json:"rangeLimit,omitempty"`
+	RangeLimit *uint32 `json:"rangeLimit,omitempty"`
 	// If set, the client signals that it only supports folding complete lines.
 	// If set, client will ignore specified `startCharacter` and `endCharacter`
 	// properties in a FoldingRange.
-	LineFoldingOnly *Boolean `json:"lineFoldingOnly,omitempty"`
+	LineFoldingOnly *bool `json:"lineFoldingOnly,omitempty"`
 	// Specific options for the folding range kind.
 	//
 	// @since 3.17.0
@@ -1421,7 +1417,7 @@ type SelectionRangeClientCapabilities struct {
 	// Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
 	// the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
 	// capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // The diagnostic tags.
@@ -1485,7 +1481,7 @@ type PublishDiagnosticsClientCapabilitiesTagSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsClientCapabilities
 type PublishDiagnosticsClientCapabilities struct {
 	// Whether the clients accepts diagnostics with related information.
-	RelatedInformation *Boolean `json:"relatedInformation,omitempty"`
+	RelatedInformation *bool `json:"relatedInformation,omitempty"`
 	// Client supports the tag property to provide meta data about a diagnostic.
 	// Clients supporting tags have to handle unknown tags gracefully.
 	//
@@ -1495,17 +1491,17 @@ type PublishDiagnosticsClientCapabilities struct {
 	// `textDocument/publishDiagnostics` notification's parameter.
 	//
 	// @since 3.15.0
-	VersionSupport *Boolean `json:"versionSupport,omitempty"`
+	VersionSupport *bool `json:"versionSupport,omitempty"`
 	// Client supports a codeDescription property
 	//
 	// @since 3.16.0
-	CodeDescriptionSupport *Boolean `json:"codeDescriptionSupport,omitempty"`
+	CodeDescriptionSupport *bool `json:"codeDescriptionSupport,omitempty"`
 	// Whether code action supports the `data` property which is
 	// preserved between a `textDocument/publishDiagnostics` and
 	// `textDocument/codeAction` request.
 	//
 	// @since 3.16.0
-	DataSupport *Boolean `json:"dataSupport,omitempty"`
+	DataSupport *bool `json:"dataSupport,omitempty"`
 }
 
 // @since 3.16.0
@@ -1515,8 +1511,10 @@ type CallHierarchyClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
+
+type Boolean bool
 
 type SemanticTokensClientCapabilitiesRequestsRangeOr2 struct {
 }
@@ -1568,7 +1566,7 @@ func (b BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) MarshalJSON()
 type SemanticTokensClientCapabilitiesRequestsFullOr2 struct {
 	// The client will send the `textDocument/semanticTokens/full/delta` request if
 	// the server provides a corresponding handler.
-	Delta *Boolean `json:"delta,omitempty"`
+	Delta *bool `json:"delta,omitempty"`
 }
 
 // BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 contains either of the following types:
@@ -1669,7 +1667,7 @@ type SemanticTokensClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Which requests the client supports and might send to the server
 	// depending on the server's capability. Please note that clients might not
 	// show semantic tokens or degrade some of the user experience if a range
@@ -1680,22 +1678,22 @@ type SemanticTokensClientCapabilities struct {
 	// even decide to not show any semantic tokens at all.
 	Requests SemanticTokensClientCapabilitiesRequests `json:"requests"`
 	// The token types that the client supports.
-	TokenTypes StringSlice `json:"tokenTypes"`
+	TokenTypes stringSlice `json:"tokenTypes"`
 	// The token modifiers that the client supports.
-	TokenModifiers StringSlice `json:"tokenModifiers"`
+	TokenModifiers stringSlice `json:"tokenModifiers"`
 	// The token formats the clients supports.
 	Formats TokenFormatSlice `json:"formats"`
 	// Whether the client supports tokens that can overlap each other.
-	OverlappingTokenSupport *Boolean `json:"overlappingTokenSupport,omitempty"`
+	OverlappingTokenSupport *bool `json:"overlappingTokenSupport,omitempty"`
 	// Whether the client supports tokens that can span multiple lines.
-	MultilineTokenSupport *Boolean `json:"multilineTokenSupport,omitempty"`
+	MultilineTokenSupport *bool `json:"multilineTokenSupport,omitempty"`
 	// Whether the client allows the server to actively cancel a
 	// semantic token request, e.g. supports returning
 	// LSPErrorCodes.ServerCancelled. If a server does the client
 	// needs to retrigger the request.
 	//
 	// @since 3.17.0
-	ServerCancelSupport *Boolean `json:"serverCancelSupport,omitempty"`
+	ServerCancelSupport *bool `json:"serverCancelSupport,omitempty"`
 	// Whether the client uses semantic tokens to augment existing
 	// syntax tokens. If set to `true` client side created syntax
 	// tokens and semantic tokens are both used for colorization. If
@@ -1706,7 +1704,7 @@ type SemanticTokensClientCapabilities struct {
 	// specified.
 	//
 	// @since 3.17.0
-	AugmentsSyntaxTokens *Boolean `json:"augmentsSyntaxTokens,omitempty"`
+	AugmentsSyntaxTokens *bool `json:"augmentsSyntaxTokens,omitempty"`
 }
 
 // Client capabilities for the linked editing range request.
@@ -1718,7 +1716,7 @@ type LinkedEditingRangeClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client capabilities specific to the moniker request.
@@ -1730,7 +1728,7 @@ type MonikerClientCapabilities struct {
 	// Whether moniker supports dynamic registration. If this is set to `true`
 	// the client supports the new `MonikerRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // @since 3.17.0
@@ -1740,7 +1738,7 @@ type TypeHierarchyClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client capabilities specific to inline values.
@@ -1750,12 +1748,12 @@ type TypeHierarchyClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlineValueClientCapabilities
 type InlineValueClientCapabilities struct {
 	// Whether implementation supports dynamic registration for inline value providers.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 type InlayHintClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily.
-	Properties StringSlice `json:"properties"`
+	Properties stringSlice `json:"properties"`
 }
 
 // Inlay hint client capabilities.
@@ -1765,7 +1763,7 @@ type InlayHintClientCapabilitiesResolveSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlayHintClientCapabilities
 type InlayHintClientCapabilities struct {
 	// Whether inlay hints support dynamic registration.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Indicates which properties a client can resolve lazily on an inlay
 	// hint.
 	ResolveSupport *InlayHintClientCapabilitiesResolveSupport `json:"resolveSupport,omitempty"`
@@ -1780,9 +1778,9 @@ type DiagnosticClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// Whether the clients supports related documents for document diagnostic pulls.
-	RelatedDocumentSupport *Boolean `json:"relatedDocumentSupport,omitempty"`
+	RelatedDocumentSupport *bool `json:"relatedDocumentSupport,omitempty"`
 }
 
 // Client capabilities specific to inline completions.
@@ -1793,7 +1791,7 @@ type DiagnosticClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlineCompletionClientCapabilities
 type InlineCompletionClientCapabilities struct {
 	// Whether implementation supports dynamic registration for inline completion providers.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Text document specific client capabilities.
@@ -1906,9 +1904,9 @@ type NotebookDocumentSyncClientCapabilities struct {
 	// set to `true` the client supports the new
 	// `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *Boolean `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
 	// The client supports sending execution summary data per cell.
-	ExecutionSummarySupport *Boolean `json:"executionSummarySupport,omitempty"`
+	ExecutionSummarySupport *bool `json:"executionSummarySupport,omitempty"`
 }
 
 // Capabilities specific to the notebook document support.
@@ -1927,7 +1925,7 @@ type ShowMessageRequestClientCapabilitiesMessageActionItem struct {
 	// Whether the client supports additional attributes which
 	// are preserved and send back to the server in the
 	// request's response.
-	AdditionalPropertiesSupport *Boolean `json:"additionalPropertiesSupport,omitempty"`
+	AdditionalPropertiesSupport *bool `json:"additionalPropertiesSupport,omitempty"`
 }
 
 // Show message request client capabilities
@@ -1946,7 +1944,7 @@ type ShowMessageRequestClientCapabilities struct {
 type ShowDocumentClientCapabilities struct {
 	// The client has support for the showDocument
 	// request.
-	Support Boolean `json:"support"`
+	Support bool `json:"support"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#windowClientCapabilities
@@ -1960,7 +1958,7 @@ type WindowClientCapabilities struct {
 	// capabilities.
 	//
 	// @since 3.15.0
-	WorkDoneProgress *Boolean `json:"workDoneProgress,omitempty"`
+	WorkDoneProgress *bool `json:"workDoneProgress,omitempty"`
 	// Capabilities specific to the showMessage request.
 	//
 	// @since 3.16.0
@@ -1973,11 +1971,11 @@ type WindowClientCapabilities struct {
 
 type GeneralClientCapabilitiesStaleRequestSupport struct {
 	// The client will actively cancel the request.
-	Cancel Boolean `json:"cancel"`
+	Cancel bool `json:"cancel"`
 	// The list of requests for which the client
 	// will retry the request if it receives a
 	// response with error code `ContentModified`
-	RetryOnContentModified StringSlice `json:"retryOnContentModified"`
+	RetryOnContentModified stringSlice `json:"retryOnContentModified"`
 }
 
 // Client capabilities specific to regular expressions.
@@ -1987,9 +1985,9 @@ type GeneralClientCapabilitiesStaleRequestSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#regularExpressionsClientCapabilities
 type RegularExpressionsClientCapabilities struct {
 	// The engine's name.
-	Engine String `json:"engine"`
+	Engine string `json:"engine"`
 	// The engine's version.
-	Version *String `json:"version,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 // Client capabilities specific to the used markdown parser.
@@ -1999,14 +1997,14 @@ type RegularExpressionsClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#markdownClientCapabilities
 type MarkdownClientCapabilities struct {
 	// The name of the parser.
-	Parser String `json:"parser"`
+	Parser string `json:"parser"`
 	// The version of the parser.
-	Version *String `json:"version,omitempty"`
+	Version *string `json:"version,omitempty"`
 	// A list of HTML tags that the client allows / supports in
 	// Markdown.
 	//
 	// @since 3.17.0
-	AllowedTags *StringSlice `json:"allowedTags,omitempty"`
+	AllowedTags *stringSlice `json:"allowedTags,omitempty"`
 }
 
 // A set of predefined position encoding kinds.
@@ -2076,13 +2074,13 @@ type GeneralClientCapabilities struct {
 	PositionEncodings *PositionEncodingKindSlice `json:"positionEncodings,omitempty"`
 }
 
-type StringLSPAnyMap map[String]LSPAny
+type stringLSPAnyMap map[string]LSPAny
 
 // LSP object definition.
 // @since 3.17.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#lSPObject
-type LSPObject = StringLSPAnyMap
+type LSPObject = stringLSPAnyMap
 
 type LSPAnySlice []LSPAny
 
@@ -2091,6 +2089,8 @@ type LSPAnySlice []LSPAny
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#lSPArray
 type LSPArray = LSPAnySlice
+
+type Uinteger uint32
 
 type Decimal float64
 
@@ -2275,7 +2275,7 @@ type _InitializeParams struct {
 	// (See https://en.wikipedia.org/wiki/IETF_language_tag)
 	//
 	// @since 3.16.0
-	Locale *String `json:"locale,omitempty"`
+	Locale *string `json:"locale,omitempty"`
 	// The rootPath of the workspace. Is null
 	// if no folder is open.
 	//
@@ -2295,17 +2295,15 @@ type _InitializeParams struct {
 	Trace *TraceValues `json:"trace,omitempty"`
 }
 
-type URI string
-
 // A workspace folder inside a client.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFolder
 type WorkspaceFolder struct {
 	// The associated URI for this workspace folder.
-	Uri URI `json:"uri"`
+	Uri string `json:"uri"`
 	// The name of the workspace folder. Used to refer to this
 	// workspace folder in the user interface.
-	Name String `json:"name"`
+	Name string `json:"name"`
 }
 
 type WorkspaceFolderSlice []WorkspaceFolder
@@ -2382,7 +2380,7 @@ func (t TextDocumentSyncKind) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#saveOptions
 type SaveOptions struct {
 	// The client is supposed to include the content on save.
-	IncludeText *Boolean `json:"includeText,omitempty"`
+	IncludeText *bool `json:"includeText,omitempty"`
 }
 
 // BooleanOrSaveOptions contains either of the following types:
@@ -2432,16 +2430,16 @@ func (b BooleanOrSaveOptions) MarshalJSON() ([]byte, error) {
 type TextDocumentSyncOptions struct {
 	// Open and close notifications are sent to the server. If omitted open close notification should not
 	// be sent.
-	OpenClose *Boolean `json:"openClose,omitempty"`
+	OpenClose *bool `json:"openClose,omitempty"`
 	// Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
 	// and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.
 	Change *TextDocumentSyncKind `json:"change,omitempty"`
 	// If present will save notifications are sent to the server. If omitted the notification should not be
 	// sent.
-	WillSave *Boolean `json:"willSave,omitempty"`
+	WillSave *bool `json:"willSave,omitempty"`
 	// If present will save wait until requests are sent to the server. If omitted the request should not be
 	// sent.
-	WillSaveWaitUntil *Boolean `json:"willSaveWaitUntil,omitempty"`
+	WillSaveWaitUntil *bool `json:"willSaveWaitUntil,omitempty"`
 	// If present save notifications are sent to the server. If omitted the notification should not be
 	// sent.
 	Save *BooleanOrSaveOptions `json:"save,omitempty"`
@@ -2492,29 +2490,29 @@ func (t TextDocumentSyncOptionsOrTextDocumentSyncKind) MarshalJSON() ([]byte, er
 
 type NotebookDocumentFilterOr1 struct {
 	// The type of the enclosing notebook.
-	NotebookType String `json:"notebookType"`
+	NotebookType string `json:"notebookType"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme *String `json:"scheme,omitempty"`
+	Scheme *string `json:"scheme,omitempty"`
 	// A glob pattern.
-	Pattern *String `json:"pattern,omitempty"`
+	Pattern *string `json:"pattern,omitempty"`
 }
 
 type NotebookDocumentFilterOr2 struct {
 	// The type of the enclosing notebook.
-	NotebookType *String `json:"notebookType,omitempty"`
+	NotebookType *string `json:"notebookType,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme String `json:"scheme"`
+	Scheme string `json:"scheme"`
 	// A glob pattern.
-	Pattern *String `json:"pattern,omitempty"`
+	Pattern *string `json:"pattern,omitempty"`
 }
 
 type NotebookDocumentFilterOr3 struct {
 	// The type of the enclosing notebook.
-	NotebookType *String `json:"notebookType,omitempty"`
+	NotebookType *string `json:"notebookType,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme *String `json:"scheme,omitempty"`
+	Scheme *string `json:"scheme,omitempty"`
 	// A glob pattern.
-	Pattern String `json:"pattern"`
+	Pattern string `json:"pattern"`
 }
 
 // NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3 contains either of the following types:
@@ -2624,7 +2622,7 @@ func (s StringOrNotebookDocumentFilter) MarshalJSON() ([]byte, error) {
 }
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr1Cells struct {
-	Language String `json:"language"`
+	Language string `json:"language"`
 }
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice []NotebookDocumentSyncOptionsNotebookSelectorOr1Cells
@@ -2639,7 +2637,7 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1 struct {
 }
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr2Cells struct {
-	Language String `json:"language"`
+	Language string `json:"language"`
 }
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr2CellsSlice []NotebookDocumentSyncOptionsNotebookSelectorOr2Cells
@@ -2720,7 +2718,7 @@ type NotebookDocumentSyncOptions struct {
 	NotebookSelector NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Slice `json:"notebookSelector"`
 	// Whether save notification should be forwarded to
 	// the server. Will only be honored if mode === `notebook`.
-	Save *Boolean `json:"save,omitempty"`
+	Save *bool `json:"save,omitempty"`
 }
 
 // Static registration options to be returned in the initialize
@@ -2730,7 +2728,7 @@ type NotebookDocumentSyncOptions struct {
 type StaticRegistrationOptions struct {
 	// The id used to register the request. The id can be used to deregister
 	// the request again. See also Registration#id.
-	Id *String `json:"id,omitempty"`
+	Id *string `json:"id,omitempty"`
 }
 
 // Registration options specific to a notebook.
@@ -2790,7 +2788,7 @@ func (n NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions) Ma
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workDoneProgressOptions
 type WorkDoneProgressOptions struct {
-	WorkDoneProgress *Boolean `json:"workDoneProgress,omitempty"`
+	WorkDoneProgress *bool `json:"workDoneProgress,omitempty"`
 }
 
 type CompletionOptionsCompletionItem struct {
@@ -2799,7 +2797,7 @@ type CompletionOptionsCompletionItem struct {
 	// receiving a completion item in a resolve call.
 	//
 	// @since 3.17.0
-	LabelDetailsSupport *Boolean `json:"labelDetailsSupport,omitempty"`
+	LabelDetailsSupport *bool `json:"labelDetailsSupport,omitempty"`
 }
 
 // Completion options.
@@ -2815,7 +2813,7 @@ type CompletionOptions struct {
 	//
 	// If code complete should automatically be trigger on characters not being valid inside
 	// an identifier (for example `.` in JavaScript) list them in `triggerCharacters`.
-	TriggerCharacters *StringSlice `json:"triggerCharacters,omitempty"`
+	TriggerCharacters *stringSlice `json:"triggerCharacters,omitempty"`
 	// The list of all possible characters that commit a completion. This field can be used
 	// if clients don't support individual commit characters per completion item. See
 	// `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
@@ -2824,10 +2822,10 @@ type CompletionOptions struct {
 	// completion item the ones on the completion item win.
 	//
 	// @since 3.2.0
-	AllCommitCharacters *StringSlice `json:"allCommitCharacters,omitempty"`
+	AllCommitCharacters *stringSlice `json:"allCommitCharacters,omitempty"`
 	// The server provides support to resolve additional
 	// information for a completion item.
-	ResolveProvider *Boolean `json:"resolveProvider,omitempty"`
+	ResolveProvider *bool `json:"resolveProvider,omitempty"`
 	// The server supports the following `CompletionItem` specific
 	// capabilities.
 	//
@@ -2891,14 +2889,14 @@ func (b BooleanOrHoverOptions) MarshalJSON() ([]byte, error) {
 type SignatureHelpOptions struct {
 	WorkDoneProgressOptions
 	// List of characters that trigger signature help automatically.
-	TriggerCharacters *StringSlice `json:"triggerCharacters,omitempty"`
+	TriggerCharacters *stringSlice `json:"triggerCharacters,omitempty"`
 	// List of characters that re-trigger signature help.
 	//
 	// These trigger characters are only active when signature help is already showing. All trigger characters
 	// are also counted as re-trigger characters.
 	//
 	// @since 3.15.0
-	RetriggerCharacters *StringSlice `json:"retriggerCharacters,omitempty"`
+	RetriggerCharacters *stringSlice `json:"retriggerCharacters,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#declarationOptions
@@ -2908,29 +2906,29 @@ type DeclarationOptions struct {
 
 type TextDocumentFilterOr1 struct {
 	// A language id, like `typescript`.
-	Language String `json:"language"`
+	Language string `json:"language"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme *String `json:"scheme,omitempty"`
+	Scheme *string `json:"scheme,omitempty"`
 	// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
-	Pattern *String `json:"pattern,omitempty"`
+	Pattern *string `json:"pattern,omitempty"`
 }
 
 type TextDocumentFilterOr2 struct {
 	// A language id, like `typescript`.
-	Language *String `json:"language,omitempty"`
+	Language *string `json:"language,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme String `json:"scheme"`
+	Scheme string `json:"scheme"`
 	// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
-	Pattern *String `json:"pattern,omitempty"`
+	Pattern *string `json:"pattern,omitempty"`
 }
 
 type TextDocumentFilterOr3 struct {
 	// A language id, like `typescript`.
-	Language *String `json:"language,omitempty"`
+	Language *string `json:"language,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme *String `json:"scheme,omitempty"`
+	Scheme *string `json:"scheme,omitempty"`
 	// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
-	Pattern String `json:"pattern"`
+	Pattern string `json:"pattern"`
 }
 
 // TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3 contains either of the following types:
@@ -3023,7 +3021,7 @@ type NotebookCellTextDocumentFilter struct {
 	//
 	// Will be matched against the language id of the
 	// notebook cell document. '*' matches every language.
-	Language *String `json:"language,omitempty"`
+	Language *string `json:"language,omitempty"`
 }
 
 // TextDocumentFilterOrNotebookCellTextDocumentFilter contains either of the following types:
@@ -3445,7 +3443,7 @@ type DocumentSymbolOptions struct {
 	// are shown for the same document.
 	//
 	// @since 3.16.0
-	Label *String `json:"label,omitempty"`
+	Label *string `json:"label,omitempty"`
 }
 
 // BooleanOrDocumentSymbolOptions contains either of the following types:
@@ -3505,7 +3503,7 @@ type CodeActionOptions struct {
 	// information for a code action.
 	//
 	// @since 3.16.0
-	ResolveProvider *Boolean `json:"resolveProvider,omitempty"`
+	ResolveProvider *bool `json:"resolveProvider,omitempty"`
 }
 
 // BooleanOrCodeActionOptions contains either of the following types:
@@ -3557,7 +3555,7 @@ func (b BooleanOrCodeActionOptions) MarshalJSON() ([]byte, error) {
 type CodeLensOptions struct {
 	WorkDoneProgressOptions
 	// Code lens has a resolve provider as well.
-	ResolveProvider *Boolean `json:"resolveProvider,omitempty"`
+	ResolveProvider *bool `json:"resolveProvider,omitempty"`
 }
 
 // Provider options for a {@link DocumentLinkRequest}.
@@ -3566,7 +3564,7 @@ type CodeLensOptions struct {
 type DocumentLinkOptions struct {
 	WorkDoneProgressOptions
 	// Document links have a resolve provider as well.
-	ResolveProvider *Boolean `json:"resolveProvider,omitempty"`
+	ResolveProvider *bool `json:"resolveProvider,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentColorOptions
@@ -3643,7 +3641,7 @@ type WorkspaceSymbolOptions struct {
 	// information for a workspace symbol.
 	//
 	// @since 3.17.0
-	ResolveProvider *Boolean `json:"resolveProvider,omitempty"`
+	ResolveProvider *bool `json:"resolveProvider,omitempty"`
 }
 
 // BooleanOrWorkspaceSymbolOptions contains either of the following types:
@@ -3748,7 +3746,7 @@ type DocumentRangeFormattingOptions struct {
 	//
 	// @since 3.18.0
 	// @proposed
-	RangesSupport *Boolean `json:"rangesSupport,omitempty"`
+	RangesSupport *bool `json:"rangesSupport,omitempty"`
 }
 
 // BooleanOrDocumentRangeFormattingOptions contains either of the following types:
@@ -3799,9 +3797,9 @@ func (b BooleanOrDocumentRangeFormattingOptions) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentOnTypeFormattingOptions
 type DocumentOnTypeFormattingOptions struct {
 	// A character on which formatting should be triggered, like `{`.
-	FirstTriggerCharacter String `json:"firstTriggerCharacter"`
+	FirstTriggerCharacter string `json:"firstTriggerCharacter"`
 	// More trigger characters.
-	MoreTriggerCharacter *StringSlice `json:"moreTriggerCharacter,omitempty"`
+	MoreTriggerCharacter *stringSlice `json:"moreTriggerCharacter,omitempty"`
 }
 
 // Provider options for a {@link RenameRequest}.
@@ -3812,7 +3810,7 @@ type RenameOptions struct {
 	// Renames should be checked and tested before being executed.
 	//
 	// @since version 3.12.0
-	PrepareProvider *Boolean `json:"prepareProvider,omitempty"`
+	PrepareProvider *bool `json:"prepareProvider,omitempty"`
 }
 
 // BooleanOrRenameOptions contains either of the following types:
@@ -3993,7 +3991,7 @@ func (b BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions) Marsh
 type ExecuteCommandOptions struct {
 	WorkDoneProgressOptions
 	// The commands to be executed on the server
-	Commands StringSlice `json:"commands"`
+	Commands stringSlice `json:"commands"`
 }
 
 // Call hierarchy options used during static registration.
@@ -4139,9 +4137,9 @@ func (b BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOption
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensLegend
 type SemanticTokensLegend struct {
 	// The token types a server uses.
-	TokenTypes StringSlice `json:"tokenTypes"`
+	TokenTypes stringSlice `json:"tokenTypes"`
 	// The token modifiers a server uses.
-	TokenModifiers StringSlice `json:"tokenModifiers"`
+	TokenModifiers stringSlice `json:"tokenModifiers"`
 }
 
 type SemanticTokensOptionsRangeOr2 struct {
@@ -4192,7 +4190,7 @@ func (b BooleanOrSemanticTokensOptionsRangeOr2) MarshalJSON() ([]byte, error) {
 
 type SemanticTokensOptionsFullOr2 struct {
 	// The server supports deltas for full documents.
-	Delta *Boolean `json:"delta,omitempty"`
+	Delta *bool `json:"delta,omitempty"`
 }
 
 // BooleanOrSemanticTokensOptionsFullOr2 contains either of the following types:
@@ -4521,7 +4519,7 @@ type InlayHintOptions struct {
 	WorkDoneProgressOptions
 	// The server provides support to resolve additional
 	// information for an inlay hint item.
-	ResolveProvider *Boolean `json:"resolveProvider,omitempty"`
+	ResolveProvider *bool `json:"resolveProvider,omitempty"`
 }
 
 // Inlay hint options used during static or dynamic registration.
@@ -4596,14 +4594,14 @@ type DiagnosticOptions struct {
 	WorkDoneProgressOptions
 	// An optional identifier under which the diagnostics are
 	// managed by the client.
-	Identifier *String `json:"identifier,omitempty"`
+	Identifier *string `json:"identifier,omitempty"`
 	// Whether the language has inter file dependencies meaning that
 	// editing code in one file can result in a different diagnostic
 	// set in another file. Inter file dependencies are common for
 	// most programming languages and typically uncommon for linters.
-	InterFileDependencies Boolean `json:"interFileDependencies"`
+	InterFileDependencies bool `json:"interFileDependencies"`
 	// The server provides support for workspace diagnostics as well.
-	WorkspaceDiagnostics Boolean `json:"workspaceDiagnostics"`
+	WorkspaceDiagnostics bool `json:"workspaceDiagnostics"`
 }
 
 // Diagnostic registration options.
@@ -4759,7 +4757,7 @@ func (s StringOrBoolean) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersServerCapabilities
 type WorkspaceFoldersServerCapabilities struct {
 	// The server has support for workspace folders
-	Supported *Boolean `json:"supported,omitempty"`
+	Supported *bool `json:"supported,omitempty"`
 	// Whether the server wants to receive workspace folder
 	// change notifications.
 	//
@@ -4822,7 +4820,7 @@ func (f FileOperationPatternKind) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#fileOperationPatternOptions
 type FileOperationPatternOptions struct {
 	// The pattern should be matched ignoring casing.
-	IgnoreCase *Boolean `json:"ignoreCase,omitempty"`
+	IgnoreCase *bool `json:"ignoreCase,omitempty"`
 }
 
 // A pattern to describe in which file operation requests or notifications
@@ -4839,7 +4837,7 @@ type FileOperationPattern struct {
 	// - `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
 	// - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
 	// - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
-	Glob String `json:"glob"`
+	Glob string `json:"glob"`
 	// Whether to match files or folders with this pattern.
 	//
 	// Matches both if undefined.
@@ -4856,7 +4854,7 @@ type FileOperationPattern struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#fileOperationFilter
 type FileOperationFilter struct {
 	// A Uri scheme like `file` or `untitled`.
-	Scheme *String `json:"scheme,omitempty"`
+	Scheme *string `json:"scheme,omitempty"`
 	// The actual file operation pattern.
 	Pattern FileOperationPattern `json:"pattern"`
 }
@@ -5020,9 +5018,9 @@ type ServerCapabilities struct {
 
 type InitializeResultServerInfo struct {
 	// The name of the server as defined by the server.
-	Name String `json:"name"`
+	Name string `json:"name"`
 	// The server's version as defined by the server.
-	Version *String `json:"version,omitempty"`
+	Version *string `json:"version,omitempty"`
 }
 
 // The result returned from an initialize request.
@@ -5046,7 +5044,7 @@ type InitializeError struct {
 	// (1) show the message provided by the ResponseError to the user
 	// (2) user selects retry or cancel
 	// (3) if user selected retry the initialize method is sent again.
-	Retry Boolean `json:"retry"`
+	Retry bool `json:"retry"`
 }
 
 // A literal to identify a text document in the client.
@@ -5054,7 +5052,7 @@ type InitializeError struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentIdentifier
 type TextDocumentIdentifier struct {
 	// The text document's uri.
-	Uri DocumentUri `json:"uri"`
+	Uri string `json:"uri"`
 }
 
 // Value-object describing what options formatting should use.
@@ -5062,21 +5060,21 @@ type TextDocumentIdentifier struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
 type FormattingOptions struct {
 	// Size of a tab in spaces.
-	TabSize Uinteger `json:"tabSize"`
+	TabSize uint32 `json:"tabSize"`
 	// Prefer spaces over tabs.
-	InsertSpaces Boolean `json:"insertSpaces"`
+	InsertSpaces bool `json:"insertSpaces"`
 	// Trim trailing whitespace on a line.
 	//
 	// @since 3.15.0
-	TrimTrailingWhitespace *Boolean `json:"trimTrailingWhitespace,omitempty"`
+	TrimTrailingWhitespace *bool `json:"trimTrailingWhitespace,omitempty"`
 	// Insert a newline character at the end of the file if one does not exist.
 	//
 	// @since 3.15.0
-	InsertFinalNewline *Boolean `json:"insertFinalNewline,omitempty"`
+	InsertFinalNewline *bool `json:"insertFinalNewline,omitempty"`
 	// Trim all newlines after the final newline at the end of the file.
 	//
 	// @since 3.15.0
-	TrimFinalNewlines *Boolean `json:"trimFinalNewlines,omitempty"`
+	TrimFinalNewlines *bool `json:"trimFinalNewlines,omitempty"`
 }
 
 // The parameters of a {@link DocumentFormattingRequest}.
@@ -5124,7 +5122,7 @@ type Position struct {
 	//
 	// If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
 	// If a line number is negative, it defaults to 0.
-	Line Uinteger `json:"line"`
+	Line uint32 `json:"line"`
 	// Character offset on a line in a document (zero-based).
 	//
 	// The meaning of this offset is determined by the negotiated
@@ -5132,7 +5130,7 @@ type Position struct {
 	//
 	// If the character value is greater than the line length it defaults back to the
 	// line length.
-	Character Uinteger `json:"character"`
+	Character uint32 `json:"character"`
 }
 
 // A range in a text document expressed as (zero-based) start and end positions.
@@ -5166,7 +5164,7 @@ type TextEdit struct {
 	Range Range `json:"range"`
 	// The string to be inserted. For delete operations use an
 	// empty string.
-	NewText String `json:"newText"`
+	NewText string `json:"newText"`
 }
 
 type TextEditSlice []TextEdit
@@ -5235,7 +5233,7 @@ type LogMessageParams struct {
 	// The message type. See {@link MessageType}
 	Type MessageType `json:"type"`
 	// The actual message.
-	Message String `json:"message"`
+	Message string `json:"message"`
 }
 
 // An item to transfer a text document from the client to the
@@ -5244,14 +5242,14 @@ type LogMessageParams struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
 type TextDocumentItem struct {
 	// The text document's uri.
-	Uri DocumentUri `json:"uri"`
+	Uri string `json:"uri"`
 	// The text document's language identifier.
-	LanguageId String `json:"languageId"`
+	LanguageId string `json:"languageId"`
 	// The version number of this document (it will increase after each
 	// change, including undo/redo).
-	Version Integer `json:"version"`
+	Version int32 `json:"version"`
 	// The content of the opened text document.
-	Text String `json:"text"`
+	Text string `json:"text"`
 }
 
 // The parameters sent in an open text document notification
@@ -5268,7 +5266,7 @@ type DidOpenTextDocumentParams struct {
 type VersionedTextDocumentIdentifier struct {
 	TextDocumentIdentifier
 	// The version number of this document.
-	Version Integer `json:"version"`
+	Version int32 `json:"version"`
 }
 
 type TextDocumentContentChangeEventOr1 struct {
@@ -5277,14 +5275,14 @@ type TextDocumentContentChangeEventOr1 struct {
 	// The optional length of the range that got replaced.
 	//
 	// @deprecated use range instead.
-	RangeLength *Uinteger `json:"rangeLength,omitempty"`
+	RangeLength *uint32 `json:"rangeLength,omitempty"`
 	// The new text for the provided range.
-	Text String `json:"text"`
+	Text string `json:"text"`
 }
 
 type TextDocumentContentChangeEventOr2 struct {
 	// The new text of the whole document.
-	Text String `json:"text"`
+	Text string `json:"text"`
 }
 
 // TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2 contains either of the following types:
@@ -5425,7 +5423,7 @@ func (d DiagnosticSeverity) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeDescription
 type CodeDescription struct {
 	// An URI to open with more information about the diagnostic error.
-	Href URI `json:"href"`
+	Href string `json:"href"`
 }
 
 // Represents a location inside a resource, such as a line
@@ -5433,7 +5431,7 @@ type CodeDescription struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#location
 type Location struct {
-	Uri DocumentUri `json:"uri"`
+	Uri string `json:"uri"`
 
 	Range Range `json:"range"`
 }
@@ -5447,7 +5445,7 @@ type DiagnosticRelatedInformation struct {
 	// The location of this related diagnostic information.
 	Location Location `json:"location"`
 	// The message of this related diagnostic information.
-	Message String `json:"message"`
+	Message string `json:"message"`
 }
 
 type DiagnosticRelatedInformationSlice []DiagnosticRelatedInformation
@@ -5472,9 +5470,9 @@ type Diagnostic struct {
 	// A human-readable string describing the source of this
 	// diagnostic, e.g. 'typescript' or 'super lint'. It usually
 	// appears in the user interface.
-	Source *String `json:"source,omitempty"`
+	Source *string `json:"source,omitempty"`
 	// The diagnostic's message. It usually appears in the user interface
-	Message String `json:"message"`
+	Message string `json:"message"`
 	// Additional metadata about the diagnostic.
 	//
 	// @since 3.15.0
@@ -5496,11 +5494,11 @@ type DiagnosticSlice []Diagnostic
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams
 type PublishDiagnosticsParams struct {
 	// The URI for which diagnostic information is reported.
-	Uri DocumentUri `json:"uri"`
+	Uri string `json:"uri"`
 	// Optional the version number of the document the diagnostics are published for.
 	//
 	// @since 3.15.0
-	Version *Integer `json:"version,omitempty"`
+	Version *int32 `json:"version,omitempty"`
 	// An array of diagnostic information items.
 	Diagnostics DiagnosticSlice `json:"diagnostics"`
 }
