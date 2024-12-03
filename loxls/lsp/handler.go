@@ -10,19 +10,23 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
-const version = "0.0.1"
+const version = "0.1.0"
 
 // Handler handles JSON-RPC requests and notifications.
 type Handler struct {
+	client *client
+	log    *logger
+
 	initialized  bool
 	shuttingDown bool
-	client       *client
-	log          *logger
+	docs         map[protocol.DocumentUri]*document
 }
 
 // NewHandler returns a new Handler.
 func NewHandler() *Handler {
-	return &Handler{}
+	return &Handler{
+		docs: map[protocol.DocumentUri]*document{},
+	}
 }
 
 // HandleRequest responds to a JSON-RPC request.
@@ -42,6 +46,12 @@ func (h *Handler) HandleRequest(method string, jsonParams *json.RawMessage) (any
 		return h.initialize(params)
 	case "shutdown":
 		return h.shutdown()
+	case "textDocument/formatting":
+		var params *protocol.DocumentFormattingParams
+		if err := json.Unmarshal(*jsonParams, &params); err != nil {
+			return nil, jsonrpc.NewError(jsonrpc.InvalidParams, "Invalid params", map[string]any{"error": err.Error()})
+		}
+		return h.textDocumentFormatting(params)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(method)
 	}

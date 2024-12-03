@@ -18,6 +18,9 @@ func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeRe
 					Change:    ptrTo(protocol.TextDocumentSyncKindFull),
 				},
 			},
+			DocumentFormattingProvider: &protocol.BooleanOrDocumentFormattingOptions{
+				Value: protocol.Boolean(true),
+			},
 		},
 		ServerInfo: &protocol.InitializeResultServerInfo{
 			Name:    "loxls",

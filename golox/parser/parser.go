@@ -22,7 +22,8 @@ func WithComments() Option {
 }
 
 // Parse parses the source code read from r.
-// If an error is returned then an incomplete AST will still be returned along with it.
+// If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
+// this error will be a [lox.Errors] containing all of the errors.
 func Parse(r io.Reader, opts ...Option) (ast.Program, error) {
 	lexer, err := newLexer(r)
 	if err != nil {

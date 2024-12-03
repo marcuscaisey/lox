@@ -1,4 +1,5 @@
-package main
+// Package format implements standard formatting of Lox source.
+package format
 
 import (
 	"fmt"
@@ -10,7 +11,8 @@ import (
 
 const indentSize = 4
 
-func format(node ast.Node) string {
+// Node formats node in canonical Lox style and returns the result. node is expected to be a syntactically correct.
+func Node(node ast.Node) string {
 	switch node := node.(type) {
 	case ast.Program:
 		return formatProgram(node)
@@ -81,7 +83,7 @@ func formatProgram(program ast.Program) string {
 func formatStmts[T ast.Stmt](stmts []T) string {
 	var b strings.Builder
 	for i, stmt := range stmts {
-		fmt.Fprint(&b, format(stmt))
+		fmt.Fprint(&b, Node(stmt))
 		if i < len(stmts)-1 {
 			fmt.Fprintln(&b)
 			if stmts[i+1].Start().Line-stmts[i].End().Line > 1 {
@@ -97,12 +99,12 @@ func formatCommentStmt(stmt ast.CommentStmt) string {
 }
 
 func formatCommentedStmt(stmt ast.InlineCommentStmt) string {
-	return fmt.Sprintf("%s %s", format(stmt.Stmt), stmt.Comment.Lexeme)
+	return fmt.Sprintf("%s %s", Node(stmt.Stmt), stmt.Comment.Lexeme)
 }
 
 func formatVarDecl(decl ast.VarDecl) string {
 	if decl.Initialiser != nil {
-		return fmt.Sprintf("var %s = %s;", decl.Name.Lexeme, format(decl.Initialiser))
+		return fmt.Sprintf("var %s = %s;", decl.Name.Lexeme, Node(decl.Initialiser))
 	} else {
 		return fmt.Sprintf("var %s;", decl.Name.Lexeme)
 	}
@@ -139,11 +141,11 @@ func formatMethodDecl(decl ast.MethodDecl) string {
 }
 
 func formatExprStmt(stmt ast.ExprStmt) string {
-	return fmt.Sprintf("%s;", format(stmt.Expr))
+	return fmt.Sprintf("%s;", Node(stmt.Expr))
 }
 
 func formatPrintStmt(stmt ast.PrintStmt) string {
-	return fmt.Sprintf("print %s;", format(stmt.Expr))
+	return fmt.Sprintf("print %s;", Node(stmt.Expr))
 }
 
 func formatBlockStmt(stmt ast.BlockStmt) string {
@@ -160,12 +162,12 @@ func formatBlock[T ast.Stmt](stmts []T) string {
 
 func formatIfStmt(stmt ast.IfStmt) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "if (%s)", format(stmt.Condition))
+	fmt.Fprintf(&b, "if (%s)", Node(stmt.Condition))
 	var thenIsBlock bool
 	if _, thenIsBlock = stmt.Then.(ast.BlockStmt); thenIsBlock {
-		fmt.Fprint(&b, " ", format(stmt.Then))
+		fmt.Fprint(&b, " ", Node(stmt.Then))
 	} else {
-		fmt.Fprint(&b, "\n", indent(format(stmt.Then)))
+		fmt.Fprint(&b, "\n", indent(Node(stmt.Then)))
 	}
 	if stmt.Else != nil {
 		if thenIsBlock {
@@ -175,9 +177,9 @@ func formatIfStmt(stmt ast.IfStmt) string {
 		}
 		switch stmt.Else.(type) {
 		case ast.IfStmt, ast.BlockStmt:
-			fmt.Fprint(&b, "else ", format(stmt.Else))
+			fmt.Fprint(&b, "else ", Node(stmt.Else))
 		default:
-			fmt.Fprint(&b, "else\n", indent(format(stmt.Else)))
+			fmt.Fprint(&b, "else\n", indent(Node(stmt.Else)))
 		}
 	}
 	return b.String()
@@ -185,9 +187,9 @@ func formatIfStmt(stmt ast.IfStmt) string {
 
 func formatWhileStmt(stmt ast.WhileStmt) string {
 	if _, ok := stmt.Body.(ast.BlockStmt); ok {
-		return fmt.Sprintf("while (%s) %s", format(stmt.Condition), format(stmt.Body))
+		return fmt.Sprintf("while (%s) %s", Node(stmt.Condition), Node(stmt.Body))
 	} else {
-		return fmt.Sprintf("while (%s)\n%s", format(stmt.Condition), indent(format(stmt.Body)))
+		return fmt.Sprintf("while (%s)\n%s", Node(stmt.Condition), indent(Node(stmt.Body)))
 	}
 }
 
@@ -195,22 +197,22 @@ func formatForStmt(stmt ast.ForStmt) string {
 	var b strings.Builder
 	fmt.Fprint(&b, "for (")
 	if stmt.Initialise != nil {
-		fmt.Fprintf(&b, "%s", format(stmt.Initialise))
+		fmt.Fprintf(&b, "%s", Node(stmt.Initialise))
 	} else {
 		fmt.Fprint(&b, ";")
 	}
 	if stmt.Condition != nil {
-		fmt.Fprintf(&b, " %s", format(stmt.Condition))
+		fmt.Fprintf(&b, " %s", Node(stmt.Condition))
 	}
 	fmt.Fprint(&b, ";")
 	if stmt.Update != nil {
-		fmt.Fprintf(&b, " %s", format(stmt.Update))
+		fmt.Fprintf(&b, " %s", Node(stmt.Update))
 	}
 	fmt.Fprint(&b, ")")
 	if _, ok := stmt.Body.(ast.BlockStmt); ok {
-		fmt.Fprintf(&b, " %s", format(stmt.Body))
+		fmt.Fprintf(&b, " %s", Node(stmt.Body))
 	} else {
-		fmt.Fprintf(&b, "\n%s", indent(format(stmt.Body)))
+		fmt.Fprintf(&b, "\n%s", indent(Node(stmt.Body)))
 	}
 	return b.String()
 }
@@ -225,7 +227,7 @@ func formatContinueStmt(ast.ContinueStmt) string {
 
 func formatReturnStmt(stmt ast.ReturnStmt) string {
 	if stmt.Value != nil {
-		return fmt.Sprintf("return %s;", format(stmt.Value))
+		return fmt.Sprintf("return %s;", Node(stmt.Value))
 	} else {
 		return "return;"
 	}
@@ -236,7 +238,7 @@ func formatFunExpr(expr ast.FunExpr) string {
 }
 
 func formatGroupExpr(expr ast.GroupExpr) string {
-	return fmt.Sprintf("(%s)", format(expr.Expr))
+	return fmt.Sprintf("(%s)", Node(expr.Expr))
 }
 
 func formatLiteralExpr(expr ast.LiteralExpr) string {
@@ -253,9 +255,9 @@ func formatThisExpr(ast.ThisExpr) string {
 
 func formatCallExpr(expr ast.CallExpr) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s(", format(expr.Callee))
+	fmt.Fprintf(&b, "%s(", Node(expr.Callee))
 	for i, arg := range expr.Args {
-		fmt.Fprint(&b, format(arg))
+		fmt.Fprint(&b, Node(arg))
 		if i < len(expr.Args)-1 {
 			fmt.Fprint(&b, ", ")
 		}
@@ -265,11 +267,11 @@ func formatCallExpr(expr ast.CallExpr) string {
 }
 
 func formatGetExpr(expr ast.GetExpr) string {
-	return fmt.Sprintf("%s.%s", format(expr.Object), expr.Name.Lexeme)
+	return fmt.Sprintf("%s.%s", Node(expr.Object), expr.Name.Lexeme)
 }
 
 func formatUnaryExpr(expr ast.UnaryExpr) string {
-	return fmt.Sprintf("%s%s", expr.Op.Lexeme, format(expr.Right))
+	return fmt.Sprintf("%s%s", expr.Op.Lexeme, Node(expr.Right))
 }
 
 func formatBinaryExpr(expr ast.BinaryExpr) string {
@@ -279,19 +281,19 @@ func formatBinaryExpr(expr ast.BinaryExpr) string {
 		// operator should be formatted as "a, b" rather than "a , b".
 		leftSpace = ""
 	}
-	return fmt.Sprintf("%s%s%s %s", format(expr.Left), leftSpace, expr.Op.Lexeme, format(expr.Right))
+	return fmt.Sprintf("%s%s%s %s", Node(expr.Left), leftSpace, expr.Op.Lexeme, Node(expr.Right))
 }
 
 func formatTernaryExpr(expr ast.TernaryExpr) string {
-	return fmt.Sprint(format(expr.Condition), " ? ", format(expr.Then), " : ", format(expr.Else))
+	return fmt.Sprint(Node(expr.Condition), " ? ", Node(expr.Then), " : ", Node(expr.Else))
 }
 
 func formatAssignmentExpr(expr ast.AssignmentExpr) string {
-	return fmt.Sprintf("%s = %s", expr.Left.Lexeme, format(expr.Right))
+	return fmt.Sprintf("%s = %s", expr.Left.Lexeme, Node(expr.Right))
 }
 
 func formatSetExpr(expr ast.SetExpr) string {
-	return fmt.Sprintf("%s.%s = %s", format(expr.Object), expr.Name.Lexeme, format(expr.Value))
+	return fmt.Sprintf("%s.%s = %s", Node(expr.Object), expr.Name.Lexeme, Node(expr.Value))
 }
 
 func indent(s string) string {

@@ -10,6 +10,7 @@ import (
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/parser"
+	"github.com/marcuscaisey/lox/loxfmt/format"
 )
 
 var (
@@ -69,7 +70,7 @@ func run(path string) error {
 		return err
 	}
 
-	formatted := format(program)
+	formatted := format.Node(program)
 	if *write {
 		if err := os.WriteFile(path, []byte(formatted), 0644); err != nil {
 			return fmt.Errorf("failed to write formatted source to file: %w", err)
