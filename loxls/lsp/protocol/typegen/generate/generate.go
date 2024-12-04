@@ -89,7 +89,7 @@ func (g *generator) genTypeDecl(namespace string, typ *metamodel.Type) string {
 	case metamodel.ArrayType:
 		return g.sliceType(namespace, typ.Element)
 	case metamodel.MapType:
-		return g.genMapDecl(namespace, typ.Key, typ.Value)
+		return g.mapType(namespace, typ.Key, typ.Value)
 	case metamodel.AndType, metamodel.BooleanLiteralType, metamodel.IntegerLiteralType, metamodel.StringLiteralType, metamodel.TupleType:
 		panic(fmt.Sprintf("unhandled type: %T", typ))
 	}
@@ -102,6 +102,8 @@ func (g *generator) genTypeDeclForSumType(namespace string, typ *metamodel.Type)
 		return g.genBaseTypeDecl(typValue.Name)
 	case metamodel.ArrayType:
 		return g.genSliceDecl(namespace, typValue.Element)
+	case metamodel.MapType:
+		return g.genMapDecl(namespace, typValue.Key, typValue.Value)
 	default:
 		return g.genTypeDecl(namespace, typ)
 	}
@@ -472,6 +474,22 @@ func (g *generator) genSliceDecl(namespace string, elementType *metamodel.Type) 
 	g.gennedTypes[name] = true
 	g.typeDecls = append(g.typeDecls, fmt.Sprintf("type %s []%s", name, goElementType))
 	return name
+}
+
+func (g *generator) mapType(namespace string, keyType metamodel.MapKeyType, valueType *metamodel.Type) string {
+	if namespace == "LSPObject" {
+		// We need to generate a type for this because its a variant of the LSPAny sum type.
+		return g.genMapDecl(namespace, keyType, valueType)
+	}
+	var goKeyType string
+	switch key := keyType.Value.(type) {
+	case metamodel.BaseMapKeyType:
+		goKeyType = g.baseType(key.Name.BaseTypes())
+	case metamodel.ReferenceType:
+		goKeyType = g.genRefTypeDecl(key.Name)
+	}
+	goValueType := g.genTypeDecl(namespace, valueType)
+	return fmt.Sprintf("map[%s]%s", goKeyType, goValueType)
 }
 
 func (g *generator) genMapDecl(namespace string, keyType metamodel.MapKeyType, valueType *metamodel.Type) string {
