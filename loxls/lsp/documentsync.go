@@ -53,13 +53,13 @@ func (h *Handler) textDocumentDidChange(params *protocol.DidChangeTextDocumentPa
 
 func (h *Handler) updateDoc(uri string, version int32, src string) error {
 	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithComments())
-	diagnostics := protocol.DiagnosticSlice{}
+	diagnostics := []*protocol.Diagnostic{}
 	if err != nil {
 		var loxErrs lox.Errors
 		if !errors.As(err, &loxErrs) {
 			return err
 		}
-		diagnostics = make(protocol.DiagnosticSlice, len(loxErrs))
+		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
 		for i, e := range loxErrs {
 			diagnostics[i] = &protocol.Diagnostic{
 				Range: &protocol.Range{

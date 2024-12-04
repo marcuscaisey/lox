@@ -116,8 +116,6 @@ func (r ResourceOperationKind) MarshalJSON() ([]byte, error) {
 
 }
 
-type ResourceOperationKindSlice []ResourceOperationKind
-
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#failureHandlingKind
 type FailureHandlingKind string
 
@@ -184,7 +182,7 @@ type WorkspaceEditClientCapabilities struct {
 	// support 'create', 'rename' and 'delete' files and folders.
 	//
 	// @since 3.13.0
-	ResourceOperations ResourceOperationKindSlice `json:"resourceOperations,omitempty"`
+	ResourceOperations []ResourceOperationKind `json:"resourceOperations,omitempty"`
 	// The failure handling strategy of a client if applying the workspace edit
 	// fails.
 	//
@@ -312,8 +310,6 @@ func (s SymbolKind) MarshalJSON() ([]byte, error) {
 
 }
 
-type SymbolKindSlice []SymbolKind
-
 type WorkspaceSymbolClientCapabilitiesSymbolKind struct {
 	// The symbol kind values the client supports. When this
 	// property exists the client also guarantees that it will
@@ -323,7 +319,7 @@ type WorkspaceSymbolClientCapabilitiesSymbolKind struct {
 	// If this property is not present the client only supports
 	// the symbol kinds from `File` to `Array` as defined in
 	// the initial version of the protocol.
-	ValueSet SymbolKindSlice `json:"valueSet,omitempty"`
+	ValueSet []SymbolKind `json:"valueSet,omitempty"`
 }
 
 // Symbol tags are extra annotations that tweak the rendering of a symbol.
@@ -367,19 +363,15 @@ func (s SymbolTag) MarshalJSON() ([]byte, error) {
 
 }
 
-type SymbolTagSlice []SymbolTag
-
 type WorkspaceSymbolClientCapabilitiesTagSupport struct {
 	// The tags supported by the client.
-	ValueSet SymbolTagSlice `json:"valueSet"`
+	ValueSet []SymbolTag `json:"valueSet"`
 }
-
-type stringSlice []string
 
 type WorkspaceSymbolClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily. Usually
 	// `location.range`
-	Properties stringSlice `json:"properties"`
+	Properties []string `json:"properties"`
 }
 
 // Client capabilities for a {@link WorkspaceSymbolRequest}.
@@ -654,8 +646,6 @@ func (m MarkupKind) MarshalJSON() ([]byte, error) {
 
 }
 
-type MarkupKindSlice []MarkupKind
-
 // Completion item tags are extra annotations that tweak the rendering of a completion
 // item.
 //
@@ -698,16 +688,14 @@ func (c CompletionItemTag) MarshalJSON() ([]byte, error) {
 
 }
 
-type CompletionItemTagSlice []CompletionItemTag
-
 type CompletionClientCapabilitiesCompletionItemTagSupport struct {
 	// The tags supported by the client.
-	ValueSet CompletionItemTagSlice `json:"valueSet"`
+	ValueSet []CompletionItemTag `json:"valueSet"`
 }
 
 type CompletionClientCapabilitiesCompletionItemResolveSupport struct {
 	// The properties that a client can resolve lazily.
-	Properties stringSlice `json:"properties"`
+	Properties []string `json:"properties"`
 }
 
 // How whitespace and indentation is handled during completion
@@ -765,10 +753,8 @@ func (i InsertTextMode) MarshalJSON() ([]byte, error) {
 
 }
 
-type InsertTextModeSlice []InsertTextMode
-
 type CompletionClientCapabilitiesCompletionItemInsertTextModeSupport struct {
-	ValueSet InsertTextModeSlice `json:"valueSet"`
+	ValueSet []InsertTextMode `json:"valueSet"`
 }
 
 type CompletionClientCapabilitiesCompletionItem struct {
@@ -783,7 +769,7 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	CommitCharactersSupport bool `json:"commitCharactersSupport,omitempty"`
 	// Client supports the following content formats for the documentation
 	// property. The order describes the preferred format of the client.
-	DocumentationFormat MarkupKindSlice `json:"documentationFormat,omitempty"`
+	DocumentationFormat []MarkupKind `json:"documentationFormat,omitempty"`
 	// Client supports the deprecated property on a completion item.
 	DeprecatedSupport bool `json:"deprecatedSupport,omitempty"`
 	// Client supports the preselect property on a completion item.
@@ -905,8 +891,6 @@ func (c CompletionItemKind) MarshalJSON() ([]byte, error) {
 
 }
 
-type CompletionItemKindSlice []CompletionItemKind
-
 type CompletionClientCapabilitiesCompletionItemKind struct {
 	// The completion item kind values the client supports. When this
 	// property exists the client also guarantees that it will
@@ -916,7 +900,7 @@ type CompletionClientCapabilitiesCompletionItemKind struct {
 	// If this property is not present the client only supports
 	// the completion items kinds from `Text` to `Reference` as defined in
 	// the initial version of the protocol.
-	ValueSet CompletionItemKindSlice `json:"valueSet,omitempty"`
+	ValueSet []CompletionItemKind `json:"valueSet,omitempty"`
 }
 
 type CompletionClientCapabilitiesCompletionList struct {
@@ -928,7 +912,7 @@ type CompletionClientCapabilitiesCompletionList struct {
 	// no properties are supported.
 	//
 	// @since 3.17.0
-	ItemDefaults stringSlice `json:"itemDefaults,omitempty"`
+	ItemDefaults []string `json:"itemDefaults,omitempty"`
 }
 
 // Completion client capabilities
@@ -964,7 +948,7 @@ type HoverClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Client supports the following content formats for the content
 	// property. The order describes the preferred format of the client.
-	ContentFormat MarkupKindSlice `json:"contentFormat,omitempty"`
+	ContentFormat []MarkupKind `json:"contentFormat,omitempty"`
 }
 
 type SignatureHelpClientCapabilitiesSignatureInformationParameterInformation struct {
@@ -978,7 +962,7 @@ type SignatureHelpClientCapabilitiesSignatureInformationParameterInformation str
 type SignatureHelpClientCapabilitiesSignatureInformation struct {
 	// Client supports the following content formats for the documentation
 	// property. The order describes the preferred format of the client.
-	DocumentationFormat MarkupKindSlice `json:"documentationFormat,omitempty"`
+	DocumentationFormat []MarkupKind `json:"documentationFormat,omitempty"`
 	// Client capabilities specific to parameter information.
 	ParameterInformation *SignatureHelpClientCapabilitiesSignatureInformationParameterInformation `json:"parameterInformation,omitempty"`
 	// The client supports the `activeParameter` property on `SignatureInformation`
@@ -1083,12 +1067,12 @@ type DocumentSymbolClientCapabilitiesSymbolKind struct {
 	// If this property is not present the client only supports
 	// the symbol kinds from `File` to `Array` as defined in
 	// the initial version of the protocol.
-	ValueSet SymbolKindSlice `json:"valueSet,omitempty"`
+	ValueSet []SymbolKind `json:"valueSet,omitempty"`
 }
 
 type DocumentSymbolClientCapabilitiesTagSupport struct {
 	// The tags supported by the client.
-	ValueSet SymbolTagSlice `json:"valueSet"`
+	ValueSet []SymbolTag `json:"valueSet"`
 }
 
 // Client Capabilities for a {@link DocumentSymbolRequest}.
@@ -1172,14 +1156,12 @@ const (
 	CodeActionKindSourceFixAll CodeActionKind = "source.fixAll"
 )
 
-type CodeActionKindSlice []CodeActionKind
-
 type CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind struct {
 	// The code action kind values the client supports. When this
 	// property exists the client also guarantees that it will
 	// handle values outside its set gracefully and falls back
 	// to a default value when unknown.
-	ValueSet CodeActionKindSlice `json:"valueSet"`
+	ValueSet []CodeActionKind `json:"valueSet"`
 }
 
 type CodeActionClientCapabilitiesCodeActionLiteralSupport struct {
@@ -1190,7 +1172,7 @@ type CodeActionClientCapabilitiesCodeActionLiteralSupport struct {
 
 type CodeActionClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily.
-	Properties stringSlice `json:"properties"`
+	Properties []string `json:"properties"`
 }
 
 // The Client Capabilities of a {@link CodeActionRequest}.
@@ -1369,14 +1351,12 @@ const (
 	FoldingRangeKindRegion FoldingRangeKind = "region"
 )
 
-type FoldingRangeKindSlice []FoldingRangeKind
-
 type FoldingRangeClientCapabilitiesFoldingRangeKind struct {
 	// The folding range kind values the client supports. When this
 	// property exists the client also guarantees that it will
 	// handle values outside its set gracefully and falls back
 	// to a default value when unknown.
-	ValueSet FoldingRangeKindSlice `json:"valueSet,omitempty"`
+	ValueSet []FoldingRangeKind `json:"valueSet,omitempty"`
 }
 
 type FoldingRangeClientCapabilitiesFoldingRange struct {
@@ -1469,11 +1449,9 @@ func (d DiagnosticTag) MarshalJSON() ([]byte, error) {
 
 }
 
-type DiagnosticTagSlice []DiagnosticTag
-
 type PublishDiagnosticsClientCapabilitiesTagSupport struct {
 	// The tags supported by the client.
-	ValueSet DiagnosticTagSlice `json:"valueSet"`
+	ValueSet []DiagnosticTag `json:"valueSet"`
 }
 
 // The publish diagnostic client capabilities.
@@ -1658,8 +1636,6 @@ func (t TokenFormat) MarshalJSON() ([]byte, error) {
 
 }
 
-type TokenFormatSlice []TokenFormat
-
 // @since 3.16.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensClientCapabilities
@@ -1678,11 +1654,11 @@ type SemanticTokensClientCapabilities struct {
 	// even decide to not show any semantic tokens at all.
 	Requests *SemanticTokensClientCapabilitiesRequests `json:"requests"`
 	// The token types that the client supports.
-	TokenTypes stringSlice `json:"tokenTypes"`
+	TokenTypes []string `json:"tokenTypes"`
 	// The token modifiers that the client supports.
-	TokenModifiers stringSlice `json:"tokenModifiers"`
+	TokenModifiers []string `json:"tokenModifiers"`
 	// The token formats the clients supports.
-	Formats TokenFormatSlice `json:"formats"`
+	Formats []TokenFormat `json:"formats"`
 	// Whether the client supports tokens that can overlap each other.
 	OverlappingTokenSupport bool `json:"overlappingTokenSupport,omitempty"`
 	// Whether the client supports tokens that can span multiple lines.
@@ -1753,7 +1729,7 @@ type InlineValueClientCapabilities struct {
 
 type InlayHintClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily.
-	Properties stringSlice `json:"properties"`
+	Properties []string `json:"properties"`
 }
 
 // Inlay hint client capabilities.
@@ -1975,7 +1951,7 @@ type GeneralClientCapabilitiesStaleRequestSupport struct {
 	// The list of requests for which the client
 	// will retry the request if it receives a
 	// response with error code `ContentModified`
-	RetryOnContentModified stringSlice `json:"retryOnContentModified"`
+	RetryOnContentModified []string `json:"retryOnContentModified"`
 }
 
 // Client capabilities specific to regular expressions.
@@ -2004,7 +1980,7 @@ type MarkdownClientCapabilities struct {
 	// Markdown.
 	//
 	// @since 3.17.0
-	AllowedTags stringSlice `json:"allowedTags,omitempty"`
+	AllowedTags []string `json:"allowedTags,omitempty"`
 }
 
 // A set of predefined position encoding kinds.
@@ -2029,8 +2005,6 @@ const (
 	// encoding-agnostic representation of character offsets.
 	PositionEncodingKindUTF32 PositionEncodingKind = "utf-32"
 )
-
-type PositionEncodingKindSlice []PositionEncodingKind
 
 // General client capabilities.
 //
@@ -2071,7 +2045,7 @@ type GeneralClientCapabilities struct {
 	// side.
 	//
 	// @since 3.17.0
-	PositionEncodings PositionEncodingKindSlice `json:"positionEncodings,omitempty"`
+	PositionEncodings []PositionEncodingKind `json:"positionEncodings,omitempty"`
 }
 
 type stringLSPAnyMap map[string]LSPAny
@@ -2625,22 +2599,18 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1Cells struct {
 	Language string `json:"language"`
 }
 
-type NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice []*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells
-
 type NotebookDocumentSyncOptionsNotebookSelectorOr1 struct {
 	// The notebook to be synced If a string
 	// value is provided it matches against the
 	// notebook type. '*' matches every notebook.
 	Notebook *StringOrNotebookDocumentFilter `json:"notebook"`
 	// The cells of the matching notebook to be synced.
-	Cells NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice `json:"cells,omitempty"`
+	Cells []*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells `json:"cells,omitempty"`
 }
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr2Cells struct {
 	Language string `json:"language"`
 }
-
-type NotebookDocumentSyncOptionsNotebookSelectorOr2CellsSlice []*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
 	// The notebook to be synced If a string
@@ -2648,7 +2618,7 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
 	// notebook type. '*' matches every notebook.
 	Notebook *StringOrNotebookDocumentFilter `json:"notebook,omitempty"`
 	// The cells of the matching notebook to be synced.
-	Cells NotebookDocumentSyncOptionsNotebookSelectorOr2CellsSlice `json:"cells"`
+	Cells []*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells `json:"cells"`
 }
 
 // NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 contains either of the following types:
@@ -2696,8 +2666,6 @@ func (n NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOpti
 	return json.Marshal(n.Value)
 }
 
-type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Slice []*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2
-
 // Options specific to a notebook plus its cells
 // to be synced to the server.
 //
@@ -2715,7 +2683,7 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptions
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#notebookDocumentSyncOptions
 type NotebookDocumentSyncOptions struct {
 	// The notebooks to be synced
-	NotebookSelector NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Slice `json:"notebookSelector"`
+	NotebookSelector []*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 `json:"notebookSelector"`
 	// Whether save notification should be forwarded to
 	// the server. Will only be honored if mode === `notebook`.
 	Save bool `json:"save,omitempty"`
@@ -2813,7 +2781,7 @@ type CompletionOptions struct {
 	//
 	// If code complete should automatically be trigger on characters not being valid inside
 	// an identifier (for example `.` in JavaScript) list them in `triggerCharacters`.
-	TriggerCharacters stringSlice `json:"triggerCharacters,omitempty"`
+	TriggerCharacters []string `json:"triggerCharacters,omitempty"`
 	// The list of all possible characters that commit a completion. This field can be used
 	// if clients don't support individual commit characters per completion item. See
 	// `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
@@ -2822,7 +2790,7 @@ type CompletionOptions struct {
 	// completion item the ones on the completion item win.
 	//
 	// @since 3.2.0
-	AllCommitCharacters stringSlice `json:"allCommitCharacters,omitempty"`
+	AllCommitCharacters []string `json:"allCommitCharacters,omitempty"`
 	// The server provides support to resolve additional
 	// information for a completion item.
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
@@ -2889,14 +2857,14 @@ func (b BooleanOrHoverOptions) MarshalJSON() ([]byte, error) {
 type SignatureHelpOptions struct {
 	*WorkDoneProgressOptions
 	// List of characters that trigger signature help automatically.
-	TriggerCharacters stringSlice `json:"triggerCharacters,omitempty"`
+	TriggerCharacters []string `json:"triggerCharacters,omitempty"`
 	// List of characters that re-trigger signature help.
 	//
 	// These trigger characters are only active when signature help is already showing. All trigger characters
 	// are also counted as re-trigger characters.
 	//
 	// @since 3.15.0
-	RetriggerCharacters stringSlice `json:"retriggerCharacters,omitempty"`
+	RetriggerCharacters []string `json:"retriggerCharacters,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#declarationOptions
@@ -3075,8 +3043,6 @@ func (t TextDocumentFilterOrNotebookCellTextDocumentFilter) MarshalJSON() ([]byt
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFilter
 type DocumentFilter = *TextDocumentFilterOrNotebookCellTextDocumentFilter
 
-type DocumentFilterSlice []DocumentFilter
-
 // A document selector is the combination of one or many document filters.
 //
 // @sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;
@@ -3084,7 +3050,7 @@ type DocumentFilterSlice []DocumentFilter
 // The use of a string as a document filter is deprecated @since 3.16.0.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSelector
-type DocumentSelector = DocumentFilterSlice
+type DocumentSelector = []DocumentFilter
 
 // General text document registration options.
 //
@@ -3498,7 +3464,7 @@ type CodeActionOptions struct {
 	//
 	// The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
 	// may list out every specific kind they provide.
-	CodeActionKinds CodeActionKindSlice `json:"codeActionKinds,omitempty"`
+	CodeActionKinds []CodeActionKind `json:"codeActionKinds,omitempty"`
 	// The server provides support to resolve additional
 	// information for a code action.
 	//
@@ -3799,7 +3765,7 @@ type DocumentOnTypeFormattingOptions struct {
 	// A character on which formatting should be triggered, like `{`.
 	FirstTriggerCharacter string `json:"firstTriggerCharacter"`
 	// More trigger characters.
-	MoreTriggerCharacter stringSlice `json:"moreTriggerCharacter,omitempty"`
+	MoreTriggerCharacter []string `json:"moreTriggerCharacter,omitempty"`
 }
 
 // Provider options for a {@link RenameRequest}.
@@ -3991,7 +3957,7 @@ func (b BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions) Marsh
 type ExecuteCommandOptions struct {
 	*WorkDoneProgressOptions
 	// The commands to be executed on the server
-	Commands stringSlice `json:"commands"`
+	Commands []string `json:"commands"`
 }
 
 // Call hierarchy options used during static registration.
@@ -4137,9 +4103,9 @@ func (b BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOption
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensLegend
 type SemanticTokensLegend struct {
 	// The token types a server uses.
-	TokenTypes stringSlice `json:"tokenTypes"`
+	TokenTypes []string `json:"tokenTypes"`
 	// The token modifiers a server uses.
-	TokenModifiers stringSlice `json:"tokenModifiers"`
+	TokenModifiers []string `json:"tokenModifiers"`
 }
 
 type SemanticTokensOptionsRangeOr2 struct {
@@ -4859,8 +4825,6 @@ type FileOperationFilter struct {
 	Pattern *FileOperationPattern `json:"pattern"`
 }
 
-type FileOperationFilterSlice []*FileOperationFilter
-
 // The options to register for file operations.
 //
 // @since 3.16.0
@@ -4868,7 +4832,7 @@ type FileOperationFilterSlice []*FileOperationFilter
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#fileOperationRegistrationOptions
 type FileOperationRegistrationOptions struct {
 	// The actual filters.
-	Filters FileOperationFilterSlice `json:"filters"`
+	Filters []*FileOperationFilter `json:"filters"`
 }
 
 // Options for notifications/requests for user operations on files.
@@ -5336,8 +5300,6 @@ func (t TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) Ma
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
 type TextDocumentContentChangeEvent = *TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2
 
-type TextDocumentContentChangeEventSlice []TextDocumentContentChangeEvent
-
 // The change text document notification's parameters.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didChangeTextDocumentParams
@@ -5357,7 +5319,7 @@ type DidChangeTextDocumentParams struct {
 	// - apply the 'textDocument/didChange' notifications in the order you receive them.
 	// - apply the `TextDocumentContentChangeEvent`s in a single notification in the order
 	//   you receive them.
-	ContentChanges TextDocumentContentChangeEventSlice `json:"contentChanges"`
+	ContentChanges []TextDocumentContentChangeEvent `json:"contentChanges"`
 }
 
 // The parameters sent in a close text document notification
@@ -5448,8 +5410,6 @@ type DiagnosticRelatedInformation struct {
 	Message string `json:"message"`
 }
 
-type DiagnosticRelatedInformationSlice []*DiagnosticRelatedInformation
-
 // Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
 // are only valid in the scope of a resource.
 //
@@ -5476,18 +5436,16 @@ type Diagnostic struct {
 	// Additional metadata about the diagnostic.
 	//
 	// @since 3.15.0
-	Tags DiagnosticTagSlice `json:"tags,omitempty"`
+	Tags []DiagnosticTag `json:"tags,omitempty"`
 	// An array of related diagnostic information, e.g. when symbol-names within
 	// a scope collide all definitions can be marked via this property.
-	RelatedInformation DiagnosticRelatedInformationSlice `json:"relatedInformation,omitempty"`
+	RelatedInformation []*DiagnosticRelatedInformation `json:"relatedInformation,omitempty"`
 	// A data entry field that is preserved between a `textDocument/publishDiagnostics`
 	// notification and `textDocument/codeAction` request.
 	//
 	// @since 3.16.0
 	Data LSPAny `json:"data,omitempty"`
 }
-
-type DiagnosticSlice []*Diagnostic
 
 // The publish diagnostic notification's parameters.
 //
@@ -5500,7 +5458,7 @@ type PublishDiagnosticsParams struct {
 	// @since 3.15.0
 	Version int32 `json:"version,omitempty"`
 	// An array of diagnostic information items.
-	Diagnostics DiagnosticSlice `json:"diagnostics"`
+	Diagnostics []*Diagnostic `json:"diagnostics"`
 }
 
 // Predefined error codes.

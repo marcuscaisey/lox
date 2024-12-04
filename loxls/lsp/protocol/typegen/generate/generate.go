@@ -83,11 +83,11 @@ func (g *generator) genTypeDecl(namespace string, typ *metamodel.Type) string {
 	case metamodel.OrType:
 		return g.genSumTypeDecl(namespace, typ.Items)
 	case metamodel.BaseType:
-		return g.genBaseTypeDecl(typ.Name)
+		return g.baseType(typ.Name)
 	case metamodel.StructureLiteralType:
 		return g.genStructDeclForLiteral(namespace, typ.Value)
 	case metamodel.ArrayType:
-		return g.genSliceDecl(namespace, typ.Element)
+		return g.sliceType(namespace, typ.Element)
 	case metamodel.MapType:
 		return g.genMapDecl(namespace, typ.Key, typ.Value)
 	case metamodel.AndType, metamodel.BooleanLiteralType, metamodel.IntegerLiteralType, metamodel.StringLiteralType, metamodel.TupleType:
@@ -99,7 +99,9 @@ func (g *generator) genTypeDecl(namespace string, typ *metamodel.Type) string {
 func (g *generator) genTypeDeclForSumType(namespace string, typ *metamodel.Type) string {
 	switch typValue := typ.Value.(type) {
 	case metamodel.BaseType:
-		return g.genBaseTypeDeclForSumType(typValue.Name)
+		return g.genBaseTypeDecl(typValue.Name)
+	case metamodel.ArrayType:
+		return g.genSliceDecl(namespace, typValue.Element)
 	default:
 		return g.genTypeDecl(namespace, typ)
 	}
@@ -153,7 +155,7 @@ type {{.name}} struct {
 	return "*" + name
 }
 
-func (g *generator) structField(namespace string, prop *metamodel.Property) string {
+func (g *generator) structField(structName string, prop *metamodel.Property) string {
 	const text = `
 {{- .comment}}
 {{- if .optional}}
@@ -167,7 +169,7 @@ func (g *generator) structField(namespace string, prop *metamodel.Property) stri
 		"comment":   g.comment(prop.Documentation, prop.Deprecated),
 		"optional":  prop.Optional,
 		"fieldName": fieldName,
-		"type":      g.genTypeDecl(namespace+fieldName, prop.Type),
+		"type":      g.genTypeDecl(structName+fieldName, prop.Type),
 		"jsonName":  prop.Name,
 	}
 	return mustExecuteTemplate(text, data)
@@ -402,7 +404,7 @@ var baseTypeTypes = map[metamodel.BaseTypes]string{
 	metamodel.BaseTypesNull:        "",
 }
 
-func (g *generator) genBaseTypeDecl(baseType metamodel.BaseTypes) string {
+func (g *generator) baseType(baseType metamodel.BaseTypes) string {
 	typ := baseTypeTypes[baseType]
 	if typ == "" {
 		panic(fmt.Sprintf("unhandled base type: %s", baseType))
@@ -410,7 +412,7 @@ func (g *generator) genBaseTypeDecl(baseType metamodel.BaseTypes) string {
 	return typ
 }
 
-func (g *generator) genBaseTypeDeclForSumType(baseType metamodel.BaseTypes) string {
+func (g *generator) genBaseTypeDecl(baseType metamodel.BaseTypes) string {
 	typ := baseTypeTypes[baseType]
 	if typ == "" {
 		panic(fmt.Sprintf("unhandled base type: %s", baseType))
@@ -425,9 +427,7 @@ func (g *generator) genBaseTypeDeclForSumType(baseType metamodel.BaseTypes) stri
 	return name
 }
 
-func (g *generator) genStructDeclForLiteral(namespace string, structLiteral metamodel.StructureLiteral) string {
-	name := namespace
-
+func (g *generator) genStructDeclForLiteral(name string, structLiteral metamodel.StructureLiteral) string {
 	if g.gennedTypes[name] {
 		return "*" + name
 	}
@@ -454,6 +454,15 @@ type {{.name}} struct {
 	return "*" + name
 }
 
+func (g *generator) sliceType(namespace string, elementType *metamodel.Type) string {
+	if namespace == "LSPArray" {
+		// We need to generate a type for this because its a variant of the LSPAny sum type.
+		return g.genSliceDecl(namespace, elementType)
+	}
+	goElementType := g.genTypeDecl(namespace, elementType)
+	return fmt.Sprintf("[]%s", goElementType)
+}
+
 func (g *generator) genSliceDecl(namespace string, elementType *metamodel.Type) string {
 	goElementType := g.genTypeDecl(namespace, elementType)
 	name := fmt.Sprintf("%sSlice", trimStarPrefix(goElementType))
@@ -469,7 +478,7 @@ func (g *generator) genMapDecl(namespace string, keyType metamodel.MapKeyType, v
 	var goKeyType string
 	switch key := keyType.Value.(type) {
 	case metamodel.BaseMapKeyType:
-		goKeyType = g.genBaseTypeDecl(key.Name.BaseTypes())
+		goKeyType = g.baseType(key.Name.BaseTypes())
 	case metamodel.ReferenceType:
 		goKeyType = g.genRefTypeDecl(key.Name)
 	}
