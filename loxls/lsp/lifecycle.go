@@ -10,12 +10,12 @@ import (
 func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeResult, error) {
 	h.initialized = true
 	return &protocol.InitializeResult{
-		Capabilities: protocol.ServerCapabilities{
-			PositionEncoding: ptrTo(protocol.PositionEncodingKindUTF16),
+		Capabilities: &protocol.ServerCapabilities{
+			PositionEncoding: protocol.PositionEncodingKindUTF16,
 			TextDocumentSync: &protocol.TextDocumentSyncOptionsOrTextDocumentSyncKind{
-				Value: protocol.TextDocumentSyncOptions{
-					OpenClose: ptrTo(true),
-					Change:    ptrTo(protocol.TextDocumentSyncKindFull),
+				Value: &protocol.TextDocumentSyncOptions{
+					OpenClose: true,
+					Change:    protocol.TextDocumentSyncKindFull,
 				},
 			},
 			DocumentFormattingProvider: &protocol.BooleanOrDocumentFormattingOptions{
@@ -24,7 +24,7 @@ func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeRe
 		},
 		ServerInfo: &protocol.InitializeResultServerInfo{
 			Name:    "loxls",
-			Version: ptrTo(version),
+			Version: version,
 		},
 	}, nil
 }

@@ -142,7 +142,3 @@ func (l *logger) log(typ protocol.MessageType, msg string) {
 		slog.Warn("Failed to log", "error", err)
 	}
 }
-
-func ptrTo[T any](v T) *T {
-	return &v
-}

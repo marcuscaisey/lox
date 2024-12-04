@@ -27,9 +27,9 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 	textLines := strings.Split(strings.TrimSuffix(doc.Text, "\n"), "\n")
 	return protocol.TextEditSlice{
 		{
-			Range: protocol.Range{
-				Start: protocol.Position{Line: 0},
-				End:   protocol.Position{Line: uint32(len(textLines))},
+			Range: &protocol.Range{
+				Start: &protocol.Position{Line: 0},
+				End:   &protocol.Position{Line: uint32(len(textLines))},
 			},
 			NewText: formatted,
 		},

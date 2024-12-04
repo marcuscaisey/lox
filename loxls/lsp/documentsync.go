@@ -39,9 +39,9 @@ func (h *Handler) textDocumentDidOpen(params *protocol.DidOpenTextDocumentParams
 func (h *Handler) textDocumentDidChange(params *protocol.DidChangeTextDocumentParams) error {
 	for _, change := range params.ContentChanges {
 		switch change := change.Value.(type) {
-		case protocol.TextDocumentContentChangeEventOr1:
+		case *protocol.TextDocumentContentChangeEventOr1:
 			return errors.New("textDocument/didChange: incremental updates not supported")
-		case protocol.TextDocumentContentChangeEventOr2:
+		case *protocol.TextDocumentContentChangeEventOr2:
 			if err := h.updateDoc(params.TextDocument.Uri, params.TextDocument.Version, string(change.Text)); err != nil {
 				return fmt.Errorf("textDocument/didChange: %s", err)
 			}
@@ -61,19 +61,19 @@ func (h *Handler) updateDoc(uri string, version int32, src string) error {
 		}
 		diagnostics = make(protocol.DiagnosticSlice, len(loxErrs))
 		for i, e := range loxErrs {
-			diagnostics[i] = protocol.Diagnostic{
-				Range: protocol.Range{
-					Start: protocol.Position{
+			diagnostics[i] = &protocol.Diagnostic{
+				Range: &protocol.Range{
+					Start: &protocol.Position{
 						Line:      uint32(e.Start.Line - 1),
 						Character: uint32(e.Start.ColumnUTF16()),
 					},
-					End: protocol.Position{
+					End: &protocol.Position{
 						Line:      uint32(e.End.Line - 1),
 						Character: uint32(e.End.ColumnUTF16()),
 					},
 				},
-				Severity: ptrTo(protocol.DiagnosticSeverityError),
-				Source:   ptrTo("loxls"),
+				Severity: protocol.DiagnosticSeverityError,
+				Source:   "loxls",
 				Message:  e.Msg,
 			}
 		}
@@ -85,7 +85,7 @@ func (h *Handler) updateDoc(uri string, version int32, src string) error {
 	}
 	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
 		Uri:         uri,
-		Version:     &version,
+		Version:     version,
 		Diagnostics: diagnostics,
 	})
 }

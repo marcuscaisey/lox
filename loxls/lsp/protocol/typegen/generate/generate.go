@@ -121,7 +121,7 @@ func (g *generator) genStructDecl(structure *metamodel.Structure) string {
 	name := structure.Name
 
 	if g.gennedTypes[name] {
-		return name
+		return "*" + name
 	}
 	g.gennedTypes[name] = true
 
@@ -150,14 +150,14 @@ type {{.name}} struct {
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 
-	return name
+	return "*" + name
 }
 
 func (g *generator) structField(namespace string, prop *metamodel.Property) string {
 	const text = `
 {{- .comment}}
 {{- if .optional}}
-{{.fieldName}} *{{.type}} {{jsonTag .jsonName "omitempty"}}
+{{.fieldName}} {{.type}} {{jsonTag .jsonName "omitempty"}}
 {{- else}}
 {{.fieldName}} {{.type}} {{jsonTag .jsonName}}
 {{- end -}}
@@ -308,11 +308,6 @@ var sumTypeVariantUnmarshalOrders = map[string][]string{
 
 func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type) (name string) {
 	nonNullVariants := slices.DeleteFunc(slices.Clone(variants), isNullBaseType)
-	defer func() {
-		if nullable := len(nonNullVariants) != len(variants); nullable {
-			name = fmt.Sprintf("*%s", name)
-		}
-	}()
 
 	variantTypes := make([]string, len(nonNullVariants))
 	for i, item := range nonNullVariants {
@@ -322,7 +317,7 @@ func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type)
 		return variantTypes[0]
 	}
 
-	name = strings.Join(variantTypes, "Or")
+	name = strings.ReplaceAll(strings.Join(variantTypes, "Or"), "*", "")
 	sortedVariantTypes := slices.Clone(variantTypes)
 	unmarshalOrderPositions := map[string]int{}
 	for i, variant := range sumTypeVariantUnmarshalOrders[name] {
@@ -333,7 +328,7 @@ func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type)
 	})
 
 	if g.gennedTypes[name] {
-		return name
+		return "*" + name
 	}
 	g.gennedTypes[name] = true
 
@@ -368,7 +363,7 @@ func ({{$receiver}} *{{$.name}}) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 	{{- range $i, $variant := $.sortedVariants}}
-	{{- with $var := lowerFirstLetter $variant | printf "%sValue"}}
+	{{- with $var := trimStarPrefix $variant | lowerFirstLetter | printf "%sValue"}}
 	var {{$var}} {{$variant}}
 	if err := json.Unmarshal(data, &{{$var}}); err == nil {
 		{{$receiver}}.Value = {{$var}}
@@ -392,7 +387,7 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 
-	return name
+	return "*" + name
 }
 
 var baseTypeTypes = map[metamodel.BaseTypes]string{
@@ -434,7 +429,7 @@ func (g *generator) genStructDeclForLiteral(namespace string, structLiteral meta
 	name := namespace
 
 	if g.gennedTypes[name] {
-		return name
+		return "*" + name
 	}
 	g.gennedTypes[name] = true
 
@@ -456,12 +451,12 @@ type {{.name}} struct {
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 
-	return name
+	return "*" + name
 }
 
 func (g *generator) genSliceDecl(namespace string, elementType *metamodel.Type) string {
 	goElementType := g.genTypeDecl(namespace, elementType)
-	name := fmt.Sprintf("%sSlice", goElementType)
+	name := fmt.Sprintf("%sSlice", trimStarPrefix(goElementType))
 	if g.gennedTypes[name] {
 		return name
 	}
@@ -529,6 +524,7 @@ func mustExecuteTemplate(text string, data map[string]any) string {
 	funcMap := template.FuncMap{
 		"jsonTag":          jsonTag,
 		"lowerFirstLetter": lowerFirstLetter,
+		"trimStarPrefix":   trimStarPrefix,
 	}
 	tmpl := template.Must(template.New("template").Funcs(funcMap).Parse(text))
 	var b strings.Builder
@@ -553,4 +549,8 @@ func jsonTag(name string, opts ...string) string {
 func isNullBaseType(typ *metamodel.Type) bool {
 	baseType, ok := typ.Value.(metamodel.BaseType)
 	return ok && baseType.Name == metamodel.BaseTypesNull
+}
+
+func trimStarPrefix(s string) string {
+	return strings.TrimPrefix(s, "*")
 }

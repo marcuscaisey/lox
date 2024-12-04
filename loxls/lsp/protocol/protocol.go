@@ -56,19 +56,19 @@ func (i IntegerOrString) MarshalJSON() ([]byte, error) {
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#progressToken
-type ProgressToken = IntegerOrString
+type ProgressToken = *IntegerOrString
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workDoneProgressParams
 type WorkDoneProgressParams struct {
 	// An optional token that a server can use to report work done progress.
-	WorkDoneToken *ProgressToken `json:"workDoneToken,omitempty"`
+	WorkDoneToken ProgressToken `json:"workDoneToken,omitempty"`
 }
 
 type _InitializeParamsClientInfo struct {
 	// The name of the client as defined by the client.
 	Name string `json:"name"`
 	// The client's version as defined by the client.
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version,omitempty"`
 }
 
 type DocumentUri string
@@ -173,23 +173,23 @@ type WorkspaceEditClientCapabilitiesChangeAnnotationSupport struct {
 	// Whether the client groups edits with equal labels into tree nodes,
 	// for instance all edits labelled with "Changes in Strings" would
 	// be a tree node.
-	GroupsOnLabel *bool `json:"groupsOnLabel,omitempty"`
+	GroupsOnLabel bool `json:"groupsOnLabel,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceEditClientCapabilities
 type WorkspaceEditClientCapabilities struct {
 	// The client supports versioned document changes in `WorkspaceEdit`s
-	DocumentChanges *bool `json:"documentChanges,omitempty"`
+	DocumentChanges bool `json:"documentChanges,omitempty"`
 	// The resource operations the client supports. Clients should at least
 	// support 'create', 'rename' and 'delete' files and folders.
 	//
 	// @since 3.13.0
-	ResourceOperations *ResourceOperationKindSlice `json:"resourceOperations,omitempty"`
+	ResourceOperations ResourceOperationKindSlice `json:"resourceOperations,omitempty"`
 	// The failure handling strategy of a client if applying the workspace edit
 	// fails.
 	//
 	// @since 3.13.0
-	FailureHandling *FailureHandlingKind `json:"failureHandling,omitempty"`
+	FailureHandling FailureHandlingKind `json:"failureHandling,omitempty"`
 	// Whether the client normalizes line endings to the client specific
 	// setting.
 	// If set to `true` the client will normalize line ending characters
@@ -197,7 +197,7 @@ type WorkspaceEditClientCapabilities struct {
 	// character.
 	//
 	// @since 3.16.0
-	NormalizesLineEndings *bool `json:"normalizesLineEndings,omitempty"`
+	NormalizesLineEndings bool `json:"normalizesLineEndings,omitempty"`
 	// Whether the client in general supports change annotations on text edits,
 	// create file, rename file and delete file changes.
 	//
@@ -208,7 +208,7 @@ type WorkspaceEditClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didChangeConfigurationClientCapabilities
 type DidChangeConfigurationClientCapabilities struct {
 	// Did change configuration notification supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didChangeWatchedFilesClientCapabilities
@@ -216,12 +216,12 @@ type DidChangeWatchedFilesClientCapabilities struct {
 	// Did change watched files notification supports dynamic registration. Please note
 	// that the current protocol doesn't support static configuration for file changes
 	// from the server side.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Whether the client has support for {@link  RelativePattern relative pattern}
 	// or not.
 	//
 	// @since 3.17.0
-	RelativePatternSupport *bool `json:"relativePatternSupport,omitempty"`
+	RelativePatternSupport bool `json:"relativePatternSupport,omitempty"`
 }
 
 // A symbol kind.
@@ -323,7 +323,7 @@ type WorkspaceSymbolClientCapabilitiesSymbolKind struct {
 	// If this property is not present the client only supports
 	// the symbol kinds from `File` to `Array` as defined in
 	// the initial version of the protocol.
-	ValueSet *SymbolKindSlice `json:"valueSet,omitempty"`
+	ValueSet SymbolKindSlice `json:"valueSet,omitempty"`
 }
 
 // Symbol tags are extra annotations that tweak the rendering of a symbol.
@@ -387,7 +387,7 @@ type WorkspaceSymbolClientCapabilitiesResolveSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceSymbolClientCapabilities
 type WorkspaceSymbolClientCapabilities struct {
 	// Symbol request supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
 	SymbolKind *WorkspaceSymbolClientCapabilitiesSymbolKind `json:"symbolKind,omitempty"`
 	// The client supports tags on `SymbolInformation`.
@@ -408,7 +408,7 @@ type WorkspaceSymbolClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#executeCommandClientCapabilities
 type ExecuteCommandClientCapabilities struct {
 	// Execute command supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // @since 3.16.0
@@ -422,7 +422,7 @@ type SemanticTokensWorkspaceClientCapabilities struct {
 	// semantic tokens currently shown. It should be used with absolute care
 	// and is useful for situation where a server for example detects a project
 	// wide change that requires such a calculation.
-	RefreshSupport *bool `json:"refreshSupport,omitempty"`
+	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
 // @since 3.16.0
@@ -436,7 +436,7 @@ type CodeLensWorkspaceClientCapabilities struct {
 	// code lenses currently shown. It should be used with absolute care and is
 	// useful for situation where a server for example detect a project wide
 	// change that requires such a calculation.
-	RefreshSupport *bool `json:"refreshSupport,omitempty"`
+	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
 // Capabilities relating to events from file operations by the user in the client.
@@ -449,19 +449,19 @@ type CodeLensWorkspaceClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#fileOperationClientCapabilities
 type FileOperationClientCapabilities struct {
 	// Whether the client supports dynamic registration for file requests/notifications.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client has support for sending didCreateFiles notifications.
-	DidCreate *bool `json:"didCreate,omitempty"`
+	DidCreate bool `json:"didCreate,omitempty"`
 	// The client has support for sending willCreateFiles requests.
-	WillCreate *bool `json:"willCreate,omitempty"`
+	WillCreate bool `json:"willCreate,omitempty"`
 	// The client has support for sending didRenameFiles notifications.
-	DidRename *bool `json:"didRename,omitempty"`
+	DidRename bool `json:"didRename,omitempty"`
 	// The client has support for sending willRenameFiles requests.
-	WillRename *bool `json:"willRename,omitempty"`
+	WillRename bool `json:"willRename,omitempty"`
 	// The client has support for sending didDeleteFiles notifications.
-	DidDelete *bool `json:"didDelete,omitempty"`
+	DidDelete bool `json:"didDelete,omitempty"`
 	// The client has support for sending willDeleteFiles requests.
-	WillDelete *bool `json:"willDelete,omitempty"`
+	WillDelete bool `json:"willDelete,omitempty"`
 }
 
 // Client workspace capabilities specific to inline values.
@@ -477,7 +477,7 @@ type InlineValueWorkspaceClientCapabilities struct {
 	// inline values currently shown. It should be used with absolute care and is
 	// useful for situation where a server for example detects a project wide
 	// change that requires such a calculation.
-	RefreshSupport *bool `json:"refreshSupport,omitempty"`
+	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
 // Client workspace capabilities specific to inlay hints.
@@ -493,7 +493,7 @@ type InlayHintWorkspaceClientCapabilities struct {
 	// inlay hints currently shown. It should be used with absolute care and
 	// is useful for situation where a server for example detects a project wide
 	// change that requires such a calculation.
-	RefreshSupport *bool `json:"refreshSupport,omitempty"`
+	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
 // Workspace client capabilities specific to diagnostic pull requests.
@@ -509,7 +509,7 @@ type DiagnosticWorkspaceClientCapabilities struct {
 	// pulled diagnostics currently shown. It should be used with absolute care and
 	// is useful for situation where a server for example detects a project wide
 	// change that requires such a calculation.
-	RefreshSupport *bool `json:"refreshSupport,omitempty"`
+	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
 // Client workspace capabilities specific to folding ranges
@@ -529,7 +529,7 @@ type FoldingRangeWorkspaceClientCapabilities struct {
 	//
 	// @since 3.18.0
 	// @proposed
-	RefreshSupport *bool `json:"refreshSupport,omitempty"`
+	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
 // Workspace specific client capabilities.
@@ -539,7 +539,7 @@ type WorkspaceClientCapabilities struct {
 	// The client supports applying batch edits
 	// to the workspace by supporting the request
 	// 'workspace/applyEdit'
-	ApplyEdit *bool `json:"applyEdit,omitempty"`
+	ApplyEdit bool `json:"applyEdit,omitempty"`
 	// Capabilities specific to `WorkspaceEdit`s.
 	WorkspaceEdit *WorkspaceEditClientCapabilities `json:"workspaceEdit,omitempty"`
 	// Capabilities specific to the `workspace/didChangeConfiguration` notification.
@@ -553,11 +553,11 @@ type WorkspaceClientCapabilities struct {
 	// The client has support for workspace folders.
 	//
 	// @since 3.6.0
-	WorkspaceFolders *bool `json:"workspaceFolders,omitempty"`
+	WorkspaceFolders bool `json:"workspaceFolders,omitempty"`
 	// The client supports `workspace/configuration` requests.
 	//
 	// @since 3.6.0
-	Configuration *bool `json:"configuration,omitempty"`
+	Configuration bool `json:"configuration,omitempty"`
 	// Capabilities specific to the semantic token requests scoped to the
 	// workspace.
 	//
@@ -597,15 +597,15 @@ type WorkspaceClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentSyncClientCapabilities
 type TextDocumentSyncClientCapabilities struct {
 	// Whether text document synchronization supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports sending will save notifications.
-	WillSave *bool `json:"willSave,omitempty"`
+	WillSave bool `json:"willSave,omitempty"`
 	// The client supports sending a will save request and
 	// waits for a response providing text edits which will
 	// be applied to the document before it is saved.
-	WillSaveWaitUntil *bool `json:"willSaveWaitUntil,omitempty"`
+	WillSaveWaitUntil bool `json:"willSaveWaitUntil,omitempty"`
 	// The client supports did save notifications.
-	DidSave *bool `json:"didSave,omitempty"`
+	DidSave bool `json:"didSave,omitempty"`
 }
 
 // Describes the content type that a client supports in various
@@ -778,16 +778,16 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	// and `${3:foo}`. `$0` defines the final tab stop, it defaults to
 	// the end of the snippet. Placeholders with equal identifiers are linked,
 	// that is typing in one will update others too.
-	SnippetSupport *bool `json:"snippetSupport,omitempty"`
+	SnippetSupport bool `json:"snippetSupport,omitempty"`
 	// Client supports commit characters on a completion item.
-	CommitCharactersSupport *bool `json:"commitCharactersSupport,omitempty"`
+	CommitCharactersSupport bool `json:"commitCharactersSupport,omitempty"`
 	// Client supports the following content formats for the documentation
 	// property. The order describes the preferred format of the client.
-	DocumentationFormat *MarkupKindSlice `json:"documentationFormat,omitempty"`
+	DocumentationFormat MarkupKindSlice `json:"documentationFormat,omitempty"`
 	// Client supports the deprecated property on a completion item.
-	DeprecatedSupport *bool `json:"deprecatedSupport,omitempty"`
+	DeprecatedSupport bool `json:"deprecatedSupport,omitempty"`
 	// Client supports the preselect property on a completion item.
-	PreselectSupport *bool `json:"preselectSupport,omitempty"`
+	PreselectSupport bool `json:"preselectSupport,omitempty"`
 	// Client supports the tag property on a completion item. Clients supporting
 	// tags have to handle unknown tags gracefully. Clients especially need to
 	// preserve unknown tags when sending a completion item back to the server in
@@ -799,7 +799,7 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	// completion item is inserted in the text or should replace text.
 	//
 	// @since 3.16.0
-	InsertReplaceSupport *bool `json:"insertReplaceSupport,omitempty"`
+	InsertReplaceSupport bool `json:"insertReplaceSupport,omitempty"`
 	// Indicates which properties a client can resolve lazily on a completion
 	// item. Before version 3.16.0 only the predefined properties `documentation`
 	// and `details` could be resolved lazily.
@@ -816,7 +816,7 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	// details (see also `CompletionItemLabelDetails`).
 	//
 	// @since 3.17.0
-	LabelDetailsSupport *bool `json:"labelDetailsSupport,omitempty"`
+	LabelDetailsSupport bool `json:"labelDetailsSupport,omitempty"`
 }
 
 // The kind of a completion entry.
@@ -916,7 +916,7 @@ type CompletionClientCapabilitiesCompletionItemKind struct {
 	// If this property is not present the client only supports
 	// the completion items kinds from `Text` to `Reference` as defined in
 	// the initial version of the protocol.
-	ValueSet *CompletionItemKindSlice `json:"valueSet,omitempty"`
+	ValueSet CompletionItemKindSlice `json:"valueSet,omitempty"`
 }
 
 type CompletionClientCapabilitiesCompletionList struct {
@@ -928,7 +928,7 @@ type CompletionClientCapabilitiesCompletionList struct {
 	// no properties are supported.
 	//
 	// @since 3.17.0
-	ItemDefaults *stringSlice `json:"itemDefaults,omitempty"`
+	ItemDefaults stringSlice `json:"itemDefaults,omitempty"`
 }
 
 // Completion client capabilities
@@ -936,7 +936,7 @@ type CompletionClientCapabilitiesCompletionList struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionClientCapabilities
 type CompletionClientCapabilities struct {
 	// Whether completion supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports the following `CompletionItem` specific
 	// capabilities.
 	CompletionItem *CompletionClientCapabilitiesCompletionItem `json:"completionItem,omitempty"`
@@ -947,10 +947,10 @@ type CompletionClientCapabilities struct {
 	// text in either `insertText` or `textEdit`.
 	//
 	// @since 3.17.0
-	InsertTextMode *InsertTextMode `json:"insertTextMode,omitempty"`
+	InsertTextMode InsertTextMode `json:"insertTextMode,omitempty"`
 	// The client supports to send additional context information for a
 	// `textDocument/completion` request.
-	ContextSupport *bool `json:"contextSupport,omitempty"`
+	ContextSupport bool `json:"contextSupport,omitempty"`
 	// The client supports the following `CompletionList` specific
 	// capabilities.
 	//
@@ -961,10 +961,10 @@ type CompletionClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hoverClientCapabilities
 type HoverClientCapabilities struct {
 	// Whether hover supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Client supports the following content formats for the content
 	// property. The order describes the preferred format of the client.
-	ContentFormat *MarkupKindSlice `json:"contentFormat,omitempty"`
+	ContentFormat MarkupKindSlice `json:"contentFormat,omitempty"`
 }
 
 type SignatureHelpClientCapabilitiesSignatureInformationParameterInformation struct {
@@ -972,20 +972,20 @@ type SignatureHelpClientCapabilitiesSignatureInformationParameterInformation str
 	// simple label string.
 	//
 	// @since 3.14.0
-	LabelOffsetSupport *bool `json:"labelOffsetSupport,omitempty"`
+	LabelOffsetSupport bool `json:"labelOffsetSupport,omitempty"`
 }
 
 type SignatureHelpClientCapabilitiesSignatureInformation struct {
 	// Client supports the following content formats for the documentation
 	// property. The order describes the preferred format of the client.
-	DocumentationFormat *MarkupKindSlice `json:"documentationFormat,omitempty"`
+	DocumentationFormat MarkupKindSlice `json:"documentationFormat,omitempty"`
 	// Client capabilities specific to parameter information.
 	ParameterInformation *SignatureHelpClientCapabilitiesSignatureInformationParameterInformation `json:"parameterInformation,omitempty"`
 	// The client supports the `activeParameter` property on `SignatureInformation`
 	// literal.
 	//
 	// @since 3.16.0
-	ActiveParameterSupport *bool `json:"activeParameterSupport,omitempty"`
+	ActiveParameterSupport bool `json:"activeParameterSupport,omitempty"`
 }
 
 // Client Capabilities for a {@link SignatureHelpRequest}.
@@ -993,7 +993,7 @@ type SignatureHelpClientCapabilitiesSignatureInformation struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#signatureHelpClientCapabilities
 type SignatureHelpClientCapabilities struct {
 	// Whether signature help supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports the following `SignatureInformation`
 	// specific properties.
 	SignatureInformation *SignatureHelpClientCapabilitiesSignatureInformation `json:"signatureInformation,omitempty"`
@@ -1003,7 +1003,7 @@ type SignatureHelpClientCapabilities struct {
 	// `SignatureHelpOptions`.
 	//
 	// @since 3.15.0
-	ContextSupport *bool `json:"contextSupport,omitempty"`
+	ContextSupport bool `json:"contextSupport,omitempty"`
 }
 
 // @since 3.14.0
@@ -1013,9 +1013,9 @@ type DeclarationClientCapabilities struct {
 	// Whether declaration supports dynamic registration. If this is set to `true`
 	// the client supports the new `DeclarationRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports additional metadata in the form of declaration links.
-	LinkSupport *bool `json:"linkSupport,omitempty"`
+	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
 // Client Capabilities for a {@link DefinitionRequest}.
@@ -1023,11 +1023,11 @@ type DeclarationClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionClientCapabilities
 type DefinitionClientCapabilities struct {
 	// Whether definition supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports additional metadata in the form of definition links.
 	//
 	// @since 3.14.0
-	LinkSupport *bool `json:"linkSupport,omitempty"`
+	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
 // Since 3.6.0
@@ -1037,11 +1037,11 @@ type TypeDefinitionClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `TypeDefinitionRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports additional metadata in the form of definition links.
 	//
 	// Since 3.14.0
-	LinkSupport *bool `json:"linkSupport,omitempty"`
+	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
 // @since 3.6.0
@@ -1051,11 +1051,11 @@ type ImplementationClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `ImplementationRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports additional metadata in the form of definition links.
 	//
 	// @since 3.14.0
-	LinkSupport *bool `json:"linkSupport,omitempty"`
+	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
 // Client Capabilities for a {@link ReferencesRequest}.
@@ -1063,7 +1063,7 @@ type ImplementationClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceClientCapabilities
 type ReferenceClientCapabilities struct {
 	// Whether references supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client Capabilities for a {@link DocumentHighlightRequest}.
@@ -1071,7 +1071,7 @@ type ReferenceClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentHighlightClientCapabilities
 type DocumentHighlightClientCapabilities struct {
 	// Whether document highlight supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 type DocumentSymbolClientCapabilitiesSymbolKind struct {
@@ -1083,7 +1083,7 @@ type DocumentSymbolClientCapabilitiesSymbolKind struct {
 	// If this property is not present the client only supports
 	// the symbol kinds from `File` to `Array` as defined in
 	// the initial version of the protocol.
-	ValueSet *SymbolKindSlice `json:"valueSet,omitempty"`
+	ValueSet SymbolKindSlice `json:"valueSet,omitempty"`
 }
 
 type DocumentSymbolClientCapabilitiesTagSupport struct {
@@ -1096,12 +1096,12 @@ type DocumentSymbolClientCapabilitiesTagSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolClientCapabilities
 type DocumentSymbolClientCapabilities struct {
 	// Whether document symbol supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Specific capabilities for the `SymbolKind` in the
 	// `textDocument/documentSymbol` request.
 	SymbolKind *DocumentSymbolClientCapabilitiesSymbolKind `json:"symbolKind,omitempty"`
 	// The client supports hierarchical document symbols.
-	HierarchicalDocumentSymbolSupport *bool `json:"hierarchicalDocumentSymbolSupport,omitempty"`
+	HierarchicalDocumentSymbolSupport bool `json:"hierarchicalDocumentSymbolSupport,omitempty"`
 	// The client supports tags on `SymbolInformation`. Tags are supported on
 	// `DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.
 	// Clients supporting tags have to handle unknown tags gracefully.
@@ -1112,7 +1112,7 @@ type DocumentSymbolClientCapabilities struct {
 	// registering a document symbol provider.
 	//
 	// @since 3.16.0
-	LabelSupport *bool `json:"labelSupport,omitempty"`
+	LabelSupport bool `json:"labelSupport,omitempty"`
 }
 
 // A set of predefined code action kinds
@@ -1185,7 +1185,7 @@ type CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind struct {
 type CodeActionClientCapabilitiesCodeActionLiteralSupport struct {
 	// The code action kind is support with the following value
 	// set.
-	CodeActionKind CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind `json:"codeActionKind"`
+	CodeActionKind *CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind `json:"codeActionKind"`
 }
 
 type CodeActionClientCapabilitiesResolveSupport struct {
@@ -1198,7 +1198,7 @@ type CodeActionClientCapabilitiesResolveSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionClientCapabilities
 type CodeActionClientCapabilities struct {
 	// Whether code action supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client support code action literals of type `CodeAction` as a valid
 	// response of the `textDocument/codeAction` request. If the property is not
 	// set the request can only return `Command` literals.
@@ -1208,17 +1208,17 @@ type CodeActionClientCapabilities struct {
 	// Whether code action supports the `isPreferred` property.
 	//
 	// @since 3.15.0
-	IsPreferredSupport *bool `json:"isPreferredSupport,omitempty"`
+	IsPreferredSupport bool `json:"isPreferredSupport,omitempty"`
 	// Whether code action supports the `disabled` property.
 	//
 	// @since 3.16.0
-	DisabledSupport *bool `json:"disabledSupport,omitempty"`
+	DisabledSupport bool `json:"disabledSupport,omitempty"`
 	// Whether code action supports the `data` property which is
 	// preserved between a `textDocument/codeAction` and a
 	// `codeAction/resolve` request.
 	//
 	// @since 3.16.0
-	DataSupport *bool `json:"dataSupport,omitempty"`
+	DataSupport bool `json:"dataSupport,omitempty"`
 	// Whether the client supports resolving additional code action
 	// properties via a separate `codeAction/resolve` request.
 	//
@@ -1231,7 +1231,7 @@ type CodeActionClientCapabilities struct {
 	// for confirmation.
 	//
 	// @since 3.16.0
-	HonorsChangeAnnotations *bool `json:"honorsChangeAnnotations,omitempty"`
+	HonorsChangeAnnotations bool `json:"honorsChangeAnnotations,omitempty"`
 }
 
 // The client capabilities  of a {@link CodeLensRequest}.
@@ -1239,7 +1239,7 @@ type CodeActionClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLensClientCapabilities
 type CodeLensClientCapabilities struct {
 	// Whether code lens supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // The client capabilities of a {@link DocumentLinkRequest}.
@@ -1247,11 +1247,11 @@ type CodeLensClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentLinkClientCapabilities
 type DocumentLinkClientCapabilities struct {
 	// Whether document link supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Whether the client supports the `tooltip` property on `DocumentLink`.
 	//
 	// @since 3.15.0
-	TooltipSupport *bool `json:"tooltipSupport,omitempty"`
+	TooltipSupport bool `json:"tooltipSupport,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentColorClientCapabilities
@@ -1259,7 +1259,7 @@ type DocumentColorClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `DocumentColorRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client capabilities of a {@link DocumentFormattingRequest}.
@@ -1267,7 +1267,7 @@ type DocumentColorClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFormattingClientCapabilities
 type DocumentFormattingClientCapabilities struct {
 	// Whether formatting supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client capabilities of a {@link DocumentRangeFormattingRequest}.
@@ -1275,12 +1275,12 @@ type DocumentFormattingClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentRangeFormattingClientCapabilities
 type DocumentRangeFormattingClientCapabilities struct {
 	// Whether range formatting supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Whether the client supports formatting multiple ranges at once.
 	//
 	// @since 3.18.0
 	// @proposed
-	RangesSupport *bool `json:"rangesSupport,omitempty"`
+	RangesSupport bool `json:"rangesSupport,omitempty"`
 }
 
 // Client capabilities of a {@link DocumentOnTypeFormattingRequest}.
@@ -1288,7 +1288,7 @@ type DocumentRangeFormattingClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentOnTypeFormattingClientCapabilities
 type DocumentOnTypeFormattingClientCapabilities struct {
 	// Whether on type formatting supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#prepareSupportDefaultBehavior
@@ -1332,19 +1332,19 @@ func (p PrepareSupportDefaultBehavior) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#renameClientCapabilities
 type RenameClientCapabilities struct {
 	// Whether rename supports dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Client supports testing for validity of rename operations
 	// before execution.
 	//
 	// @since 3.12.0
-	PrepareSupport *bool `json:"prepareSupport,omitempty"`
+	PrepareSupport bool `json:"prepareSupport,omitempty"`
 	// Client supports the default behavior result.
 	//
 	// The value indicates the default behavior used by the
 	// client.
 	//
 	// @since 3.16.0
-	PrepareSupportDefaultBehavior *PrepareSupportDefaultBehavior `json:"prepareSupportDefaultBehavior,omitempty"`
+	PrepareSupportDefaultBehavior PrepareSupportDefaultBehavior `json:"prepareSupportDefaultBehavior,omitempty"`
 	// Whether the client honors the change annotations in
 	// text edits and resource operations returned via the
 	// rename request's workspace edit by for example presenting
@@ -1352,7 +1352,7 @@ type RenameClientCapabilities struct {
 	// for confirmation.
 	//
 	// @since 3.16.0
-	HonorsChangeAnnotations *bool `json:"honorsChangeAnnotations,omitempty"`
+	HonorsChangeAnnotations bool `json:"honorsChangeAnnotations,omitempty"`
 }
 
 // A set of predefined range kinds.
@@ -1376,7 +1376,7 @@ type FoldingRangeClientCapabilitiesFoldingRangeKind struct {
 	// property exists the client also guarantees that it will
 	// handle values outside its set gracefully and falls back
 	// to a default value when unknown.
-	ValueSet *FoldingRangeKindSlice `json:"valueSet,omitempty"`
+	ValueSet FoldingRangeKindSlice `json:"valueSet,omitempty"`
 }
 
 type FoldingRangeClientCapabilitiesFoldingRange struct {
@@ -1384,7 +1384,7 @@ type FoldingRangeClientCapabilitiesFoldingRange struct {
 	// folding ranges to display custom labels instead of the default text.
 	//
 	// @since 3.17.0
-	CollapsedText *bool `json:"collapsedText,omitempty"`
+	CollapsedText bool `json:"collapsedText,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#foldingRangeClientCapabilities
@@ -1393,15 +1393,15 @@ type FoldingRangeClientCapabilities struct {
 	// providers. If this is set to `true` the client supports the new
 	// `FoldingRangeRegistrationOptions` return value for the corresponding
 	// server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The maximum number of folding ranges that the client prefers to receive
 	// per document. The value serves as a hint, servers are free to follow the
 	// limit.
-	RangeLimit *uint32 `json:"rangeLimit,omitempty"`
+	RangeLimit uint32 `json:"rangeLimit,omitempty"`
 	// If set, the client signals that it only supports folding complete lines.
 	// If set, client will ignore specified `startCharacter` and `endCharacter`
 	// properties in a FoldingRange.
-	LineFoldingOnly *bool `json:"lineFoldingOnly,omitempty"`
+	LineFoldingOnly bool `json:"lineFoldingOnly,omitempty"`
 	// Specific options for the folding range kind.
 	//
 	// @since 3.17.0
@@ -1417,7 +1417,7 @@ type SelectionRangeClientCapabilities struct {
 	// Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
 	// the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
 	// capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // The diagnostic tags.
@@ -1481,7 +1481,7 @@ type PublishDiagnosticsClientCapabilitiesTagSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsClientCapabilities
 type PublishDiagnosticsClientCapabilities struct {
 	// Whether the clients accepts diagnostics with related information.
-	RelatedInformation *bool `json:"relatedInformation,omitempty"`
+	RelatedInformation bool `json:"relatedInformation,omitempty"`
 	// Client supports the tag property to provide meta data about a diagnostic.
 	// Clients supporting tags have to handle unknown tags gracefully.
 	//
@@ -1491,17 +1491,17 @@ type PublishDiagnosticsClientCapabilities struct {
 	// `textDocument/publishDiagnostics` notification's parameter.
 	//
 	// @since 3.15.0
-	VersionSupport *bool `json:"versionSupport,omitempty"`
+	VersionSupport bool `json:"versionSupport,omitempty"`
 	// Client supports a codeDescription property
 	//
 	// @since 3.16.0
-	CodeDescriptionSupport *bool `json:"codeDescriptionSupport,omitempty"`
+	CodeDescriptionSupport bool `json:"codeDescriptionSupport,omitempty"`
 	// Whether code action supports the `data` property which is
 	// preserved between a `textDocument/publishDiagnostics` and
 	// `textDocument/codeAction` request.
 	//
 	// @since 3.16.0
-	DataSupport *bool `json:"dataSupport,omitempty"`
+	DataSupport bool `json:"dataSupport,omitempty"`
 }
 
 // @since 3.16.0
@@ -1511,7 +1511,7 @@ type CallHierarchyClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 type Boolean bool
@@ -1521,14 +1521,14 @@ type SemanticTokensClientCapabilitiesRequestsRangeOr2 struct {
 
 // BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2 contains either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensClientCapabilitiesRequestsRangeOr2]
+//   - [*SemanticTokensClientCapabilitiesRequestsRangeOr2]
 type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2 struct {
 	Value BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value
 }
 
 // BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value is either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensClientCapabilitiesRequestsRangeOr2]
+//   - [*SemanticTokensClientCapabilitiesRequestsRangeOr2]
 //
 //gosumtype:decl BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value
 type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value interface {
@@ -1536,7 +1536,7 @@ type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value interface {
 }
 
 func (Boolean) isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value() {}
-func (SemanticTokensClientCapabilitiesRequestsRangeOr2) isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value() {
+func (*SemanticTokensClientCapabilitiesRequestsRangeOr2) isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value() {
 }
 
 func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) UnmarshalJSON(data []byte) error {
@@ -1548,7 +1548,7 @@ func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) UnmarshalJSO
 		b.Value = booleanValue
 		return nil
 	}
-	var semanticTokensClientCapabilitiesRequestsRangeOr2Value SemanticTokensClientCapabilitiesRequestsRangeOr2
+	var semanticTokensClientCapabilitiesRequestsRangeOr2Value *SemanticTokensClientCapabilitiesRequestsRangeOr2
 	if err := json.Unmarshal(data, &semanticTokensClientCapabilitiesRequestsRangeOr2Value); err == nil {
 		b.Value = semanticTokensClientCapabilitiesRequestsRangeOr2Value
 		return nil
@@ -1566,19 +1566,19 @@ func (b BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) MarshalJSON()
 type SemanticTokensClientCapabilitiesRequestsFullOr2 struct {
 	// The client will send the `textDocument/semanticTokens/full/delta` request if
 	// the server provides a corresponding handler.
-	Delta *bool `json:"delta,omitempty"`
+	Delta bool `json:"delta,omitempty"`
 }
 
 // BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 contains either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensClientCapabilitiesRequestsFullOr2]
+//   - [*SemanticTokensClientCapabilitiesRequestsFullOr2]
 type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 struct {
 	Value BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value
 }
 
 // BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value is either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensClientCapabilitiesRequestsFullOr2]
+//   - [*SemanticTokensClientCapabilitiesRequestsFullOr2]
 //
 //gosumtype:decl BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value
 type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value interface {
@@ -1586,7 +1586,7 @@ type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value interface {
 }
 
 func (Boolean) isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value() {}
-func (SemanticTokensClientCapabilitiesRequestsFullOr2) isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value() {
+func (*SemanticTokensClientCapabilitiesRequestsFullOr2) isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value() {
 }
 
 func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2) UnmarshalJSON(data []byte) error {
@@ -1598,7 +1598,7 @@ func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2) UnmarshalJSON
 		b.Value = booleanValue
 		return nil
 	}
-	var semanticTokensClientCapabilitiesRequestsFullOr2Value SemanticTokensClientCapabilitiesRequestsFullOr2
+	var semanticTokensClientCapabilitiesRequestsFullOr2Value *SemanticTokensClientCapabilitiesRequestsFullOr2
 	if err := json.Unmarshal(data, &semanticTokensClientCapabilitiesRequestsFullOr2Value); err == nil {
 		b.Value = semanticTokensClientCapabilitiesRequestsFullOr2Value
 		return nil
@@ -1667,7 +1667,7 @@ type SemanticTokensClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Which requests the client supports and might send to the server
 	// depending on the server's capability. Please note that clients might not
 	// show semantic tokens or degrade some of the user experience if a range
@@ -1676,7 +1676,7 @@ type SemanticTokensClientCapabilities struct {
 	// `request.range` are both set to true but the server only provides a
 	// range provider the client might not render a minimap correctly or might
 	// even decide to not show any semantic tokens at all.
-	Requests SemanticTokensClientCapabilitiesRequests `json:"requests"`
+	Requests *SemanticTokensClientCapabilitiesRequests `json:"requests"`
 	// The token types that the client supports.
 	TokenTypes stringSlice `json:"tokenTypes"`
 	// The token modifiers that the client supports.
@@ -1684,16 +1684,16 @@ type SemanticTokensClientCapabilities struct {
 	// The token formats the clients supports.
 	Formats TokenFormatSlice `json:"formats"`
 	// Whether the client supports tokens that can overlap each other.
-	OverlappingTokenSupport *bool `json:"overlappingTokenSupport,omitempty"`
+	OverlappingTokenSupport bool `json:"overlappingTokenSupport,omitempty"`
 	// Whether the client supports tokens that can span multiple lines.
-	MultilineTokenSupport *bool `json:"multilineTokenSupport,omitempty"`
+	MultilineTokenSupport bool `json:"multilineTokenSupport,omitempty"`
 	// Whether the client allows the server to actively cancel a
 	// semantic token request, e.g. supports returning
 	// LSPErrorCodes.ServerCancelled. If a server does the client
 	// needs to retrigger the request.
 	//
 	// @since 3.17.0
-	ServerCancelSupport *bool `json:"serverCancelSupport,omitempty"`
+	ServerCancelSupport bool `json:"serverCancelSupport,omitempty"`
 	// Whether the client uses semantic tokens to augment existing
 	// syntax tokens. If set to `true` client side created syntax
 	// tokens and semantic tokens are both used for colorization. If
@@ -1704,7 +1704,7 @@ type SemanticTokensClientCapabilities struct {
 	// specified.
 	//
 	// @since 3.17.0
-	AugmentsSyntaxTokens *bool `json:"augmentsSyntaxTokens,omitempty"`
+	AugmentsSyntaxTokens bool `json:"augmentsSyntaxTokens,omitempty"`
 }
 
 // Client capabilities for the linked editing range request.
@@ -1716,7 +1716,7 @@ type LinkedEditingRangeClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client capabilities specific to the moniker request.
@@ -1728,7 +1728,7 @@ type MonikerClientCapabilities struct {
 	// Whether moniker supports dynamic registration. If this is set to `true`
 	// the client supports the new `MonikerRegistrationOptions` return value
 	// for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // @since 3.17.0
@@ -1738,7 +1738,7 @@ type TypeHierarchyClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Client capabilities specific to inline values.
@@ -1748,7 +1748,7 @@ type TypeHierarchyClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlineValueClientCapabilities
 type InlineValueClientCapabilities struct {
 	// Whether implementation supports dynamic registration for inline value providers.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 type InlayHintClientCapabilitiesResolveSupport struct {
@@ -1763,7 +1763,7 @@ type InlayHintClientCapabilitiesResolveSupport struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlayHintClientCapabilities
 type InlayHintClientCapabilities struct {
 	// Whether inlay hints support dynamic registration.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Indicates which properties a client can resolve lazily on an inlay
 	// hint.
 	ResolveSupport *InlayHintClientCapabilitiesResolveSupport `json:"resolveSupport,omitempty"`
@@ -1778,9 +1778,9 @@ type DiagnosticClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// Whether the clients supports related documents for document diagnostic pulls.
-	RelatedDocumentSupport *bool `json:"relatedDocumentSupport,omitempty"`
+	RelatedDocumentSupport bool `json:"relatedDocumentSupport,omitempty"`
 }
 
 // Client capabilities specific to inline completions.
@@ -1791,7 +1791,7 @@ type DiagnosticClientCapabilities struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlineCompletionClientCapabilities
 type InlineCompletionClientCapabilities struct {
 	// Whether implementation supports dynamic registration for inline completion providers.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
 // Text document specific client capabilities.
@@ -1904,9 +1904,9 @@ type NotebookDocumentSyncClientCapabilities struct {
 	// set to `true` the client supports the new
 	// `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
-	DynamicRegistration *bool `json:"dynamicRegistration,omitempty"`
+	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports sending execution summary data per cell.
-	ExecutionSummarySupport *bool `json:"executionSummarySupport,omitempty"`
+	ExecutionSummarySupport bool `json:"executionSummarySupport,omitempty"`
 }
 
 // Capabilities specific to the notebook document support.
@@ -1918,14 +1918,14 @@ type NotebookDocumentClientCapabilities struct {
 	// Capabilities specific to notebook document synchronization
 	//
 	// @since 3.17.0
-	Synchronization NotebookDocumentSyncClientCapabilities `json:"synchronization"`
+	Synchronization *NotebookDocumentSyncClientCapabilities `json:"synchronization"`
 }
 
 type ShowMessageRequestClientCapabilitiesMessageActionItem struct {
 	// Whether the client supports additional attributes which
 	// are preserved and send back to the server in the
 	// request's response.
-	AdditionalPropertiesSupport *bool `json:"additionalPropertiesSupport,omitempty"`
+	AdditionalPropertiesSupport bool `json:"additionalPropertiesSupport,omitempty"`
 }
 
 // Show message request client capabilities
@@ -1958,7 +1958,7 @@ type WindowClientCapabilities struct {
 	// capabilities.
 	//
 	// @since 3.15.0
-	WorkDoneProgress *bool `json:"workDoneProgress,omitempty"`
+	WorkDoneProgress bool `json:"workDoneProgress,omitempty"`
 	// Capabilities specific to the showMessage request.
 	//
 	// @since 3.16.0
@@ -1987,7 +1987,7 @@ type RegularExpressionsClientCapabilities struct {
 	// The engine's name.
 	Engine string `json:"engine"`
 	// The engine's version.
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version,omitempty"`
 }
 
 // Client capabilities specific to the used markdown parser.
@@ -1999,12 +1999,12 @@ type MarkdownClientCapabilities struct {
 	// The name of the parser.
 	Parser string `json:"parser"`
 	// The version of the parser.
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version,omitempty"`
 	// A list of HTML tags that the client allows / supports in
 	// Markdown.
 	//
 	// @since 3.17.0
-	AllowedTags *stringSlice `json:"allowedTags,omitempty"`
+	AllowedTags stringSlice `json:"allowedTags,omitempty"`
 }
 
 // A set of predefined position encoding kinds.
@@ -2071,7 +2071,7 @@ type GeneralClientCapabilities struct {
 	// side.
 	//
 	// @since 3.17.0
-	PositionEncodings *PositionEncodingKindSlice `json:"positionEncodings,omitempty"`
+	PositionEncodings PositionEncodingKindSlice `json:"positionEncodings,omitempty"`
 }
 
 type stringLSPAnyMap map[string]LSPAny
@@ -2206,7 +2206,7 @@ type ClientCapabilities struct {
 	// @since 3.16.0
 	General *GeneralClientCapabilities `json:"general,omitempty"`
 	// Experimental client capabilities.
-	Experimental *LSPAny `json:"experimental,omitempty"`
+	Experimental LSPAny `json:"experimental,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#traceValues
@@ -2256,13 +2256,13 @@ func (t TraceValues) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#_InitializeParams
 type _InitializeParams struct {
-	WorkDoneProgressParams
+	*WorkDoneProgressParams
 	// The process Id of the parent process that started
 	// the server.
 	//
 	// Is `null` if the process has not been started by another process.
 	// If the parent process is not alive then the server should exit.
-	ProcessId *Integer `json:"processId"`
+	ProcessId Integer `json:"processId"`
 	// Information about the client
 	//
 	// @since 3.15.0
@@ -2275,24 +2275,24 @@ type _InitializeParams struct {
 	// (See https://en.wikipedia.org/wiki/IETF_language_tag)
 	//
 	// @since 3.16.0
-	Locale *string `json:"locale,omitempty"`
+	Locale string `json:"locale,omitempty"`
 	// The rootPath of the workspace. Is null
 	// if no folder is open.
 	//
 	// Deprecated: in favour of rootUri.
-	RootPath **String `json:"rootPath,omitempty"`
+	RootPath String `json:"rootPath,omitempty"`
 	// The rootUri of the workspace. Is null if no
 	// folder is open. If both `rootPath` and `rootUri` are set
 	// `rootUri` wins.
 	//
 	// Deprecated: in favour of workspaceFolders.
-	RootUri *DocumentUri `json:"rootUri"`
+	RootUri DocumentUri `json:"rootUri"`
 	// The capabilities provided by the client (editor or tool)
-	Capabilities ClientCapabilities `json:"capabilities"`
+	Capabilities *ClientCapabilities `json:"capabilities"`
 	// User provided initialization options.
-	InitializationOptions *LSPAny `json:"initializationOptions,omitempty"`
+	InitializationOptions LSPAny `json:"initializationOptions,omitempty"`
 	// The initial trace setting. If omitted trace is disabled ('off').
-	Trace *TraceValues `json:"trace,omitempty"`
+	Trace TraceValues `json:"trace,omitempty"`
 }
 
 // A workspace folder inside a client.
@@ -2306,7 +2306,7 @@ type WorkspaceFolder struct {
 	Name string `json:"name"`
 }
 
-type WorkspaceFolderSlice []WorkspaceFolder
+type WorkspaceFolderSlice []*WorkspaceFolder
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersInitializeParams
 type WorkspaceFoldersInitializeParams struct {
@@ -2317,13 +2317,13 @@ type WorkspaceFoldersInitializeParams struct {
 	// configured.
 	//
 	// @since 3.6.0
-	WorkspaceFolders **WorkspaceFolderSlice `json:"workspaceFolders,omitempty"`
+	WorkspaceFolders WorkspaceFolderSlice `json:"workspaceFolders,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
 type InitializeParams struct {
-	_InitializeParams
-	WorkspaceFoldersInitializeParams
+	*_InitializeParams
+	*WorkspaceFoldersInitializeParams
 }
 
 // Defines how the host (editor) should sync
@@ -2380,27 +2380,27 @@ func (t TextDocumentSyncKind) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#saveOptions
 type SaveOptions struct {
 	// The client is supposed to include the content on save.
-	IncludeText *bool `json:"includeText,omitempty"`
+	IncludeText bool `json:"includeText,omitempty"`
 }
 
 // BooleanOrSaveOptions contains either of the following types:
 //   - [Boolean]
-//   - [SaveOptions]
+//   - [*SaveOptions]
 type BooleanOrSaveOptions struct {
 	Value BooleanOrSaveOptionsValue
 }
 
 // BooleanOrSaveOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [SaveOptions]
+//   - [*SaveOptions]
 //
 //gosumtype:decl BooleanOrSaveOptionsValue
 type BooleanOrSaveOptionsValue interface {
 	isBooleanOrSaveOptionsValue()
 }
 
-func (Boolean) isBooleanOrSaveOptionsValue()     {}
-func (SaveOptions) isBooleanOrSaveOptionsValue() {}
+func (Boolean) isBooleanOrSaveOptionsValue()      {}
+func (*SaveOptions) isBooleanOrSaveOptionsValue() {}
 
 func (b *BooleanOrSaveOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -2411,7 +2411,7 @@ func (b *BooleanOrSaveOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var saveOptionsValue SaveOptions
+	var saveOptionsValue *SaveOptions
 	if err := json.Unmarshal(data, &saveOptionsValue); err == nil {
 		b.Value = saveOptionsValue
 		return nil
@@ -2430,30 +2430,30 @@ func (b BooleanOrSaveOptions) MarshalJSON() ([]byte, error) {
 type TextDocumentSyncOptions struct {
 	// Open and close notifications are sent to the server. If omitted open close notification should not
 	// be sent.
-	OpenClose *bool `json:"openClose,omitempty"`
+	OpenClose bool `json:"openClose,omitempty"`
 	// Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
 	// and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.
-	Change *TextDocumentSyncKind `json:"change,omitempty"`
+	Change TextDocumentSyncKind `json:"change,omitempty"`
 	// If present will save notifications are sent to the server. If omitted the notification should not be
 	// sent.
-	WillSave *bool `json:"willSave,omitempty"`
+	WillSave bool `json:"willSave,omitempty"`
 	// If present will save wait until requests are sent to the server. If omitted the request should not be
 	// sent.
-	WillSaveWaitUntil *bool `json:"willSaveWaitUntil,omitempty"`
+	WillSaveWaitUntil bool `json:"willSaveWaitUntil,omitempty"`
 	// If present save notifications are sent to the server. If omitted the notification should not be
 	// sent.
 	Save *BooleanOrSaveOptions `json:"save,omitempty"`
 }
 
 // TextDocumentSyncOptionsOrTextDocumentSyncKind contains either of the following types:
-//   - [TextDocumentSyncOptions]
+//   - [*TextDocumentSyncOptions]
 //   - [TextDocumentSyncKind]
 type TextDocumentSyncOptionsOrTextDocumentSyncKind struct {
 	Value TextDocumentSyncOptionsOrTextDocumentSyncKindValue
 }
 
 // TextDocumentSyncOptionsOrTextDocumentSyncKindValue is either of the following types:
-//   - [TextDocumentSyncOptions]
+//   - [*TextDocumentSyncOptions]
 //   - [TextDocumentSyncKind]
 //
 //gosumtype:decl TextDocumentSyncOptionsOrTextDocumentSyncKindValue
@@ -2461,14 +2461,14 @@ type TextDocumentSyncOptionsOrTextDocumentSyncKindValue interface {
 	isTextDocumentSyncOptionsOrTextDocumentSyncKindValue()
 }
 
-func (TextDocumentSyncOptions) isTextDocumentSyncOptionsOrTextDocumentSyncKindValue() {}
-func (TextDocumentSyncKind) isTextDocumentSyncOptionsOrTextDocumentSyncKindValue()    {}
+func (*TextDocumentSyncOptions) isTextDocumentSyncOptionsOrTextDocumentSyncKindValue() {}
+func (TextDocumentSyncKind) isTextDocumentSyncOptionsOrTextDocumentSyncKindValue()     {}
 
 func (t *TextDocumentSyncOptionsOrTextDocumentSyncKind) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	var textDocumentSyncOptionsValue TextDocumentSyncOptions
+	var textDocumentSyncOptionsValue *TextDocumentSyncOptions
 	if err := json.Unmarshal(data, &textDocumentSyncOptionsValue); err == nil {
 		t.Value = textDocumentSyncOptionsValue
 		return nil
@@ -2492,69 +2492,69 @@ type NotebookDocumentFilterOr1 struct {
 	// The type of the enclosing notebook.
 	NotebookType string `json:"notebookType"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme *string `json:"scheme,omitempty"`
+	Scheme string `json:"scheme,omitempty"`
 	// A glob pattern.
-	Pattern *string `json:"pattern,omitempty"`
+	Pattern string `json:"pattern,omitempty"`
 }
 
 type NotebookDocumentFilterOr2 struct {
 	// The type of the enclosing notebook.
-	NotebookType *string `json:"notebookType,omitempty"`
+	NotebookType string `json:"notebookType,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 	Scheme string `json:"scheme"`
 	// A glob pattern.
-	Pattern *string `json:"pattern,omitempty"`
+	Pattern string `json:"pattern,omitempty"`
 }
 
 type NotebookDocumentFilterOr3 struct {
 	// The type of the enclosing notebook.
-	NotebookType *string `json:"notebookType,omitempty"`
+	NotebookType string `json:"notebookType,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme *string `json:"scheme,omitempty"`
+	Scheme string `json:"scheme,omitempty"`
 	// A glob pattern.
 	Pattern string `json:"pattern"`
 }
 
 // NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3 contains either of the following types:
-//   - [NotebookDocumentFilterOr1]
-//   - [NotebookDocumentFilterOr2]
-//   - [NotebookDocumentFilterOr3]
+//   - [*NotebookDocumentFilterOr1]
+//   - [*NotebookDocumentFilterOr2]
+//   - [*NotebookDocumentFilterOr3]
 type NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3 struct {
 	Value NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value
 }
 
 // NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value is either of the following types:
-//   - [NotebookDocumentFilterOr1]
-//   - [NotebookDocumentFilterOr2]
-//   - [NotebookDocumentFilterOr3]
+//   - [*NotebookDocumentFilterOr1]
+//   - [*NotebookDocumentFilterOr2]
+//   - [*NotebookDocumentFilterOr3]
 //
 //gosumtype:decl NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value
 type NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value interface {
 	isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value()
 }
 
-func (NotebookDocumentFilterOr1) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
+func (*NotebookDocumentFilterOr1) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
 }
-func (NotebookDocumentFilterOr2) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
+func (*NotebookDocumentFilterOr2) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
 }
-func (NotebookDocumentFilterOr3) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
+func (*NotebookDocumentFilterOr3) isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value() {
 }
 
 func (n *NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	var notebookDocumentFilterOr1Value NotebookDocumentFilterOr1
+	var notebookDocumentFilterOr1Value *NotebookDocumentFilterOr1
 	if err := json.Unmarshal(data, &notebookDocumentFilterOr1Value); err == nil {
 		n.Value = notebookDocumentFilterOr1Value
 		return nil
 	}
-	var notebookDocumentFilterOr2Value NotebookDocumentFilterOr2
+	var notebookDocumentFilterOr2Value *NotebookDocumentFilterOr2
 	if err := json.Unmarshal(data, &notebookDocumentFilterOr2Value); err == nil {
 		n.Value = notebookDocumentFilterOr2Value
 		return nil
 	}
-	var notebookDocumentFilterOr3Value NotebookDocumentFilterOr3
+	var notebookDocumentFilterOr3Value *NotebookDocumentFilterOr3
 	if err := json.Unmarshal(data, &notebookDocumentFilterOr3Value); err == nil {
 		n.Value = notebookDocumentFilterOr3Value
 		return nil
@@ -2576,7 +2576,7 @@ func (n NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFi
 // @since 3.17.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#notebookDocumentFilter
-type NotebookDocumentFilter = NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3
+type NotebookDocumentFilter = *NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3
 
 // StringOrNotebookDocumentFilter contains either of the following types:
 //   - [String]
@@ -2625,22 +2625,22 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1Cells struct {
 	Language string `json:"language"`
 }
 
-type NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice []NotebookDocumentSyncOptionsNotebookSelectorOr1Cells
+type NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice []*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr1 struct {
 	// The notebook to be synced If a string
 	// value is provided it matches against the
 	// notebook type. '*' matches every notebook.
-	Notebook StringOrNotebookDocumentFilter `json:"notebook"`
+	Notebook *StringOrNotebookDocumentFilter `json:"notebook"`
 	// The cells of the matching notebook to be synced.
-	Cells *NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice `json:"cells,omitempty"`
+	Cells NotebookDocumentSyncOptionsNotebookSelectorOr1CellsSlice `json:"cells,omitempty"`
 }
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr2Cells struct {
 	Language string `json:"language"`
 }
 
-type NotebookDocumentSyncOptionsNotebookSelectorOr2CellsSlice []NotebookDocumentSyncOptionsNotebookSelectorOr2Cells
+type NotebookDocumentSyncOptionsNotebookSelectorOr2CellsSlice []*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
 	// The notebook to be synced If a string
@@ -2652,36 +2652,36 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
 }
 
 // NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 contains either of the following types:
-//   - [NotebookDocumentSyncOptionsNotebookSelectorOr1]
-//   - [NotebookDocumentSyncOptionsNotebookSelectorOr2]
+//   - [*NotebookDocumentSyncOptionsNotebookSelectorOr1]
+//   - [*NotebookDocumentSyncOptionsNotebookSelectorOr2]
 type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
 	Value NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value
 }
 
 // NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value is either of the following types:
-//   - [NotebookDocumentSyncOptionsNotebookSelectorOr1]
-//   - [NotebookDocumentSyncOptionsNotebookSelectorOr2]
+//   - [*NotebookDocumentSyncOptionsNotebookSelectorOr1]
+//   - [*NotebookDocumentSyncOptionsNotebookSelectorOr2]
 //
 //gosumtype:decl NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value
 type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value interface {
 	isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value()
 }
 
-func (NotebookDocumentSyncOptionsNotebookSelectorOr1) isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value() {
+func (*NotebookDocumentSyncOptionsNotebookSelectorOr1) isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value() {
 }
-func (NotebookDocumentSyncOptionsNotebookSelectorOr2) isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value() {
+func (*NotebookDocumentSyncOptionsNotebookSelectorOr2) isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value() {
 }
 
 func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	var notebookDocumentSyncOptionsNotebookSelectorOr1Value NotebookDocumentSyncOptionsNotebookSelectorOr1
+	var notebookDocumentSyncOptionsNotebookSelectorOr1Value *NotebookDocumentSyncOptionsNotebookSelectorOr1
 	if err := json.Unmarshal(data, &notebookDocumentSyncOptionsNotebookSelectorOr1Value); err == nil {
 		n.Value = notebookDocumentSyncOptionsNotebookSelectorOr1Value
 		return nil
 	}
-	var notebookDocumentSyncOptionsNotebookSelectorOr2Value NotebookDocumentSyncOptionsNotebookSelectorOr2
+	var notebookDocumentSyncOptionsNotebookSelectorOr2Value *NotebookDocumentSyncOptionsNotebookSelectorOr2
 	if err := json.Unmarshal(data, &notebookDocumentSyncOptionsNotebookSelectorOr2Value); err == nil {
 		n.Value = notebookDocumentSyncOptionsNotebookSelectorOr2Value
 		return nil
@@ -2696,7 +2696,7 @@ func (n NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOpti
 	return json.Marshal(n.Value)
 }
 
-type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Slice []NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2
+type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Slice []*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2
 
 // Options specific to a notebook plus its cells
 // to be synced to the server.
@@ -2718,7 +2718,7 @@ type NotebookDocumentSyncOptions struct {
 	NotebookSelector NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Slice `json:"notebookSelector"`
 	// Whether save notification should be forwarded to
 	// the server. Will only be honored if mode === `notebook`.
-	Save *bool `json:"save,omitempty"`
+	Save bool `json:"save,omitempty"`
 }
 
 // Static registration options to be returned in the initialize
@@ -2728,7 +2728,7 @@ type NotebookDocumentSyncOptions struct {
 type StaticRegistrationOptions struct {
 	// The id used to register the request. The id can be used to deregister
 	// the request again. See also Registration#id.
-	Id *string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 }
 
 // Registration options specific to a notebook.
@@ -2737,41 +2737,41 @@ type StaticRegistrationOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#notebookDocumentSyncRegistrationOptions
 type NotebookDocumentSyncRegistrationOptions struct {
-	NotebookDocumentSyncOptions
-	StaticRegistrationOptions
+	*NotebookDocumentSyncOptions
+	*StaticRegistrationOptions
 }
 
 // NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions contains either of the following types:
-//   - [NotebookDocumentSyncOptions]
-//   - [NotebookDocumentSyncRegistrationOptions]
+//   - [*NotebookDocumentSyncOptions]
+//   - [*NotebookDocumentSyncRegistrationOptions]
 type NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions struct {
 	Value NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue
 }
 
 // NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue is either of the following types:
-//   - [NotebookDocumentSyncOptions]
-//   - [NotebookDocumentSyncRegistrationOptions]
+//   - [*NotebookDocumentSyncOptions]
+//   - [*NotebookDocumentSyncRegistrationOptions]
 //
 //gosumtype:decl NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue
 type NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue interface {
 	isNotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue()
 }
 
-func (NotebookDocumentSyncOptions) isNotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue() {
+func (*NotebookDocumentSyncOptions) isNotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue() {
 }
-func (NotebookDocumentSyncRegistrationOptions) isNotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue() {
+func (*NotebookDocumentSyncRegistrationOptions) isNotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue() {
 }
 
 func (n *NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	var notebookDocumentSyncOptionsValue NotebookDocumentSyncOptions
+	var notebookDocumentSyncOptionsValue *NotebookDocumentSyncOptions
 	if err := json.Unmarshal(data, &notebookDocumentSyncOptionsValue); err == nil {
 		n.Value = notebookDocumentSyncOptionsValue
 		return nil
 	}
-	var notebookDocumentSyncRegistrationOptionsValue NotebookDocumentSyncRegistrationOptions
+	var notebookDocumentSyncRegistrationOptionsValue *NotebookDocumentSyncRegistrationOptions
 	if err := json.Unmarshal(data, &notebookDocumentSyncRegistrationOptionsValue); err == nil {
 		n.Value = notebookDocumentSyncRegistrationOptionsValue
 		return nil
@@ -2788,7 +2788,7 @@ func (n NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions) Ma
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workDoneProgressOptions
 type WorkDoneProgressOptions struct {
-	WorkDoneProgress *bool `json:"workDoneProgress,omitempty"`
+	WorkDoneProgress bool `json:"workDoneProgress,omitempty"`
 }
 
 type CompletionOptionsCompletionItem struct {
@@ -2797,14 +2797,14 @@ type CompletionOptionsCompletionItem struct {
 	// receiving a completion item in a resolve call.
 	//
 	// @since 3.17.0
-	LabelDetailsSupport *bool `json:"labelDetailsSupport,omitempty"`
+	LabelDetailsSupport bool `json:"labelDetailsSupport,omitempty"`
 }
 
 // Completion options.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionOptions
 type CompletionOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// Most tools trigger completion request automatically without explicitly requesting
 	// it using a keyboard shortcut (e.g. Ctrl+Space). Typically they do so when the user
 	// starts to type an identifier. For example if the user types `c` in a JavaScript file
@@ -2813,7 +2813,7 @@ type CompletionOptions struct {
 	//
 	// If code complete should automatically be trigger on characters not being valid inside
 	// an identifier (for example `.` in JavaScript) list them in `triggerCharacters`.
-	TriggerCharacters *stringSlice `json:"triggerCharacters,omitempty"`
+	TriggerCharacters stringSlice `json:"triggerCharacters,omitempty"`
 	// The list of all possible characters that commit a completion. This field can be used
 	// if clients don't support individual commit characters per completion item. See
 	// `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
@@ -2822,10 +2822,10 @@ type CompletionOptions struct {
 	// completion item the ones on the completion item win.
 	//
 	// @since 3.2.0
-	AllCommitCharacters *stringSlice `json:"allCommitCharacters,omitempty"`
+	AllCommitCharacters stringSlice `json:"allCommitCharacters,omitempty"`
 	// The server provides support to resolve additional
 	// information for a completion item.
-	ResolveProvider *bool `json:"resolveProvider,omitempty"`
+	ResolveProvider bool `json:"resolveProvider,omitempty"`
 	// The server supports the following `CompletionItem` specific
 	// capabilities.
 	//
@@ -2837,27 +2837,27 @@ type CompletionOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hoverOptions
 type HoverOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // BooleanOrHoverOptions contains either of the following types:
 //   - [Boolean]
-//   - [HoverOptions]
+//   - [*HoverOptions]
 type BooleanOrHoverOptions struct {
 	Value BooleanOrHoverOptionsValue
 }
 
 // BooleanOrHoverOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [HoverOptions]
+//   - [*HoverOptions]
 //
 //gosumtype:decl BooleanOrHoverOptionsValue
 type BooleanOrHoverOptionsValue interface {
 	isBooleanOrHoverOptionsValue()
 }
 
-func (Boolean) isBooleanOrHoverOptionsValue()      {}
-func (HoverOptions) isBooleanOrHoverOptionsValue() {}
+func (Boolean) isBooleanOrHoverOptionsValue()       {}
+func (*HoverOptions) isBooleanOrHoverOptionsValue() {}
 
 func (b *BooleanOrHoverOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -2868,7 +2868,7 @@ func (b *BooleanOrHoverOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var hoverOptionsValue HoverOptions
+	var hoverOptionsValue *HoverOptions
 	if err := json.Unmarshal(data, &hoverOptionsValue); err == nil {
 		b.Value = hoverOptionsValue
 		return nil
@@ -2887,90 +2887,90 @@ func (b BooleanOrHoverOptions) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#signatureHelpOptions
 type SignatureHelpOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// List of characters that trigger signature help automatically.
-	TriggerCharacters *stringSlice `json:"triggerCharacters,omitempty"`
+	TriggerCharacters stringSlice `json:"triggerCharacters,omitempty"`
 	// List of characters that re-trigger signature help.
 	//
 	// These trigger characters are only active when signature help is already showing. All trigger characters
 	// are also counted as re-trigger characters.
 	//
 	// @since 3.15.0
-	RetriggerCharacters *stringSlice `json:"retriggerCharacters,omitempty"`
+	RetriggerCharacters stringSlice `json:"retriggerCharacters,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#declarationOptions
 type DeclarationOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 type TextDocumentFilterOr1 struct {
 	// A language id, like `typescript`.
 	Language string `json:"language"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme *string `json:"scheme,omitempty"`
+	Scheme string `json:"scheme,omitempty"`
 	// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
-	Pattern *string `json:"pattern,omitempty"`
+	Pattern string `json:"pattern,omitempty"`
 }
 
 type TextDocumentFilterOr2 struct {
 	// A language id, like `typescript`.
-	Language *string `json:"language,omitempty"`
+	Language string `json:"language,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 	Scheme string `json:"scheme"`
 	// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
-	Pattern *string `json:"pattern,omitempty"`
+	Pattern string `json:"pattern,omitempty"`
 }
 
 type TextDocumentFilterOr3 struct {
 	// A language id, like `typescript`.
-	Language *string `json:"language,omitempty"`
+	Language string `json:"language,omitempty"`
 	// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
-	Scheme *string `json:"scheme,omitempty"`
+	Scheme string `json:"scheme,omitempty"`
 	// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 	Pattern string `json:"pattern"`
 }
 
 // TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3 contains either of the following types:
-//   - [TextDocumentFilterOr1]
-//   - [TextDocumentFilterOr2]
-//   - [TextDocumentFilterOr3]
+//   - [*TextDocumentFilterOr1]
+//   - [*TextDocumentFilterOr2]
+//   - [*TextDocumentFilterOr3]
 type TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3 struct {
 	Value TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value
 }
 
 // TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value is either of the following types:
-//   - [TextDocumentFilterOr1]
-//   - [TextDocumentFilterOr2]
-//   - [TextDocumentFilterOr3]
+//   - [*TextDocumentFilterOr1]
+//   - [*TextDocumentFilterOr2]
+//   - [*TextDocumentFilterOr3]
 //
 //gosumtype:decl TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value
 type TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value interface {
 	isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value()
 }
 
-func (TextDocumentFilterOr1) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
+func (*TextDocumentFilterOr1) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
 }
-func (TextDocumentFilterOr2) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
+func (*TextDocumentFilterOr2) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
 }
-func (TextDocumentFilterOr3) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
+func (*TextDocumentFilterOr3) isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value() {
 }
 
 func (t *TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	var textDocumentFilterOr1Value TextDocumentFilterOr1
+	var textDocumentFilterOr1Value *TextDocumentFilterOr1
 	if err := json.Unmarshal(data, &textDocumentFilterOr1Value); err == nil {
 		t.Value = textDocumentFilterOr1Value
 		return nil
 	}
-	var textDocumentFilterOr2Value TextDocumentFilterOr2
+	var textDocumentFilterOr2Value *TextDocumentFilterOr2
 	if err := json.Unmarshal(data, &textDocumentFilterOr2Value); err == nil {
 		t.Value = textDocumentFilterOr2Value
 		return nil
 	}
-	var textDocumentFilterOr3Value TextDocumentFilterOr3
+	var textDocumentFilterOr3Value *TextDocumentFilterOr3
 	if err := json.Unmarshal(data, &textDocumentFilterOr3Value); err == nil {
 		t.Value = textDocumentFilterOr3Value
 		return nil
@@ -3003,7 +3003,7 @@ func (t TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3) Mar
 // @since 3.17.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentFilter
-type TextDocumentFilter = TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3
+type TextDocumentFilter = *TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3
 
 // A notebook cell text document filter denotes a cell text
 // document by different properties.
@@ -3016,32 +3016,32 @@ type NotebookCellTextDocumentFilter struct {
 	// containing the notebook cell. If a string
 	// value is provided it matches against the
 	// notebook type. '*' matches every notebook.
-	Notebook StringOrNotebookDocumentFilter `json:"notebook"`
+	Notebook *StringOrNotebookDocumentFilter `json:"notebook"`
 	// A language id like `python`.
 	//
 	// Will be matched against the language id of the
 	// notebook cell document. '*' matches every language.
-	Language *string `json:"language,omitempty"`
+	Language string `json:"language,omitempty"`
 }
 
 // TextDocumentFilterOrNotebookCellTextDocumentFilter contains either of the following types:
 //   - [TextDocumentFilter]
-//   - [NotebookCellTextDocumentFilter]
+//   - [*NotebookCellTextDocumentFilter]
 type TextDocumentFilterOrNotebookCellTextDocumentFilter struct {
 	Value TextDocumentFilterOrNotebookCellTextDocumentFilterValue
 }
 
 // TextDocumentFilterOrNotebookCellTextDocumentFilterValue is either of the following types:
 //   - [TextDocumentFilter]
-//   - [NotebookCellTextDocumentFilter]
+//   - [*NotebookCellTextDocumentFilter]
 //
 //gosumtype:decl TextDocumentFilterOrNotebookCellTextDocumentFilterValue
 type TextDocumentFilterOrNotebookCellTextDocumentFilterValue interface {
 	isTextDocumentFilterOrNotebookCellTextDocumentFilterValue()
 }
 
-func (TextDocumentFilter) isTextDocumentFilterOrNotebookCellTextDocumentFilterValue()             {}
-func (NotebookCellTextDocumentFilter) isTextDocumentFilterOrNotebookCellTextDocumentFilterValue() {}
+func (TextDocumentFilter) isTextDocumentFilterOrNotebookCellTextDocumentFilterValue()              {}
+func (*NotebookCellTextDocumentFilter) isTextDocumentFilterOrNotebookCellTextDocumentFilterValue() {}
 
 func (t *TextDocumentFilterOrNotebookCellTextDocumentFilter) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3052,7 +3052,7 @@ func (t *TextDocumentFilterOrNotebookCellTextDocumentFilter) UnmarshalJSON(data 
 		t.Value = textDocumentFilterValue
 		return nil
 	}
-	var notebookCellTextDocumentFilterValue NotebookCellTextDocumentFilter
+	var notebookCellTextDocumentFilterValue *NotebookCellTextDocumentFilter
 	if err := json.Unmarshal(data, &notebookCellTextDocumentFilterValue); err == nil {
 		t.Value = notebookCellTextDocumentFilterValue
 		return nil
@@ -3073,7 +3073,7 @@ func (t TextDocumentFilterOrNotebookCellTextDocumentFilter) MarshalJSON() ([]byt
 // @since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFilter
-type DocumentFilter = TextDocumentFilterOrNotebookCellTextDocumentFilter
+type DocumentFilter = *TextDocumentFilterOrNotebookCellTextDocumentFilter
 
 type DocumentFilterSlice []DocumentFilter
 
@@ -3092,37 +3092,37 @@ type DocumentSelector = DocumentFilterSlice
 type TextDocumentRegistrationOptions struct {
 	// A document selector to identify the scope of the registration. If set to null
 	// the document selector provided on the client side will be used.
-	DocumentSelector *DocumentSelector `json:"documentSelector"`
+	DocumentSelector DocumentSelector `json:"documentSelector"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#declarationRegistrationOptions
 type DeclarationRegistrationOptions struct {
-	DeclarationOptions
-	TextDocumentRegistrationOptions
-	StaticRegistrationOptions
+	*DeclarationOptions
+	*TextDocumentRegistrationOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [DeclarationOptions]
-//   - [DeclarationRegistrationOptions]
+//   - [*DeclarationOptions]
+//   - [*DeclarationRegistrationOptions]
 type BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions struct {
 	Value BooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue
 }
 
 // BooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [DeclarationOptions]
-//   - [DeclarationRegistrationOptions]
+//   - [*DeclarationOptions]
+//   - [*DeclarationRegistrationOptions]
 //
 //gosumtype:decl BooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue
 type BooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue interface {
 	isBooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue()
 }
 
-func (Boolean) isBooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue()            {}
-func (DeclarationOptions) isBooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue() {}
-func (DeclarationRegistrationOptions) isBooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue() {
+func (Boolean) isBooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue()             {}
+func (*DeclarationOptions) isBooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue() {}
+func (*DeclarationRegistrationOptions) isBooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -3134,12 +3134,12 @@ func (b *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions) UnmarshalJ
 		b.Value = booleanValue
 		return nil
 	}
-	var declarationOptionsValue DeclarationOptions
+	var declarationOptionsValue *DeclarationOptions
 	if err := json.Unmarshal(data, &declarationOptionsValue); err == nil {
 		b.Value = declarationOptionsValue
 		return nil
 	}
-	var declarationRegistrationOptionsValue DeclarationRegistrationOptions
+	var declarationRegistrationOptionsValue *DeclarationRegistrationOptions
 	if err := json.Unmarshal(data, &declarationRegistrationOptionsValue); err == nil {
 		b.Value = declarationRegistrationOptionsValue
 		return nil
@@ -3158,27 +3158,27 @@ func (b BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions) MarshalJSON
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionOptions
 type DefinitionOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // BooleanOrDefinitionOptions contains either of the following types:
 //   - [Boolean]
-//   - [DefinitionOptions]
+//   - [*DefinitionOptions]
 type BooleanOrDefinitionOptions struct {
 	Value BooleanOrDefinitionOptionsValue
 }
 
 // BooleanOrDefinitionOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [DefinitionOptions]
+//   - [*DefinitionOptions]
 //
 //gosumtype:decl BooleanOrDefinitionOptionsValue
 type BooleanOrDefinitionOptionsValue interface {
 	isBooleanOrDefinitionOptionsValue()
 }
 
-func (Boolean) isBooleanOrDefinitionOptionsValue()           {}
-func (DefinitionOptions) isBooleanOrDefinitionOptionsValue() {}
+func (Boolean) isBooleanOrDefinitionOptionsValue()            {}
+func (*DefinitionOptions) isBooleanOrDefinitionOptionsValue() {}
 
 func (b *BooleanOrDefinitionOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3189,7 +3189,7 @@ func (b *BooleanOrDefinitionOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var definitionOptionsValue DefinitionOptions
+	var definitionOptionsValue *DefinitionOptions
 	if err := json.Unmarshal(data, &definitionOptionsValue); err == nil {
 		b.Value = definitionOptionsValue
 		return nil
@@ -3206,28 +3206,28 @@ func (b BooleanOrDefinitionOptions) MarshalJSON() ([]byte, error) {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#typeDefinitionOptions
 type TypeDefinitionOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#typeDefinitionRegistrationOptions
 type TypeDefinitionRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	TypeDefinitionOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*TypeDefinitionOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [TypeDefinitionOptions]
-//   - [TypeDefinitionRegistrationOptions]
+//   - [*TypeDefinitionOptions]
+//   - [*TypeDefinitionRegistrationOptions]
 type BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions struct {
 	Value BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue
 }
 
 // BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [TypeDefinitionOptions]
-//   - [TypeDefinitionRegistrationOptions]
+//   - [*TypeDefinitionOptions]
+//   - [*TypeDefinitionRegistrationOptions]
 //
 //gosumtype:decl BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue
 type BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue interface {
@@ -3235,9 +3235,9 @@ type BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue inte
 }
 
 func (Boolean) isBooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue() {}
-func (TypeDefinitionOptions) isBooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue() {
+func (*TypeDefinitionOptions) isBooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue() {
 }
-func (TypeDefinitionRegistrationOptions) isBooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue() {
+func (*TypeDefinitionRegistrationOptions) isBooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -3249,12 +3249,12 @@ func (b *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions) Unma
 		b.Value = booleanValue
 		return nil
 	}
-	var typeDefinitionOptionsValue TypeDefinitionOptions
+	var typeDefinitionOptionsValue *TypeDefinitionOptions
 	if err := json.Unmarshal(data, &typeDefinitionOptionsValue); err == nil {
 		b.Value = typeDefinitionOptionsValue
 		return nil
 	}
-	var typeDefinitionRegistrationOptionsValue TypeDefinitionRegistrationOptions
+	var typeDefinitionRegistrationOptionsValue *TypeDefinitionRegistrationOptions
 	if err := json.Unmarshal(data, &typeDefinitionRegistrationOptionsValue); err == nil {
 		b.Value = typeDefinitionRegistrationOptionsValue
 		return nil
@@ -3271,28 +3271,28 @@ func (b BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions) Marsh
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#implementationOptions
 type ImplementationOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#implementationRegistrationOptions
 type ImplementationRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	ImplementationOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*ImplementationOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrImplementationOptionsOrImplementationRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [ImplementationOptions]
-//   - [ImplementationRegistrationOptions]
+//   - [*ImplementationOptions]
+//   - [*ImplementationRegistrationOptions]
 type BooleanOrImplementationOptionsOrImplementationRegistrationOptions struct {
 	Value BooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue
 }
 
 // BooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [ImplementationOptions]
-//   - [ImplementationRegistrationOptions]
+//   - [*ImplementationOptions]
+//   - [*ImplementationRegistrationOptions]
 //
 //gosumtype:decl BooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue
 type BooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue interface {
@@ -3300,9 +3300,9 @@ type BooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue inte
 }
 
 func (Boolean) isBooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue() {}
-func (ImplementationOptions) isBooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue() {
+func (*ImplementationOptions) isBooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue() {
 }
-func (ImplementationRegistrationOptions) isBooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue() {
+func (*ImplementationRegistrationOptions) isBooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrImplementationOptionsOrImplementationRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -3314,12 +3314,12 @@ func (b *BooleanOrImplementationOptionsOrImplementationRegistrationOptions) Unma
 		b.Value = booleanValue
 		return nil
 	}
-	var implementationOptionsValue ImplementationOptions
+	var implementationOptionsValue *ImplementationOptions
 	if err := json.Unmarshal(data, &implementationOptionsValue); err == nil {
 		b.Value = implementationOptionsValue
 		return nil
 	}
-	var implementationRegistrationOptionsValue ImplementationRegistrationOptions
+	var implementationRegistrationOptionsValue *ImplementationRegistrationOptions
 	if err := json.Unmarshal(data, &implementationRegistrationOptionsValue); err == nil {
 		b.Value = implementationRegistrationOptionsValue
 		return nil
@@ -3338,27 +3338,27 @@ func (b BooleanOrImplementationOptionsOrImplementationRegistrationOptions) Marsh
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceOptions
 type ReferenceOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // BooleanOrReferenceOptions contains either of the following types:
 //   - [Boolean]
-//   - [ReferenceOptions]
+//   - [*ReferenceOptions]
 type BooleanOrReferenceOptions struct {
 	Value BooleanOrReferenceOptionsValue
 }
 
 // BooleanOrReferenceOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [ReferenceOptions]
+//   - [*ReferenceOptions]
 //
 //gosumtype:decl BooleanOrReferenceOptionsValue
 type BooleanOrReferenceOptionsValue interface {
 	isBooleanOrReferenceOptionsValue()
 }
 
-func (Boolean) isBooleanOrReferenceOptionsValue()          {}
-func (ReferenceOptions) isBooleanOrReferenceOptionsValue() {}
+func (Boolean) isBooleanOrReferenceOptionsValue()           {}
+func (*ReferenceOptions) isBooleanOrReferenceOptionsValue() {}
 
 func (b *BooleanOrReferenceOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3369,7 +3369,7 @@ func (b *BooleanOrReferenceOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var referenceOptionsValue ReferenceOptions
+	var referenceOptionsValue *ReferenceOptions
 	if err := json.Unmarshal(data, &referenceOptionsValue); err == nil {
 		b.Value = referenceOptionsValue
 		return nil
@@ -3388,27 +3388,27 @@ func (b BooleanOrReferenceOptions) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentHighlightOptions
 type DocumentHighlightOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // BooleanOrDocumentHighlightOptions contains either of the following types:
 //   - [Boolean]
-//   - [DocumentHighlightOptions]
+//   - [*DocumentHighlightOptions]
 type BooleanOrDocumentHighlightOptions struct {
 	Value BooleanOrDocumentHighlightOptionsValue
 }
 
 // BooleanOrDocumentHighlightOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [DocumentHighlightOptions]
+//   - [*DocumentHighlightOptions]
 //
 //gosumtype:decl BooleanOrDocumentHighlightOptionsValue
 type BooleanOrDocumentHighlightOptionsValue interface {
 	isBooleanOrDocumentHighlightOptionsValue()
 }
 
-func (Boolean) isBooleanOrDocumentHighlightOptionsValue()                  {}
-func (DocumentHighlightOptions) isBooleanOrDocumentHighlightOptionsValue() {}
+func (Boolean) isBooleanOrDocumentHighlightOptionsValue()                   {}
+func (*DocumentHighlightOptions) isBooleanOrDocumentHighlightOptionsValue() {}
 
 func (b *BooleanOrDocumentHighlightOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3419,7 +3419,7 @@ func (b *BooleanOrDocumentHighlightOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var documentHighlightOptionsValue DocumentHighlightOptions
+	var documentHighlightOptionsValue *DocumentHighlightOptions
 	if err := json.Unmarshal(data, &documentHighlightOptionsValue); err == nil {
 		b.Value = documentHighlightOptionsValue
 		return nil
@@ -3438,32 +3438,32 @@ func (b BooleanOrDocumentHighlightOptions) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolOptions
 type DocumentSymbolOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// A human-readable string that is shown when multiple outlines trees
 	// are shown for the same document.
 	//
 	// @since 3.16.0
-	Label *string `json:"label,omitempty"`
+	Label string `json:"label,omitempty"`
 }
 
 // BooleanOrDocumentSymbolOptions contains either of the following types:
 //   - [Boolean]
-//   - [DocumentSymbolOptions]
+//   - [*DocumentSymbolOptions]
 type BooleanOrDocumentSymbolOptions struct {
 	Value BooleanOrDocumentSymbolOptionsValue
 }
 
 // BooleanOrDocumentSymbolOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [DocumentSymbolOptions]
+//   - [*DocumentSymbolOptions]
 //
 //gosumtype:decl BooleanOrDocumentSymbolOptionsValue
 type BooleanOrDocumentSymbolOptionsValue interface {
 	isBooleanOrDocumentSymbolOptionsValue()
 }
 
-func (Boolean) isBooleanOrDocumentSymbolOptionsValue()               {}
-func (DocumentSymbolOptions) isBooleanOrDocumentSymbolOptionsValue() {}
+func (Boolean) isBooleanOrDocumentSymbolOptionsValue()                {}
+func (*DocumentSymbolOptions) isBooleanOrDocumentSymbolOptionsValue() {}
 
 func (b *BooleanOrDocumentSymbolOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3474,7 +3474,7 @@ func (b *BooleanOrDocumentSymbolOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var documentSymbolOptionsValue DocumentSymbolOptions
+	var documentSymbolOptionsValue *DocumentSymbolOptions
 	if err := json.Unmarshal(data, &documentSymbolOptionsValue); err == nil {
 		b.Value = documentSymbolOptionsValue
 		return nil
@@ -3493,37 +3493,37 @@ func (b BooleanOrDocumentSymbolOptions) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionOptions
 type CodeActionOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// CodeActionKinds that this server may return.
 	//
 	// The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
 	// may list out every specific kind they provide.
-	CodeActionKinds *CodeActionKindSlice `json:"codeActionKinds,omitempty"`
+	CodeActionKinds CodeActionKindSlice `json:"codeActionKinds,omitempty"`
 	// The server provides support to resolve additional
 	// information for a code action.
 	//
 	// @since 3.16.0
-	ResolveProvider *bool `json:"resolveProvider,omitempty"`
+	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
 // BooleanOrCodeActionOptions contains either of the following types:
 //   - [Boolean]
-//   - [CodeActionOptions]
+//   - [*CodeActionOptions]
 type BooleanOrCodeActionOptions struct {
 	Value BooleanOrCodeActionOptionsValue
 }
 
 // BooleanOrCodeActionOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [CodeActionOptions]
+//   - [*CodeActionOptions]
 //
 //gosumtype:decl BooleanOrCodeActionOptionsValue
 type BooleanOrCodeActionOptionsValue interface {
 	isBooleanOrCodeActionOptionsValue()
 }
 
-func (Boolean) isBooleanOrCodeActionOptionsValue()           {}
-func (CodeActionOptions) isBooleanOrCodeActionOptionsValue() {}
+func (Boolean) isBooleanOrCodeActionOptionsValue()            {}
+func (*CodeActionOptions) isBooleanOrCodeActionOptionsValue() {}
 
 func (b *BooleanOrCodeActionOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3534,7 +3534,7 @@ func (b *BooleanOrCodeActionOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var codeActionOptionsValue CodeActionOptions
+	var codeActionOptionsValue *CodeActionOptions
 	if err := json.Unmarshal(data, &codeActionOptionsValue); err == nil {
 		b.Value = codeActionOptionsValue
 		return nil
@@ -3553,44 +3553,44 @@ func (b BooleanOrCodeActionOptions) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLensOptions
 type CodeLensOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// Code lens has a resolve provider as well.
-	ResolveProvider *bool `json:"resolveProvider,omitempty"`
+	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
 // Provider options for a {@link DocumentLinkRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentLinkOptions
 type DocumentLinkOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// Document links have a resolve provider as well.
-	ResolveProvider *bool `json:"resolveProvider,omitempty"`
+	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentColorOptions
 type DocumentColorOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentColorRegistrationOptions
 type DocumentColorRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	DocumentColorOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*DocumentColorOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [DocumentColorOptions]
-//   - [DocumentColorRegistrationOptions]
+//   - [*DocumentColorOptions]
+//   - [*DocumentColorRegistrationOptions]
 type BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions struct {
 	Value BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue
 }
 
 // BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [DocumentColorOptions]
-//   - [DocumentColorRegistrationOptions]
+//   - [*DocumentColorOptions]
+//   - [*DocumentColorRegistrationOptions]
 //
 //gosumtype:decl BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue
 type BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue interface {
@@ -3598,9 +3598,9 @@ type BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue interf
 }
 
 func (Boolean) isBooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue() {}
-func (DocumentColorOptions) isBooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue() {
+func (*DocumentColorOptions) isBooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue() {
 }
-func (DocumentColorRegistrationOptions) isBooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue() {
+func (*DocumentColorRegistrationOptions) isBooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -3612,12 +3612,12 @@ func (b *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions) Unmars
 		b.Value = booleanValue
 		return nil
 	}
-	var documentColorOptionsValue DocumentColorOptions
+	var documentColorOptionsValue *DocumentColorOptions
 	if err := json.Unmarshal(data, &documentColorOptionsValue); err == nil {
 		b.Value = documentColorOptionsValue
 		return nil
 	}
-	var documentColorRegistrationOptionsValue DocumentColorRegistrationOptions
+	var documentColorRegistrationOptionsValue *DocumentColorRegistrationOptions
 	if err := json.Unmarshal(data, &documentColorRegistrationOptionsValue); err == nil {
 		b.Value = documentColorRegistrationOptionsValue
 		return nil
@@ -3636,32 +3636,32 @@ func (b BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions) Marshal
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceSymbolOptions
 type WorkspaceSymbolOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// The server provides support to resolve additional
 	// information for a workspace symbol.
 	//
 	// @since 3.17.0
-	ResolveProvider *bool `json:"resolveProvider,omitempty"`
+	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
 // BooleanOrWorkspaceSymbolOptions contains either of the following types:
 //   - [Boolean]
-//   - [WorkspaceSymbolOptions]
+//   - [*WorkspaceSymbolOptions]
 type BooleanOrWorkspaceSymbolOptions struct {
 	Value BooleanOrWorkspaceSymbolOptionsValue
 }
 
 // BooleanOrWorkspaceSymbolOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [WorkspaceSymbolOptions]
+//   - [*WorkspaceSymbolOptions]
 //
 //gosumtype:decl BooleanOrWorkspaceSymbolOptionsValue
 type BooleanOrWorkspaceSymbolOptionsValue interface {
 	isBooleanOrWorkspaceSymbolOptionsValue()
 }
 
-func (Boolean) isBooleanOrWorkspaceSymbolOptionsValue()                {}
-func (WorkspaceSymbolOptions) isBooleanOrWorkspaceSymbolOptionsValue() {}
+func (Boolean) isBooleanOrWorkspaceSymbolOptionsValue()                 {}
+func (*WorkspaceSymbolOptions) isBooleanOrWorkspaceSymbolOptionsValue() {}
 
 func (b *BooleanOrWorkspaceSymbolOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3672,7 +3672,7 @@ func (b *BooleanOrWorkspaceSymbolOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var workspaceSymbolOptionsValue WorkspaceSymbolOptions
+	var workspaceSymbolOptionsValue *WorkspaceSymbolOptions
 	if err := json.Unmarshal(data, &workspaceSymbolOptionsValue); err == nil {
 		b.Value = workspaceSymbolOptionsValue
 		return nil
@@ -3691,27 +3691,27 @@ func (b BooleanOrWorkspaceSymbolOptions) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFormattingOptions
 type DocumentFormattingOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // BooleanOrDocumentFormattingOptions contains either of the following types:
 //   - [Boolean]
-//   - [DocumentFormattingOptions]
+//   - [*DocumentFormattingOptions]
 type BooleanOrDocumentFormattingOptions struct {
 	Value BooleanOrDocumentFormattingOptionsValue
 }
 
 // BooleanOrDocumentFormattingOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [DocumentFormattingOptions]
+//   - [*DocumentFormattingOptions]
 //
 //gosumtype:decl BooleanOrDocumentFormattingOptionsValue
 type BooleanOrDocumentFormattingOptionsValue interface {
 	isBooleanOrDocumentFormattingOptionsValue()
 }
 
-func (Boolean) isBooleanOrDocumentFormattingOptionsValue()                   {}
-func (DocumentFormattingOptions) isBooleanOrDocumentFormattingOptionsValue() {}
+func (Boolean) isBooleanOrDocumentFormattingOptionsValue()                    {}
+func (*DocumentFormattingOptions) isBooleanOrDocumentFormattingOptionsValue() {}
 
 func (b *BooleanOrDocumentFormattingOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3722,7 +3722,7 @@ func (b *BooleanOrDocumentFormattingOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var documentFormattingOptionsValue DocumentFormattingOptions
+	var documentFormattingOptionsValue *DocumentFormattingOptions
 	if err := json.Unmarshal(data, &documentFormattingOptionsValue); err == nil {
 		b.Value = documentFormattingOptionsValue
 		return nil
@@ -3741,32 +3741,32 @@ func (b BooleanOrDocumentFormattingOptions) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentRangeFormattingOptions
 type DocumentRangeFormattingOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// Whether the server supports formatting multiple ranges at once.
 	//
 	// @since 3.18.0
 	// @proposed
-	RangesSupport *bool `json:"rangesSupport,omitempty"`
+	RangesSupport bool `json:"rangesSupport,omitempty"`
 }
 
 // BooleanOrDocumentRangeFormattingOptions contains either of the following types:
 //   - [Boolean]
-//   - [DocumentRangeFormattingOptions]
+//   - [*DocumentRangeFormattingOptions]
 type BooleanOrDocumentRangeFormattingOptions struct {
 	Value BooleanOrDocumentRangeFormattingOptionsValue
 }
 
 // BooleanOrDocumentRangeFormattingOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [DocumentRangeFormattingOptions]
+//   - [*DocumentRangeFormattingOptions]
 //
 //gosumtype:decl BooleanOrDocumentRangeFormattingOptionsValue
 type BooleanOrDocumentRangeFormattingOptionsValue interface {
 	isBooleanOrDocumentRangeFormattingOptionsValue()
 }
 
-func (Boolean) isBooleanOrDocumentRangeFormattingOptionsValue()                        {}
-func (DocumentRangeFormattingOptions) isBooleanOrDocumentRangeFormattingOptionsValue() {}
+func (Boolean) isBooleanOrDocumentRangeFormattingOptionsValue()                         {}
+func (*DocumentRangeFormattingOptions) isBooleanOrDocumentRangeFormattingOptionsValue() {}
 
 func (b *BooleanOrDocumentRangeFormattingOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3777,7 +3777,7 @@ func (b *BooleanOrDocumentRangeFormattingOptions) UnmarshalJSON(data []byte) err
 		b.Value = booleanValue
 		return nil
 	}
-	var documentRangeFormattingOptionsValue DocumentRangeFormattingOptions
+	var documentRangeFormattingOptionsValue *DocumentRangeFormattingOptions
 	if err := json.Unmarshal(data, &documentRangeFormattingOptionsValue); err == nil {
 		b.Value = documentRangeFormattingOptionsValue
 		return nil
@@ -3799,38 +3799,38 @@ type DocumentOnTypeFormattingOptions struct {
 	// A character on which formatting should be triggered, like `{`.
 	FirstTriggerCharacter string `json:"firstTriggerCharacter"`
 	// More trigger characters.
-	MoreTriggerCharacter *stringSlice `json:"moreTriggerCharacter,omitempty"`
+	MoreTriggerCharacter stringSlice `json:"moreTriggerCharacter,omitempty"`
 }
 
 // Provider options for a {@link RenameRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#renameOptions
 type RenameOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// Renames should be checked and tested before being executed.
 	//
 	// @since version 3.12.0
-	PrepareProvider *bool `json:"prepareProvider,omitempty"`
+	PrepareProvider bool `json:"prepareProvider,omitempty"`
 }
 
 // BooleanOrRenameOptions contains either of the following types:
 //   - [Boolean]
-//   - [RenameOptions]
+//   - [*RenameOptions]
 type BooleanOrRenameOptions struct {
 	Value BooleanOrRenameOptionsValue
 }
 
 // BooleanOrRenameOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [RenameOptions]
+//   - [*RenameOptions]
 //
 //gosumtype:decl BooleanOrRenameOptionsValue
 type BooleanOrRenameOptionsValue interface {
 	isBooleanOrRenameOptionsValue()
 }
 
-func (Boolean) isBooleanOrRenameOptionsValue()       {}
-func (RenameOptions) isBooleanOrRenameOptionsValue() {}
+func (Boolean) isBooleanOrRenameOptionsValue()        {}
+func (*RenameOptions) isBooleanOrRenameOptionsValue() {}
 
 func (b *BooleanOrRenameOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -3841,7 +3841,7 @@ func (b *BooleanOrRenameOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var renameOptionsValue RenameOptions
+	var renameOptionsValue *RenameOptions
 	if err := json.Unmarshal(data, &renameOptionsValue); err == nil {
 		b.Value = renameOptionsValue
 		return nil
@@ -3858,37 +3858,37 @@ func (b BooleanOrRenameOptions) MarshalJSON() ([]byte, error) {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#foldingRangeOptions
 type FoldingRangeOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#foldingRangeRegistrationOptions
 type FoldingRangeRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	FoldingRangeOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*FoldingRangeOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [FoldingRangeOptions]
-//   - [FoldingRangeRegistrationOptions]
+//   - [*FoldingRangeOptions]
+//   - [*FoldingRangeRegistrationOptions]
 type BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions struct {
 	Value BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue
 }
 
 // BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [FoldingRangeOptions]
-//   - [FoldingRangeRegistrationOptions]
+//   - [*FoldingRangeOptions]
+//   - [*FoldingRangeRegistrationOptions]
 //
 //gosumtype:decl BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue
 type BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue interface {
 	isBooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue()
 }
 
-func (Boolean) isBooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue()             {}
-func (FoldingRangeOptions) isBooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue() {}
-func (FoldingRangeRegistrationOptions) isBooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue() {
+func (Boolean) isBooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue()              {}
+func (*FoldingRangeOptions) isBooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue() {}
+func (*FoldingRangeRegistrationOptions) isBooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -3900,12 +3900,12 @@ func (b *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions) Unmarsha
 		b.Value = booleanValue
 		return nil
 	}
-	var foldingRangeOptionsValue FoldingRangeOptions
+	var foldingRangeOptionsValue *FoldingRangeOptions
 	if err := json.Unmarshal(data, &foldingRangeOptionsValue); err == nil {
 		b.Value = foldingRangeOptionsValue
 		return nil
 	}
-	var foldingRangeRegistrationOptionsValue FoldingRangeRegistrationOptions
+	var foldingRangeRegistrationOptionsValue *FoldingRangeRegistrationOptions
 	if err := json.Unmarshal(data, &foldingRangeRegistrationOptionsValue); err == nil {
 		b.Value = foldingRangeRegistrationOptionsValue
 		return nil
@@ -3922,28 +3922,28 @@ func (b BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions) MarshalJS
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#selectionRangeOptions
 type SelectionRangeOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#selectionRangeRegistrationOptions
 type SelectionRangeRegistrationOptions struct {
-	SelectionRangeOptions
-	TextDocumentRegistrationOptions
-	StaticRegistrationOptions
+	*SelectionRangeOptions
+	*TextDocumentRegistrationOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [SelectionRangeOptions]
-//   - [SelectionRangeRegistrationOptions]
+//   - [*SelectionRangeOptions]
+//   - [*SelectionRangeRegistrationOptions]
 type BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions struct {
 	Value BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue
 }
 
 // BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [SelectionRangeOptions]
-//   - [SelectionRangeRegistrationOptions]
+//   - [*SelectionRangeOptions]
+//   - [*SelectionRangeRegistrationOptions]
 //
 //gosumtype:decl BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue
 type BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue interface {
@@ -3951,9 +3951,9 @@ type BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue inte
 }
 
 func (Boolean) isBooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue() {}
-func (SelectionRangeOptions) isBooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue() {
+func (*SelectionRangeOptions) isBooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue() {
 }
-func (SelectionRangeRegistrationOptions) isBooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue() {
+func (*SelectionRangeRegistrationOptions) isBooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -3965,12 +3965,12 @@ func (b *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions) Unma
 		b.Value = booleanValue
 		return nil
 	}
-	var selectionRangeOptionsValue SelectionRangeOptions
+	var selectionRangeOptionsValue *SelectionRangeOptions
 	if err := json.Unmarshal(data, &selectionRangeOptionsValue); err == nil {
 		b.Value = selectionRangeOptionsValue
 		return nil
 	}
-	var selectionRangeRegistrationOptionsValue SelectionRangeRegistrationOptions
+	var selectionRangeRegistrationOptionsValue *SelectionRangeRegistrationOptions
 	if err := json.Unmarshal(data, &selectionRangeRegistrationOptionsValue); err == nil {
 		b.Value = selectionRangeRegistrationOptionsValue
 		return nil
@@ -3989,7 +3989,7 @@ func (b BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions) Marsh
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#executeCommandOptions
 type ExecuteCommandOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// The commands to be executed on the server
 	Commands stringSlice `json:"commands"`
 }
@@ -4000,7 +4000,7 @@ type ExecuteCommandOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#callHierarchyOptions
 type CallHierarchyOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // Call hierarchy options used during static or dynamic registration.
@@ -4009,23 +4009,23 @@ type CallHierarchyOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#callHierarchyRegistrationOptions
 type CallHierarchyRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	CallHierarchyOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*CallHierarchyOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [CallHierarchyOptions]
-//   - [CallHierarchyRegistrationOptions]
+//   - [*CallHierarchyOptions]
+//   - [*CallHierarchyRegistrationOptions]
 type BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions struct {
 	Value BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue
 }
 
 // BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [CallHierarchyOptions]
-//   - [CallHierarchyRegistrationOptions]
+//   - [*CallHierarchyOptions]
+//   - [*CallHierarchyRegistrationOptions]
 //
 //gosumtype:decl BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue
 type BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue interface {
@@ -4033,9 +4033,9 @@ type BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue interf
 }
 
 func (Boolean) isBooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue() {}
-func (CallHierarchyOptions) isBooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue() {
+func (*CallHierarchyOptions) isBooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue() {
 }
-func (CallHierarchyRegistrationOptions) isBooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue() {
+func (*CallHierarchyRegistrationOptions) isBooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -4047,12 +4047,12 @@ func (b *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions) Unmars
 		b.Value = booleanValue
 		return nil
 	}
-	var callHierarchyOptionsValue CallHierarchyOptions
+	var callHierarchyOptionsValue *CallHierarchyOptions
 	if err := json.Unmarshal(data, &callHierarchyOptionsValue); err == nil {
 		b.Value = callHierarchyOptionsValue
 		return nil
 	}
-	var callHierarchyRegistrationOptionsValue CallHierarchyRegistrationOptions
+	var callHierarchyRegistrationOptionsValue *CallHierarchyRegistrationOptions
 	if err := json.Unmarshal(data, &callHierarchyRegistrationOptionsValue); err == nil {
 		b.Value = callHierarchyRegistrationOptionsValue
 		return nil
@@ -4069,28 +4069,28 @@ func (b BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions) Marshal
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#linkedEditingRangeOptions
 type LinkedEditingRangeOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#linkedEditingRangeRegistrationOptions
 type LinkedEditingRangeRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	LinkedEditingRangeOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*LinkedEditingRangeOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [LinkedEditingRangeOptions]
-//   - [LinkedEditingRangeRegistrationOptions]
+//   - [*LinkedEditingRangeOptions]
+//   - [*LinkedEditingRangeRegistrationOptions]
 type BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions struct {
 	Value BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue
 }
 
 // BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [LinkedEditingRangeOptions]
-//   - [LinkedEditingRangeRegistrationOptions]
+//   - [*LinkedEditingRangeOptions]
+//   - [*LinkedEditingRangeRegistrationOptions]
 //
 //gosumtype:decl BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue
 type BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue interface {
@@ -4098,9 +4098,9 @@ type BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsVa
 }
 
 func (Boolean) isBooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue() {}
-func (LinkedEditingRangeOptions) isBooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue() {
+func (*LinkedEditingRangeOptions) isBooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue() {
 }
-func (LinkedEditingRangeRegistrationOptions) isBooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue() {
+func (*LinkedEditingRangeRegistrationOptions) isBooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -4112,12 +4112,12 @@ func (b *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptio
 		b.Value = booleanValue
 		return nil
 	}
-	var linkedEditingRangeOptionsValue LinkedEditingRangeOptions
+	var linkedEditingRangeOptionsValue *LinkedEditingRangeOptions
 	if err := json.Unmarshal(data, &linkedEditingRangeOptionsValue); err == nil {
 		b.Value = linkedEditingRangeOptionsValue
 		return nil
 	}
-	var linkedEditingRangeRegistrationOptionsValue LinkedEditingRangeRegistrationOptions
+	var linkedEditingRangeRegistrationOptionsValue *LinkedEditingRangeRegistrationOptions
 	if err := json.Unmarshal(data, &linkedEditingRangeRegistrationOptionsValue); err == nil {
 		b.Value = linkedEditingRangeRegistrationOptionsValue
 		return nil
@@ -4147,22 +4147,22 @@ type SemanticTokensOptionsRangeOr2 struct {
 
 // BooleanOrSemanticTokensOptionsRangeOr2 contains either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensOptionsRangeOr2]
+//   - [*SemanticTokensOptionsRangeOr2]
 type BooleanOrSemanticTokensOptionsRangeOr2 struct {
 	Value BooleanOrSemanticTokensOptionsRangeOr2Value
 }
 
 // BooleanOrSemanticTokensOptionsRangeOr2Value is either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensOptionsRangeOr2]
+//   - [*SemanticTokensOptionsRangeOr2]
 //
 //gosumtype:decl BooleanOrSemanticTokensOptionsRangeOr2Value
 type BooleanOrSemanticTokensOptionsRangeOr2Value interface {
 	isBooleanOrSemanticTokensOptionsRangeOr2Value()
 }
 
-func (Boolean) isBooleanOrSemanticTokensOptionsRangeOr2Value()                       {}
-func (SemanticTokensOptionsRangeOr2) isBooleanOrSemanticTokensOptionsRangeOr2Value() {}
+func (Boolean) isBooleanOrSemanticTokensOptionsRangeOr2Value()                        {}
+func (*SemanticTokensOptionsRangeOr2) isBooleanOrSemanticTokensOptionsRangeOr2Value() {}
 
 func (b *BooleanOrSemanticTokensOptionsRangeOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -4173,7 +4173,7 @@ func (b *BooleanOrSemanticTokensOptionsRangeOr2) UnmarshalJSON(data []byte) erro
 		b.Value = booleanValue
 		return nil
 	}
-	var semanticTokensOptionsRangeOr2Value SemanticTokensOptionsRangeOr2
+	var semanticTokensOptionsRangeOr2Value *SemanticTokensOptionsRangeOr2
 	if err := json.Unmarshal(data, &semanticTokensOptionsRangeOr2Value); err == nil {
 		b.Value = semanticTokensOptionsRangeOr2Value
 		return nil
@@ -4190,27 +4190,27 @@ func (b BooleanOrSemanticTokensOptionsRangeOr2) MarshalJSON() ([]byte, error) {
 
 type SemanticTokensOptionsFullOr2 struct {
 	// The server supports deltas for full documents.
-	Delta *bool `json:"delta,omitempty"`
+	Delta bool `json:"delta,omitempty"`
 }
 
 // BooleanOrSemanticTokensOptionsFullOr2 contains either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensOptionsFullOr2]
+//   - [*SemanticTokensOptionsFullOr2]
 type BooleanOrSemanticTokensOptionsFullOr2 struct {
 	Value BooleanOrSemanticTokensOptionsFullOr2Value
 }
 
 // BooleanOrSemanticTokensOptionsFullOr2Value is either of the following types:
 //   - [Boolean]
-//   - [SemanticTokensOptionsFullOr2]
+//   - [*SemanticTokensOptionsFullOr2]
 //
 //gosumtype:decl BooleanOrSemanticTokensOptionsFullOr2Value
 type BooleanOrSemanticTokensOptionsFullOr2Value interface {
 	isBooleanOrSemanticTokensOptionsFullOr2Value()
 }
 
-func (Boolean) isBooleanOrSemanticTokensOptionsFullOr2Value()                      {}
-func (SemanticTokensOptionsFullOr2) isBooleanOrSemanticTokensOptionsFullOr2Value() {}
+func (Boolean) isBooleanOrSemanticTokensOptionsFullOr2Value()                       {}
+func (*SemanticTokensOptionsFullOr2) isBooleanOrSemanticTokensOptionsFullOr2Value() {}
 
 func (b *BooleanOrSemanticTokensOptionsFullOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -4221,7 +4221,7 @@ func (b *BooleanOrSemanticTokensOptionsFullOr2) UnmarshalJSON(data []byte) error
 		b.Value = booleanValue
 		return nil
 	}
-	var semanticTokensOptionsFullOr2Value SemanticTokensOptionsFullOr2
+	var semanticTokensOptionsFullOr2Value *SemanticTokensOptionsFullOr2
 	if err := json.Unmarshal(data, &semanticTokensOptionsFullOr2Value); err == nil {
 		b.Value = semanticTokensOptionsFullOr2Value
 		return nil
@@ -4240,9 +4240,9 @@ func (b BooleanOrSemanticTokensOptionsFullOr2) MarshalJSON() ([]byte, error) {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensOptions
 type SemanticTokensOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// The legend used by the server
-	Legend SemanticTokensLegend `json:"legend"`
+	Legend *SemanticTokensLegend `json:"legend"`
 	// Server supports providing semantic tokens for a specific range
 	// of a document.
 	Range *BooleanOrSemanticTokensOptionsRangeOr2 `json:"range,omitempty"`
@@ -4254,41 +4254,41 @@ type SemanticTokensOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#semanticTokensRegistrationOptions
 type SemanticTokensRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	SemanticTokensOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*SemanticTokensOptions
+	*StaticRegistrationOptions
 }
 
 // SemanticTokensOptionsOrSemanticTokensRegistrationOptions contains either of the following types:
-//   - [SemanticTokensOptions]
-//   - [SemanticTokensRegistrationOptions]
+//   - [*SemanticTokensOptions]
+//   - [*SemanticTokensRegistrationOptions]
 type SemanticTokensOptionsOrSemanticTokensRegistrationOptions struct {
 	Value SemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue
 }
 
 // SemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue is either of the following types:
-//   - [SemanticTokensOptions]
-//   - [SemanticTokensRegistrationOptions]
+//   - [*SemanticTokensOptions]
+//   - [*SemanticTokensRegistrationOptions]
 //
 //gosumtype:decl SemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue
 type SemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue interface {
 	isSemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue()
 }
 
-func (SemanticTokensOptions) isSemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue() {}
-func (SemanticTokensRegistrationOptions) isSemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue() {
+func (*SemanticTokensOptions) isSemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue() {}
+func (*SemanticTokensRegistrationOptions) isSemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue() {
 }
 
 func (s *SemanticTokensOptionsOrSemanticTokensRegistrationOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	var semanticTokensOptionsValue SemanticTokensOptions
+	var semanticTokensOptionsValue *SemanticTokensOptions
 	if err := json.Unmarshal(data, &semanticTokensOptionsValue); err == nil {
 		s.Value = semanticTokensOptionsValue
 		return nil
 	}
-	var semanticTokensRegistrationOptionsValue SemanticTokensRegistrationOptions
+	var semanticTokensRegistrationOptionsValue *SemanticTokensRegistrationOptions
 	if err := json.Unmarshal(data, &semanticTokensRegistrationOptionsValue); err == nil {
 		s.Value = semanticTokensRegistrationOptionsValue
 		return nil
@@ -4305,36 +4305,36 @@ func (s SemanticTokensOptionsOrSemanticTokensRegistrationOptions) MarshalJSON() 
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#monikerOptions
 type MonikerOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#monikerRegistrationOptions
 type MonikerRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	MonikerOptions
+	*TextDocumentRegistrationOptions
+	*MonikerOptions
 }
 
 // BooleanOrMonikerOptionsOrMonikerRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [MonikerOptions]
-//   - [MonikerRegistrationOptions]
+//   - [*MonikerOptions]
+//   - [*MonikerRegistrationOptions]
 type BooleanOrMonikerOptionsOrMonikerRegistrationOptions struct {
 	Value BooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue
 }
 
 // BooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [MonikerOptions]
-//   - [MonikerRegistrationOptions]
+//   - [*MonikerOptions]
+//   - [*MonikerRegistrationOptions]
 //
 //gosumtype:decl BooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue
 type BooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue interface {
 	isBooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue()
 }
 
-func (Boolean) isBooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue()                    {}
-func (MonikerOptions) isBooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue()             {}
-func (MonikerRegistrationOptions) isBooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue() {}
+func (Boolean) isBooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue()                     {}
+func (*MonikerOptions) isBooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue()             {}
+func (*MonikerRegistrationOptions) isBooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue() {}
 
 func (b *BooleanOrMonikerOptionsOrMonikerRegistrationOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -4345,12 +4345,12 @@ func (b *BooleanOrMonikerOptionsOrMonikerRegistrationOptions) UnmarshalJSON(data
 		b.Value = booleanValue
 		return nil
 	}
-	var monikerOptionsValue MonikerOptions
+	var monikerOptionsValue *MonikerOptions
 	if err := json.Unmarshal(data, &monikerOptionsValue); err == nil {
 		b.Value = monikerOptionsValue
 		return nil
 	}
-	var monikerRegistrationOptionsValue MonikerRegistrationOptions
+	var monikerRegistrationOptionsValue *MonikerRegistrationOptions
 	if err := json.Unmarshal(data, &monikerRegistrationOptionsValue); err == nil {
 		b.Value = monikerRegistrationOptionsValue
 		return nil
@@ -4371,7 +4371,7 @@ func (b BooleanOrMonikerOptionsOrMonikerRegistrationOptions) MarshalJSON() ([]by
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#typeHierarchyOptions
 type TypeHierarchyOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // Type hierarchy options used during static or dynamic registration.
@@ -4380,23 +4380,23 @@ type TypeHierarchyOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#typeHierarchyRegistrationOptions
 type TypeHierarchyRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	TypeHierarchyOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*TypeHierarchyOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [TypeHierarchyOptions]
-//   - [TypeHierarchyRegistrationOptions]
+//   - [*TypeHierarchyOptions]
+//   - [*TypeHierarchyRegistrationOptions]
 type BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions struct {
 	Value BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue
 }
 
 // BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [TypeHierarchyOptions]
-//   - [TypeHierarchyRegistrationOptions]
+//   - [*TypeHierarchyOptions]
+//   - [*TypeHierarchyRegistrationOptions]
 //
 //gosumtype:decl BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue
 type BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue interface {
@@ -4404,9 +4404,9 @@ type BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue interf
 }
 
 func (Boolean) isBooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue() {}
-func (TypeHierarchyOptions) isBooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue() {
+func (*TypeHierarchyOptions) isBooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue() {
 }
-func (TypeHierarchyRegistrationOptions) isBooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue() {
+func (*TypeHierarchyRegistrationOptions) isBooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -4418,12 +4418,12 @@ func (b *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions) Unmars
 		b.Value = booleanValue
 		return nil
 	}
-	var typeHierarchyOptionsValue TypeHierarchyOptions
+	var typeHierarchyOptionsValue *TypeHierarchyOptions
 	if err := json.Unmarshal(data, &typeHierarchyOptionsValue); err == nil {
 		b.Value = typeHierarchyOptionsValue
 		return nil
 	}
-	var typeHierarchyRegistrationOptionsValue TypeHierarchyRegistrationOptions
+	var typeHierarchyRegistrationOptionsValue *TypeHierarchyRegistrationOptions
 	if err := json.Unmarshal(data, &typeHierarchyRegistrationOptionsValue); err == nil {
 		b.Value = typeHierarchyRegistrationOptionsValue
 		return nil
@@ -4444,7 +4444,7 @@ func (b BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions) Marshal
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlineValueOptions
 type InlineValueOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // Inline value options used during static or dynamic registration.
@@ -4453,32 +4453,32 @@ type InlineValueOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlineValueRegistrationOptions
 type InlineValueRegistrationOptions struct {
-	InlineValueOptions
-	TextDocumentRegistrationOptions
-	StaticRegistrationOptions
+	*InlineValueOptions
+	*TextDocumentRegistrationOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [InlineValueOptions]
-//   - [InlineValueRegistrationOptions]
+//   - [*InlineValueOptions]
+//   - [*InlineValueRegistrationOptions]
 type BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions struct {
 	Value BooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue
 }
 
 // BooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [InlineValueOptions]
-//   - [InlineValueRegistrationOptions]
+//   - [*InlineValueOptions]
+//   - [*InlineValueRegistrationOptions]
 //
 //gosumtype:decl BooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue
 type BooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue interface {
 	isBooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue()
 }
 
-func (Boolean) isBooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue()            {}
-func (InlineValueOptions) isBooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue() {}
-func (InlineValueRegistrationOptions) isBooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue() {
+func (Boolean) isBooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue()             {}
+func (*InlineValueOptions) isBooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue() {}
+func (*InlineValueRegistrationOptions) isBooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -4490,12 +4490,12 @@ func (b *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions) UnmarshalJ
 		b.Value = booleanValue
 		return nil
 	}
-	var inlineValueOptionsValue InlineValueOptions
+	var inlineValueOptionsValue *InlineValueOptions
 	if err := json.Unmarshal(data, &inlineValueOptionsValue); err == nil {
 		b.Value = inlineValueOptionsValue
 		return nil
 	}
-	var inlineValueRegistrationOptionsValue InlineValueRegistrationOptions
+	var inlineValueRegistrationOptionsValue *InlineValueRegistrationOptions
 	if err := json.Unmarshal(data, &inlineValueRegistrationOptionsValue); err == nil {
 		b.Value = inlineValueRegistrationOptionsValue
 		return nil
@@ -4516,10 +4516,10 @@ func (b BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions) MarshalJSON
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlayHintOptions
 type InlayHintOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// The server provides support to resolve additional
 	// information for an inlay hint item.
-	ResolveProvider *bool `json:"resolveProvider,omitempty"`
+	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
 // Inlay hint options used during static or dynamic registration.
@@ -4528,32 +4528,32 @@ type InlayHintOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlayHintRegistrationOptions
 type InlayHintRegistrationOptions struct {
-	InlayHintOptions
-	TextDocumentRegistrationOptions
-	StaticRegistrationOptions
+	*InlayHintOptions
+	*TextDocumentRegistrationOptions
+	*StaticRegistrationOptions
 }
 
 // BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions contains either of the following types:
 //   - [Boolean]
-//   - [InlayHintOptions]
-//   - [InlayHintRegistrationOptions]
+//   - [*InlayHintOptions]
+//   - [*InlayHintRegistrationOptions]
 type BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions struct {
 	Value BooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue
 }
 
 // BooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [InlayHintOptions]
-//   - [InlayHintRegistrationOptions]
+//   - [*InlayHintOptions]
+//   - [*InlayHintRegistrationOptions]
 //
 //gosumtype:decl BooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue
 type BooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue interface {
 	isBooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue()
 }
 
-func (Boolean) isBooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue()          {}
-func (InlayHintOptions) isBooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue() {}
-func (InlayHintRegistrationOptions) isBooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue() {
+func (Boolean) isBooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue()           {}
+func (*InlayHintOptions) isBooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue() {}
+func (*InlayHintRegistrationOptions) isBooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue() {
 }
 
 func (b *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions) UnmarshalJSON(data []byte) error {
@@ -4565,12 +4565,12 @@ func (b *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions) UnmarshalJSON(
 		b.Value = booleanValue
 		return nil
 	}
-	var inlayHintOptionsValue InlayHintOptions
+	var inlayHintOptionsValue *InlayHintOptions
 	if err := json.Unmarshal(data, &inlayHintOptionsValue); err == nil {
 		b.Value = inlayHintOptionsValue
 		return nil
 	}
-	var inlayHintRegistrationOptionsValue InlayHintRegistrationOptions
+	var inlayHintRegistrationOptionsValue *InlayHintRegistrationOptions
 	if err := json.Unmarshal(data, &inlayHintRegistrationOptionsValue); err == nil {
 		b.Value = inlayHintRegistrationOptionsValue
 		return nil
@@ -4591,10 +4591,10 @@ func (b BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions) MarshalJSON() (
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticOptions
 type DiagnosticOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 	// An optional identifier under which the diagnostics are
 	// managed by the client.
-	Identifier *string `json:"identifier,omitempty"`
+	Identifier string `json:"identifier,omitempty"`
 	// Whether the language has inter file dependencies meaning that
 	// editing code in one file can result in a different diagnostic
 	// set in another file. Inter file dependencies are common for
@@ -4610,40 +4610,40 @@ type DiagnosticOptions struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticRegistrationOptions
 type DiagnosticRegistrationOptions struct {
-	TextDocumentRegistrationOptions
-	DiagnosticOptions
-	StaticRegistrationOptions
+	*TextDocumentRegistrationOptions
+	*DiagnosticOptions
+	*StaticRegistrationOptions
 }
 
 // DiagnosticOptionsOrDiagnosticRegistrationOptions contains either of the following types:
-//   - [DiagnosticOptions]
-//   - [DiagnosticRegistrationOptions]
+//   - [*DiagnosticOptions]
+//   - [*DiagnosticRegistrationOptions]
 type DiagnosticOptionsOrDiagnosticRegistrationOptions struct {
 	Value DiagnosticOptionsOrDiagnosticRegistrationOptionsValue
 }
 
 // DiagnosticOptionsOrDiagnosticRegistrationOptionsValue is either of the following types:
-//   - [DiagnosticOptions]
-//   - [DiagnosticRegistrationOptions]
+//   - [*DiagnosticOptions]
+//   - [*DiagnosticRegistrationOptions]
 //
 //gosumtype:decl DiagnosticOptionsOrDiagnosticRegistrationOptionsValue
 type DiagnosticOptionsOrDiagnosticRegistrationOptionsValue interface {
 	isDiagnosticOptionsOrDiagnosticRegistrationOptionsValue()
 }
 
-func (DiagnosticOptions) isDiagnosticOptionsOrDiagnosticRegistrationOptionsValue()             {}
-func (DiagnosticRegistrationOptions) isDiagnosticOptionsOrDiagnosticRegistrationOptionsValue() {}
+func (*DiagnosticOptions) isDiagnosticOptionsOrDiagnosticRegistrationOptionsValue()             {}
+func (*DiagnosticRegistrationOptions) isDiagnosticOptionsOrDiagnosticRegistrationOptionsValue() {}
 
 func (d *DiagnosticOptionsOrDiagnosticRegistrationOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	var diagnosticOptionsValue DiagnosticOptions
+	var diagnosticOptionsValue *DiagnosticOptions
 	if err := json.Unmarshal(data, &diagnosticOptionsValue); err == nil {
 		d.Value = diagnosticOptionsValue
 		return nil
 	}
-	var diagnosticRegistrationOptionsValue DiagnosticRegistrationOptions
+	var diagnosticRegistrationOptionsValue *DiagnosticRegistrationOptions
 	if err := json.Unmarshal(data, &diagnosticRegistrationOptionsValue); err == nil {
 		d.Value = diagnosticRegistrationOptionsValue
 		return nil
@@ -4665,27 +4665,27 @@ func (d DiagnosticOptionsOrDiagnosticRegistrationOptions) MarshalJSON() ([]byte,
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#inlineCompletionOptions
 type InlineCompletionOptions struct {
-	WorkDoneProgressOptions
+	*WorkDoneProgressOptions
 }
 
 // BooleanOrInlineCompletionOptions contains either of the following types:
 //   - [Boolean]
-//   - [InlineCompletionOptions]
+//   - [*InlineCompletionOptions]
 type BooleanOrInlineCompletionOptions struct {
 	Value BooleanOrInlineCompletionOptionsValue
 }
 
 // BooleanOrInlineCompletionOptionsValue is either of the following types:
 //   - [Boolean]
-//   - [InlineCompletionOptions]
+//   - [*InlineCompletionOptions]
 //
 //gosumtype:decl BooleanOrInlineCompletionOptionsValue
 type BooleanOrInlineCompletionOptionsValue interface {
 	isBooleanOrInlineCompletionOptionsValue()
 }
 
-func (Boolean) isBooleanOrInlineCompletionOptionsValue()                 {}
-func (InlineCompletionOptions) isBooleanOrInlineCompletionOptionsValue() {}
+func (Boolean) isBooleanOrInlineCompletionOptionsValue()                  {}
+func (*InlineCompletionOptions) isBooleanOrInlineCompletionOptionsValue() {}
 
 func (b *BooleanOrInlineCompletionOptions) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
@@ -4696,7 +4696,7 @@ func (b *BooleanOrInlineCompletionOptions) UnmarshalJSON(data []byte) error {
 		b.Value = booleanValue
 		return nil
 	}
-	var inlineCompletionOptionsValue InlineCompletionOptions
+	var inlineCompletionOptionsValue *InlineCompletionOptions
 	if err := json.Unmarshal(data, &inlineCompletionOptionsValue); err == nil {
 		b.Value = inlineCompletionOptionsValue
 		return nil
@@ -4757,7 +4757,7 @@ func (s StringOrBoolean) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersServerCapabilities
 type WorkspaceFoldersServerCapabilities struct {
 	// The server has support for workspace folders
-	Supported *bool `json:"supported,omitempty"`
+	Supported bool `json:"supported,omitempty"`
 	// Whether the server wants to receive workspace folder
 	// change notifications.
 	//
@@ -4820,7 +4820,7 @@ func (f FileOperationPatternKind) MarshalJSON() ([]byte, error) {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#fileOperationPatternOptions
 type FileOperationPatternOptions struct {
 	// The pattern should be matched ignoring casing.
-	IgnoreCase *bool `json:"ignoreCase,omitempty"`
+	IgnoreCase bool `json:"ignoreCase,omitempty"`
 }
 
 // A pattern to describe in which file operation requests or notifications
@@ -4841,7 +4841,7 @@ type FileOperationPattern struct {
 	// Whether to match files or folders with this pattern.
 	//
 	// Matches both if undefined.
-	Matches *FileOperationPatternKind `json:"matches,omitempty"`
+	Matches FileOperationPatternKind `json:"matches,omitempty"`
 	// Additional options used during matching.
 	Options *FileOperationPatternOptions `json:"options,omitempty"`
 }
@@ -4854,12 +4854,12 @@ type FileOperationPattern struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#fileOperationFilter
 type FileOperationFilter struct {
 	// A Uri scheme like `file` or `untitled`.
-	Scheme *string `json:"scheme,omitempty"`
+	Scheme string `json:"scheme,omitempty"`
 	// The actual file operation pattern.
-	Pattern FileOperationPattern `json:"pattern"`
+	Pattern *FileOperationPattern `json:"pattern"`
 }
 
-type FileOperationFilterSlice []FileOperationFilter
+type FileOperationFilterSlice []*FileOperationFilter
 
 // The options to register for file operations.
 //
@@ -4916,7 +4916,7 @@ type ServerCapabilities struct {
 	// If omitted it defaults to 'utf-16'.
 	//
 	// @since 3.17.0
-	PositionEncoding *PositionEncodingKind `json:"positionEncoding,omitempty"`
+	PositionEncoding PositionEncodingKind `json:"positionEncoding,omitempty"`
 	// Defines how text documents are synced. Is either a detailed structure
 	// defining each notification or for backwards compatibility the
 	// TextDocumentSyncKind number.
@@ -5013,14 +5013,14 @@ type ServerCapabilities struct {
 	// Workspace specific server capabilities.
 	Workspace *ServerCapabilitiesWorkspace `json:"workspace,omitempty"`
 	// Experimental server capabilities.
-	Experimental *LSPAny `json:"experimental,omitempty"`
+	Experimental LSPAny `json:"experimental,omitempty"`
 }
 
 type InitializeResultServerInfo struct {
 	// The name of the server as defined by the server.
 	Name string `json:"name"`
 	// The server's version as defined by the server.
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version,omitempty"`
 }
 
 // The result returned from an initialize request.
@@ -5028,7 +5028,7 @@ type InitializeResultServerInfo struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeResult
 type InitializeResult struct {
 	// The capabilities the language server provides.
-	Capabilities ServerCapabilities `json:"capabilities"`
+	Capabilities *ServerCapabilities `json:"capabilities"`
 	// Information about the server.
 	//
 	// @since 3.15.0
@@ -5066,26 +5066,26 @@ type FormattingOptions struct {
 	// Trim trailing whitespace on a line.
 	//
 	// @since 3.15.0
-	TrimTrailingWhitespace *bool `json:"trimTrailingWhitespace,omitempty"`
+	TrimTrailingWhitespace bool `json:"trimTrailingWhitespace,omitempty"`
 	// Insert a newline character at the end of the file if one does not exist.
 	//
 	// @since 3.15.0
-	InsertFinalNewline *bool `json:"insertFinalNewline,omitempty"`
+	InsertFinalNewline bool `json:"insertFinalNewline,omitempty"`
 	// Trim all newlines after the final newline at the end of the file.
 	//
 	// @since 3.15.0
-	TrimFinalNewlines *bool `json:"trimFinalNewlines,omitempty"`
+	TrimFinalNewlines bool `json:"trimFinalNewlines,omitempty"`
 }
 
 // The parameters of a {@link DocumentFormattingRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFormattingParams
 type DocumentFormattingParams struct {
-	WorkDoneProgressParams
+	*WorkDoneProgressParams
 	// The document to format.
-	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	TextDocument *TextDocumentIdentifier `json:"textDocument"`
 	// The format options.
-	Options FormattingOptions `json:"options"`
+	Options *FormattingOptions `json:"options"`
 }
 
 // Position in a text document expressed as zero-based line and character
@@ -5150,9 +5150,9 @@ type Position struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#range
 type Range struct {
 	// The range's start position.
-	Start Position `json:"start"`
+	Start *Position `json:"start"`
 	// The range's end position.
-	End Position `json:"end"`
+	End *Position `json:"end"`
 }
 
 // A text edit applicable to a text document.
@@ -5161,13 +5161,13 @@ type Range struct {
 type TextEdit struct {
 	// The range of the text document to be manipulated. To insert
 	// text into a document create a range where start === end.
-	Range Range `json:"range"`
+	Range *Range `json:"range"`
 	// The string to be inserted. For delete operations use an
 	// empty string.
 	NewText string `json:"newText"`
 }
 
-type TextEditSlice []TextEdit
+type TextEditSlice []*TextEdit
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializedParams
 type InitializedParams struct {
@@ -5257,25 +5257,25 @@ type TextDocumentItem struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didOpenTextDocumentParams
 type DidOpenTextDocumentParams struct {
 	// The document that was opened.
-	TextDocument TextDocumentItem `json:"textDocument"`
+	TextDocument *TextDocumentItem `json:"textDocument"`
 }
 
 // A text document identifier to denote a specific version of a text document.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#versionedTextDocumentIdentifier
 type VersionedTextDocumentIdentifier struct {
-	TextDocumentIdentifier
+	*TextDocumentIdentifier
 	// The version number of this document.
 	Version int32 `json:"version"`
 }
 
 type TextDocumentContentChangeEventOr1 struct {
 	// The range of the document that changed.
-	Range Range `json:"range"`
+	Range *Range `json:"range"`
 	// The optional length of the range that got replaced.
 	//
 	// @deprecated use range instead.
-	RangeLength *uint32 `json:"rangeLength,omitempty"`
+	RangeLength uint32 `json:"rangeLength,omitempty"`
 	// The new text for the provided range.
 	Text string `json:"text"`
 }
@@ -5286,38 +5286,38 @@ type TextDocumentContentChangeEventOr2 struct {
 }
 
 // TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2 contains either of the following types:
-//   - [TextDocumentContentChangeEventOr1]
-//   - [TextDocumentContentChangeEventOr2]
+//   - [*TextDocumentContentChangeEventOr1]
+//   - [*TextDocumentContentChangeEventOr2]
 type TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2 struct {
 	Value TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value
 }
 
 // TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value is either of the following types:
-//   - [TextDocumentContentChangeEventOr1]
-//   - [TextDocumentContentChangeEventOr2]
+//   - [*TextDocumentContentChangeEventOr1]
+//   - [*TextDocumentContentChangeEventOr2]
 //
 //gosumtype:decl TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value
 type TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value interface {
 	isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value()
 }
 
-func (TextDocumentContentChangeEventOr1) isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value() {
+func (*TextDocumentContentChangeEventOr1) isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value() {
 }
-func (TextDocumentContentChangeEventOr2) isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value() {
+func (*TextDocumentContentChangeEventOr2) isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value() {
 }
 
 func (t *TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
-	var textDocumentContentChangeEventOr2Value TextDocumentContentChangeEventOr2
-	if err := json.Unmarshal(data, &textDocumentContentChangeEventOr2Value); err == nil {
-		t.Value = textDocumentContentChangeEventOr2Value
-		return nil
-	}
-	var textDocumentContentChangeEventOr1Value TextDocumentContentChangeEventOr1
+	var textDocumentContentChangeEventOr1Value *TextDocumentContentChangeEventOr1
 	if err := json.Unmarshal(data, &textDocumentContentChangeEventOr1Value); err == nil {
 		t.Value = textDocumentContentChangeEventOr1Value
+		return nil
+	}
+	var textDocumentContentChangeEventOr2Value *TextDocumentContentChangeEventOr2
+	if err := json.Unmarshal(data, &textDocumentContentChangeEventOr2Value); err == nil {
+		t.Value = textDocumentContentChangeEventOr2Value
 		return nil
 	}
 	return &json.UnmarshalTypeError{
@@ -5334,7 +5334,7 @@ func (t TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) Ma
 // it is considered to be the full content of the document.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
-type TextDocumentContentChangeEvent = TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2
+type TextDocumentContentChangeEvent = *TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2
 
 type TextDocumentContentChangeEventSlice []TextDocumentContentChangeEvent
 
@@ -5345,7 +5345,7 @@ type DidChangeTextDocumentParams struct {
 	// The document that did change. The version number points
 	// to the version after all provided content changes have
 	// been applied.
-	TextDocument VersionedTextDocumentIdentifier `json:"textDocument"`
+	TextDocument *VersionedTextDocumentIdentifier `json:"textDocument"`
 	// The actual content changes. The content changes describe single state changes
 	// to the document. So if there are two content changes c1 (at array index 0) and
 	// c2 (at array index 1) for a document in state S then c1 moves the document from
@@ -5365,7 +5365,7 @@ type DidChangeTextDocumentParams struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didCloseTextDocumentParams
 type DidCloseTextDocumentParams struct {
 	// The document that was closed.
-	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	TextDocument *TextDocumentIdentifier `json:"textDocument"`
 }
 
 // The diagnostic's severity.
@@ -5433,7 +5433,7 @@ type CodeDescription struct {
 type Location struct {
 	Uri string `json:"uri"`
 
-	Range Range `json:"range"`
+	Range *Range `json:"range"`
 }
 
 // Represents a related message and source code location for a diagnostic. This should be
@@ -5443,12 +5443,12 @@ type Location struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnosticRelatedInformation
 type DiagnosticRelatedInformation struct {
 	// The location of this related diagnostic information.
-	Location Location `json:"location"`
+	Location *Location `json:"location"`
 	// The message of this related diagnostic information.
 	Message string `json:"message"`
 }
 
-type DiagnosticRelatedInformationSlice []DiagnosticRelatedInformation
+type DiagnosticRelatedInformationSlice []*DiagnosticRelatedInformation
 
 // Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
 // are only valid in the scope of a resource.
@@ -5456,10 +5456,10 @@ type DiagnosticRelatedInformationSlice []DiagnosticRelatedInformation
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#diagnostic
 type Diagnostic struct {
 	// The range at which the message applies
-	Range Range `json:"range"`
+	Range *Range `json:"range"`
 	// The diagnostic's severity. Can be omitted. If omitted it is up to the
 	// client to interpret diagnostics as error, warning, info or hint.
-	Severity *DiagnosticSeverity `json:"severity,omitempty"`
+	Severity DiagnosticSeverity `json:"severity,omitempty"`
 	// The diagnostic's code, which usually appear in the user interface.
 	Code *IntegerOrString `json:"code,omitempty"`
 	// An optional property to describe the error code.
@@ -5470,24 +5470,24 @@ type Diagnostic struct {
 	// A human-readable string describing the source of this
 	// diagnostic, e.g. 'typescript' or 'super lint'. It usually
 	// appears in the user interface.
-	Source *string `json:"source,omitempty"`
+	Source string `json:"source,omitempty"`
 	// The diagnostic's message. It usually appears in the user interface
 	Message string `json:"message"`
 	// Additional metadata about the diagnostic.
 	//
 	// @since 3.15.0
-	Tags *DiagnosticTagSlice `json:"tags,omitempty"`
+	Tags DiagnosticTagSlice `json:"tags,omitempty"`
 	// An array of related diagnostic information, e.g. when symbol-names within
 	// a scope collide all definitions can be marked via this property.
-	RelatedInformation *DiagnosticRelatedInformationSlice `json:"relatedInformation,omitempty"`
+	RelatedInformation DiagnosticRelatedInformationSlice `json:"relatedInformation,omitempty"`
 	// A data entry field that is preserved between a `textDocument/publishDiagnostics`
 	// notification and `textDocument/codeAction` request.
 	//
 	// @since 3.16.0
-	Data *LSPAny `json:"data,omitempty"`
+	Data LSPAny `json:"data,omitempty"`
 }
 
-type DiagnosticSlice []Diagnostic
+type DiagnosticSlice []*Diagnostic
 
 // The publish diagnostic notification's parameters.
 //
@@ -5498,7 +5498,7 @@ type PublishDiagnosticsParams struct {
 	// Optional the version number of the document the diagnostics are published for.
 	//
 	// @since 3.15.0
-	Version *int32 `json:"version,omitempty"`
+	Version int32 `json:"version,omitempty"`
 	// An array of diagnostic information items.
 	Diagnostics DiagnosticSlice `json:"diagnostics"`
 }
