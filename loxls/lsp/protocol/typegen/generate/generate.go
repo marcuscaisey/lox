@@ -122,7 +122,7 @@ func (g *generator) genRefTypeDecl(name string) string {
 }
 
 func (g *generator) genStructDecl(structure *metamodel.Structure) string {
-	name := structure.Name
+	name := sanitiseName(structure.Name)
 
 	if g.gennedTypes[name] {
 		return "*" + name
@@ -166,7 +166,7 @@ func (g *generator) structField(structName string, prop *metamodel.Property) str
 {{.fieldName}} {{.type}} {{jsonTag .jsonName}}
 {{- end -}}
 `
-	fieldName := upperFirstLetter(prop.Name)
+	fieldName := upperFirstLetter(sanitiseName(prop.Name))
 	data := map[string]any{
 		"comment":   g.comment(prop.Documentation, prop.Deprecated),
 		"optional":  prop.Optional,
@@ -178,7 +178,7 @@ func (g *generator) structField(structName string, prop *metamodel.Property) str
 }
 
 func (g *generator) genTypeAliasDecl(typeAlias *metamodel.TypeAlias) string {
-	name := typeAlias.Name
+	name := sanitiseName(typeAlias.Name)
 
 	if g.gennedTypes[name] {
 		return name
@@ -207,7 +207,7 @@ var enumTypeTypes = map[metamodel.EnumerationTypeName]string{
 }
 
 func (g *generator) genEnumDecl(enum *metamodel.Enumeration) string {
-	name := enum.Name
+	name := sanitiseName(enum.Name)
 
 	if g.gennedTypes[name] {
 		return name
@@ -580,4 +580,11 @@ func isNullBaseType(typ *metamodel.Type) bool {
 
 func trimStarPrefix(s string) string {
 	return strings.TrimPrefix(s, "*")
+}
+
+func sanitiseName(name string) string {
+	if name[0] == '_' {
+		return "X" + name[1:]
+	}
+	return name
 }

@@ -64,7 +64,7 @@ type WorkDoneProgressParams struct {
 	WorkDoneToken ProgressToken `json:"workDoneToken,omitempty"`
 }
 
-type _InitializeParamsClientInfo struct {
+type XInitializeParamsClientInfo struct {
 	// The name of the client as defined by the client.
 	Name string `json:"name"`
 	// The client's version as defined by the client.
@@ -2226,8 +2226,8 @@ func (t TraceValues) MarshalJSON() ([]byte, error) {
 
 // The initialize parameters
 //
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#_InitializeParams
-type _InitializeParams struct {
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#xInitializeParams
+type XInitializeParams struct {
 	*WorkDoneProgressParams
 	// The process Id of the parent process that started
 	// the server.
@@ -2238,7 +2238,7 @@ type _InitializeParams struct {
 	// Information about the client
 	//
 	// @since 3.15.0
-	ClientInfo *_InitializeParamsClientInfo `json:"clientInfo,omitempty"`
+	ClientInfo *XInitializeParamsClientInfo `json:"clientInfo,omitempty"`
 	// The locale the client is currently showing the user interface
 	// in. This must not necessarily be the locale of the operating
 	// system.
@@ -2292,7 +2292,7 @@ type WorkspaceFoldersInitializeParams struct {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
 type InitializeParams struct {
-	*_InitializeParams
+	*XInitializeParams
 	*WorkspaceFoldersInitializeParams
 }
 
