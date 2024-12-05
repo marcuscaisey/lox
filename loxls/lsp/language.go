@@ -8,7 +8,7 @@ import (
 )
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting
-func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingParams) (protocol.TextEditSlice, error) {
+func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingParams) ([]*protocol.TextEdit, error) {
 	doc, err := h.document(params.TextDocument.Uri)
 	if err != nil {
 		return nil, err
@@ -25,7 +25,7 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 	}
 
 	textLines := strings.Split(strings.TrimSuffix(doc.Text, "\n"), "\n")
-	return protocol.TextEditSlice{
+	return []*protocol.TextEdit{
 		{
 			Range: &protocol.Range{
 				Start: &protocol.Position{Line: 0},

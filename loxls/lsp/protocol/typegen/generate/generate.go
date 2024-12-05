@@ -312,13 +312,13 @@ var sumTypeVariantUnmarshalOrders = map[string][]string{
 
 func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type) (name string) {
 	nonNullVariants := slices.DeleteFunc(slices.Clone(variants), isNullBaseType)
+	if len(nonNullVariants) == 1 {
+		return g.genTypeDecl(namespace, nonNullVariants[0])
+	}
 
 	variantTypes := make([]string, len(nonNullVariants))
 	for i, item := range nonNullVariants {
 		variantTypes[i] = g.genTypeDeclForSumType(fmt.Sprintf("%sOr%d", namespace, i+1), item)
-	}
-	if len(variantTypes) == 1 {
-		return variantTypes[0]
 	}
 
 	name = strings.ReplaceAll(strings.Join(variantTypes, "Or"), "*", "")

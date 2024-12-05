@@ -71,8 +71,6 @@ type _InitializeParamsClientInfo struct {
 	Version string `json:"version,omitempty"`
 }
 
-type DocumentUri string
-
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#resourceOperationKind
 type ResourceOperationKind string
 
@@ -2236,7 +2234,7 @@ type _InitializeParams struct {
 	//
 	// Is `null` if the process has not been started by another process.
 	// If the parent process is not alive then the server should exit.
-	ProcessId Integer `json:"processId"`
+	ProcessId int32 `json:"processId"`
 	// Information about the client
 	//
 	// @since 3.15.0
@@ -2254,13 +2252,13 @@ type _InitializeParams struct {
 	// if no folder is open.
 	//
 	// Deprecated: in favour of rootUri.
-	RootPath String `json:"rootPath,omitempty"`
+	RootPath string `json:"rootPath,omitempty"`
 	// The rootUri of the workspace. Is null if no
 	// folder is open. If both `rootPath` and `rootUri` are set
 	// `rootUri` wins.
 	//
 	// Deprecated: in favour of workspaceFolders.
-	RootUri DocumentUri `json:"rootUri"`
+	RootUri string `json:"rootUri"`
 	// The capabilities provided by the client (editor or tool)
 	Capabilities *ClientCapabilities `json:"capabilities"`
 	// User provided initialization options.
@@ -2280,8 +2278,6 @@ type WorkspaceFolder struct {
 	Name string `json:"name"`
 }
 
-type WorkspaceFolderSlice []*WorkspaceFolder
-
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersInitializeParams
 type WorkspaceFoldersInitializeParams struct {
 	// The workspace folders configured in the client when the server starts.
@@ -2291,7 +2287,7 @@ type WorkspaceFoldersInitializeParams struct {
 	// configured.
 	//
 	// @since 3.6.0
-	WorkspaceFolders WorkspaceFolderSlice `json:"workspaceFolders,omitempty"`
+	WorkspaceFolders []*WorkspaceFolder `json:"workspaceFolders,omitempty"`
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
@@ -5130,8 +5126,6 @@ type TextEdit struct {
 	// empty string.
 	NewText string `json:"newText"`
 }
-
-type TextEditSlice []*TextEdit
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializedParams
 type InitializedParams struct {
