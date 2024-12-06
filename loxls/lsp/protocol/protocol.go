@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"reflect"
+	"slices"
 )
 
 type Integer int32
@@ -5268,10 +5270,18 @@ func (t *TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) U
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
+	var unmarshalledData map[string]any
+	err := json.Unmarshal(data, &unmarshalledData)
+	if err != nil {
+		return err
+	}
+	fields := slices.Collect(maps.Keys(unmarshalledData))
 	var textDocumentContentChangeEventOr1Value *TextDocumentContentChangeEventOr1
-	if err := json.Unmarshal(data, &textDocumentContentChangeEventOr1Value); err == nil {
-		t.Value = textDocumentContentChangeEventOr1Value
-		return nil
+	if slices.Contains(fields, "range") {
+		if err := json.Unmarshal(data, &textDocumentContentChangeEventOr1Value); err == nil {
+			t.Value = textDocumentContentChangeEventOr1Value
+			return nil
+		}
 	}
 	var textDocumentContentChangeEventOr2Value *TextDocumentContentChangeEventOr2
 	if err := json.Unmarshal(data, &textDocumentContentChangeEventOr2Value); err == nil {

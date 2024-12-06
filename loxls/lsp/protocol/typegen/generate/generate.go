@@ -300,13 +300,9 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 	return name
 }
 
-// sumTypeVariantUnmarshalOrders stores the relative order that variants of each sum type will be unmarshaled in.
-// If a sum type does not have an order, its variants will be unmarshaled in the order they are defined.
-// Unlisted variants will be unmarshaled before listed variants in the order they are defined.
-var sumTypeVariantUnmarshalOrders = map[string][]string{
+var sumTypeVariantDiscriminators = map[string]map[string]string{
 	"TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2": {
-		"TextDocumentContentChangeEventOr2",
-		"TextDocumentContentChangeEventOr1",
+		"*TextDocumentContentChangeEventOr1": "range",
 	},
 }
 
@@ -322,13 +318,20 @@ func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type)
 	}
 
 	name = strings.ReplaceAll(strings.Join(variantTypes, "Or"), "*", "")
+
 	sortedVariantTypes := slices.Clone(variantTypes)
-	unmarshalOrderPositions := map[string]int{}
-	for i, variant := range sumTypeVariantUnmarshalOrders[name] {
-		unmarshalOrderPositions[variant] = i + 1
-	}
-	slices.SortStableFunc(sortedVariantTypes, func(x, y string) int {
-		return cmp.Compare(unmarshalOrderPositions[x], unmarshalOrderPositions[y])
+	discriminators := sumTypeVariantDiscriminators[name]
+	// Sort the variants so that the ones with discriminators come first.
+	slices.SortStableFunc(sortedVariantTypes, func(left, right string) int {
+		var x int
+		var y int
+		if _, ok := discriminators[left]; !ok {
+			x = 1
+		}
+		if _, ok := discriminators[right]; !ok {
+			y = 1
+		}
+		return cmp.Compare(x, y)
 	})
 
 	if g.gennedTypes[name] {
@@ -366,13 +369,30 @@ func ({{$receiver}} *{{$.name}}) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
+	{{- if gt (len $.discriminators) 0}}
+	var unmarshalledData map[string]any
+	err := json.Unmarshal(data, &unmarshalledData)
+	if err != nil {
+		return err
+	}
+	fields := slices.Collect(maps.Keys(unmarshalledData))
+	{{- end}}
 	{{- range $i, $variant := $.sortedVariants}}
 	{{- with $var := trimStarPrefix $variant | lowerFirstLetter | printf "%sValue"}}
 	var {{$var}} {{$variant}}
+	{{- with $discriminator := index $.discriminators $variant}}
+	if slices.Contains(fields, "{{$discriminator}}") {
+		if err := json.Unmarshal(data, &{{$var}}); err == nil {
+			{{$receiver}}.Value = {{$var}}
+			return nil
+		}
+	}
+	{{- else}}
 	if err := json.Unmarshal(data, &{{$var}}); err == nil {
 		{{$receiver}}.Value = {{$var}}
 		return nil
 	}
+	{{- end}}
 	{{- end}}
 	{{- end}}
 	return &json.UnmarshalTypeError{
@@ -387,7 +407,15 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 {{end}}
 `
 	g.importPkgs("bytes", "encoding/json", "reflect")
-	data := map[string]any{"name": name, "variants": variantTypes, "sortedVariants": sortedVariantTypes}
+	if len(discriminators) > 0 {
+		g.importPkgs("maps", "slices")
+	}
+	data := map[string]any{
+		"name":           name,
+		"variants":       variantTypes,
+		"sortedVariants": sortedVariantTypes,
+		"discriminators": discriminators,
+	}
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 
