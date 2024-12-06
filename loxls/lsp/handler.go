@@ -39,22 +39,24 @@ func (h *Handler) HandleRequest(method string, jsonParams *json.RawMessage) (any
 	}
 	switch method {
 	case "initialize":
-		var params *protocol.InitializeParams
-		if err := json.Unmarshal(*jsonParams, &params); err != nil {
-			return nil, jsonrpc.NewError(jsonrpc.InvalidParams, "Invalid params", map[string]any{"error": err.Error()})
-		}
-		return h.initialize(params)
+		return handleRequest(h.initialize, jsonParams)
 	case "shutdown":
 		return h.shutdown()
 	case "textDocument/formatting":
-		var params *protocol.DocumentFormattingParams
-		if err := json.Unmarshal(*jsonParams, &params); err != nil {
-			return nil, jsonrpc.NewError(jsonrpc.InvalidParams, "Invalid params", map[string]any{"error": err.Error()})
-		}
-		return h.textDocumentFormatting(params)
+		return handleRequest(h.textDocumentFormatting, jsonParams)
 	default:
 		return nil, jsonrpc.NewMethodNotFoundError(method)
 	}
+}
+
+type requestHandler[T any, R any] func(T) (R, error)
+
+func handleRequest[T any, R any](handler requestHandler[T, R], jsonParams *json.RawMessage) (any, error) {
+	var params T
+	if err := json.Unmarshal(*jsonParams, &params); err != nil {
+		return nil, jsonrpc.NewError(jsonrpc.InvalidParams, "Invalid params", map[string]any{"error": err.Error()})
+	}
+	return handler(params)
 }
 
 // HandleNotification responds to a JSON-RPC notification.
@@ -75,29 +77,27 @@ func (h *Handler) handleNotification(method string, jsonParams *json.RawMessage)
 	case "initialized":
 		// No further initialisation needed
 	case "textDocument/didOpen":
-		var params *protocol.DidOpenTextDocumentParams
-		if err := json.Unmarshal(*jsonParams, &params); err != nil {
-			return fmt.Errorf("%s: %s", method, err)
-		}
-		return h.textDocumentDidOpen(params)
+		return handleNotification(method, h.textDocumentDidOpen, jsonParams)
 	case "textDocument/didChange":
-		var params *protocol.DidChangeTextDocumentParams
-		if err := json.Unmarshal(*jsonParams, &params); err != nil {
-			return fmt.Errorf("%s: %s", method, err)
-		}
-		return h.textDocumentDidChange(params)
+		return handleNotification(method, h.textDocumentDidChange, jsonParams)
 	case "textDocument/didClose":
-		var params *protocol.DidCloseTextDocumentParams
-		if err := json.Unmarshal(*jsonParams, &params); err != nil {
-			return fmt.Errorf("%s: %s", method, err)
-		}
-		return h.textDocumentDidClose(params)
+		return handleNotification(method, h.textDocumentDidClose, jsonParams)
 	case "exit":
 		return h.exit()
 	default:
 		return fmt.Errorf("%s method not found", method)
 	}
 	return nil
+}
+
+type notificationHandler[T any] func(T) error
+
+func handleNotification[T any](method string, handler notificationHandler[T], jsonParams *json.RawMessage) error {
+	var params T
+	if err := json.Unmarshal(*jsonParams, &params); err != nil {
+		return fmt.Errorf("%s: %s", method, err)
+	}
+	return handler(params)
 }
 
 // SetClient sets the client that the handler can use to send requests and notifications to the server's client.
