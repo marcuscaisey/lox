@@ -19,7 +19,7 @@ type Handler struct {
 
 	initialized  bool
 	shuttingDown bool
-	docsByURI         map[string]*document
+	docsByURI    map[string]*document
 }
 
 // NewHandler returns a new Handler.
