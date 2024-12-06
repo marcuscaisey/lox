@@ -1,4 +1,4 @@
-// Package token defines Token which represents a lexical token of the Lox programming language.
+// Package token declares the type representing a lexical token of Lox code.
 package token
 
 import (

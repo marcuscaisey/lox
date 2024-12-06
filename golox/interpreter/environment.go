@@ -5,8 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/marcuscaisey/lox/golox/lox"
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 type environment struct {

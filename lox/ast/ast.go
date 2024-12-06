@@ -1,8 +1,8 @@
-// Package ast defines the types which are used to represent the abstract syntax tree of the Lox programming language.
+// Package ast declares the types used to represent abstract syntax trees for Lox programs.
 package ast
 
 import (
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 // Node is the interface which all AST nodes implement.
@@ -159,6 +159,11 @@ func (m MethodDecl) HasModifier(target token.Type) bool {
 		}
 	}
 	return false
+}
+
+// IsConstructor reports whether the declaration is a constructor.
+func (m MethodDecl) IsConstructor() bool {
+	return !m.HasModifier(token.Static) && m.Name.Lexeme == token.ConstructorIdent
 }
 
 // ExprStmt is an expression statement, such as a function call.

@@ -8,9 +8,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/parser"
-	"github.com/marcuscaisey/lox/loxfmt/format"
+	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/format"
+	"github.com/marcuscaisey/lox/lox/parser"
 )
 
 var (

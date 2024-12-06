@@ -1,9 +1,9 @@
-package interpreter
+package analysis
 
 import (
-	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/lox"
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox"
+	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 const (
@@ -205,4 +205,29 @@ func (c *semanticChecker) checkNumArgs(args []ast.Expr) {
 	if len(args) > maxArgs {
 		c.errs.Addf(args[maxArgs], "cannot pass more than %d arguments to function", maxArgs)
 	}
+}
+
+type funType int
+
+const (
+	funTypeNone     funType = iota
+	funTypeFunction funType = 1 << (iota - 1)
+	funTypeMethodFlag
+	funTypeConstructorFlag
+)
+
+func (f funType) IsMethod() bool {
+	return f&funTypeMethodFlag != 0
+}
+
+func (f funType) IsConstructor() bool {
+	return f&funTypeConstructorFlag != 0
+}
+
+func methodFunType(decl ast.MethodDecl) funType {
+	typ := funTypeFunction | funTypeMethodFlag
+	if decl.IsConstructor() {
+		typ |= funTypeConstructorFlag
+	}
+	return typ
 }

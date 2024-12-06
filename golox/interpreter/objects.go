@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/lox"
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox"
+	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 // loxType is the string representation of a Lox object's type.
@@ -267,7 +267,7 @@ func (f funType) IsBuiltin() bool {
 
 func methodFunType(decl ast.MethodDecl) funType {
 	typ := funTypeFunction | funTypeMethodFlag
-	if !decl.HasModifier(token.Static) && decl.Name.Lexeme == token.ConstructorIdent {
+	if decl.IsConstructor() {
 		typ |= funTypeConstructorFlag
 	}
 	return typ

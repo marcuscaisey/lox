@@ -1,4 +1,4 @@
-// Package interpreter defines the interpreter for the language.
+// Package interpreter implements an interpreter of Lox programs.
 package interpreter
 
 import (
@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/lox"
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox"
+	"github.com/marcuscaisey/lox/lox/analysis"
+	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 // Interpreter is the interpreter for the language.
@@ -52,8 +53,8 @@ func New(opts ...Option) *Interpreter {
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program ast.Program) error {
-	declDistancesByTok, errs := ResolveIdents(program)
-	errs = append(errs, CheckSemantics(program)...)
+	declDistancesByTok, errs := analysis.ResolveIdents(program)
+	errs = append(errs, analysis.CheckSemantics(program)...)
 	if err := errs.Err(); err != nil {
 		return err
 	}

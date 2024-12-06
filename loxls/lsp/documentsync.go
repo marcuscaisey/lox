@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/interpreter"
-	"github.com/marcuscaisey/lox/golox/lox"
-	"github.com/marcuscaisey/lox/golox/parser"
+	"github.com/marcuscaisey/lox/lox"
+	"github.com/marcuscaisey/lox/lox/analysis"
+	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/parser"
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
@@ -61,8 +61,8 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 			return err
 		}
 	} else {
-		_, loxErrs = interpreter.ResolveIdents(program)
-		loxErrs = append(loxErrs, interpreter.CheckSemantics(program)...)
+		_, loxErrs = analysis.ResolveIdents(program)
+		loxErrs = append(loxErrs, analysis.CheckSemantics(program)...)
 	}
 
 	diagnostics := make([]*protocol.Diagnostic, len(loxErrs))

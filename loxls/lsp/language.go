@@ -3,7 +3,7 @@ package lsp
 import (
 	"strings"
 
-	"github.com/marcuscaisey/lox/loxfmt/format"
+	"github.com/marcuscaisey/lox/lox/format"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 

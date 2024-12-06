@@ -1,4 +1,3 @@
-// Package lox provides types which are shared by most of the packages in the Lox interpreter.
 package lox
 
 import (
@@ -10,7 +9,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 // Error describes an error that occurred during the execution of a Lox program.

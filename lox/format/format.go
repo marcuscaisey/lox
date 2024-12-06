@@ -1,12 +1,12 @@
-// Package format implements standard formatting of Lox source.
+// Package format implements canonical formatting of Lox code.
 package format
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 const indentSize = 4

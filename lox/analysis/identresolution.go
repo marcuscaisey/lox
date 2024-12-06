@@ -1,9 +1,10 @@
-package interpreter
+package analysis
 
 import (
-	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/lox"
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox"
+	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/stack"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 // ResolveIdents resolves the identifier tokens in a program to the declarations that they refer to.
@@ -22,7 +23,7 @@ func ResolveIdents(program ast.Program) (map[token.Token]int, lox.Errors) {
 }
 
 type identResolver struct {
-	scopes *stack[scope]
+	scopes *stack.Stack[scope]
 	// map of identifier tokens to the distance to the declaration of the identifier that they refer to
 	declDistancesByTok map[token.Token]int
 
@@ -31,7 +32,7 @@ type identResolver struct {
 
 func newIdentResolver() *identResolver {
 	return &identResolver{
-		scopes:             newStack[scope](),
+		scopes:             stack.New[scope](),
 		declDistancesByTok: map[token.Token]int{},
 	}
 }

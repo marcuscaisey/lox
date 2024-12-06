@@ -9,12 +9,13 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox/stack"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 type callStack struct {
-	frames      *stack[*stackFrame]
-	calledFuncs *stack[string]
+	frames      *stack.Stack[*stackFrame]
+	calledFuncs *stack.Stack[string]
 }
 
 // stackFrame points either to a function call or where an error occurred.
@@ -25,8 +26,8 @@ type stackFrame struct {
 
 func newCallStack() *callStack {
 	callStack := &callStack{
-		frames:      newStack[*stackFrame](),
-		calledFuncs: newStack[string](),
+		frames:      stack.New[*stackFrame](),
+		calledFuncs: stack.New[string](),
 	}
 	callStack.calledFuncs.Push("")
 	return callStack

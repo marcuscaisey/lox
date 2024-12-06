@@ -1,4 +1,4 @@
-// Package parser implements a parser for Lox source code.
+// Package parser implements a parser of Lox code.
 package parser
 
 import (
@@ -6,9 +6,9 @@ import (
 	"io"
 	"slices"
 
-	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/lox"
-	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/lox"
+	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/token"
 )
 
 // Option can be passed to [Parse] to configure its behaviour.
