@@ -91,6 +91,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didClose
-func (h *Handler) textDocumentDidClose(*protocol.DidCloseTextDocumentParams) error {
+func (h *Handler) textDocumentDidClose(params *protocol.DidCloseTextDocumentParams) error {
+	delete(h.docsByURI, params.TextDocument.Uri)
 	return nil
 }
