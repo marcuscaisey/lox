@@ -266,6 +266,19 @@ type CharacterRange interface {
 	End() Position   // End returns the position of the character immediately after the range.
 }
 
+type characterRange struct {
+	start Position
+	end   Position
+}
+
+func (cr characterRange) Start() Position {
+	return cr.start
+}
+
+func (cr characterRange) End() Position {
+	return cr.end
+}
+
 var (
 	cyan   = color.New(color.FgCyan).SprintFunc()
 	yellow = color.New(color.FgYellow).SprintFunc()

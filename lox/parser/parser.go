@@ -43,6 +43,7 @@ func Parse(r io.Reader, opts ...Option) (ast.Program, error) {
 
 type parser struct {
 	lexer   *lexer
+	prevTok token.Token
 	tok     token.Token // token currently being considered
 	nextTok token.Token
 
@@ -147,7 +148,7 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
 	if p.match(token.Equal) {
 		value = p.parseExpr()
 	}
-	semicolon := p.expect(token.Semicolon)
+	semicolon := p.expectSemicolon()
 	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
 }
 
@@ -285,13 +286,13 @@ func (p *parser) parseInlineCommentStmt(stmt ast.Stmt) (ast.InlineCommentStmt, b
 
 func (p *parser) parseExprStmt() ast.ExprStmt {
 	expr := p.parseExpr()
-	semicolon := p.expect(token.Semicolon)
+	semicolon := p.expectSemicolon()
 	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
 }
 
 func (p *parser) parsePrintStmt(printTok token.Token) ast.PrintStmt {
 	expr := p.parseExpr()
-	semicolon := p.expect(token.Semicolon)
+	semicolon := p.expectSemicolon()
 	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
 }
 
@@ -334,7 +335,7 @@ func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
 	var condition ast.Expr
 	if !p.match(token.Semicolon) {
 		condition = p.parseExpr()
-		p.expect(token.Semicolon)
+		p.expectSemicolon()
 	}
 	var update ast.Expr
 	if !p.match(token.RightParen) {
@@ -346,12 +347,12 @@ func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
 }
 
 func (p *parser) parseBreakStmt(breakTok token.Token) ast.BreakStmt {
-	semicolon := p.expect(token.Semicolon)
+	semicolon := p.expectSemicolon()
 	return ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
 }
 
 func (p *parser) parseContinueStmt(continueTok token.Token) ast.ContinueStmt {
-	semicolon := p.expect(token.Semicolon)
+	semicolon := p.expectSemicolon()
 	return ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
 }
 
@@ -360,7 +361,7 @@ func (p *parser) parseReturnStmt(returnTok token.Token) ast.ReturnStmt {
 	var value ast.Expr
 	if !ok {
 		value = p.parseExpr()
-		semicolon = p.expect(token.Semicolon)
+		semicolon = p.expectSemicolon()
 	}
 	return ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
 }
@@ -590,17 +591,26 @@ func (p *parser) expect(t token.Type) token.Token {
 
 // expectf is like expect but accepts a format string for the error message.
 func (p *parser) expectf(t token.Type, format string, a ...any) token.Token {
-	if p.tok.Type == t {
-		tok := p.tok
-		p.next()
+	if tok, ok := p.match2(t); ok {
 		return tok
 	}
 	p.addErrorf(p.tok, format, a...)
 	panic(unwind{})
 }
 
+// expectSemicolon returns the current token and advances the parser if it is a semicolon. Otherwise, an "expected
+// trailing %m" error is added and the method panics to unwind the stack.
+func (p *parser) expectSemicolon() token.Token {
+	if tok, ok := p.match2(token.Semicolon); ok {
+		return tok
+	}
+	p.addErrorf(p.prevTok, "expected trailing %m", token.Semicolon)
+	panic(unwind{})
+}
+
 // next advances the parser to the next token.
 func (p *parser) next() {
+	p.prevTok = p.tok
 	p.tok = p.nextTok
 	p.nextTok = p.lexer.Next()
 }
