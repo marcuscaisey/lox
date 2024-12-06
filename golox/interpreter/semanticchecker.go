@@ -11,7 +11,7 @@ const (
 	maxArgs   = maxParams
 )
 
-// checkSemantics checks that the following rules have been followed:
+// CheckSemantics checks that the following rules have been followed:
 //   - Write-only properties are not allowed
 //   - break and continue can only be used inside a loop
 //   - return can only be used inside a function definition
@@ -22,7 +22,7 @@ const (
 //   - property setter must have exactly one parameter
 //   - functions cannot have more than 255 parameters
 //   - function calls cannot have more than 255 arguments
-func checkSemantics(program ast.Program) lox.Errors {
+func CheckSemantics(program ast.Program) lox.Errors {
 	c := newSemanticChecker()
 	return c.Check(program)
 }

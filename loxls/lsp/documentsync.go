@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/interpreter"
 	"github.com/marcuscaisey/lox/golox/lox"
 	"github.com/marcuscaisey/lox/golox/parser"
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
@@ -53,36 +54,42 @@ func (h *Handler) textDocumentDidChange(params *protocol.DidChangeTextDocumentPa
 
 func (h *Handler) updateDoc(uri string, version int, src string) error {
 	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithComments())
-	diagnostics := []*protocol.Diagnostic{}
+
+	var loxErrs lox.Errors
 	if err != nil {
-		var loxErrs lox.Errors
 		if !errors.As(err, &loxErrs) {
 			return err
 		}
-		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
-		for i, e := range loxErrs {
-			diagnostics[i] = &protocol.Diagnostic{
-				Range: &protocol.Range{
-					Start: &protocol.Position{
-						Line:      e.Start.Line - 1,
-						Character: e.Start.ColumnUTF16(),
-					},
-					End: &protocol.Position{
-						Line:      e.End.Line - 1,
-						Character: e.End.ColumnUTF16(),
-					},
+	} else {
+		_, loxErrs = interpreter.ResolveIdents(program)
+		loxErrs = append(loxErrs, interpreter.CheckSemantics(program)...)
+	}
+
+	diagnostics := make([]*protocol.Diagnostic, len(loxErrs))
+	for i, e := range loxErrs {
+		diagnostics[i] = &protocol.Diagnostic{
+			Range: &protocol.Range{
+				Start: &protocol.Position{
+					Line:      e.Start.Line - 1,
+					Character: e.Start.ColumnUTF16(),
 				},
-				Severity: protocol.DiagnosticSeverityError,
-				Source:   "loxls",
-				Message:  e.Msg,
-			}
+				End: &protocol.Position{
+					Line:      e.End.Line - 1,
+					Character: e.End.ColumnUTF16(),
+				},
+			},
+			Severity: protocol.DiagnosticSeverityError,
+			Source:   "loxls",
+			Message:  e.Msg,
 		}
 	}
+
 	h.docsByURI[uri] = &document{
 		Text:      src,
 		Program:   program,
 		HasErrors: err != nil,
 	}
+
 	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
 		Uri:         uri,
 		Version:     version,

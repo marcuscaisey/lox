@@ -6,7 +6,7 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-// resolveIdents resolves the identifier tokens in a program to the declarations that they refer to.
+// ResolveIdents resolves the identifier tokens in a program to the declarations that they refer to.
 // It returns a map from identifier tokens to the distance to the declaration of the identifier that they refer to.
 // A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
 // parent scope, and so on.
@@ -16,7 +16,7 @@ import (
 //   - declared and never used
 //   - declared more than once in the same scope
 //   - used before they are defined
-func resolveIdents(program ast.Program) (map[token.Token]int, lox.Errors) {
+func ResolveIdents(program ast.Program) (map[token.Token]int, lox.Errors) {
 	r := newIdentResolver()
 	return r.Resolve(program)
 }
