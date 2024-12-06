@@ -300,9 +300,14 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 	return name
 }
 
+var sumTypeVariantNameOverrides = map[string]string{
+	"TextDocumentContentChangeEventOr1": "IncrementalTextDocumentContentChangeEvent",
+	"TextDocumentContentChangeEventOr2": "FullTextDocumentContentChangeEvent",
+}
+
 var sumTypeVariantDiscriminators = map[string]map[string]string{
-	"TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2": {
-		"*TextDocumentContentChangeEventOr1": "range",
+	"IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent": {
+		"*IncrementalTextDocumentContentChangeEvent": "range",
 	},
 }
 
@@ -314,7 +319,11 @@ func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type)
 
 	variantTypes := make([]string, len(nonNullVariants))
 	for i, item := range nonNullVariants {
-		variantTypes[i] = g.genTypeDeclForSumType(fmt.Sprintf("%sOr%d", namespace, i+1), item)
+		name := fmt.Sprintf("%sOr%d", namespace, i+1)
+		if override, ok := sumTypeVariantNameOverrides[name]; ok {
+			name = override
+		}
+		variantTypes[i] = g.genTypeDeclForSumType(name, item)
 	}
 
 	name = strings.ReplaceAll(strings.Join(variantTypes, "Or"), "*", "")

@@ -39,9 +39,9 @@ func (h *Handler) textDocumentDidOpen(params *protocol.DidOpenTextDocumentParams
 func (h *Handler) textDocumentDidChange(params *protocol.DidChangeTextDocumentParams) error {
 	for _, change := range params.ContentChanges {
 		switch change := change.Value.(type) {
-		case *protocol.TextDocumentContentChangeEventOr1:
+		case *protocol.IncrementalTextDocumentContentChangeEvent:
 			return errors.New("textDocument/didChange: incremental updates not supported")
-		case *protocol.TextDocumentContentChangeEventOr2:
+		case *protocol.FullTextDocumentContentChangeEvent:
 			if err := h.updateDoc(params.TextDocument.Uri, params.TextDocument.Version, string(change.Text)); err != nil {
 				return fmt.Errorf("textDocument/didChange: %s", err)
 			}

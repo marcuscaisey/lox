@@ -5229,7 +5229,7 @@ type VersionedTextDocumentIdentifier struct {
 	Version int `json:"version"`
 }
 
-type TextDocumentContentChangeEventOr1 struct {
+type IncrementalTextDocumentContentChangeEvent struct {
 	// The range of the document that changed.
 	Range *Range `json:"range"`
 	// The optional length of the range that got replaced.
@@ -5240,33 +5240,33 @@ type TextDocumentContentChangeEventOr1 struct {
 	Text string `json:"text"`
 }
 
-type TextDocumentContentChangeEventOr2 struct {
+type FullTextDocumentContentChangeEvent struct {
 	// The new text of the whole document.
 	Text string `json:"text"`
 }
 
-// TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2 contains either of the following types:
-//   - [*TextDocumentContentChangeEventOr1]
-//   - [*TextDocumentContentChangeEventOr2]
-type TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2 struct {
-	Value TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value
+// IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent contains either of the following types:
+//   - [*IncrementalTextDocumentContentChangeEvent]
+//   - [*FullTextDocumentContentChangeEvent]
+type IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent struct {
+	Value IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue
 }
 
-// TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value is either of the following types:
-//   - [*TextDocumentContentChangeEventOr1]
-//   - [*TextDocumentContentChangeEventOr2]
+// IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue is either of the following types:
+//   - [*IncrementalTextDocumentContentChangeEvent]
+//   - [*FullTextDocumentContentChangeEvent]
 //
-//gosumtype:decl TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value
-type TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value interface {
-	isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value()
+//gosumtype:decl IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue
+type IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue interface {
+	isIncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue()
 }
 
-func (*TextDocumentContentChangeEventOr1) isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value() {
+func (*IncrementalTextDocumentContentChangeEvent) isIncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue() {
 }
-func (*TextDocumentContentChangeEventOr2) isTextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2Value() {
+func (*FullTextDocumentContentChangeEvent) isIncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue() {
 }
 
-func (t *TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) UnmarshalJSON(data []byte) error {
+func (i *IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
@@ -5276,33 +5276,33 @@ func (t *TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) U
 		return err
 	}
 	fields := slices.Collect(maps.Keys(unmarshalledData))
-	var textDocumentContentChangeEventOr1Value *TextDocumentContentChangeEventOr1
+	var incrementalTextDocumentContentChangeEventValue *IncrementalTextDocumentContentChangeEvent
 	if slices.Contains(fields, "range") {
-		if err := json.Unmarshal(data, &textDocumentContentChangeEventOr1Value); err == nil {
-			t.Value = textDocumentContentChangeEventOr1Value
+		if err := json.Unmarshal(data, &incrementalTextDocumentContentChangeEventValue); err == nil {
+			i.Value = incrementalTextDocumentContentChangeEventValue
 			return nil
 		}
 	}
-	var textDocumentContentChangeEventOr2Value *TextDocumentContentChangeEventOr2
-	if err := json.Unmarshal(data, &textDocumentContentChangeEventOr2Value); err == nil {
-		t.Value = textDocumentContentChangeEventOr2Value
+	var fullTextDocumentContentChangeEventValue *FullTextDocumentContentChangeEvent
+	if err := json.Unmarshal(data, &fullTextDocumentContentChangeEventValue); err == nil {
+		i.Value = fullTextDocumentContentChangeEventValue
 		return nil
 	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2](),
+		Type:  reflect.TypeFor[*IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent](),
 	}
 }
 
-func (t TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Value)
+func (i IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent) MarshalJSON() ([]byte, error) {
+	return json.Marshal(i.Value)
 }
 
 // An event describing a change to a text document. If only a text is provided
 // it is considered to be the full content of the document.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentContentChangeEvent
-type TextDocumentContentChangeEvent = *TextDocumentContentChangeEventOr1OrTextDocumentContentChangeEventOr2
+type TextDocumentContentChangeEvent = *IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent
 
 // The change text document notification's parameters.
 //
