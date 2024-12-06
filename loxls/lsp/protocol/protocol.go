@@ -10,7 +10,7 @@ import (
 	"slices"
 )
 
-type Integer int32
+type Integer int
 
 type String string
 
@@ -1377,7 +1377,7 @@ type FoldingRangeClientCapabilities struct {
 	// The maximum number of folding ranges that the client prefers to receive
 	// per document. The value serves as a hint, servers are free to follow the
 	// limit.
-	RangeLimit uint32 `json:"rangeLimit,omitempty"`
+	RangeLimit int `json:"rangeLimit,omitempty"`
 	// If set, the client signals that it only supports folding complete lines.
 	// If set, client will ignore specified `startCharacter` and `endCharacter`
 	// properties in a FoldingRange.
@@ -2064,7 +2064,7 @@ type LSPAnySlice []LSPAny
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#lSPArray
 type LSPArray = LSPAnySlice
 
-type Uinteger uint32
+type Uinteger int
 
 type Decimal float64
 
@@ -2236,7 +2236,7 @@ type XInitializeParams struct {
 	//
 	// Is `null` if the process has not been started by another process.
 	// If the parent process is not alive then the server should exit.
-	ProcessId int32 `json:"processId"`
+	ProcessId int `json:"processId"`
 	// Information about the client
 	//
 	// @since 3.15.0
@@ -5022,7 +5022,7 @@ type TextDocumentIdentifier struct {
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
 type FormattingOptions struct {
 	// Size of a tab in spaces.
-	TabSize uint32 `json:"tabSize"`
+	TabSize int `json:"tabSize"`
 	// Prefer spaces over tabs.
 	InsertSpaces bool `json:"insertSpaces"`
 	// Trim trailing whitespace on a line.
@@ -5084,7 +5084,7 @@ type Position struct {
 	//
 	// If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
 	// If a line number is negative, it defaults to 0.
-	Line uint32 `json:"line"`
+	Line int `json:"line"`
 	// Character offset on a line in a document (zero-based).
 	//
 	// The meaning of this offset is determined by the negotiated
@@ -5092,7 +5092,7 @@ type Position struct {
 	//
 	// If the character value is greater than the line length it defaults back to the
 	// line length.
-	Character uint32 `json:"character"`
+	Character int `json:"character"`
 }
 
 // A range in a text document expressed as (zero-based) start and end positions.
@@ -5207,7 +5207,7 @@ type TextDocumentItem struct {
 	LanguageId string `json:"languageId"`
 	// The version number of this document (it will increase after each
 	// change, including undo/redo).
-	Version int32 `json:"version"`
+	Version int `json:"version"`
 	// The content of the opened text document.
 	Text string `json:"text"`
 }
@@ -5226,7 +5226,7 @@ type DidOpenTextDocumentParams struct {
 type VersionedTextDocumentIdentifier struct {
 	*TextDocumentIdentifier
 	// The version number of this document.
-	Version int32 `json:"version"`
+	Version int `json:"version"`
 }
 
 type TextDocumentContentChangeEventOr1 struct {
@@ -5235,7 +5235,7 @@ type TextDocumentContentChangeEventOr1 struct {
 	// The optional length of the range that got replaced.
 	//
 	// @deprecated use range instead.
-	RangeLength uint32 `json:"rangeLength,omitempty"`
+	RangeLength int `json:"rangeLength,omitempty"`
 	// The new text for the provided range.
 	Text string `json:"text"`
 }
@@ -5460,7 +5460,7 @@ type PublishDiagnosticsParams struct {
 	// Optional the version number of the document the diagnostics are published for.
 	//
 	// @since 3.15.0
-	Version int32 `json:"version,omitempty"`
+	Version int `json:"version,omitempty"`
 	// An array of diagnostic information items.
 	Diagnostics []*Diagnostic `json:"diagnostics"`
 }

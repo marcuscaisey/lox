@@ -51,7 +51,7 @@ func (h *Handler) textDocumentDidChange(params *protocol.DidChangeTextDocumentPa
 	return nil
 }
 
-func (h *Handler) updateDoc(uri string, version int32, src string) error {
+func (h *Handler) updateDoc(uri string, version int, src string) error {
 	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithComments())
 	diagnostics := []*protocol.Diagnostic{}
 	if err != nil {
@@ -64,12 +64,12 @@ func (h *Handler) updateDoc(uri string, version int32, src string) error {
 			diagnostics[i] = &protocol.Diagnostic{
 				Range: &protocol.Range{
 					Start: &protocol.Position{
-						Line:      uint32(e.Start.Line - 1),
-						Character: uint32(e.Start.ColumnUTF16()),
+						Line:      e.Start.Line - 1,
+						Character: e.Start.ColumnUTF16(),
 					},
 					End: &protocol.Position{
-						Line:      uint32(e.End.Line - 1),
-						Character: uint32(e.End.ColumnUTF16()),
+						Line:      e.End.Line - 1,
+						Character: e.End.ColumnUTF16(),
 					},
 				},
 				Severity: protocol.DiagnosticSeverityError,

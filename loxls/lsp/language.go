@@ -29,7 +29,7 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 		{
 			Range: &protocol.Range{
 				Start: &protocol.Position{Line: 0},
-				End:   &protocol.Position{Line: uint32(len(textLines))},
+				End:   &protocol.Position{Line: len(textLines)},
 			},
 			NewText: formatted,
 		},

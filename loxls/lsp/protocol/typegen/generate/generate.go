@@ -425,8 +425,8 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 var baseTypeTypes = map[metamodel.BaseTypes]string{
 	metamodel.BaseTypesURI:         "string",
 	metamodel.BaseTypesDocumentURI: "string",
-	metamodel.BaseTypesInteger:     "int32",
-	metamodel.BaseTypesUinteger:    "uint32",
+	metamodel.BaseTypesInteger:     "int",
+	metamodel.BaseTypesUinteger:    "int",
 	metamodel.BaseTypesDecimal:     "float64",
 	metamodel.BaseTypesRegExp:      "*regexp.Regexp",
 	metamodel.BaseTypesString:      "string",
