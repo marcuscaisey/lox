@@ -28,7 +28,7 @@ typegen generates a Go file containing the types required to implement handlers
 for the given LSP methods.
 
 Methods can either be specified as arguments or if invoked via go generate then
-via "%s[1]" comments in the file containing the "//go:generate"
+via "%[1]s" comments in the file containing the "//go:generate"
 comment.
 
 	package protocol
