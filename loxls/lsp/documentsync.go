@@ -14,6 +14,7 @@ import (
 )
 
 type document struct {
+	URI       string
 	Text      string
 	Program   ast.Program
 	HasErrors bool
@@ -68,16 +69,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	diagnostics := make([]*protocol.Diagnostic, len(loxErrs))
 	for i, e := range loxErrs {
 		diagnostics[i] = &protocol.Diagnostic{
-			Range: &protocol.Range{
-				Start: &protocol.Position{
-					Line:      e.Start.Line - 1,
-					Character: e.Start.ColumnUTF16(),
-				},
-				End: &protocol.Position{
-					Line:      e.End.Line - 1,
-					Character: e.End.ColumnUTF16(),
-				},
-			},
+			Range:    protocol.NewRange(e.Start, e.End),
 			Severity: protocol.DiagnosticSeverityError,
 			Source:   "loxls",
 			Message:  e.Msg,
@@ -85,6 +77,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	}
 
 	h.docsByURI[uri] = &document{
+		URI:       uri,
 		Text:      src,
 		Program:   program,
 		HasErrors: err != nil,
@@ -99,6 +92,10 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didClose
 func (h *Handler) textDocumentDidClose(params *protocol.DidCloseTextDocumentParams) error {
-	delete(h.docsByURI, params.TextDocument.Uri)
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return err
+	}
+	delete(h.docsByURI, doc.URI)
 	return nil
 }

@@ -305,3 +305,12 @@ func indent(s string) string {
 	}
 	return strings.Join(lines, "\n")
 }
+
+// Signature returns a string representation of the functions signature.
+func Signature(fun ast.Function) string {
+	params := make([]string, len(fun.Params))
+	for i, param := range fun.Params {
+		params[i] = param.Lexeme
+	}
+	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
+}

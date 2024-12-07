@@ -7,8 +7,15 @@ import (
 )
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialize
-func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeResult, error) {
+func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.InitializeResult, error) {
 	h.initialized = true
+
+	if textDocument := params.Capabilities.TextDocument; textDocument != nil {
+		if documentSymbol := textDocument.DocumentSymbol; documentSymbol != nil {
+			h.clientSupportsHierarchicalDocumentSymbols = documentSymbol.HierarchicalDocumentSymbolSupport
+		}
+	}
+
 	return &protocol.InitializeResult{
 		Capabilities: &protocol.ServerCapabilities{
 			PositionEncoding: protocol.PositionEncodingKindUTF16,
@@ -17,6 +24,9 @@ func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeRe
 					OpenClose: true,
 					Change:    protocol.TextDocumentSyncKindFull,
 				},
+			},
+			DocumentSymbolProvider: &protocol.BooleanOrDocumentSymbolOptions{
+				Value: protocol.Boolean(true),
 			},
 			DocumentFormattingProvider: &protocol.BooleanOrDocumentFormattingOptions{
 				Value: protocol.Boolean(true),
@@ -29,7 +39,7 @@ func (h *Handler) initialize(*protocol.InitializeParams) (*protocol.InitializeRe
 	}, nil
 }
 
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialized
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#shutdown
 func (h *Handler) shutdown() (any, error) {
 	h.shuttingDown = true
 	return nil, nil

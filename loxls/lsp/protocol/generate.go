@@ -9,6 +9,7 @@ package protocol
 //typegen:method textDocument/didOpen
 //typegen:method textDocument/didChange
 //typegen:method textDocument/didClose
+//typegen:method textDocument/documentSymbol
 //typegen:method textDocument/publishDiagnostics
 //typegen:method textDocument/formatting
 //typegen:method window/logMessage

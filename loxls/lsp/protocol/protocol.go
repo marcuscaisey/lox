@@ -5009,6 +5009,13 @@ type InitializeError struct {
 	Retry bool `json:"retry"`
 }
 
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#partialResultParams
+type PartialResultParams struct {
+	// An optional token that a server can use to report partial results (e.g. streaming) to
+	// the client.
+	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
+}
+
 // A literal to identify a text document in the client.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentIdentifier
@@ -5017,37 +5024,33 @@ type TextDocumentIdentifier struct {
 	Uri string `json:"uri"`
 }
 
-// Value-object describing what options formatting should use.
+// Parameters for a {@link DocumentSymbolRequest}.
 //
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
-type FormattingOptions struct {
-	// Size of a tab in spaces.
-	TabSize int `json:"tabSize"`
-	// Prefer spaces over tabs.
-	InsertSpaces bool `json:"insertSpaces"`
-	// Trim trailing whitespace on a line.
-	//
-	// @since 3.15.0
-	TrimTrailingWhitespace bool `json:"trimTrailingWhitespace,omitempty"`
-	// Insert a newline character at the end of the file if one does not exist.
-	//
-	// @since 3.15.0
-	InsertFinalNewline bool `json:"insertFinalNewline,omitempty"`
-	// Trim all newlines after the final newline at the end of the file.
-	//
-	// @since 3.15.0
-	TrimFinalNewlines bool `json:"trimFinalNewlines,omitempty"`
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolParams
+type DocumentSymbolParams struct {
+	*WorkDoneProgressParams
+	*PartialResultParams
+	// The text document.
+	TextDocument *TextDocumentIdentifier `json:"textDocument"`
 }
 
-// The parameters of a {@link DocumentFormattingRequest}.
+// A base for all symbol information.
 //
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFormattingParams
-type DocumentFormattingParams struct {
-	*WorkDoneProgressParams
-	// The document to format.
-	TextDocument *TextDocumentIdentifier `json:"textDocument"`
-	// The format options.
-	Options *FormattingOptions `json:"options"`
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseSymbolInformation
+type BaseSymbolInformation struct {
+	// The name of this symbol.
+	Name string `json:"name"`
+	// The kind of this symbol.
+	Kind SymbolKind `json:"kind"`
+	// Tags for this symbol.
+	//
+	// @since 3.16.0
+	Tags []SymbolTag `json:"tags,omitempty"`
+	// The name of the symbol containing this symbol. This information is for
+	// user interface purposes (e.g. to render a qualifier in the user interface
+	// if necessary). It can't be used to re-infer a hierarchy for the document
+	// symbols.
+	ContainerName string `json:"containerName,omitempty"`
 }
 
 // Position in a text document expressed as zero-based line and character
@@ -5115,6 +5118,151 @@ type Range struct {
 	Start *Position `json:"start"`
 	// The range's end position.
 	End *Position `json:"end"`
+}
+
+// Represents a location inside a resource, such as a line
+// inside a text file.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#location
+type Location struct {
+	Uri string `json:"uri"`
+
+	Range *Range `json:"range"`
+}
+
+// Represents information about programming constructs like variables, classes,
+// interfaces etc.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolInformation
+type SymbolInformation struct {
+	*BaseSymbolInformation
+	// Indicates if this symbol is deprecated.
+	//
+	// Deprecated: Use tags instead
+	Deprecated bool `json:"deprecated,omitempty"`
+	// The location of this symbol. The location's range is used by a tool
+	// to reveal the location in the editor. If the symbol is selected in the
+	// tool the range's start information is used to position the cursor. So
+	// the range usually spans more than the actual symbol's name and does
+	// normally include things like visibility modifiers.
+	//
+	// The range doesn't have to denote a node range in the sense of an abstract
+	// syntax tree. It can therefore not be used to re-construct a hierarchy of
+	// the symbols.
+	Location *Location `json:"location"`
+}
+
+type SymbolInformationSlice []*SymbolInformation
+
+// Represents programming constructs like variables, classes, interfaces etc.
+// that appear in a document. Document symbols can be hierarchical and they
+// have two ranges: one that encloses its definition and one that points to
+// its most interesting range, e.g. the range of an identifier.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbol
+type DocumentSymbol struct {
+	// The name of this symbol. Will be displayed in the user interface and therefore must not be
+	// an empty string or a string only consisting of white spaces.
+	Name string `json:"name"`
+	// More detail for this symbol, e.g the signature of a function.
+	Detail string `json:"detail,omitempty"`
+	// The kind of this symbol.
+	Kind SymbolKind `json:"kind"`
+	// Tags for this document symbol.
+	//
+	// @since 3.16.0
+	Tags []SymbolTag `json:"tags,omitempty"`
+	// Indicates if this symbol is deprecated.
+	//
+	// Deprecated: Use tags instead
+	Deprecated bool `json:"deprecated,omitempty"`
+	// The range enclosing this symbol not including leading/trailing whitespace but everything else
+	// like comments. This information is typically used to determine if the clients cursor is
+	// inside the symbol to reveal in the symbol in the UI.
+	Range *Range `json:"range"`
+	// The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
+	// Must be contained by the `range`.
+	SelectionRange *Range `json:"selectionRange"`
+	// Children of this symbol, e.g. properties of a class.
+	Children []*DocumentSymbol `json:"children,omitempty"`
+}
+
+type DocumentSymbolSlice []*DocumentSymbol
+
+// SymbolInformationSliceOrDocumentSymbolSlice contains either of the following types:
+//   - [SymbolInformationSlice]
+//   - [DocumentSymbolSlice]
+type SymbolInformationSliceOrDocumentSymbolSlice struct {
+	Value SymbolInformationSliceOrDocumentSymbolSliceValue
+}
+
+// SymbolInformationSliceOrDocumentSymbolSliceValue is either of the following types:
+//   - [SymbolInformationSlice]
+//   - [DocumentSymbolSlice]
+//
+//gosumtype:decl SymbolInformationSliceOrDocumentSymbolSliceValue
+type SymbolInformationSliceOrDocumentSymbolSliceValue interface {
+	isSymbolInformationSliceOrDocumentSymbolSliceValue()
+}
+
+func (SymbolInformationSlice) isSymbolInformationSliceOrDocumentSymbolSliceValue() {}
+func (DocumentSymbolSlice) isSymbolInformationSliceOrDocumentSymbolSliceValue()    {}
+
+func (s *SymbolInformationSliceOrDocumentSymbolSlice) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var symbolInformationSliceValue SymbolInformationSlice
+	if err := json.Unmarshal(data, &symbolInformationSliceValue); err == nil {
+		s.Value = symbolInformationSliceValue
+		return nil
+	}
+	var documentSymbolSliceValue DocumentSymbolSlice
+	if err := json.Unmarshal(data, &documentSymbolSliceValue); err == nil {
+		s.Value = documentSymbolSliceValue
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*SymbolInformationSliceOrDocumentSymbolSlice](),
+	}
+}
+
+func (s SymbolInformationSliceOrDocumentSymbolSlice) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Value)
+}
+
+// Value-object describing what options formatting should use.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions
+type FormattingOptions struct {
+	// Size of a tab in spaces.
+	TabSize int `json:"tabSize"`
+	// Prefer spaces over tabs.
+	InsertSpaces bool `json:"insertSpaces"`
+	// Trim trailing whitespace on a line.
+	//
+	// @since 3.15.0
+	TrimTrailingWhitespace bool `json:"trimTrailingWhitespace,omitempty"`
+	// Insert a newline character at the end of the file if one does not exist.
+	//
+	// @since 3.15.0
+	InsertFinalNewline bool `json:"insertFinalNewline,omitempty"`
+	// Trim all newlines after the final newline at the end of the file.
+	//
+	// @since 3.15.0
+	TrimFinalNewlines bool `json:"trimFinalNewlines,omitempty"`
+}
+
+// The parameters of a {@link DocumentFormattingRequest}.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFormattingParams
+type DocumentFormattingParams struct {
+	*WorkDoneProgressParams
+	// The document to format.
+	TextDocument *TextDocumentIdentifier `json:"textDocument"`
+	// The format options.
+	Options *FormattingOptions `json:"options"`
 }
 
 // A text edit applicable to a text document.
@@ -5390,16 +5538,6 @@ func (d DiagnosticSeverity) MarshalJSON() ([]byte, error) {
 type CodeDescription struct {
 	// An URI to open with more information about the diagnostic error.
 	Href string `json:"href"`
-}
-
-// Represents a location inside a resource, such as a line
-// inside a text file.
-//
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#location
-type Location struct {
-	Uri string `json:"uri"`
-
-	Range *Range `json:"range"`
 }
 
 // Represents a related message and source code location for a diagnostic. This should be
