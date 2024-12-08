@@ -604,7 +604,9 @@ func (p *parser) expectSemicolon() token.Token {
 	if tok, ok := p.match2(token.Semicolon); ok {
 		return tok
 	}
-	p.addErrorf(p.prevTok, "expected trailing %m", token.Semicolon)
+	if p.lastErrPos != p.tok.Start() {
+		p.addErrorf(p.prevTok, "expected trailing %m", token.Semicolon)
+	}
 	panic(unwind{})
 }
 
