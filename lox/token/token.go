@@ -267,19 +267,6 @@ type CharacterRange interface {
 	End() Position   // End returns the position of the character immediately after the range.
 }
 
-type characterRange struct {
-	start Position
-	end   Position
-}
-
-func (cr characterRange) Start() Position {
-	return cr.start
-}
-
-func (cr characterRange) End() Position {
-	return cr.end
-}
-
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
 // position for use in an error message.
 func (p Position) Format(f fmt.State, verb rune) {
