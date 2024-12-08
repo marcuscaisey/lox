@@ -6,9 +6,9 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/marcuscaisey/lox/lox/ansi"
 	"github.com/marcuscaisey/lox/lox/token"
 )
 
@@ -37,13 +37,6 @@ func NewErrorf(charRange token.CharacterRange, format string, args ...any) error
 
 }
 
-var (
-	bold     = color.New(color.Bold)
-	faint    = color.New(color.Faint)
-	red      = color.New(color.FgRed)
-	faintRed = color.New(color.Faint, color.FgRed)
-)
-
 // Error formats the error by displaying the error message and highlighting the range of characters in the source code
 // that the error applies to.
 //
@@ -58,7 +51,7 @@ func (e *Error) Error() string {
 		return strings.TrimSuffix(b.String(), "\n")
 	}
 
-	bold.Fprint(&b, fmt.Sprintf("%m", e.Start), ": ", red.Sprint("error"), ": ", e.Msg, "\n")
+	ansi.Fprintf(&b, "${BOLD}%m: ${RED}error${DEFAULT}: %s${DEFAULT}${RESET_BOLD}\n", e.Start, e.Msg)
 
 	lines := make([]string, e.End.Line-e.Start.Line+1)
 	for i := e.Start.Line; i <= e.End.Line; i++ {
@@ -70,25 +63,33 @@ func (e *Error) Error() string {
 		}
 		lines[i-e.Start.Line] = string(line)
 	}
-	faint.Fprintln(&b, lines[0])
+
+	printLine := func(line string) {
+		ansi.Fprint(&b, "${FAINT}", line, "${RESET_BOLD}\n")
+	}
+	printLineHighlight := func(line string, start, end int) {
+		leadingWhitespace := strings.Repeat(" ", runewidth.StringWidth(line[:start]))
+		tildes := strings.Repeat("~", runewidth.StringWidth(line[start:end]))
+		ansi.Fprint(&b, leadingWhitespace, "${FAINT}${RED}", tildes, "${DEFAULT}${RESET_BOLD}\n")
+	}
+
+	printLine(lines[0])
 	if e.Start == e.End {
 		// There's nothing to highlight
 		return buildString()
 	}
 
 	if len(lines) == 1 {
-		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.Start.Column]))))
-		faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.Start.Column:e.End.Column]))))
+		printLineHighlight(lines[0], e.Start.Column, e.End.Column)
 	} else {
-		fmt.Fprint(&b, strings.Repeat(" ", runewidth.StringWidth(string(lines[0][:e.Start.Column]))))
-		faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lines[0][e.Start.Column:]))))
+		printLineHighlight(lines[0], e.Start.Column, len(lines[0]))
 		for _, line := range lines[1 : len(lines)-1] {
-			faint.Fprintln(&b, string(line))
-			faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(line))))
+			printLine(line)
+			printLineHighlight(line, 0, len(line))
 		}
 		if lastLine := lines[len(lines)-1]; len(lastLine) > 0 {
-			faint.Fprintln(&b, string(lastLine))
-			faintRed.Fprintln(&b, strings.Repeat("~", runewidth.StringWidth(string(lastLine[:e.End.Column]))))
+			printLine(lastLine)
+			printLineHighlight(lastLine, 0, e.End.Column)
 		}
 	}
 

@@ -6,9 +6,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 
+	"github.com/marcuscaisey/lox/lox/ansi"
 	"github.com/marcuscaisey/lox/lox/stack"
 	"github.com/marcuscaisey/lox/lox/token"
 )
@@ -56,14 +56,9 @@ func (cs *callStack) Clear() {
 	cs.calledFuncs.Push("")
 }
 
-var (
-	bold  = color.New(color.Bold)
-	faint = color.New(color.Faint)
-)
-
 func (cs *callStack) StackTrace() string {
 	var b strings.Builder
-	bold.Fprintln(&b, "Stack Trace (most recent call first):")
+	ansi.Fprintln(&b, "${BOLD}Stack Trace (most recent call first):${RESET_BOLD}")
 	locations := make([]string, cs.Len())
 	locationWidth := 0
 	functions := make([]string, cs.Len())
@@ -78,7 +73,8 @@ func (cs *callStack) StackTrace() string {
 		}
 		functions[i] = function
 		functionWidth = max(functionWidth, runewidth.StringWidth(functions[i]))
-		lines[i] = faint.Sprintf("%s", bytes.TrimLeftFunc(frame.Location.File.Line(frame.Location.Line), unicode.IsSpace))
+		trimmedLine := string(bytes.TrimLeftFunc(frame.Location.File.Line(frame.Location.Line), unicode.IsSpace))
+		lines[i] = ansi.Sprint("${FAINT}", trimmedLine, "${RESET_BOLD}")
 	}
 	for i := cs.Len() - 1; i >= 0; i-- {
 		location := runewidth.FillRight(locations[i], locationWidth)

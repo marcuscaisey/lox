@@ -9,12 +9,17 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/fatih/color"
 	"github.com/google/go-cmp/cmp"
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
+
+	"github.com/marcuscaisey/lox/lox/ansi"
 )
+
+func init() {
+	ansi.Enabled = true
+}
 
 var update = flag.Bool("update", false, "updates the expected output of each test")
 
@@ -62,32 +67,25 @@ func snakeToPascalCase(s string) string {
 }
 
 func computeDiff(want, got any) string {
-	color.NoColor = false
 	diff := cmp.Diff(want, got, cmp.Transformer("BytesToString", func(b []byte) string {
 		return string(b)
 	}))
-	lines := strings.Split(diff, "\n")
-	for i, line := range lines {
-		if strings.HasPrefix(line, "-") {
-			lines[i] = color.GreenString(line)
-		} else if strings.HasPrefix(line, "+") {
-			lines[i] = color.RedString(line)
-		}
-	}
-	diff = strings.Join(lines, "\n")
-	return fmt.Sprint(color.GreenString("want -\n"), color.RedString("got +\n"), diff)
+	return ansi.Sprintf("${GREEN}want -\n${RED}got +${DEFAULT}\n%s", colouriseDiff(diff))
 }
 
 func computeTextDiff(want, got string) string {
-	color.NoColor = false
 	edits := myers.ComputeEdits(span.URIFromPath("want"), want, got)
 	diff := fmt.Sprint(gotextdiff.ToUnified("want", "got", want, edits))
+	return colouriseDiff(diff)
+}
+
+func colouriseDiff(diff string) string {
 	lines := strings.Split(diff, "\n")
 	for i, line := range lines {
 		if strings.HasPrefix(line, "-") {
-			lines[i] = color.GreenString(line)
+			lines[i] = ansi.Sprint("${GREEN}", line, "${DEFAULT}")
 		} else if strings.HasPrefix(line, "+") {
-			lines[i] = color.RedString(line)
+			lines[i] = ansi.Sprint("${RED}", line, "${DEFAULT}")
 		}
 	}
 	return strings.Join(lines, "\n")

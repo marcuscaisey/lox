@@ -7,8 +7,9 @@ import (
 	"unicode"
 	"unicode/utf16"
 
-	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
+
+	"github.com/marcuscaisey/lox/lox/ansi"
 )
 
 func init() {
@@ -279,11 +280,6 @@ func (cr characterRange) End() Position {
 	return cr.end
 }
 
-var (
-	cyan   = color.New(color.FgCyan).SprintFunc()
-	yellow = color.New(color.FgYellow).SprintFunc()
-)
-
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
 // position for use in an error message.
 func (p Position) Format(f fmt.State, verb rune) {
@@ -291,11 +287,11 @@ func (p Position) Format(f fmt.State, verb rune) {
 	case 'm':
 		var prefix string
 		if p.File != nil && p.File.Name != "" {
-			prefix = cyan(p.File.Name) + ":"
+			prefix = ansi.Sprint("${CYAN}", p.File.Name, "${DEFAULT}:")
 		}
 		line := p.File.Line(p.Line)
-		col := yellow(runewidth.StringWidth(string(line[:p.Column])) + 1)
-		fmt.Fprint(f, prefix, yellow(p.Line), ":", yellow(col))
+		col := runewidth.StringWidth(string(line[:p.Column])) + 1
+		ansi.Fprint(f, prefix, "${YELLOW}", p.Line, "${DEFAULT}:${YELLOW}", col, "${DEFAULT}")
 	case 's':
 		fmt.Fprint(f, p.String())
 	default:
