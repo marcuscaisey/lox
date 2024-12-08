@@ -3,7 +3,6 @@ package test
 import (
 	"bytes"
 	"errors"
-	"flag"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,18 +13,9 @@ import (
 )
 
 var (
-	interpreter = flag.String("interpreter", "", "path to the interpreter to test")
-
 	printsRe = regexp.MustCompile(`// prints: (.+)`)
 	errorRe  = regexp.MustCompile(`// error: (.+)`)
 )
-
-func TestInterpreter(t *testing.T) {
-	if *interpreter == "" {
-		t.Skip("interpreter not specified with the -interpreter flag")
-	}
-	runTests(t, interpreterRunner{}, "testdata")
-}
 
 type interpreterRunner struct{}
 

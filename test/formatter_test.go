@@ -3,7 +3,6 @@ package test
 import (
 	"bytes"
 	"errors"
-	"flag"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,17 +12,8 @@ import (
 )
 
 var (
-	formatter = flag.String("formatter", "", "path to the formatter to test")
-
 	noFormatComment = "// noformat"
 )
-
-func TestFormatter(t *testing.T) {
-	if *formatter == "" {
-		t.Skip("formatter not specified with the -formatter flag")
-	}
-	runTests(t, formatterRunner{}, "testdata")
-}
 
 type formatterRunner struct{}
 
