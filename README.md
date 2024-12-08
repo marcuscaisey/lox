@@ -15,10 +15,8 @@ Working Lox code examples can be found under [test/testdata](test/testdata).
 
 ### Extra Features
 
-Implemented is a superset of the Lox language defined in the book where the extra features originate
-either from challenges in the book or my own ideas.
-
-#### Challenges
+Implemented is a superset of the language described in the book where the extra features mostly come
+from the challenges in the book.
 
 - [Comma expression](#Binary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
 - [Ternary expression](#Ternary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
@@ -32,9 +30,6 @@ either from challenges in the book or my own ideas.
 - Reporting of [unused variables](#Blank-Identifier) - [Resolving and Binding](https://craftinginterpreters.com/resolving-and-binding.html#challenges)
 - [Static method](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
 - [Property getter method](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
-
-#### Own Ideas
-
 - [`%` operator](#Binary-Expression)
 - [`continue` statement](#Continue-Statement)
 - [`type` built-in function](#Built-in-Functions)
