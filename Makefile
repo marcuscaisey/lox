@@ -1,6 +1,8 @@
 .PHONY: test test_golox test_loxfmt update_golox_tests update_loxfmt_tests lint lint_golangci_lint lint_go_sumtype
 
-test: test_golox test_loxfmt
+test:
+	-$(MAKE) test_golox
+	-$(MAKE) test_loxfmt
 
 test_golox:
 	$(MAKE) -C golox test
@@ -14,7 +16,9 @@ update_golox_tests:
 update_loxfmt_tests:
 	$(MAKE) -C loxfmt update_tests
 
-lint: lint_golangci_lint lint_go_sumtype
+lint:
+	-$(MAKE) lint_golangci_lint
+	-$(MAKE) lint_go_sumtype
 
 lint_golangci_lint:
 	golangci-lint run
