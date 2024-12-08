@@ -4,13 +4,13 @@ go 1.23
 
 require (
 	github.com/chzyer/readline v1.5.1
+	github.com/marcuscaisey/go-sumtype v0.0.0-20241208122212-4c96c503b8ce
 	github.com/mattn/go-runewidth v0.0.15
 	golang.org/x/term v0.18.0
 )
 
 // Tools
 require (
-	github.com/BurntSushi/go-sumtype v0.0.0-20240512121737-f9f88f1fa1ac
 	golang.org/x/tools v0.23.0
 	gotest.tools/gotestsum v1.12.0
 )
@@ -35,5 +35,3 @@ require (
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
-
-replace github.com/BurntSushi/go-sumtype => github.com/lantw44/go-sumtype v0.0.0-20230306011935-0ae65d6b318e

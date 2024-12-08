@@ -23,8 +23,8 @@ github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaU
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
 github.com/hexops/gotextdiff v1.0.3 h1:gitA9+qJrrTCsiCl7+kh75nPqQt1cx4ZkudSTLoUqJM=
 github.com/hexops/gotextdiff v1.0.3/go.mod h1:pSWU5MAI3yDq+fZBTazCSJysOMbxWL1BSow5/V2vxeg=
-github.com/lantw44/go-sumtype v0.0.0-20230306011935-0ae65d6b318e h1:bCZh8KfjO2Byt31MtgeNR1rWO5UkV23Nd81Ex5IIOWE=
-github.com/lantw44/go-sumtype v0.0.0-20230306011935-0ae65d6b318e/go.mod h1:wlrmXFerGLp8Y4SMVu5erH9CEDn8IZrByB4VCduVEts=
+github.com/marcuscaisey/go-sumtype v0.0.0-20241208122212-4c96c503b8ce h1:HV+0aGxGqLaeYSWXYOGhcOk0QyUK7Io2uUir6DG/zxw=
+github.com/marcuscaisey/go-sumtype v0.0.0-20241208122212-4c96c503b8ce/go.mod h1:EhdaIHVb2oB6Y7HJm45hOH4qumSuwQ5voXpg+rCanLs=
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
 github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=

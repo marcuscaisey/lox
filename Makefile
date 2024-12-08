@@ -20,4 +20,4 @@ lint_golangci_lint:
 	golangci-lint run
 
 lint_go_sumtype:
-	go run github.com/BurntSushi/go-sumtype $$(go list ./...)
+	go run github.com/marcuscaisey/go-sumtype $$(go list ./...)
