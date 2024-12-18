@@ -3,6 +3,7 @@ package lsp
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/marcuscaisey/lox/lox"
