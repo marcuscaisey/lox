@@ -15,7 +15,17 @@ var (
 	noFormatComment = "// noformat"
 )
 
-type formatterRunner struct{}
+func newFormatterRunner(pwd string, formatter string) formatterRunner {
+	return formatterRunner{
+		pwd:       pwd,
+		formatter: formatter,
+	}
+}
+
+type formatterRunner struct {
+	pwd       string
+	formatter string
+}
 
 func (r formatterRunner) Test(t *testing.T, path string) {
 	want, err := os.ReadFile(path)
@@ -36,12 +46,20 @@ func (r formatterRunner) Test(t *testing.T, path string) {
 func (r formatterRunner) runFormatter(t *testing.T, path string, flags ...string) []byte {
 	args := append(slices.Clone(flags), path)
 	cmd := exec.Command(*formatter, args...)
+	relFormatter, err := filepath.Rel(r.pwd, r.formatter)
+	if err != nil {
+		t.Fatal(err)
+	}
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	argsWithAbsPath := append(slices.Clone(flags), absPath)
-	t.Logf("%s %s", *formatter, strings.Join(argsWithAbsPath, " "))
+	relPath, err := filepath.Rel(r.pwd, absPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	argsWithRelPath := append(slices.Clone(flags), relPath)
+	t.Logf("%s %s", relFormatter, strings.Join(argsWithRelPath, " "))
 
 	stdout, err := cmd.Output()
 	exitErr := &exec.ExitError{}

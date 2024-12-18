@@ -17,7 +17,17 @@ var (
 	errorRe  = regexp.MustCompile(`// error: (.+)`)
 )
 
-type interpreterRunner struct{}
+func newInterpreterRunner(pwd string, interpreter string) interpreterRunner {
+	return interpreterRunner{
+		pwd:         pwd,
+		interpreter: interpreter,
+	}
+}
+
+type interpreterRunner struct {
+	pwd         string
+	interpreter string
+}
 
 func (r interpreterRunner) Test(t *testing.T, path string) {
 	want := r.parseExpectedResult(t, path)
@@ -48,12 +58,20 @@ type interpreterResult struct {
 }
 
 func (r interpreterRunner) runInterpreter(t *testing.T, path string) interpreterResult {
-	cmd := exec.Command(*interpreter, path)
+	cmd := exec.Command(r.interpreter, path)
+	relInterpeter, err := filepath.Rel(r.pwd, r.interpreter)
+	if err != nil {
+		t.Fatal(err)
+	}
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%s %s", *interpreter, absPath)
+	relPath, err := filepath.Rel(r.pwd, absPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%s %s", relInterpeter, relPath)
 
 	stdout, err := cmd.Output()
 

@@ -22,6 +22,7 @@ func init() {
 }
 
 var (
+	pwd         = flag.String("pwd", "", "directory that the test was invoked from")
 	interpreter = flag.String("interpreter", "", "path to the interpreter to test")
 	formatter   = flag.String("formatter", "", "path to the formatter to test")
 	update      = flag.Bool("update", false, "updates the expected output of each test")
@@ -33,16 +34,19 @@ type testRunner interface {
 }
 
 func TestLox(t *testing.T) {
+	if *pwd == "" {
+		t.Fatal("-pwd flag must be provided")
+	}
 	if *interpreter != "" && *formatter != "" {
 		t.Fatal("-interpreter and -formatter flags cannot be provided together")
 	}
 	if *interpreter != "" {
 		t.Run("TestInterpreter", func(t *testing.T) {
-			runTests(t, interpreterRunner{}, "testdata")
+			runTests(t, newInterpreterRunner(*pwd, *interpreter), "testdata")
 		})
 	} else if *formatter != "" {
 		t.Run("TestFormatter", func(t *testing.T) {
-			runTests(t, formatterRunner{}, "testdata")
+			runTests(t, newFormatterRunner(*pwd, *formatter), "testdata")
 		})
 	} else {
 		t.Fatal("one of -interpreter or -formatter flags must be provided")
