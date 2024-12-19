@@ -3,7 +3,6 @@ package lsp
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/marcuscaisey/lox/lox"
@@ -65,9 +64,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	} else {
 		_, loxErrs = analysis.ResolveIdents(program)
 		loxErrs = append(loxErrs, analysis.CheckSemantics(program)...)
-		slices.SortFunc(loxErrs, func(e1, e2 *lox.Error) int {
-			return e1.Start.Compare(e2.Start)
-		})
+		loxErrs.Sort()
 	}
 
 	diagnostics := make([]*protocol.Diagnostic, len(loxErrs))
