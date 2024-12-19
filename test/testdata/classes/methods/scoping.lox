@@ -2,6 +2,7 @@ var a = "global a";
 var b;
 var c = "global c";
 var d = "global d";
+_ = d; // suppress unused declaration error
 var e = "global e";
 var f = "global f";
 

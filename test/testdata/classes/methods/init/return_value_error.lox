@@ -6,3 +6,5 @@ class Foo {
         return 2; // error: init() cannot return a value
     }
 }
+
+_ = Foo; // suppress unused declaration error
