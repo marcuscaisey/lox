@@ -111,14 +111,19 @@ func (e *Errors) Addf(charRange token.CharacterRange, format string, args ...any
 	*e = append(*e, NewErrorf(charRange, format, args...).(*Error))
 }
 
+// Sort sorts the errors by their start position.
+func (e Errors) Sort() {
+	slices.SortFunc(e, func(e1, e2 *Error) int {
+		return e1.Start.Compare(e2.Start)
+	})
+}
+
 // Error formats the errors by concatenating their messages after sorting them by their start position.
 func (e Errors) Error() string {
 	if len(e) == 0 {
 		panic("Error called on empty error list")
 	}
-	slices.SortFunc([]*Error(e), func(e1, e2 *Error) int {
-		return e1.Start.Compare(e2.Start)
-	})
+	e.Sort()
 	msgs := make([]string, len(e))
 	for i, err := range e {
 		msgs[i] = err.Error()
