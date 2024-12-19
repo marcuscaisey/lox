@@ -5,3 +5,5 @@ class Foo {
         _ = y;
     }
 }
+
+_ = Foo; // suppress unused declaration error

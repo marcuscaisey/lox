@@ -1,4 +1,5 @@
 var a = "global a";
+_ = a; // suppress unused declaration error
 var b = "global b";
 var c;
 var d = "global d";

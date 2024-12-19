@@ -4,3 +4,5 @@ class Foo {
         this._bar = value;
     }
 }
+
+_ = Foo; // suppress unused declaration error
