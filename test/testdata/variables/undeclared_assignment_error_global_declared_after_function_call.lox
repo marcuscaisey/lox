@@ -1,0 +1,6 @@
+fun setX(value) {
+    x = value;
+}
+
+setX(2); // error: x has not been declared
+var x;
