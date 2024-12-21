@@ -3,7 +3,6 @@ package interpreter
 
 import (
 	"fmt"
-	"maps"
 	"strconv"
 	"strings"
 
@@ -15,9 +14,8 @@ import (
 
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
-	globals            *environment
-	declDistancesByTok map[token.Token]int
-	callStack          *callStack
+	globals   environment
+	callStack *callStack
 
 	printExprStmtResults bool
 }
@@ -35,14 +33,13 @@ func REPLMode() Option {
 
 // New constructs a new Interpreter with the given options.
 func New(opts ...Option) *Interpreter {
-	globals := newEnvironment()
+	var globals environment = newGlobalEnvironment()
 	for name, builtin := range builtins {
-		globals.Set(name, builtin)
+		globals = globals.Define(name, builtin)
 	}
 	interpreter := &Interpreter{
-		globals:            globals,
-		declDistancesByTok: map[token.Token]int{},
-		callStack:          newCallStack(),
+		globals:   globals,
+		callStack: newCallStack(),
 	}
 	for _, opt := range opts {
 		opt(interpreter)
@@ -53,12 +50,11 @@ func New(opts ...Option) *Interpreter {
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program ast.Program) error {
-	declDistancesByTok, errs := analysis.ResolveIdents(program)
+	_, errs := analysis.ResolveIdents(program)
 	errs = append(errs, analysis.CheckSemantics(program)...)
 	if err := errs.Err(); err != nil {
 		return err
 	}
-	maps.Copy(i.declDistancesByTok, declDistancesByTok)
 	return i.interpretProgram(program)
 }
 
@@ -98,73 +94,81 @@ type (
 	}
 )
 
-func (i *Interpreter) execStmt(env *environment, stmt ast.Stmt) stmtResult {
+func (i *Interpreter) execStmt(env environment, stmt ast.Stmt) (stmtResult, environment) {
+	var result stmtResult = stmtResultNone{}
+	newEnv := env
 	switch stmt := stmt.(type) {
 	case ast.VarDecl:
-		i.execVarDecl(env, stmt)
+		newEnv = i.execVarDecl(env, stmt)
 	case ast.FunDecl:
-		i.execFunDecl(env, stmt)
+		newEnv = i.execFunDecl(env, stmt)
 	case ast.ClassDecl:
-		i.execClassDecl(env, stmt)
+		newEnv = i.execClassDecl(env, stmt)
 	case ast.ExprStmt:
 		i.execExprStmt(env, stmt)
 	case ast.PrintStmt:
 		i.execPrintStmt(env, stmt)
 	case ast.BlockStmt:
-		return i.execBlockStmt(env, stmt)
+		result = i.execBlockStmt(env, stmt)
 	case ast.IfStmt:
-		return i.execIfStmt(env, stmt)
+		result = i.execIfStmt(env, stmt)
 	case ast.WhileStmt:
-		return i.execWhileStmt(env, stmt)
+		result = i.execWhileStmt(env, stmt)
 	case ast.ForStmt:
-		return i.execForStmt(env, stmt)
+		result = i.execForStmt(env, stmt)
 	case ast.BreakStmt:
-		return i.execBreakStmt()
+		result = i.execBreakStmt()
 	case ast.ContinueStmt:
-		return i.execContinueStmt()
+		result = i.execContinueStmt()
 	case ast.ReturnStmt:
-		return i.execReturnStmt(env, stmt)
+		result = i.execReturnStmt(env, stmt)
 	case ast.CommentStmt, ast.InlineCommentStmt, ast.IllegalStmt, ast.MethodDecl:
 		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
 	}
-	return stmtResultNone{}
+	return result, newEnv
 }
 
-func (i *Interpreter) execVarDecl(env *environment, stmt ast.VarDecl) {
+func (i *Interpreter) execVarDecl(env environment, stmt ast.VarDecl) environment {
 	if stmt.Initialiser != nil {
-		env.Define(stmt.Name, i.evalExpr(env, stmt.Initialiser))
+		return env.Define(stmt.Name.Lexeme, i.evalExpr(env, stmt.Initialiser))
 	} else {
-		env.Declare(stmt.Name)
+		return env.Declare(stmt.Name.Lexeme)
 	}
 }
 
-func (i *Interpreter) execFunDecl(env *environment, stmt ast.FunDecl) {
-	env.Define(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Function, funTypeFunction, env))
+func (i *Interpreter) execFunDecl(env environment, stmt ast.FunDecl) environment {
+	newEnv := env.Declare(stmt.Name.Lexeme)
+	newEnv.Assign(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Function, funTypeFunction, newEnv))
+	return newEnv
 }
 
-func (i *Interpreter) execClassDecl(env *environment, stmt ast.ClassDecl) {
-	env.Define(stmt.Name, newLoxClass(stmt.Name.Lexeme, stmt.Methods(), env))
+func (i *Interpreter) execClassDecl(env environment, stmt ast.ClassDecl) environment {
+	newEnv := env.Declare(stmt.Name.Lexeme)
+	newEnv.Assign(stmt.Name, newLoxClass(stmt.Name.Lexeme, stmt.Methods(), newEnv))
+	return newEnv
 }
 
-func (i *Interpreter) execExprStmt(env *environment, stmt ast.ExprStmt) {
+func (i *Interpreter) execExprStmt(env environment, stmt ast.ExprStmt) {
 	value := i.evalExpr(env, stmt.Expr)
 	if i.printExprStmtResults {
 		fmt.Println(value.String())
 	}
 }
 
-func (i *Interpreter) execPrintStmt(env *environment, stmt ast.PrintStmt) {
+func (i *Interpreter) execPrintStmt(env environment, stmt ast.PrintStmt) {
 	value := i.evalExpr(env, stmt.Expr)
 	fmt.Println(value.String())
 }
 
-func (i *Interpreter) execBlockStmt(env *environment, stmt ast.BlockStmt) stmtResult {
+func (i *Interpreter) execBlockStmt(env environment, stmt ast.BlockStmt) stmtResult {
 	return i.executeBlock(env.Child(), stmt.Stmts)
 }
 
-func (i *Interpreter) executeBlock(env *environment, stmts []ast.Stmt) stmtResult {
+func (i *Interpreter) executeBlock(env environment, stmts []ast.Stmt) stmtResult {
+	currentEnv := env
 	for _, stmt := range stmts {
-		result := i.execStmt(env, stmt)
+		var result stmtResult
+		result, currentEnv = i.execStmt(currentEnv, stmt)
 		if _, ok := result.(stmtResultNone); !ok {
 			return result
 		}
@@ -172,20 +176,22 @@ func (i *Interpreter) executeBlock(env *environment, stmts []ast.Stmt) stmtResul
 	return stmtResultNone{}
 }
 
-func (i *Interpreter) execIfStmt(env *environment, stmt ast.IfStmt) stmtResult {
+func (i *Interpreter) execIfStmt(env environment, stmt ast.IfStmt) stmtResult {
 	condition := i.evalExpr(env, stmt.Condition)
 	if isTruthy(condition) {
-		return i.execStmt(env, stmt.Then)
+		result, _ := i.execStmt(env, stmt.Then)
+		return result
 	} else if stmt.Else != nil {
-		return i.execStmt(env, stmt.Else)
+		result, _ := i.execStmt(env, stmt.Else)
+		return result
 	} else {
 		return stmtResultNone{}
 	}
 }
 
-func (i *Interpreter) execWhileStmt(env *environment, stmt ast.WhileStmt) stmtResult {
+func (i *Interpreter) execWhileStmt(env environment, stmt ast.WhileStmt) stmtResult {
 	for isTruthy(i.evalExpr(env, stmt.Condition)) {
-		switch result := i.execStmt(env, stmt.Body).(type) {
+		switch result, _ := i.execStmt(env, stmt.Body); result.(type) {
 		case stmtResultBreak:
 			return stmtResultNone{}
 		case stmtResultReturn:
@@ -196,13 +202,13 @@ func (i *Interpreter) execWhileStmt(env *environment, stmt ast.WhileStmt) stmtRe
 	return stmtResultNone{}
 }
 
-func (i *Interpreter) execForStmt(env *environment, stmt ast.ForStmt) stmtResult {
+func (i *Interpreter) execForStmt(env environment, stmt ast.ForStmt) stmtResult {
 	childEnv := env.Child()
 	if stmt.Initialise != nil {
-		i.execStmt(childEnv, stmt.Initialise)
+		_, childEnv = i.execStmt(childEnv, stmt.Initialise)
 	}
 	for stmt.Condition == nil || isTruthy(i.evalExpr(childEnv, stmt.Condition)) {
-		switch result := i.execStmt(childEnv, stmt.Body).(type) {
+		switch result, _ := i.execStmt(childEnv, stmt.Body); result.(type) {
 		case stmtResultBreak:
 			return stmtResultNone{}
 		case stmtResultReturn:
@@ -224,7 +230,7 @@ func (i *Interpreter) execContinueStmt() stmtResultContinue {
 	return stmtResultContinue{}
 }
 
-func (i *Interpreter) execReturnStmt(env *environment, stmt ast.ReturnStmt) stmtResultReturn {
+func (i *Interpreter) execReturnStmt(env environment, stmt ast.ReturnStmt) stmtResultReturn {
 	var value loxObject = loxNil{}
 	if stmt.Value != nil {
 		value = i.evalExpr(env, stmt.Value)
@@ -232,7 +238,7 @@ func (i *Interpreter) execReturnStmt(env *environment, stmt ast.ReturnStmt) stmt
 	return stmtResultReturn{Value: value}
 }
 
-func (i *Interpreter) evalExpr(env *environment, expr ast.Expr) loxObject {
+func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 	switch expr := expr.(type) {
 	case ast.FunExpr:
 		return i.evalFunExpr(env, expr)
@@ -262,11 +268,11 @@ func (i *Interpreter) evalExpr(env *environment, expr ast.Expr) loxObject {
 	panic("unreachable")
 }
 
-func (i *Interpreter) evalFunExpr(env *environment, expr ast.FunExpr) loxObject {
+func (i *Interpreter) evalFunExpr(env environment, expr ast.FunExpr) loxObject {
 	return newLoxFunction("(anonymous)", expr.Function, funTypeFunction, env)
 }
 
-func (i *Interpreter) evalGroupExpr(env *environment, expr ast.GroupExpr) loxObject {
+func (i *Interpreter) evalGroupExpr(env environment, expr ast.GroupExpr) loxObject {
 	return i.evalExpr(env, expr.Expr)
 }
 
@@ -289,23 +295,15 @@ func (i *Interpreter) evalLiteralExpr(expr ast.LiteralExpr) loxObject {
 	}
 }
 
-func (i *Interpreter) evalVariableExpr(env *environment, expr ast.VariableExpr) loxObject {
-	return i.resolveIdent(env, expr.Name)
+func (i *Interpreter) evalVariableExpr(env environment, expr ast.VariableExpr) loxObject {
+	return env.Get(expr.Name)
 }
 
-func (i *Interpreter) evalThisExpr(env *environment, expr ast.ThisExpr) loxObject {
-	return i.resolveIdent(env, expr.This)
+func (i *Interpreter) evalThisExpr(env environment, expr ast.ThisExpr) loxObject {
+	return env.Get(expr.This)
 }
 
-func (i *Interpreter) resolveIdent(env *environment, tok token.Token) loxObject {
-	distance, ok := i.declDistancesByTok[tok]
-	if ok {
-		return env.GetAt(distance, tok)
-	}
-	return i.globals.Get(tok)
-}
-
-func (i *Interpreter) evalCallExpr(env *environment, expr ast.CallExpr) loxObject {
+func (i *Interpreter) evalCallExpr(env environment, expr ast.CallExpr) loxObject {
 	callee := i.evalExpr(env, expr.Callee)
 	args := make([]loxObject, len(expr.Args))
 	for j, arg := range expr.Args {
@@ -360,7 +358,7 @@ func (i *Interpreter) call(location token.Position, callable loxCallable, args [
 	return result
 }
 
-func (i *Interpreter) evalGetExpr(env *environment, expr ast.GetExpr) loxObject {
+func (i *Interpreter) evalGetExpr(env environment, expr ast.GetExpr) loxObject {
 	object := i.evalExpr(env, expr.Object)
 	getter, ok := object.(loxGetter)
 	if !ok {
@@ -369,7 +367,7 @@ func (i *Interpreter) evalGetExpr(env *environment, expr ast.GetExpr) loxObject 
 	return getter.Get(i, expr.Name)
 }
 
-func (i *Interpreter) evalUnaryExpr(env *environment, expr ast.UnaryExpr) loxObject {
+func (i *Interpreter) evalUnaryExpr(env environment, expr ast.UnaryExpr) loxObject {
 	right := i.evalExpr(env, expr.Right)
 	if expr.Op.Type == token.Bang {
 		// The behaviour of ! is independent of the type of the operand, so we can implement it here.
@@ -384,7 +382,7 @@ func (i *Interpreter) evalUnaryExpr(env *environment, expr ast.UnaryExpr) loxObj
 	panic(lox.NewErrorf(expr.Op, "%m operator cannot be used with type %m", expr.Op.Type, right.Type()))
 }
 
-func (i *Interpreter) evalBinaryExpr(env *environment, expr ast.BinaryExpr) loxObject {
+func (i *Interpreter) evalBinaryExpr(env environment, expr ast.BinaryExpr) loxObject {
 	left := i.evalExpr(env, expr.Left)
 
 	// We check for short-circuiting operators first.
@@ -429,7 +427,7 @@ func (i *Interpreter) evalBinaryExpr(env *environment, expr ast.BinaryExpr) loxO
 	}
 }
 
-func (i *Interpreter) evalTernaryExpr(env *environment, expr ast.TernaryExpr) loxObject {
+func (i *Interpreter) evalTernaryExpr(env environment, expr ast.TernaryExpr) loxObject {
 	condition := i.evalExpr(env, expr.Condition)
 	if isTruthy(condition) {
 		return i.evalExpr(env, expr.Then)
@@ -437,18 +435,13 @@ func (i *Interpreter) evalTernaryExpr(env *environment, expr ast.TernaryExpr) lo
 	return i.evalExpr(env, expr.Else)
 }
 
-func (i *Interpreter) evalAssignmentExpr(env *environment, expr ast.AssignmentExpr) loxObject {
+func (i *Interpreter) evalAssignmentExpr(env environment, expr ast.AssignmentExpr) loxObject {
 	value := i.evalExpr(env, expr.Right)
-	distance, ok := i.declDistancesByTok[expr.Left]
-	if ok {
-		env.AssignAt(distance, expr.Left, value)
-	} else {
-		i.globals.Assign(expr.Left, value)
-	}
+	env.Assign(expr.Left, value)
 	return value
 }
 
-func (i *Interpreter) evalSetExpr(env *environment, expr ast.SetExpr) loxObject {
+func (i *Interpreter) evalSetExpr(env environment, expr ast.SetExpr) loxObject {
 	object := i.evalExpr(env, expr.Object)
 	setter, ok := object.(loxSetter)
 	if !ok {

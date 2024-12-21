@@ -2,181 +2,156 @@ package interpreter
 
 import (
 	"fmt"
-	"slices"
-	"strings"
 
 	"github.com/marcuscaisey/lox/lox"
 	"github.com/marcuscaisey/lox/lox/token"
 )
 
-type environment struct {
-	parent        *environment
-	valuesByIdent map[string]loxObject
+// environment stores the values of variables in a lexical scope.
+type environment interface {
+	// Child create a new child of this environment.
+	// Variables in the parent environment are visible in the child.
+	// Variables declared in the child environment are not visible in the parent.
+	// Variables declared in the child environment shadow variables with the same name in the parent environment.
+	Child() environment
+	// Declare declares a variable and returns the updated environment.
+	Declare(name string) environment
+	// Define declares a variable, assigns a value to it, and returns the updated environment.
+	Define(name string, value loxObject) environment
+	// Assign assigns a value to the variable identified by ident and returns the updated environment.
+	Assign(ident token.Token, value loxObject)
+	// Get returns the value of the variable identified by ident.
+	Get(ident token.Token) loxObject
 }
 
-func newEnvironment() *environment {
-	return &environment{
-		valuesByIdent: make(map[string]loxObject),
+// globalEnvironment is the environment for the global scope.
+type globalEnvironment struct {
+	values map[string]loxObject
+}
+
+func newGlobalEnvironment() *globalEnvironment {
+	return &globalEnvironment{
+		values: map[string]loxObject{},
 	}
 }
 
-func (e *environment) String() string {
-	_, s := e.string()
-	return s
+func (e *globalEnvironment) Child() environment {
+	return newLocalEnvironment(e, "", nil)
 }
 
-func (e *environment) string() (prefix string, s string) {
-	var b strings.Builder
-	firstLinePrefix := ""
-	if e.parent != nil {
-		parentPrefix, parentString := e.parent.string()
-		fmt.Fprintf(&b, "%s\n", parentString)
-		prefix = parentPrefix + "   "
-		firstLinePrefix = parentPrefix + "└──"
+func (e *globalEnvironment) Declare(name string) environment {
+	if name == token.PlaceholderIdent {
+		return e
 	}
+	if _, ok := e.values[name]; !ok {
+		e.values[name] = nil
+		return e
+	} else {
+		// This should have been caught by [analysis.ResolveIdents].
+		panic(fmt.Sprintf("%s has already been declared", name))
+	}
+}
 
-	if len(e.valuesByIdent) == 0 {
-		fmt.Fprintf(&b, "%s<empty>", firstLinePrefix)
-		return prefix, b.String()
+func (e *globalEnvironment) Define(name string, value loxObject) environment {
+	if name == token.PlaceholderIdent {
+		return e
 	}
+	if value == nil {
+		panic(fmt.Sprintf("attempt to set %s to nil", name))
+	}
+	e.Declare(name)
+	e.values[name] = value
+	return e
+}
 
-	idents := make([]string, 0, len(e.valuesByIdent))
-	for ident := range e.valuesByIdent {
-		idents = append(idents, ident)
+func (e *globalEnvironment) Assign(ident token.Token, value loxObject) {
+	if ident.Lexeme == token.PlaceholderIdent {
+		return
 	}
-	slices.Sort(idents)
-	for i, ident := range idents {
-		prefix := prefix
-		if i == 0 {
-			prefix = firstLinePrefix
+	if value == nil {
+		panic(fmt.Sprintf("attempt to assign nil to %s", ident.Lexeme))
+	}
+	if _, ok := e.values[ident.Lexeme]; ok {
+		e.values[ident.Lexeme] = value
+	} else {
+		panic(lox.NewErrorf(ident, "%s has not been declared", ident.Lexeme))
+	}
+}
+
+func (e *globalEnvironment) Get(ident token.Token) loxObject {
+	if value, ok := e.values[ident.Lexeme]; ok {
+		if value != nil {
+			return value
+		} else {
+			panic(lox.NewErrorf(ident, "%s has not been defined", ident.Lexeme))
 		}
-		fmt.Fprintf(&b, "%s%s: %s\n", prefix, ident, e.valuesByIdent[ident])
+	} else {
+		panic(lox.NewErrorf(ident, "%s has not been declared", ident.Lexeme))
 	}
-	return prefix, strings.TrimSuffix(b.String(), "\n")
 }
 
-// Child creates a new child environment of this environment.
-func (e *environment) Child() *environment {
-	env := newEnvironment()
-	env.parent = e
-	return env
+// localEnvironment is the environment for a local scope.
+type localEnvironment struct {
+	parent environment
+	name   string
+	value  loxObject
 }
 
-// Declare declares an identifier in this environment.
-// If the identifier has already been declared in this environment, then an error is raised.
-// If the identifier is [token.PlaceholderIdent], then this method is a no-op.
-func (e *environment) Declare(tok token.Token) {
-	if tok.Lexeme == token.PlaceholderIdent {
-		return
+func newLocalEnvironment(parent environment, name string, value loxObject) *localEnvironment {
+	return &localEnvironment{
+		parent: parent,
+		name:   name,
+		value:  value,
 	}
-	if _, ok := e.valuesByIdent[tok.Lexeme]; ok {
-		panic(lox.NewErrorf(tok, "%s has already been declared", tok.Lexeme))
-	}
-	e.valuesByIdent[tok.Lexeme] = nil
 }
 
-// Define declares an identifier in this environment and defines it with a value.
-// If the identifier has already been declared in this environment, then an error is raised.
-// If the identifier is [token.PlaceholderIdent], then this method is a no-op.
-// This method should be used for defining values which originated from an assignment in code. For example, a variable
-// or function declaration. Otherwise, use [*environment.Set].
-func (e *environment) Define(tok token.Token, value loxObject) {
-	if tok.Lexeme == token.PlaceholderIdent {
-		return
+func (e *localEnvironment) Child() environment {
+	return e
+}
+
+func (e *localEnvironment) Declare(name string) environment {
+	if name == token.PlaceholderIdent {
+		return e
+	}
+	return newLocalEnvironment(e, name, nil)
+}
+
+func (e *localEnvironment) Define(name string, value loxObject) environment {
+	if name == token.PlaceholderIdent {
+		return e
 	}
 	if value == nil {
-		panic(fmt.Sprintf("attempt to define %s to nil", tok.Lexeme))
+		panic(fmt.Sprintf("attempt to set %s to nil", name))
 	}
-	if _, ok := e.valuesByIdent[tok.Lexeme]; ok {
-		panic(lox.NewErrorf(tok, "%s has already been declared", tok.Lexeme))
-	}
-	e.valuesByIdent[tok.Lexeme] = value
+	return newLocalEnvironment(e, name, value)
 }
 
-// Set declares an identifier in this environment and defines it with a value.
-// If the identifier has already been declared in this environment, then this method panics.
-// If the identifier is [token.PlaceholderIdent], then this method is a no-op.
-// This method should be used for defining values which did not originate from an assignment in code. For example,
-// defining built-in functions or function arguments. Otherwise, use [*environment.Define].
-func (e *environment) Set(ident string, value loxObject) {
-	if ident == token.PlaceholderIdent {
+func (e *localEnvironment) Assign(ident token.Token, value loxObject) {
+	if ident.Lexeme == token.PlaceholderIdent {
 		return
 	}
 	if value == nil {
-		// It's a bug if we end up here
-		panic(fmt.Sprintf("attempt to set %s to nil", ident))
+		panic(fmt.Sprintf("attempt to assign nil to %s", ident.Lexeme))
 	}
-	if _, ok := e.valuesByIdent[ident]; ok {
-		// It's a bug if we end up here
-		panic(fmt.Sprintf("%s has already been declared", ident))
+	if ident.Lexeme == e.name {
+		e.value = value
+	} else if e.parent != nil {
+		e.parent.Assign(ident, value)
+	} else {
+		panic(fmt.Sprintf("%s has not been declared", ident.Lexeme))
 	}
-	e.valuesByIdent[ident] = value
 }
 
-// Assign assigns a value to an identifier in this environment.
-// If the identifier has not been defined in this environment, then an error is raised.
-// If the identifier is [token.PlaceholderIdent], then this method is a no-op.
-func (e *environment) Assign(tok token.Token, value loxObject) {
-	if tok.Lexeme == token.PlaceholderIdent {
-		return
-	}
-	if value == nil {
-		panic(fmt.Sprintf("attempt to assign nil to %s", tok.Lexeme))
-	}
-	_, ok := e.valuesByIdent[tok.Lexeme]
-	if !ok {
-		panic(lox.NewErrorf(tok, "%s has not been declared", tok.Lexeme))
-	}
-	e.valuesByIdent[tok.Lexeme] = value
-}
-
-// AssignAt assigns a value to a variable in the environment distance levels up the parent chain.
-func (e *environment) AssignAt(distance int, tok token.Token, value loxObject) {
-	e.ancestor(distance).Assign(tok, value)
-}
-
-// Get returns the value of an identifier in this environment.
-// If the identifier has not been declared or defined in this environment, then an error is raised.
-func (e *environment) Get(tok token.Token) loxObject {
-	value, ok := e.valuesByIdent[tok.Lexeme]
-	if !ok {
-		panic(lox.NewErrorf(tok, "%s has not been declared", tok.Lexeme))
-	}
-	if value == nil {
-		panic(lox.NewErrorf(tok, "%s has not been defined", tok.Lexeme))
-	}
-	return value
-}
-
-// Get returns the value of an identifier in this environment.
-// If the identifier has not been declared or defined in this environment, then this method panics.
-// This method should be used for accesses which did not originate from an expression in code. Otherwise, use
-// [*environment.Get].
-func (e *environment) GetByIdent(ident string) loxObject {
-	value, ok := e.valuesByIdent[ident]
-	if !ok {
-		// It's a bug if we end up here
-		panic(fmt.Sprintf("%s has not been declared", ident))
-	}
-	if value == nil {
-		// It's a bug if we end up here
-		panic(fmt.Sprintf("%s has not been defined", ident))
-	}
-	return value
-}
-
-// GetAt returns the value of an identifier in the environment distance levels up the parent chain.
-func (e *environment) GetAt(distance int, tok token.Token) loxObject {
-	return e.ancestor(distance).Get(tok)
-}
-
-func (e *environment) ancestor(n int) *environment {
-	ancestor := e
-	for range n {
-		ancestor = ancestor.parent
-		if ancestor == nil {
-			panic(fmt.Sprintf("ancestor %d is out of range", n))
+func (e *localEnvironment) Get(ident token.Token) loxObject {
+	if ident.Lexeme == e.name {
+		if e.value != nil {
+			return e.value
+		} else {
+			panic(fmt.Sprintf("%s has not been defined", ident.Lexeme))
 		}
+	} else if e.parent != nil {
+		return e.parent.Get(ident)
+	} else {
+		panic(fmt.Sprintf("%s has not been declared", ident.Lexeme))
 	}
-	return ancestor
 }

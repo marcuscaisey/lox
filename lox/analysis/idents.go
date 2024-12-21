@@ -13,7 +13,7 @@ import (
 // It returns a map from identifiers to the distance to the declaration that they refer to.
 // A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
 // parent scope, and so on.
-// If an identifier is not present in the map, then it was either declared globally or not at all.
+// If an identifier is not present in the map, then it was declared globally.
 //
 // Addtionally, checks that identifiers are not:
 //   - declared and never used

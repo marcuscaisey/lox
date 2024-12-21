@@ -281,10 +281,10 @@ type loxFunction struct {
 	body       []ast.Stmt
 	nativeBody nativeFunBody
 	typ        funType
-	closure    *environment
+	closure    environment
 }
 
-func newLoxFunction(name string, fun ast.Function, typ funType, closure *environment) *loxFunction {
+func newLoxFunction(name string, fun ast.Function, typ funType, closure environment) *loxFunction {
 	paramNames := make([]string, len(fun.Params))
 	for i, param := range fun.Params {
 		paramNames[i] = param.Lexeme
@@ -343,11 +343,11 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 
 	childEnv := f.closure.Child()
 	for i, param := range f.params {
-		childEnv.Set(param, args[i])
+		childEnv = childEnv.Define(param, args[i])
 	}
 	result := interpreter.executeBlock(childEnv, f.body)
 	if f.typ.IsConstructor() {
-		return f.closure.GetByIdent(token.CurrentInstanceIdent)
+		return f.closure.Get(token.Token{Lexeme: token.CurrentInstanceIdent})
 	}
 	if r, ok := result.(stmtResultReturn); ok {
 		return r.Value
@@ -357,8 +357,8 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 
 func (f *loxFunction) Bind(instance *loxInstance) *loxFunction {
 	fCopy := *f
-	fCopy.closure = f.closure.Child()
-	fCopy.closure.Set(token.CurrentInstanceIdent, instance)
+	fCopyClosure := f.closure.Child()
+	fCopy.closure = fCopyClosure.Define(token.CurrentInstanceIdent, instance)
 	return &fCopy
 }
 
@@ -389,7 +389,7 @@ type loxClass struct {
 	propertiesByName map[string]*property
 }
 
-func newLoxClass(name string, methods []ast.MethodDecl, env *environment) *loxClass {
+func newLoxClass(name string, methods []ast.MethodDecl, env environment) *loxClass {
 	instanceMethods := make([]ast.MethodDecl, 0, len(methods))
 	staticMethods := make([]ast.MethodDecl, 0, len(methods))
 	for _, decl := range methods {
@@ -404,7 +404,7 @@ func newLoxClass(name string, methods []ast.MethodDecl, env *environment) *loxCl
 	return newLoxClassWithMetaclass(name, instanceMethods, env, metaclass)
 }
 
-func newLoxClassWithMetaclass(name string, methods []ast.MethodDecl, env *environment, metaclass *loxClass) *loxClass {
+func newLoxClassWithMetaclass(name string, methods []ast.MethodDecl, env environment, metaclass *loxClass) *loxClass {
 	methodsByName := make(map[string]*loxFunction, len(methods))
 	gettersByName := make(map[string]*loxFunction, len(methods))
 	settersByName := make(map[string]*loxFunction, len(methods))
