@@ -3,4 +3,4 @@ fun add(x, y, z) {
     return x + y;
 }
 
-_ = add; // suppress unused declaration error
+_ = add;

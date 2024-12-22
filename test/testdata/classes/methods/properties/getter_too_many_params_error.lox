@@ -6,4 +6,4 @@ class Foo {
     }
 }
 
-_ = Foo; // suppress unused declaration error
+_ = Foo;

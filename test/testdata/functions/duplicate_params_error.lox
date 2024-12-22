@@ -6,4 +6,4 @@ fun f(x, y, z, x, y) {
     _ = z;
 }
 
-_ = f; // suppress unused declaration error
+_ = f;

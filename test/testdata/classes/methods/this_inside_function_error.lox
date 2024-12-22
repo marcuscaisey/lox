@@ -2,4 +2,4 @@ fun printThis() {
     print this; // error: 'this' can only be used inside a method definition
 }
 
-_ = printThis; // suppress unused declaration error
+_ = printThis;

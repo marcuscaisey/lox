@@ -1,5 +1,5 @@
 var a = "global a";
-_ = a; // suppress unused declaration error
+_ = a;
 var b = "global b";
 var c;
 var d = "global d";
@@ -9,7 +9,7 @@ for (var a = "local a";;) {
     print b; // prints: global b
     c = "global c";
     var d = "local d";
-    var _ = d; // suppress unused declaration error
+    var _ = d;
     break;
 }
 
