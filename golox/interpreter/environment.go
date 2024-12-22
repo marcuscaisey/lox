@@ -40,9 +40,6 @@ func (e *globalEnvironment) Child() environment {
 }
 
 func (e *globalEnvironment) Declare(name string) environment {
-	if name == token.PlaceholderIdent {
-		return e
-	}
 	if _, ok := e.values[name]; !ok {
 		e.values[name] = nil
 		return e
@@ -53,9 +50,6 @@ func (e *globalEnvironment) Declare(name string) environment {
 }
 
 func (e *globalEnvironment) Define(name string, value loxObject) environment {
-	if name == token.PlaceholderIdent {
-		return e
-	}
 	if value == nil {
 		panic(fmt.Sprintf("attempt to set %s to nil", name))
 	}
@@ -65,9 +59,6 @@ func (e *globalEnvironment) Define(name string, value loxObject) environment {
 }
 
 func (e *globalEnvironment) Assign(ident token.Token, value loxObject) {
-	if ident.Lexeme == token.PlaceholderIdent {
-		return
-	}
 	if value == nil {
 		panic(fmt.Sprintf("attempt to assign nil to %s", ident.Lexeme))
 	}
@@ -110,16 +101,10 @@ func (e *localEnvironment) Child() environment {
 }
 
 func (e *localEnvironment) Declare(name string) environment {
-	if name == token.PlaceholderIdent {
-		return e
-	}
 	return newLocalEnvironment(e, name, nil)
 }
 
 func (e *localEnvironment) Define(name string, value loxObject) environment {
-	if name == token.PlaceholderIdent {
-		return e
-	}
 	if value == nil {
 		panic(fmt.Sprintf("attempt to set %s to nil", name))
 	}
@@ -127,9 +112,6 @@ func (e *localEnvironment) Define(name string, value loxObject) environment {
 }
 
 func (e *localEnvironment) Assign(ident token.Token, value loxObject) {
-	if ident.Lexeme == token.PlaceholderIdent {
-		return
-	}
 	if value == nil {
 		panic(fmt.Sprintf("attempt to assign nil to %s", ident.Lexeme))
 	}
@@ -138,6 +120,7 @@ func (e *localEnvironment) Assign(ident token.Token, value loxObject) {
 	} else if e.parent != nil {
 		e.parent.Assign(ident, value)
 	} else {
+		// This should have been caught by [analysis.ResolveIdents].
 		panic(fmt.Sprintf("%s has not been declared", ident.Lexeme))
 	}
 }
@@ -147,11 +130,13 @@ func (e *localEnvironment) Get(ident token.Token) loxObject {
 		if e.value != nil {
 			return e.value
 		} else {
+			// This should have been caught by [analysis.ResolveIdents].
 			panic(fmt.Sprintf("%s has not been defined", ident.Lexeme))
 		}
 	} else if e.parent != nil {
 		return e.parent.Get(ident)
 	} else {
+		// This should have been caught by [analysis.ResolveIdents].
 		panic(fmt.Sprintf("%s has not been declared", ident.Lexeme))
 	}
 }

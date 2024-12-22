@@ -129,20 +129,33 @@ func (i *Interpreter) execStmt(env environment, stmt ast.Stmt) (stmtResult, envi
 }
 
 func (i *Interpreter) execVarDecl(env environment, stmt ast.VarDecl) environment {
+	var value loxObject
 	if stmt.Initialiser != nil {
-		return env.Define(stmt.Name.Lexeme, i.evalExpr(env, stmt.Initialiser))
+		value = i.evalExpr(env, stmt.Initialiser)
+	}
+	if stmt.Name.Lexeme == token.PlaceholderIdent {
+		return env
+	}
+	if stmt.Initialiser != nil {
+		return env.Define(stmt.Name.Lexeme, value)
 	} else {
 		return env.Declare(stmt.Name.Lexeme)
 	}
 }
 
 func (i *Interpreter) execFunDecl(env environment, stmt ast.FunDecl) environment {
+	if stmt.Name.Lexeme == token.PlaceholderIdent {
+		return env
+	}
 	newEnv := env.Declare(stmt.Name.Lexeme)
 	newEnv.Assign(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Function, funTypeFunction, newEnv))
 	return newEnv
 }
 
 func (i *Interpreter) execClassDecl(env environment, stmt ast.ClassDecl) environment {
+	if stmt.Name.Lexeme == token.PlaceholderIdent {
+		return env
+	}
 	newEnv := env.Declare(stmt.Name.Lexeme)
 	newEnv.Assign(stmt.Name, newLoxClass(stmt.Name.Lexeme, stmt.Methods(), newEnv))
 	return newEnv
@@ -437,7 +450,9 @@ func (i *Interpreter) evalTernaryExpr(env environment, expr ast.TernaryExpr) lox
 
 func (i *Interpreter) evalAssignmentExpr(env environment, expr ast.AssignmentExpr) loxObject {
 	value := i.evalExpr(env, expr.Right)
-	env.Assign(expr.Left, value)
+	if expr.Left.Lexeme != token.PlaceholderIdent {
+		env.Assign(expr.Left, value)
+	}
 	return value
 }
 
