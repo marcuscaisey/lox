@@ -16,7 +16,8 @@ const (
 //   - break and continue can only be used inside a loop
 //   - return can only be used inside a function definition
 //   - init() cannot return a value
-//   - _ cannot be used in a non-assignment expression
+//   - _ cannot be used as a value
+//   - _ cannot be used as a field name
 //   - this can only be used inside a method definition
 //   - property getter cannot have parameters
 //   - property setter must have exactly one parameter
@@ -71,11 +72,15 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.walkFun(node.Function, funTypeFunction)
 		return false
 	case ast.VariableExpr:
-		c.checkNoPlaceholderAssignment(node)
+		c.checkNoPlaceholderAccess(node)
 	case ast.ThisExpr:
 		c.checkThisInMethod(node)
 	case ast.CallExpr:
 		c.checkNumArgs(node.Args)
+	case ast.GetExpr:
+		c.checkNoPlaceholderFieldAccess(node.Name)
+	case ast.SetExpr:
+		c.checkNoPlaceholderFieldAccess(node.Name)
 	default:
 	}
 	return true
@@ -189,9 +194,15 @@ func (c *semanticChecker) checkNoConstructorReturn(stmt ast.ReturnStmt) {
 	}
 }
 
-func (c *semanticChecker) checkNoPlaceholderAssignment(expr ast.VariableExpr) {
+func (c *semanticChecker) checkNoPlaceholderAccess(expr ast.VariableExpr) {
 	if expr.Name.Lexeme == token.PlaceholderIdent {
-		c.errs.Addf(expr.Name, "identifier %s cannot be used in a non-assignment expression", token.PlaceholderIdent)
+		c.errs.Addf(expr.Name, "%s cannot be used as a value", token.PlaceholderIdent)
+	}
+}
+
+func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident token.Token) {
+	if ident.Lexeme == token.PlaceholderIdent {
+		c.errs.Addf(ident, "%s cannot be used as a field name", token.PlaceholderIdent)
 	}
 }
 

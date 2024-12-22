@@ -1,0 +1,6 @@
+class Foo {
+    init() {
+        this._ = 2; // error: _ cannot be used as a field name
+    }
+}
+Foo();

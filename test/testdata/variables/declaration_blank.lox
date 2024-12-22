@@ -4,3 +4,11 @@ var _ = 2;
     var _ = 3;
     var _ = 4;
 }
+
+var value = "original";
+fun updateValue() {
+    value = "updated";
+}
+
+var _ = updateValue();
+print value; // prints: updated
