@@ -1,0 +1,12 @@
+{
+    var fib = fun(n) {
+        if (n <= 1) {
+            return n;
+        }
+        // error: fib has not been declared
+        // error: fib has not been declared
+        return fib(n - 1) + fib(n - 2);
+    };
+
+    print fib(10);
+}

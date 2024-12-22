@@ -1,0 +1,12 @@
+{
+    class Fib {
+        static fib(n) {
+            if (n <= 1) {
+                return n;
+            }
+            return this.fib(n - 1) + this.fib(n - 2);
+        }
+    }
+
+    print Fib.fib(10); // prints: 55
+}

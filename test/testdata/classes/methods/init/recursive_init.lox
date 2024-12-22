@@ -1,0 +1,15 @@
+class Count {
+    init(start, end) {
+        if (start <= end) {
+            print start;
+            this.init(start + 1, end);
+        }
+    }
+}
+
+// prints: 1
+// prints: 2
+// prints: 3
+// prints: 4
+// prints: 5
+Count(1, 5);
