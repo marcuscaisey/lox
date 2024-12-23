@@ -23,8 +23,8 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
 				Name:           n.Name.Lexeme,
 				Kind:           protocol.SymbolKindVariable,
-				Range:          protocol.NewRange(n.Start(), n.End()),
-				SelectionRange: protocol.NewRange(n.Name.Start(), n.Name.End()),
+				Range:          newRange(n.Start(), n.End()),
+				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
 			})
 			return false
 		case ast.FunDecl:
@@ -32,16 +32,16 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				Name:           n.Name.Lexeme,
 				Detail:         format.Signature(n.Function),
 				Kind:           protocol.SymbolKindFunction,
-				Range:          protocol.NewRange(n.Start(), n.End()),
-				SelectionRange: protocol.NewRange(n.Name.Start(), n.Name.End()),
+				Range:          newRange(n.Start(), n.End()),
+				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
 			})
 			return false
 		case ast.ClassDecl:
 			class := &protocol.DocumentSymbol{
 				Name:           n.Name.Lexeme,
 				Kind:           protocol.SymbolKindClass,
-				Range:          protocol.NewRange(n.Start(), n.End()),
-				SelectionRange: protocol.NewRange(n.Name.Start(), n.Name.End()),
+				Range:          newRange(n.Start(), n.End()),
+				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
 			}
 			docSymbols = append(docSymbols, class)
 			for _, decl := range n.Methods() {
@@ -64,8 +64,8 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 					Name:           fmt.Sprintf("%s.%s%s", class.Name, decl.Name.Lexeme, modifiers),
 					Detail:         format.Signature(decl.Function),
 					Kind:           kind,
-					Range:          protocol.NewRange(decl.Start(), decl.End()),
-					SelectionRange: protocol.NewRange(decl.Name.Start(), decl.Name.End()),
+					Range:          newRange(decl.Start(), decl.End()),
+					SelectionRange: newRange(decl.Name.Start(), decl.Name.End()),
 				})
 			}
 			return false
