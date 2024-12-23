@@ -9,15 +9,15 @@ import (
 	"github.com/marcuscaisey/lox/lox/token"
 )
 
-// ResolveIdentsOption can be passed to [ResolveIdentifiers] to configure the resolving behaviour.
-type ResolveIdentsOption func(*identResolver)
+// ResolveIdentifiersOption can be passed to [ResolveIdentifiers] to configure the resolving behaviour.
+type ResolveIdentifiersOption func(*identResolver)
 
 // WithREPLMode configures identifiers to be resolved in REPL mode.
 // In REPL mode, the following identifier checks are disabled:
 //   - declared and never used
 //   - declared more than once in the same scope
 //   - used before they are declared
-func WithREPLMode() ResolveIdentsOption {
+func WithREPLMode() ResolveIdentifiersOption {
 	return func(i *identResolver) {
 		i.replMode = true
 	}
@@ -37,16 +37,15 @@ func WithREPLMode() ResolveIdentsOption {
 //   - used before they are defined (best effort for globals)
 //
 // Some checks are best effort for global identifiers as it's not always possible to (easily) determine how they're used
-// without running the program. For example, in the following example:
+// without running the program. For example, in the following example, whether the program is valid depends on whether
+// the global variable x is defined before printX is called.
 //
 //	fun printX() {
 //	    print x;
 //	}
 //	var x = 1;
 //	printX();
-//
-// Whether the program is valid depends on whether the global variable x is defined before printX is called.
-func ResolveIdentifiers(program ast.Program, opts ...ResolveIdentsOption) (map[token.Token]int, lox.Errors) {
+func ResolveIdentifiers(program ast.Program, opts ...ResolveIdentifiersOption) (map[token.Token]int, lox.Errors) {
 	r := newIdentResolver(program, opts...)
 	return r.Resolve()
 }
@@ -67,7 +66,7 @@ type identResolver struct {
 	replMode bool
 }
 
-func newIdentResolver(program ast.Program, opts ...ResolveIdentsOption) *identResolver {
+func newIdentResolver(program ast.Program, opts ...ResolveIdentifiersOption) *identResolver {
 	r := &identResolver{
 		program:                program,
 		scopes:                 stack.New[scope](),
