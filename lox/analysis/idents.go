@@ -9,23 +9,46 @@ import (
 	"github.com/marcuscaisey/lox/lox/token"
 )
 
+// ResolveIdentsOption can be passed to [ResolveIdents] to configure the resolving behaviour.
+type ResolveIdentsOption func(*identResolver)
+
+// WithREPLMode configures identifiers to be resolved in REPL mode.
+// In REPL mode, the following identifier checks are disabled:
+//   - declared and never used
+//   - declared more than once in the same scope
+//   - used before they are declared
+func WithREPLMode() ResolveIdentsOption {
+	return func(i *identResolver) {
+		i.replMode = true
+	}
+}
+
 // ResolveIdents resolves the identifiers in a program to the declarations that they refer to.
 // It returns a map from identifiers to the distance to the declaration that they refer to.
 // A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
 // parent scope, and so on.
 // If an identifier is not present in the map, then it was declared globally.
 //
-// Addtionally, checks that identifiers are not:
+// Addtionally, this function checks that identifiers are not:
 //   - declared and never used
 //   - declared more than once in the same scope
-//   - used before they are declared
-//   - used and not declared
-//   - used before they are defined
+//   - used before they are declared (best effort for globals)
+//   - used and not declared (best effort for globals)
+//   - used before they are defined (best effort for globals)
 //
-// These checks are best effort for globally defined identifiers as it's not always possible to determine how an
-// identifier is used without running the program.
-func ResolveIdents(program ast.Program) (map[token.Token]int, lox.Errors) {
-	r := newIdentResolver(program)
+// Some checks are best effort for global identifiers as it's not always possible to (easily) determine how they're used
+// without running the program. For example, in the following example:
+//
+//	fun printX() {
+//	    print x;
+//	}
+//	var x = 1;
+//	printX();
+//
+// Whether the program is valid depends on whether the global variable x is defined before printX is called.
+// TODO: rename to ResolveIdentifiers
+func ResolveIdents(program ast.Program, opts ...ResolveIdentsOption) (map[token.Token]int, lox.Errors) {
+	r := newIdentResolver(program, opts...)
 	return r.Resolve()
 }
 
@@ -41,15 +64,21 @@ type identResolver struct {
 
 	identDeclDistances map[token.Token]int // map of identifiers to the distance to the declaration that they refer to
 	errs               lox.Errors
+
+	replMode bool
 }
 
-func newIdentResolver(program ast.Program) *identResolver {
-	return &identResolver{
+func newIdentResolver(program ast.Program, opts ...ResolveIdentsOption) *identResolver {
+	r := &identResolver{
 		program:                program,
 		scopes:                 stack.New[scope](),
 		forwardDeclaredGlobals: map[string]bool{},
 		identDeclDistances:     map[token.Token]int{},
 	}
+	for _, opt := range opts {
+		opt(r)
+	}
+	return r
 }
 
 func (r *identResolver) Resolve() (map[token.Token]int, lox.Errors) {
@@ -187,11 +216,14 @@ func (s scope) UndeclaredUsages() iter.Seq[token.Token] {
 	}
 }
 
-// beginScope creates a new scope and returns a function that ends the scope
+// beginScope creates a new scope and returns a function that ends the scope.
 func (r *identResolver) beginScope() func() {
 	r.scopes.Push(newScope())
 	return func() {
 		scope := r.scopes.Pop()
+		if r.replMode {
+			return
+		}
 		for ident := range scope.UnusedIdents() {
 			r.errs.Addf(ident, "%s has been declared but is never used", ident.Lexeme)
 		}

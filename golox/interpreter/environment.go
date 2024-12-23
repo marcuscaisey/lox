@@ -7,20 +7,22 @@ import (
 	"github.com/marcuscaisey/lox/lox/token"
 )
 
-// environment stores the values of variables in a lexical scope.
+// environment stores the values of identifiers in a lexical scope.
 type environment interface {
 	// Child create a new child of this environment.
-	// Variables in the parent environment are visible in the child.
-	// Variables declared in the child environment are not visible in the parent.
-	// Variables declared in the child environment shadow variables with the same name in the parent environment.
+	// Identifiers in the parent environment are visible in the child.
+	// Identifiers declared in the child environment are not visible in the parent.
+	// Identifiers declared in the child environment shadow identifiers with the same name in the parent environment.
 	Child() environment
-	// Declare declares a variable and returns the updated environment.
-	Declare(name string) environment
-	// Define declares a variable, assigns a value to it, and returns the updated environment.
+	// Declare declares an identifier and returns the updated environment.
+	// This should be used for identifiers that originate from a declaration in code, like a variable declaration.
+	Declare(ident token.Token) environment
+	// Define defines an identifier and returns the updated environment.
+	// This should be used for identifiers that don't originate from a declaration in code, like a function parameter.
 	Define(name string, value loxObject) environment
-	// Assign assigns a value to the variable identified by ident and returns the updated environment.
+	// Assign assigns a value to an identifier and returns the updated environment.
 	Assign(ident token.Token, value loxObject)
-	// Get returns the value of the variable identified by ident.
+	// Get returns the value of the identifier.
 	Get(ident token.Token) loxObject
 }
 
@@ -39,13 +41,12 @@ func (e *globalEnvironment) Child() environment {
 	return newLocalEnvironment(e, "", nil)
 }
 
-func (e *globalEnvironment) Declare(name string) environment {
-	if _, ok := e.values[name]; !ok {
-		e.values[name] = nil
+func (e *globalEnvironment) Declare(ident token.Token) environment {
+	if _, ok := e.values[ident.Lexeme]; !ok {
+		e.values[ident.Lexeme] = nil
 		return e
 	} else {
-		// This should have been caught by [analysis.ResolveIdents].
-		panic(fmt.Sprintf("%s has already been declared", name))
+		panic(lox.NewErrorf(ident, "%s has already been declared", ident.Lexeme))
 	}
 }
 
@@ -53,9 +54,12 @@ func (e *globalEnvironment) Define(name string, value loxObject) environment {
 	if value == nil {
 		panic(fmt.Sprintf("attempt to set %s to nil", name))
 	}
-	e.Declare(name)
-	e.values[name] = value
-	return e
+	if _, ok := e.values[name]; !ok {
+		e.values[name] = value
+		return e
+	} else {
+		panic(fmt.Sprintf("%s has already been declared", name))
+	}
 }
 
 func (e *globalEnvironment) Assign(ident token.Token, value loxObject) {
@@ -100,8 +104,8 @@ func (e *localEnvironment) Child() environment {
 	return e
 }
 
-func (e *localEnvironment) Declare(name string) environment {
-	return newLocalEnvironment(e, name, nil)
+func (e *localEnvironment) Declare(ident token.Token) environment {
+	return newLocalEnvironment(e, ident.Lexeme, nil)
 }
 
 func (e *localEnvironment) Define(name string, value loxObject) environment {

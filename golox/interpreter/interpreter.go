@@ -17,17 +17,17 @@ type Interpreter struct {
 	globals   environment
 	callStack *callStack
 
-	printExprStmtResults bool
+	replMode bool
 }
 
 // Option can be passed to New to configure the interpreter.
 type Option func(*Interpreter)
 
-// REPLMode sets the interpreter to REPL mode.
-// In REPL mode, the interpreter will print the result of expression statements.
-func REPLMode() Option {
+// WithREPLMode configures the interpreter to run in REPL mode.
+// In REPL mode, the interpreter prints the result of expression statements.
+func WithREPLMode() Option {
 	return func(i *Interpreter) {
-		i.printExprStmtResults = true
+		i.replMode = true
 	}
 }
 
@@ -50,7 +50,11 @@ func New(opts ...Option) *Interpreter {
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program ast.Program) error {
-	_, errs := analysis.ResolveIdents(program)
+	var opts []analysis.ResolveIdentsOption
+	if i.replMode {
+		opts = append(opts, analysis.WithREPLMode())
+	}
+	_, errs := analysis.ResolveIdents(program, opts...)
 	errs = append(errs, analysis.CheckSemantics(program)...)
 	if err := errs.Err(); err != nil {
 		return err
@@ -136,18 +140,18 @@ func (i *Interpreter) execVarDecl(env environment, stmt ast.VarDecl) environment
 	if stmt.Name.Lexeme == token.PlaceholderIdent {
 		return env
 	}
+	newEnv := env.Declare(stmt.Name)
 	if stmt.Initialiser != nil {
-		return env.Define(stmt.Name.Lexeme, value)
-	} else {
-		return env.Declare(stmt.Name.Lexeme)
+		newEnv.Assign(stmt.Name, value)
 	}
+	return newEnv
 }
 
 func (i *Interpreter) execFunDecl(env environment, stmt ast.FunDecl) environment {
 	if stmt.Name.Lexeme == token.PlaceholderIdent {
 		return env
 	}
-	newEnv := env.Declare(stmt.Name.Lexeme)
+	newEnv := env.Declare(stmt.Name)
 	newEnv.Assign(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Function, funTypeFunction, newEnv))
 	return newEnv
 }
@@ -156,14 +160,14 @@ func (i *Interpreter) execClassDecl(env environment, stmt ast.ClassDecl) environ
 	if stmt.Name.Lexeme == token.PlaceholderIdent {
 		return env
 	}
-	newEnv := env.Declare(stmt.Name.Lexeme)
+	newEnv := env.Declare(stmt.Name)
 	newEnv.Assign(stmt.Name, newLoxClass(stmt.Name.Lexeme, stmt.Methods(), newEnv))
 	return newEnv
 }
 
 func (i *Interpreter) execExprStmt(env environment, stmt ast.ExprStmt) {
 	value := i.evalExpr(env, stmt.Expr)
-	if i.printExprStmtResults {
+	if i.replMode {
 		fmt.Println(value.String())
 	}
 }
