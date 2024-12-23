@@ -62,7 +62,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 			return err
 		}
 	} else {
-		_, loxErrs = analysis.ResolveIdents(program)
+		_, loxErrs = analysis.ResolveIdentifiers(program)
 		loxErrs = append(loxErrs, analysis.CheckSemantics(program)...)
 		loxErrs.Sort()
 	}

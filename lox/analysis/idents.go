@@ -9,7 +9,7 @@ import (
 	"github.com/marcuscaisey/lox/lox/token"
 )
 
-// ResolveIdentsOption can be passed to [ResolveIdents] to configure the resolving behaviour.
+// ResolveIdentsOption can be passed to [ResolveIdentifiers] to configure the resolving behaviour.
 type ResolveIdentsOption func(*identResolver)
 
 // WithREPLMode configures identifiers to be resolved in REPL mode.
@@ -23,7 +23,7 @@ func WithREPLMode() ResolveIdentsOption {
 	}
 }
 
-// ResolveIdents resolves the identifiers in a program to the declarations that they refer to.
+// ResolveIdentifiers resolves the identifiers in a program to the declarations that they refer to.
 // It returns a map from identifiers to the distance to the declaration that they refer to.
 // A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
 // parent scope, and so on.
@@ -46,8 +46,7 @@ func WithREPLMode() ResolveIdentsOption {
 //	printX();
 //
 // Whether the program is valid depends on whether the global variable x is defined before printX is called.
-// TODO: rename to ResolveIdentifiers
-func ResolveIdents(program ast.Program, opts ...ResolveIdentsOption) (map[token.Token]int, lox.Errors) {
+func ResolveIdentifiers(program ast.Program, opts ...ResolveIdentsOption) (map[token.Token]int, lox.Errors) {
 	r := newIdentResolver(program, opts...)
 	return r.Resolve()
 }

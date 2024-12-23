@@ -54,7 +54,7 @@ func (i *Interpreter) Interpret(program ast.Program) error {
 	if i.replMode {
 		opts = append(opts, analysis.WithREPLMode())
 	}
-	_, errs := analysis.ResolveIdents(program, opts...)
+	_, errs := analysis.ResolveIdentifiers(program, opts...)
 	errs = append(errs, analysis.CheckSemantics(program)...)
 	if err := errs.Err(); err != nil {
 		return err
