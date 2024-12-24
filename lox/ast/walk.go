@@ -17,11 +17,13 @@ func Walk(node Node, f func(Node) bool) {
 			Walk(node.Initialiser, f)
 		}
 	case FunDecl:
+		Walk(node.Function, f)
+	case Function:
 		walkSlice(node.Body.Stmts, f)
 	case ClassDecl:
 		walkSlice(node.Body, f)
 	case MethodDecl:
-		walkSlice(node.Body.Stmts, f)
+		Walk(node.Function, f)
 	case ExprStmt:
 		Walk(node.Expr, f)
 	case PrintStmt:
@@ -56,7 +58,7 @@ func Walk(node Node, f func(Node) bool) {
 			Walk(node.Value, f)
 		}
 	case FunExpr:
-		walkSlice(node.Body.Stmts, f)
+		Walk(node.Function, f)
 	case GroupExpr:
 		Walk(node.Expr, f)
 	case LiteralExpr:

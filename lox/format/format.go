@@ -24,6 +24,8 @@ func Node(node ast.Node) string {
 		return formatVarDecl(node)
 	case ast.FunDecl:
 		return formatFunDecl(node)
+	case ast.Function:
+		return formatFun(node)
 	case ast.ClassDecl:
 		return formatClassDecl(node)
 	case ast.MethodDecl:
@@ -111,7 +113,7 @@ func formatVarDecl(decl ast.VarDecl) string {
 }
 
 func formatFunDecl(decl ast.FunDecl) string {
-	return fmt.Sprintf("fun %s%s", decl.Name.Lexeme, formatFun(decl.Function))
+	return fmt.Sprintf("fun %s%s", decl.Name.Lexeme, Node(decl.Function))
 }
 
 func formatFun(fun ast.Function) string {
@@ -136,7 +138,7 @@ func formatMethodDecl(decl ast.MethodDecl) string {
 	for _, modifier := range decl.Modifiers {
 		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
 	}
-	fmt.Fprintf(&b, "%s%s", decl.Name.Lexeme, formatFun(decl.Function))
+	fmt.Fprintf(&b, "%s%s", decl.Name.Lexeme, Node(decl.Function))
 	return b.String()
 }
 
@@ -234,7 +236,7 @@ func formatReturnStmt(stmt ast.ReturnStmt) string {
 }
 
 func formatFunExpr(expr ast.FunExpr) string {
-	return fmt.Sprintf("fun%s", formatFun(expr.Function))
+	return fmt.Sprintf("fun%s", Node(expr.Function))
 }
 
 func formatGroupExpr(expr ast.GroupExpr) string {

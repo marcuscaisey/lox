@@ -85,18 +85,19 @@ func (d VarDecl) End() token.Position   { return d.Semicolon.EndPos }
 type FunDecl struct {
 	Fun      token.Token
 	Name     token.Token `print:"named"`
-	Function `print:"named"`
+	Function Function    `print:"named"`
 	stmt
 }
 
 func (d FunDecl) Start() token.Position { return d.Fun.StartPos }
-func (d FunDecl) End() token.Position   { return d.Body.End() }
+func (d FunDecl) End() token.Position   { return d.Function.Body.End() }
 
 // Function is a function's parameters and body.
 type Function struct {
 	LeftParen token.Token
 	Params    token.Tokens `print:"named"`
 	Body      BlockStmt    `print:"named"`
+	node
 }
 
 func (f Function) Start() token.Position { return f.LeftParen.StartPos }
@@ -139,7 +140,7 @@ func (c ClassDecl) Methods() []MethodDecl {
 type MethodDecl struct {
 	Modifiers []token.Token `print:"named"`
 	Name      token.Token   `print:"named"`
-	Function  `print:"named"`
+	Function  Function      `print:"named"`
 	stmt
 }
 
@@ -149,7 +150,7 @@ func (m MethodDecl) Start() token.Position {
 	}
 	return m.Name.StartPos
 }
-func (m MethodDecl) End() token.Position { return m.Body.End() }
+func (m MethodDecl) End() token.Position { return m.Function.Body.End() }
 
 // HasModifier reports whether the declaration has a modifier of the target type.
 func (m MethodDecl) HasModifier(target token.Type) bool {
@@ -323,12 +324,12 @@ func (expr) isExpr() {}
 // FunExpr is a function expression, such as fun(x, y) { return x + y; }.
 type FunExpr struct {
 	Fun      token.Token
-	Function `print:"named"`
+	Function Function `print:"named"`
 	expr
 }
 
 func (d FunExpr) Start() token.Position { return d.Fun.StartPos }
-func (d FunExpr) End() token.Position   { return d.Body.End() }
+func (d FunExpr) End() token.Position   { return d.Function.Body.End() }
 
 // GroupExpr is a group expression, such as (a + b).
 type GroupExpr struct {
