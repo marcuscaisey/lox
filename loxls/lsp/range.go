@@ -18,3 +18,20 @@ func newRange(start, end token.Position) *protocol.Range {
 		},
 	}
 }
+
+// posInRange reports whether a [protocol.Position] is contained within a [token.CharacterRange].
+func posInRange(pos *protocol.Position, charRange token.CharacterRange) bool {
+	start := charRange.Start()
+	end := charRange.End()
+	line := pos.Line + 1
+	col := pos.Character
+	if start.Line == end.Line {
+		return line == start.Line && col >= start.ColumnUTF16() && col < end.ColumnUTF16()
+	} else if line == start.Line {
+		return col >= start.ColumnUTF16()
+	} else if line == end.Line {
+		return col < end.ColumnUTF16()
+	} else {
+		return line > start.Line && line < end.Line
+	}
+}

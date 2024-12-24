@@ -5009,48 +5009,12 @@ type InitializeError struct {
 	Retry bool `json:"retry"`
 }
 
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#partialResultParams
-type PartialResultParams struct {
-	// An optional token that a server can use to report partial results (e.g. streaming) to
-	// the client.
-	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
-}
-
 // A literal to identify a text document in the client.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentIdentifier
 type TextDocumentIdentifier struct {
 	// The text document's uri.
 	Uri string `json:"uri"`
-}
-
-// Parameters for a {@link DocumentSymbolRequest}.
-//
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolParams
-type DocumentSymbolParams struct {
-	*WorkDoneProgressParams
-	*PartialResultParams
-	// The text document.
-	TextDocument *TextDocumentIdentifier `json:"textDocument"`
-}
-
-// A base for all symbol information.
-//
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseSymbolInformation
-type BaseSymbolInformation struct {
-	// The name of this symbol.
-	Name string `json:"name"`
-	// The kind of this symbol.
-	Kind SymbolKind `json:"kind"`
-	// Tags for this symbol.
-	//
-	// @since 3.16.0
-	Tags []SymbolTag `json:"tags,omitempty"`
-	// The name of the symbol containing this symbol. This information is for
-	// user interface purposes (e.g. to render a qualifier in the user interface
-	// if necessary). It can't be used to re-infer a hierarchy for the document
-	// symbols.
-	ContainerName string `json:"containerName,omitempty"`
 }
 
 // Position in a text document expressed as zero-based line and character
@@ -5098,6 +5062,33 @@ type Position struct {
 	Character int `json:"character"`
 }
 
+// A parameter literal used in requests to pass a text document and a position inside that
+// document.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentPositionParams
+type TextDocumentPositionParams struct {
+	// The text document.
+	TextDocument *TextDocumentIdentifier `json:"textDocument"`
+	// The position inside the text document.
+	Position *Position `json:"position"`
+}
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#partialResultParams
+type PartialResultParams struct {
+	// An optional token that a server can use to report partial results (e.g. streaming) to
+	// the client.
+	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
+}
+
+// Parameters for a {@link DefinitionRequest}.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionParams
+type DefinitionParams struct {
+	*TextDocumentPositionParams
+	*WorkDoneProgressParams
+	*PartialResultParams
+}
+
 // A range in a text document expressed as (zero-based) start and end positions.
 //
 // If you want to specify a range that contains a line including the line ending
@@ -5128,6 +5119,164 @@ type Location struct {
 	Uri string `json:"uri"`
 
 	Range *Range `json:"range"`
+}
+
+type LocationSlice []*Location
+
+// LocationOrLocationSlice contains either of the following types:
+//   - [*Location]
+//   - [LocationSlice]
+type LocationOrLocationSlice struct {
+	Value LocationOrLocationSliceValue
+}
+
+// LocationOrLocationSliceValue is either of the following types:
+//   - [*Location]
+//   - [LocationSlice]
+//
+//gosumtype:decl LocationOrLocationSliceValue
+type LocationOrLocationSliceValue interface {
+	isLocationOrLocationSliceValue()
+}
+
+func (*Location) isLocationOrLocationSliceValue()     {}
+func (LocationSlice) isLocationOrLocationSliceValue() {}
+
+func (l *LocationOrLocationSlice) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var locationValue *Location
+	if err := json.Unmarshal(data, &locationValue); err == nil {
+		l.Value = locationValue
+		return nil
+	}
+	var locationSliceValue LocationSlice
+	if err := json.Unmarshal(data, &locationSliceValue); err == nil {
+		l.Value = locationSliceValue
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*LocationOrLocationSlice](),
+	}
+}
+
+func (l LocationOrLocationSlice) MarshalJSON() ([]byte, error) {
+	return json.Marshal(l.Value)
+}
+
+// The definition of a symbol represented as one or many {@link Location locations}.
+// For most programming languages there is only one location at which a symbol is
+// defined.
+//
+// Servers should prefer returning `DefinitionLink` over `Definition` if supported
+// by the client.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definition
+type Definition = *LocationOrLocationSlice
+
+// Represents the connection of two locations. Provides additional metadata over normal {@link Location locations},
+// including an origin range.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#locationLink
+type LocationLink struct {
+	// Span of the origin of this link.
+	//
+	// Used as the underlined span for mouse interaction. Defaults to the word range at
+	// the definition position.
+	OriginSelectionRange *Range `json:"originSelectionRange,omitempty"`
+	// The target resource identifier of this link.
+	TargetUri string `json:"targetUri"`
+	// The full target range of this link. If the target for example is a symbol then target range is the
+	// range enclosing this symbol not including leading/trailing whitespace but everything else
+	// like comments. This information is typically used to highlight the range in the editor.
+	TargetRange *Range `json:"targetRange"`
+	// The range that should be selected and revealed when this link is being followed, e.g the name of a function.
+	// Must be contained by the `targetRange`. See also `DocumentSymbol#range`
+	TargetSelectionRange *Range `json:"targetSelectionRange"`
+}
+
+// Information about where a symbol is defined.
+//
+// Provides additional metadata over normal {@link Location location} definitions, including the range of
+// the defining symbol
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionLink
+type DefinitionLink = *LocationLink
+
+type DefinitionLinkSlice []DefinitionLink
+
+// DefinitionOrDefinitionLinkSlice contains either of the following types:
+//   - [Definition]
+//   - [DefinitionLinkSlice]
+type DefinitionOrDefinitionLinkSlice struct {
+	Value DefinitionOrDefinitionLinkSliceValue
+}
+
+// DefinitionOrDefinitionLinkSliceValue is either of the following types:
+//   - [Definition]
+//   - [DefinitionLinkSlice]
+//
+//gosumtype:decl DefinitionOrDefinitionLinkSliceValue
+type DefinitionOrDefinitionLinkSliceValue interface {
+	isDefinitionOrDefinitionLinkSliceValue()
+}
+
+func (Definition) isDefinitionOrDefinitionLinkSliceValue()          {}
+func (DefinitionLinkSlice) isDefinitionOrDefinitionLinkSliceValue() {}
+
+func (d *DefinitionOrDefinitionLinkSlice) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var definitionValue Definition
+	if err := json.Unmarshal(data, &definitionValue); err == nil {
+		d.Value = definitionValue
+		return nil
+	}
+	var definitionLinkSliceValue DefinitionLinkSlice
+	if err := json.Unmarshal(data, &definitionLinkSliceValue); err == nil {
+		d.Value = definitionLinkSliceValue
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*DefinitionOrDefinitionLinkSlice](),
+	}
+}
+
+func (d DefinitionOrDefinitionLinkSlice) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Value)
+}
+
+// Parameters for a {@link DocumentSymbolRequest}.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolParams
+type DocumentSymbolParams struct {
+	*WorkDoneProgressParams
+	*PartialResultParams
+	// The text document.
+	TextDocument *TextDocumentIdentifier `json:"textDocument"`
+}
+
+// A base for all symbol information.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#baseSymbolInformation
+type BaseSymbolInformation struct {
+	// The name of this symbol.
+	Name string `json:"name"`
+	// The kind of this symbol.
+	Kind SymbolKind `json:"kind"`
+	// Tags for this symbol.
+	//
+	// @since 3.16.0
+	Tags []SymbolTag `json:"tags,omitempty"`
+	// The name of the symbol containing this symbol. This information is for
+	// user interface purposes (e.g. to render a qualifier in the user interface
+	// if necessary). It can't be used to re-infer a hierarchy for the document
+	// symbols.
+	ContainerName string `json:"containerName,omitempty"`
 }
 
 // Represents information about programming constructs like variables, classes,

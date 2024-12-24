@@ -9,15 +9,17 @@ import (
 	"github.com/marcuscaisey/lox/lox/analysis"
 	"github.com/marcuscaisey/lox/lox/ast"
 	"github.com/marcuscaisey/lox/lox/parser"
+	"github.com/marcuscaisey/lox/lox/token"
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
 type document struct {
-	URI       string
-	Text      string
-	Program   ast.Program
-	HasErrors bool
+	URI        string
+	Text       string
+	Program    ast.Program
+	IdentDecls map[token.Token]token.Token
+	HasErrors  bool
 }
 
 // document returns the document with the given URI, or an error if it doesn't exist.
@@ -57,12 +59,13 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithComments())
 
 	var loxErrs lox.Errors
+	var identDecls map[token.Token]token.Token
 	if err != nil {
 		if !errors.As(err, &loxErrs) {
 			return err
 		}
 	} else {
-		_, loxErrs = analysis.ResolveIdentifiers(program)
+		identDecls, loxErrs = analysis.ResolveIdentifiers(program)
 		loxErrs = append(loxErrs, analysis.CheckSemantics(program)...)
 		loxErrs.Sort()
 	}
@@ -78,10 +81,11 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	}
 
 	h.docsByURI[uri] = &document{
-		URI:       uri,
-		Text:      src,
-		Program:   program,
-		HasErrors: err != nil,
+		URI:        uri,
+		Text:       src,
+		Program:    program,
+		IdentDecls: identDecls,
+		HasErrors:  err != nil,
 	}
 
 	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{

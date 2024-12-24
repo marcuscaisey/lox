@@ -25,6 +25,9 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 					Change:    protocol.TextDocumentSyncKindFull,
 				},
 			},
+			DefinitionProvider: &protocol.BooleanOrDefinitionOptions{
+				Value: protocol.Boolean(true),
+			},
 			DocumentSymbolProvider: &protocol.BooleanOrDocumentSymbolOptions{
 				Value: protocol.Boolean(true),
 			},

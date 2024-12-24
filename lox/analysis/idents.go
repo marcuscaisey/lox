@@ -23,13 +23,26 @@ func WithREPLMode() ResolveIdentifiersOption {
 	}
 }
 
-// ResolveIdentifiers resolves the identifiers in a program to the declarations that they refer to.
-// It returns a map from identifiers to the distance to the declaration that they refer to.
-// A distance of 0 means that the identifier was declared in the current scope, 1 means it was declared in the
-// parent scope, and so on.
-// If an identifier is not present in the map, then it was declared globally.
+// ResolveIdentifiers resolves the identifiers in a program to their declarations.
+// It returns a map from identifiers to the identifier which declares them. If an error is returned then a possibly
+// incomplete map will still be returned along with it.
 //
-// Addtionally, this function checks that identifiers are not:
+// For example, given the following code:
+//
+//	1| var a = 1;
+//	2|
+//	3| print a;
+//	4| print a + 1;
+//
+// The returned map is:
+//
+//	{
+//	  1:5: a [Ident] => 1:5: a [Ident],
+//	  3:7: a [Ident] => 1:5: a [Ident],
+//	  4:7: a [Ident] => 1:5: a [Ident],
+//	}
+//
+// This function also checks that identifiers are not:
 //   - declared and never used
 //   - declared more than once in the same scope
 //   - used before they are declared (best effort for globals)
@@ -45,7 +58,7 @@ func WithREPLMode() ResolveIdentifiersOption {
 //	}
 //	var x = 1;
 //	printX();
-func ResolveIdentifiers(program ast.Program, opts ...ResolveIdentifiersOption) (map[token.Token]int, lox.Errors) {
+func ResolveIdentifiers(program ast.Program, opts ...ResolveIdentifiersOption) (map[token.Token]token.Token, lox.Errors) {
 	r := newIdentResolver(program, opts...)
 	return r.Resolve()
 }
@@ -60,8 +73,8 @@ type identResolver struct {
 	inFun                  bool
 	funScopeLevel          int
 
-	identDeclDistances map[token.Token]int // map of identifiers to the distance to the declaration that they refer to
-	errs               lox.Errors
+	identDecls map[token.Token]token.Token
+	errs       lox.Errors
 
 	replMode bool
 }
@@ -71,7 +84,7 @@ func newIdentResolver(program ast.Program, opts ...ResolveIdentifiersOption) *id
 		program:                program,
 		scopes:                 stack.New[scope](),
 		forwardDeclaredGlobals: map[string]bool{},
-		identDeclDistances:     map[token.Token]int{},
+		identDecls:             map[token.Token]token.Token{},
 	}
 	for _, opt := range opts {
 		opt(r)
@@ -79,9 +92,9 @@ func newIdentResolver(program ast.Program, opts ...ResolveIdentifiersOption) *id
 	return r
 }
 
-func (r *identResolver) Resolve() (map[token.Token]int, lox.Errors) {
+func (r *identResolver) Resolve() (map[token.Token]token.Token, lox.Errors) {
 	r.resolve()
-	return r.identDeclDistances, r.errs
+	return r.identDecls, r.errs
 }
 
 func (r *identResolver) resolve() {
@@ -160,6 +173,11 @@ func (s scope) Declare(ident token.Token) {
 		decl.Status |= declStatusUsed
 	}
 	s.decls[ident.Lexeme] = decl
+}
+
+// DeclaredIdent returns the identifier which declares the given name.
+func (s scope) DeclaredIdent(name string) token.Token {
+	return s.decls[name].Ident
 }
 
 // Define marks an identifier as defined in the scope.
@@ -275,13 +293,12 @@ func (r *identResolver) resolveIdent(ident token.Token, op identOp) {
 	for level, scope := range r.scopes.Backward() {
 		if scope.IsDeclared(ident.Lexeme) {
 			scope.Use(ident.Lexeme)
+			r.identDecls[ident] = scope.DeclaredIdent(ident.Lexeme)
 			// If we're in a function which was declared in the same or a deeper scope than the identifier was declared
 			// in, then we can't definitely say that the identifier has been defined yet. It might be defined later
 			// before the function is called.
 			if op == identOpRead && !scope.IsDefined(ident.Lexeme) && !(r.inFun && level <= r.funScopeLevel) {
 				r.errs.Addf(ident, "%s has not been defined", ident.Lexeme)
-			} else {
-				r.identDeclDistances[ident] = r.scopes.Len() - 1 - level
 			}
 			return
 		}

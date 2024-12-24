@@ -6,8 +6,45 @@ import (
 
 	"github.com/marcuscaisey/lox/lox/ast"
 	"github.com/marcuscaisey/lox/lox/format"
+	"github.com/marcuscaisey/lox/lox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_definition
+func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*protocol.LocationOrLocationSlice, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	var ident token.Token
+	ast.Walk(doc.Program, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case ast.VariableExpr:
+			if posInRange(params.Position, n) {
+				ident = n.Name
+			}
+		default:
+			return true
+		}
+		return false
+	})
+	if ident == (token.Token{}) {
+		return nil, nil
+	}
+
+	decl, ok := doc.IdentDecls[ident]
+	if !ok {
+		return nil, nil
+	}
+
+	return &protocol.LocationOrLocationSlice{
+		Value: &protocol.Location{
+			Uri:   doc.URI,
+			Range: newRange(decl.Start(), decl.End()),
+		},
+	}, nil
+}
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol
 func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolParams) (*protocol.SymbolInformationSliceOrDocumentSymbolSlice, error) {
@@ -111,6 +148,7 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 	}
 
 	if doc.HasErrors {
+		// TODO: return error here instead?
 		h.log.Infof("textDocument/formatting: %s has errors. Skipping formatting.", params.TextDocument.Uri)
 		return nil, nil
 	}
