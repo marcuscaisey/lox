@@ -307,6 +307,7 @@ func (r *identResolver) resolveIdent(ident token.Token, op identOp) {
 		r.globalScope.Declare(globalIdent)
 		r.globalScope.Use(ident.Lexeme)
 		r.forwardDeclaredGlobals[ident.Lexeme] = true
+		r.identDecls[ident] = globalIdent
 		return
 	}
 	// The semantic checker will return a "'this' cannot be used outside of a method" error in this case.
