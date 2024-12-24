@@ -264,6 +264,7 @@ func (r *identResolver) declareIdent(ident token.Token) {
 		r.errs.Addf(ident, "%s has already been declared", ident.Lexeme)
 	} else {
 		scope.Declare(ident)
+		r.identDecls[ident] = ident
 	}
 }
 

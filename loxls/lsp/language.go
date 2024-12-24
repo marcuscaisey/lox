@@ -24,6 +24,10 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 			if posInRange(params.Position, n) {
 				ident = n.Name
 			}
+		case ast.VarDecl:
+			if posInRange(params.Position, n) {
+				ident = n.Name
+			}
 		default:
 			return true
 		}
