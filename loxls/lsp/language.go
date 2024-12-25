@@ -19,31 +19,23 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 	var ident ast.Ident
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
-		case ast.IdentExpr:
+		case ast.Ident:
 			if posInRange(params.Position, n) {
-				ident = n.Ident
+				ident = n
 			}
-		case ast.VarDecl:
-			if posInRange(params.Position, n) {
-				ident = n.Name
-			}
+			return false
 		default:
 			return true
 		}
-		return false
 	})
 	if ident == (ast.Ident{}) {
-		h.log.Errorf("No identifier found at %d:%d", params.Position.Line+1, params.Position.Character)
 		return nil, nil
 	}
-	h.log.Infof("Found identifier %s at %s", ident.Token.Lexeme, ident.Start())
 
 	decl, ok := doc.IdentDecls[ident]
 	if !ok {
-		h.log.Errorf("No declaration found for %s", ident.Token.Lexeme)
 		return nil, nil
 	}
-	h.log.Infof("Declaration of %s found at %s", ident.Token.Lexeme, decl.Start())
 
 	return &protocol.LocationOrLocationSlice{
 		Value: &protocol.Location{
