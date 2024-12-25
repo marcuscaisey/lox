@@ -149,14 +149,14 @@ func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
 		value = p.parseExpr()
 	}
 	semicolon := p.expectSemicolon()
-	return ast.VarDecl{Var: varTok, Name: name, Initialiser: value, Semicolon: semicolon}
+	return ast.VarDecl{Var: varTok, Name: ast.Ident{Token: name}, Initialiser: value, Semicolon: semicolon}
 }
 
 func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
 	name := p.expectf(token.Ident, "expected function name")
 	return ast.FunDecl{
 		Fun:      funTok,
-		Name:     name,
+		Name:     ast.Ident{Token: name},
 		Function: p.parseFun(),
 	}
 }
@@ -186,7 +186,7 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 	rightBrace := p.expect(token.RightBrace)
 	return ast.ClassDecl{
 		Class:      classTok,
-		Name:       name,
+		Name:       ast.Ident{Token: name},
 		Body:       body,
 		RightBrace: rightBrace,
 	}
@@ -212,14 +212,14 @@ func (p *parser) parseMethodDecl() (ast.MethodDecl, bool) {
 
 	return ast.MethodDecl{
 		Modifiers: modifiers,
-		Name:      name,
+		Name:      ast.Ident{Token: name},
 		Function:  p.parseFun(),
 	}, true
 }
 
 func (p *parser) parseFun() ast.Function {
 	leftParen := p.expect(token.LeftParen)
-	var params []token.Token
+	var params token.Ranges[ast.Ident]
 	if !p.match(token.RightParen) {
 		params = p.parseParams()
 		p.expect(token.RightParen)
@@ -233,10 +233,11 @@ func (p *parser) parseFun() ast.Function {
 	}
 }
 
-func (p *parser) parseParams() []token.Token {
-	var params []token.Token
+func (p *parser) parseParams() token.Ranges[ast.Ident] {
+	var params token.Ranges[ast.Ident]
 	for {
-		params = append(params, p.expectf(token.Ident, "expected parameter name"))
+		tok := p.expectf(token.Ident, "expected parameter name")
+		params = append(params, ast.Ident{Token: tok})
 		if !p.match(token.Comma) {
 			break
 		}
@@ -378,10 +379,10 @@ func (p *parser) parseAssignmentExpr() ast.Expr {
 	expr := p.parseTernaryExpr()
 	if p.match(token.Equal) {
 		switch left := expr.(type) {
-		case ast.VariableExpr:
+		case ast.IdentExpr:
 			right := p.parseAssignmentExpr()
 			expr = ast.AssignmentExpr{
-				Left:  left.Name,
+				Left:  left.Ident,
 				Right: right,
 			}
 		case ast.GetExpr:
@@ -487,7 +488,7 @@ func (p *parser) parseCallExpr() ast.Expr {
 			name := p.expectf(token.Ident, "expected property name")
 			expr = ast.GetExpr{
 				Object: expr,
-				Name:   name,
+				Name:   ast.Ident{Token: name},
 			}
 		default:
 			return expr
@@ -511,7 +512,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 	case p.match(token.Number, token.String, token.True, token.False, token.Nil):
 		return ast.LiteralExpr{Value: tok}
 	case p.match(token.Ident):
-		return ast.VariableExpr{Name: tok}
+		return ast.IdentExpr{Ident: ast.Ident{Token: tok}}
 	case p.match(token.This):
 		return ast.ThisExpr{This: tok}
 	case p.match(token.Fun):
@@ -617,17 +618,17 @@ func (p *parser) next() {
 	p.nextTok = p.lexer.Next()
 }
 
-func (p *parser) addError(charRange token.CharacterRange, message string) {
-	p.addErrorf(charRange, "%s", message)
+func (p *parser) addError(rang token.Range, message string) {
+	p.addErrorf(rang, "%s", message)
 }
 
-func (p *parser) addErrorf(charRange token.CharacterRange, format string, args ...any) {
-	start := charRange.Start()
+func (p *parser) addErrorf(rang token.Range, format string, args ...any) {
+	start := rang.Start()
 	if len(p.errs) > 0 && start == p.lastErrPos {
 		return
 	}
 	p.lastErrPos = start
-	p.errs.Addf(charRange, format, args...)
+	p.errs.Addf(rang, format, args...)
 }
 
 // unwind is used as a panic value so that we can unwind the stack and recover from a parsing error without having to

@@ -16,6 +16,8 @@ func Node(node ast.Node) string {
 	switch node := node.(type) {
 	case ast.Program:
 		return formatProgram(node)
+	case ast.Ident:
+		return formatIdent(node)
 	case ast.CommentStmt:
 		return formatCommentStmt(node)
 	case ast.InlineCommentStmt:
@@ -54,8 +56,8 @@ func Node(node ast.Node) string {
 		return formatGroupExpr(node)
 	case ast.LiteralExpr:
 		return formatLiteralExpr(node)
-	case ast.VariableExpr:
-		return formatVariableExpr(node)
+	case ast.IdentExpr:
+		return formatIdentExpr(node)
 	case ast.ThisExpr:
 		return formatThisExpr(node)
 	case ast.CallExpr:
@@ -76,6 +78,10 @@ func Node(node ast.Node) string {
 		panic("IllegalStmt cannot be formatted")
 	}
 	panic("unreachable")
+}
+
+func formatIdent(ident ast.Ident) string {
+	return ident.Token.Lexeme
 }
 
 func formatProgram(program ast.Program) string {
@@ -106,21 +112,21 @@ func formatCommentedStmt(stmt ast.InlineCommentStmt) string {
 
 func formatVarDecl(decl ast.VarDecl) string {
 	if decl.Initialiser != nil {
-		return fmt.Sprintf("var %s = %s;", decl.Name.Lexeme, Node(decl.Initialiser))
+		return fmt.Sprintf("var %s = %s;", Node(decl.Name), Node(decl.Initialiser))
 	} else {
-		return fmt.Sprintf("var %s;", decl.Name.Lexeme)
+		return fmt.Sprintf("var %s;", Node(decl.Name))
 	}
 }
 
 func formatFunDecl(decl ast.FunDecl) string {
-	return fmt.Sprintf("fun %s%s", decl.Name.Lexeme, Node(decl.Function))
+	return fmt.Sprintf("fun %s%s", Node(decl.Name), Node(decl.Function))
 }
 
 func formatFun(fun ast.Function) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "(")
 	for i, param := range fun.Params {
-		fmt.Fprintf(&b, "%s", param.Lexeme)
+		fmt.Fprint(&b, Node(param))
 		if i < len(fun.Params)-1 {
 			fmt.Fprint(&b, ", ")
 		}
@@ -130,7 +136,7 @@ func formatFun(fun ast.Function) string {
 }
 
 func formatClassDecl(decl ast.ClassDecl) string {
-	return fmt.Sprintf("class %s %s", decl.Name.Lexeme, formatBlock(decl.Body))
+	return fmt.Sprintf("class %s %s", Node(decl.Name), formatBlock(decl.Body))
 }
 
 func formatMethodDecl(decl ast.MethodDecl) string {
@@ -138,7 +144,7 @@ func formatMethodDecl(decl ast.MethodDecl) string {
 	for _, modifier := range decl.Modifiers {
 		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
 	}
-	fmt.Fprintf(&b, "%s%s", decl.Name.Lexeme, Node(decl.Function))
+	fmt.Fprintf(&b, "%s%s", Node(decl.Name), Node(decl.Function))
 	return b.String()
 }
 
@@ -247,8 +253,8 @@ func formatLiteralExpr(expr ast.LiteralExpr) string {
 	return expr.Value.Lexeme
 }
 
-func formatVariableExpr(expr ast.VariableExpr) string {
-	return expr.Name.Lexeme
+func formatIdentExpr(expr ast.IdentExpr) string {
+	return expr.Ident.Token.Lexeme
 }
 
 func formatThisExpr(ast.ThisExpr) string {
@@ -269,7 +275,7 @@ func formatCallExpr(expr ast.CallExpr) string {
 }
 
 func formatGetExpr(expr ast.GetExpr) string {
-	return fmt.Sprintf("%s.%s", Node(expr.Object), expr.Name.Lexeme)
+	return fmt.Sprintf("%s.%s", Node(expr.Object), Node(expr.Name))
 }
 
 func formatUnaryExpr(expr ast.UnaryExpr) string {
@@ -291,11 +297,11 @@ func formatTernaryExpr(expr ast.TernaryExpr) string {
 }
 
 func formatAssignmentExpr(expr ast.AssignmentExpr) string {
-	return fmt.Sprintf("%s = %s", expr.Left.Lexeme, Node(expr.Right))
+	return fmt.Sprintf("%s = %s", Node(expr.Left), Node(expr.Right))
 }
 
 func formatSetExpr(expr ast.SetExpr) string {
-	return fmt.Sprintf("%s.%s = %s", Node(expr.Object), expr.Name.Lexeme, Node(expr.Value))
+	return fmt.Sprintf("%s.%s = %s", Node(expr.Object), Node(expr.Name), Node(expr.Value))
 }
 
 func indent(s string) string {
@@ -312,7 +318,7 @@ func indent(s string) string {
 func Signature(fun ast.Function) string {
 	params := make([]string, len(fun.Params))
 	for i, param := range fun.Params {
-		params[i] = param.Lexeme
+		params[i] = Node(param)
 	}
 	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
 }

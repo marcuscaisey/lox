@@ -21,18 +21,18 @@ type Error struct {
 }
 
 // NewError creates a [*Error] with the given message and range.
-func NewError(charRange token.CharacterRange, message string) error {
-	return NewErrorf(charRange, "%s", message)
+func NewError(rang token.Range, message string) error {
+	return NewErrorf(rang, "%s", message)
 }
 
 // NewErrorf creates a [*Error].
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
-func NewErrorf(charRange token.CharacterRange, format string, args ...any) error {
+func NewErrorf(rang token.Range, format string, args ...any) error {
 	e := &Error{
 		Msg: fmt.Sprintf(format, args...),
 	}
-	e.Start = charRange.Start()
-	e.End = charRange.End()
+	e.Start = rang.Start()
+	e.End = rang.End()
 	return e
 
 }
@@ -101,14 +101,14 @@ type Errors []*Error
 
 // Add adds a [*Error] to the list of errors.
 // The parameters are the same as for [NewError].
-func (e *Errors) Add(charRange token.CharacterRange, message string) {
-	*e = append(*e, NewError(charRange, message).(*Error))
+func (e *Errors) Add(rang token.Range, message string) {
+	*e = append(*e, NewError(rang, message).(*Error))
 }
 
 // Addf adds a [*Error] to the list of errors.
 // The parameters are the same as for [NewErrorf].
-func (e *Errors) Addf(charRange token.CharacterRange, format string, args ...any) {
-	*e = append(*e, NewErrorf(charRange, format, args...).(*Error))
+func (e *Errors) Addf(rang token.Range, format string, args ...any) {
+	*e = append(*e, NewErrorf(rang, format, args...).(*Error))
 }
 
 // Sort sorts the errors by their start position.

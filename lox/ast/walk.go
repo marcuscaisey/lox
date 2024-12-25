@@ -62,7 +62,7 @@ func Walk(node Node, f func(Node) bool) {
 	case GroupExpr:
 		Walk(node.Expr, f)
 	case LiteralExpr:
-	case VariableExpr:
+	case IdentExpr:
 	case ThisExpr:
 	case CallExpr:
 		Walk(node.Callee, f)

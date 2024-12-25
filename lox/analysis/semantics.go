@@ -71,7 +71,7 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 	case ast.FunExpr:
 		c.walkFun(node.Function, funTypeFunction)
 		return false
-	case ast.VariableExpr:
+	case ast.IdentExpr:
 		c.checkNoPlaceholderAccess(node)
 	case ast.ThisExpr:
 		c.checkThisInMethod(node)
@@ -103,7 +103,7 @@ func (c *semanticChecker) walkFun(fun ast.Function, funType funType) {
 	}
 }
 
-func (c *semanticChecker) checkNumParams(params []token.Token) {
+func (c *semanticChecker) checkNumParams(params token.Ranges[ast.Ident]) {
 	if len(params) > maxParams {
 		c.errs.Addf(params[maxParams], "cannot define more than %d function parameters", maxParams)
 	}
@@ -140,18 +140,18 @@ func (c *semanticChecker) beginLoop() func() {
 
 func (c *semanticChecker) checkNoWriteOnlyProperties(methods []ast.MethodDecl) {
 	gettersByName := map[string]bool{}
-	setterNameToksByName := map[string]token.Token{}
+	setterIdentsByName := map[string]ast.Ident{}
 	for _, methodDecl := range methods {
 		switch {
 		case methodDecl.HasModifier(token.Get):
-			gettersByName[methodDecl.Name.Lexeme] = true
+			gettersByName[methodDecl.Name.Token.Lexeme] = true
 		case methodDecl.HasModifier(token.Set):
-			setterNameToksByName[methodDecl.Name.Lexeme] = methodDecl.Name
+			setterIdentsByName[methodDecl.Name.Token.Lexeme] = methodDecl.Name
 		}
 	}
-	for name, nameTok := range setterNameToksByName {
+	for name, ident := range setterIdentsByName {
 		if !gettersByName[name] {
-			c.errs.Add(nameTok, "write-only properties are not allowed")
+			c.errs.Add(ident, "write-only properties are not allowed")
 		}
 	}
 }
@@ -194,14 +194,14 @@ func (c *semanticChecker) checkNoConstructorReturn(stmt ast.ReturnStmt) {
 	}
 }
 
-func (c *semanticChecker) checkNoPlaceholderAccess(expr ast.VariableExpr) {
-	if expr.Name.Lexeme == token.PlaceholderIdent {
-		c.errs.Addf(expr.Name, "%s cannot be used as a value", token.PlaceholderIdent)
+func (c *semanticChecker) checkNoPlaceholderAccess(expr ast.IdentExpr) {
+	if expr.Ident.Token.Lexeme == token.PlaceholderIdent {
+		c.errs.Addf(expr.Ident, "%s cannot be used as a value", token.PlaceholderIdent)
 	}
 }
 
-func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident token.Token) {
-	if ident.Lexeme == token.PlaceholderIdent {
+func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident ast.Ident) {
+	if ident.Token.Lexeme == token.PlaceholderIdent {
 		c.errs.Addf(ident, "%s cannot be used as a field name", token.PlaceholderIdent)
 	}
 }

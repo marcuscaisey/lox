@@ -9,7 +9,7 @@ import (
 //
 //gosumtype:decl Node
 type Node interface {
-	token.CharacterRange
+	token.Range
 	isNode()
 }
 
@@ -19,12 +19,21 @@ func (node) isNode() {}
 
 // Program is the root node of the AST.
 type Program struct {
-	Stmts Stmts `print:"unnamed"`
+	Stmts token.Ranges[Stmt] `print:"unnamed"`
 	node
 }
 
 func (p Program) Start() token.Position { return p.Stmts[0].Start() }
 func (p Program) End() token.Position   { return p.Stmts[len(p.Stmts)-1].End() }
+
+// Ident is an identifier, such as a variable name.
+type Ident struct {
+	Token token.Token
+	node
+}
+
+func (i Ident) Start() token.Position { return i.Token.Start() }
+func (i Ident) End() token.Position   { return i.Token.End() }
 
 // Stmt is the interface which all statement nodes implement.
 //
@@ -33,12 +42,6 @@ type Stmt interface {
 	Node
 	isStmt()
 }
-
-// Stmts is a slice of statements.
-type Stmts []Stmt
-
-func (s Stmts) Start() token.Position { return s[0].Start() }
-func (s Stmts) End() token.Position   { return s[len(s)-1].End() }
 
 type stmt struct {
 	node
@@ -72,20 +75,20 @@ func (s InlineCommentStmt) End() token.Position   { return s.Comment.EndPos }
 // VarDecl is a variable declaration, such as var a = 123 or var b.
 type VarDecl struct {
 	Var         token.Token
-	Name        token.Token `print:"named"`
-	Initialiser Expr        `print:"named"`
+	Name        Ident `print:"named"`
+	Initialiser Expr  `print:"named"`
 	Semicolon   token.Token
 	stmt
 }
 
-func (d VarDecl) Start() token.Position { return d.Name.StartPos }
+func (d VarDecl) Start() token.Position { return d.Name.Start() }
 func (d VarDecl) End() token.Position   { return d.Semicolon.EndPos }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {
 	Fun      token.Token
-	Name     token.Token `print:"named"`
-	Function Function    `print:"named"`
+	Name     Ident    `print:"named"`
+	Function Function `print:"named"`
 	stmt
 }
 
@@ -95,8 +98,8 @@ func (d FunDecl) End() token.Position   { return d.Function.Body.End() }
 // Function is a function's parameters and body.
 type Function struct {
 	LeftParen token.Token
-	Params    token.Tokens `print:"named"`
-	Body      BlockStmt    `print:"named"`
+	Params    token.Ranges[Ident] `print:"named"`
+	Body      BlockStmt           `print:"named"`
 	node
 }
 
@@ -112,8 +115,8 @@ func (f Function) End() token.Position   { return f.Body.End() }
 //	}
 type ClassDecl struct {
 	Class      token.Token
-	Name       token.Token `print:"named"`
-	Body       Stmts       `print:"named"`
+	Name       Ident              `print:"named"`
+	Body       token.Ranges[Stmt] `print:"named"`
 	RightBrace token.Token
 	stmt
 }
@@ -139,7 +142,7 @@ func (c ClassDecl) Methods() []MethodDecl {
 //	}
 type MethodDecl struct {
 	Modifiers []token.Token `print:"named"`
-	Name      token.Token   `print:"named"`
+	Name      Ident         `print:"named"`
 	Function  Function      `print:"named"`
 	stmt
 }
@@ -148,7 +151,7 @@ func (m MethodDecl) Start() token.Position {
 	if len(m.Modifiers) > 0 {
 		return m.Modifiers[0].StartPos
 	}
-	return m.Name.StartPos
+	return m.Name.Start()
 }
 func (m MethodDecl) End() token.Position { return m.Function.Body.End() }
 
@@ -164,7 +167,7 @@ func (m MethodDecl) HasModifier(target token.Type) bool {
 
 // IsConstructor reports whether the declaration is a constructor.
 func (m MethodDecl) IsConstructor() bool {
-	return !m.HasModifier(token.Static) && m.Name.Lexeme == token.ConstructorIdent
+	return !m.HasModifier(token.Static) && m.Name.Token.Lexeme == token.ConstructorIdent
 }
 
 // ExprStmt is an expression statement, such as a function call.
@@ -196,7 +199,7 @@ func (p PrintStmt) End() token.Position   { return p.Semicolon.EndPos }
 //	}
 type BlockStmt struct {
 	LeftBrace  token.Token
-	Stmts      Stmts `print:"unnamed"`
+	Stmts      token.Ranges[Stmt] `print:"unnamed"`
 	RightBrace token.Token
 	stmt
 }
@@ -309,12 +312,6 @@ type Expr interface {
 	isExpr()
 }
 
-// Exprs is a slice of expressions.
-type Exprs []Expr
-
-func (e Exprs) Start() token.Position { return e[0].Start() }
-func (e Exprs) End() token.Position   { return e[len(e)-1].End() }
-
 type expr struct {
 	node
 }
@@ -351,14 +348,14 @@ type LiteralExpr struct {
 func (l LiteralExpr) Start() token.Position { return l.Value.StartPos }
 func (l LiteralExpr) End() token.Position   { return l.Value.EndPos }
 
-// VariableExpr is a variable expression, such as a or b.
-type VariableExpr struct {
-	Name token.Token
+// IdentExpr is an identifier expression, such as a or b.
+type IdentExpr struct {
+	Ident Ident
 	expr
 }
 
-func (v VariableExpr) Start() token.Position { return v.Name.StartPos }
-func (v VariableExpr) End() token.Position   { return v.Name.EndPos }
+func (v IdentExpr) Start() token.Position { return v.Ident.Start() }
+func (v IdentExpr) End() token.Position   { return v.Ident.End() }
 
 // ThisExpr represents usage of the 'this' keyword.
 type ThisExpr struct {
@@ -371,8 +368,8 @@ func (t ThisExpr) End() token.Position   { return t.This.EndPos }
 
 // CallExpr is a call expression, such as add(x, 1).
 type CallExpr struct {
-	Callee     Expr  `print:"named"`
-	Args       Exprs `print:"named"`
+	Callee     Expr               `print:"named"`
+	Args       token.Ranges[Expr] `print:"named"`
 	RightParen token.Token
 	expr
 }
@@ -382,13 +379,13 @@ func (c CallExpr) End() token.Position   { return c.RightParen.EndPos }
 
 // GetExpr is a property access expression, such as a.b.
 type GetExpr struct {
-	Object Expr        `print:"named"`
-	Name   token.Token `print:"named"`
+	Object Expr  `print:"named"`
+	Name   Ident `print:"named"`
 	expr
 }
 
 func (g GetExpr) Start() token.Position { return g.Object.Start() }
-func (g GetExpr) End() token.Position   { return g.Name.EndPos }
+func (g GetExpr) End() token.Position   { return g.Name.End() }
 
 // UnaryExpr is a unary operator expression, such as !a.
 type UnaryExpr struct {
@@ -424,19 +421,19 @@ func (t TernaryExpr) End() token.Position   { return t.Else.End() }
 
 // AssignmentExpr is an assignment expression, such as a = 2.
 type AssignmentExpr struct {
-	Left  token.Token `print:"named"`
-	Right Expr        `print:"named"`
+	Left  Ident `print:"named"`
+	Right Expr  `print:"named"`
 	expr
 }
 
-func (a AssignmentExpr) Start() token.Position { return a.Left.StartPos }
+func (a AssignmentExpr) Start() token.Position { return a.Left.Start() }
 func (a AssignmentExpr) End() token.Position   { return a.Right.End() }
 
 // SetExpr is a property assignment expression, such as a.b = 2.
 type SetExpr struct {
-	Object Expr        `print:"named"`
-	Name   token.Token `print:"named"`
-	Value  Expr        `print:"named"`
+	Object Expr  `print:"named"`
+	Name   Ident `print:"named"`
+	Value  Expr  `print:"named"`
 	expr
 }
 

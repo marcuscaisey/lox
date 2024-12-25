@@ -207,25 +207,6 @@ func (t Token) String() string {
 	return fmt.Sprintf("%s: %s [%s]", t.StartPos, t.Lexeme, t.Type)
 }
 
-// Tokens is a slice of tokens.
-type Tokens []Token
-
-// Start returns the position of the first character of the first token.
-func (t Tokens) Start() Position {
-	if len(t) == 0 {
-		return Position{}
-	}
-	return t[0].Start()
-}
-
-// End returns the position of the character immediately after the last token.
-func (t Tokens) End() Position {
-	if len(t) == 0 {
-		return Position{}
-	}
-	return t[len(t)-1].End()
-}
-
 // Position is a position in a file.
 type Position struct {
 	File   *File
@@ -261,12 +242,6 @@ func (p Position) String() string {
 	return fmt.Sprintf("%s%d:%d", prefix, p.Line, col)
 }
 
-// CharacterRange is an interface which describes a range of characters in the source code.
-type CharacterRange interface {
-	Start() Position // Start returns the position of the first character of the range.
-	End() Position   // End returns the position of the character immediately after the range.
-}
-
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
 // position for use in an error message.
 func (p Position) Format(f fmt.State, verb rune) {
@@ -284,6 +259,25 @@ func (p Position) Format(f fmt.State, verb rune) {
 	default:
 		fmt.Fprintf(f, fmt.FormatString(f, verb), p)
 	}
+}
+
+// Range describes a range of characters in the source code.
+type Range interface {
+	Start() Position // Start returns the position of the first character of the range.
+	End() Position   // End returns the position of the character immediately after the range.
+}
+
+// Ranges is a slice of [Range].
+type Ranges[T Range] []T
+
+// Start returns the position of the first character of the first range.
+func (r Ranges[T]) Start() Position {
+	return r[0].Start()
+}
+
+// End returns the position of the character immediately after the last range.
+func (r Ranges[T]) End() Position {
+	return r[len(r)-1].End()
 }
 
 // File is a simple representation of a file.

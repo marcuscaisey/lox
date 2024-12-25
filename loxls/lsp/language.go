@@ -6,7 +6,6 @@ import (
 
 	"github.com/marcuscaisey/lox/lox/ast"
 	"github.com/marcuscaisey/lox/lox/format"
-	"github.com/marcuscaisey/lox/lox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
@@ -17,12 +16,12 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		return nil, err
 	}
 
-	var ident token.Token
+	var ident ast.Ident
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
-		case ast.VariableExpr:
+		case ast.IdentExpr:
 			if posInRange(params.Position, n) {
-				ident = n.Name
+				ident = n.Ident
 			}
 		case ast.VarDecl:
 			if posInRange(params.Position, n) {
@@ -33,14 +32,18 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		}
 		return false
 	})
-	if ident == (token.Token{}) {
+	if ident == (ast.Ident{}) {
+		h.log.Errorf("No identifier found at %d:%d", params.Position.Line+1, params.Position.Character)
 		return nil, nil
 	}
+	h.log.Infof("Found identifier %s at %s", ident.Token.Lexeme, ident.Start())
 
 	decl, ok := doc.IdentDecls[ident]
 	if !ok {
+		h.log.Errorf("No declaration found for %s", ident.Token.Lexeme)
 		return nil, nil
 	}
+	h.log.Infof("Declaration of %s found at %s", ident.Token.Lexeme, decl.Start())
 
 	return &protocol.LocationOrLocationSlice{
 		Value: &protocol.Location{
@@ -62,7 +65,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 		switch n := n.(type) {
 		case ast.VarDecl:
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
-				Name:           n.Name.Lexeme,
+				Name:           n.Name.Token.Lexeme,
 				Kind:           protocol.SymbolKindVariable,
 				Range:          newRange(n.Start(), n.End()),
 				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
@@ -70,7 +73,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			return false
 		case ast.FunDecl:
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
-				Name:           n.Name.Lexeme,
+				Name:           n.Name.Token.Lexeme,
 				Detail:         format.Signature(n.Function),
 				Kind:           protocol.SymbolKindFunction,
 				Range:          newRange(n.Start(), n.End()),
@@ -79,7 +82,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			return false
 		case ast.ClassDecl:
 			class := &protocol.DocumentSymbol{
-				Name:           n.Name.Lexeme,
+				Name:           n.Name.Token.Lexeme,
 				Kind:           protocol.SymbolKindClass,
 				Range:          newRange(n.Start(), n.End()),
 				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
@@ -102,7 +105,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 					kind = protocol.SymbolKindMethod
 				}
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
-					Name:           fmt.Sprintf("%s.%s%s", class.Name, decl.Name.Lexeme, modifiers),
+					Name:           fmt.Sprintf("%s.%s%s", class.Name, decl.Name.Token.Lexeme, modifiers),
 					Detail:         format.Signature(decl.Function),
 					Kind:           kind,
 					Range:          newRange(decl.Start(), decl.End()),

@@ -9,7 +9,6 @@ import (
 	"github.com/marcuscaisey/lox/lox/analysis"
 	"github.com/marcuscaisey/lox/lox/ast"
 	"github.com/marcuscaisey/lox/lox/parser"
-	"github.com/marcuscaisey/lox/lox/token"
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
@@ -18,7 +17,7 @@ type document struct {
 	URI        string
 	Text       string
 	Program    ast.Program
-	IdentDecls map[token.Token]token.Token
+	IdentDecls map[ast.Ident]ast.Ident
 	HasErrors  bool
 }
 
@@ -59,13 +58,13 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithComments())
 
 	var loxErrs lox.Errors
-	var identDecls map[token.Token]token.Token
+	var identDecls map[ast.Ident]ast.Ident
 	if err != nil {
 		if !errors.As(err, &loxErrs) {
 			return err
 		}
 	} else {
-		identDecls, loxErrs = analysis.ResolveIdentifiers(program)
+		identDecls, loxErrs = analysis.ResolveIdents(program)
 		loxErrs = append(loxErrs, analysis.CheckSemantics(program)...)
 		loxErrs.Sort()
 	}

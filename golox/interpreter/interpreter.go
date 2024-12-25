@@ -50,11 +50,11 @@ func New(opts ...Option) *Interpreter {
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program ast.Program) error {
-	var opts []analysis.ResolveIdentifiersOption
+	var opts []analysis.ResolveIdentsOption
 	if i.replMode {
 		opts = append(opts, analysis.WithREPLMode())
 	}
-	_, errs := analysis.ResolveIdentifiers(program, opts...)
+	_, errs := analysis.ResolveIdents(program, opts...)
 	errs = append(errs, analysis.CheckSemantics(program)...)
 	if err := errs.Err(); err != nil {
 		return err
@@ -137,7 +137,7 @@ func (i *Interpreter) execVarDecl(env environment, stmt ast.VarDecl) environment
 	if stmt.Initialiser != nil {
 		value = i.evalExpr(env, stmt.Initialiser)
 	}
-	if stmt.Name.Lexeme == token.PlaceholderIdent {
+	if stmt.Name.Token.Lexeme == token.PlaceholderIdent {
 		return env
 	}
 	newEnv := env.Declare(stmt.Name)
@@ -148,20 +148,20 @@ func (i *Interpreter) execVarDecl(env environment, stmt ast.VarDecl) environment
 }
 
 func (i *Interpreter) execFunDecl(env environment, stmt ast.FunDecl) environment {
-	if stmt.Name.Lexeme == token.PlaceholderIdent {
+	if stmt.Name.Token.Lexeme == token.PlaceholderIdent {
 		return env
 	}
 	newEnv := env.Declare(stmt.Name)
-	newEnv.Assign(stmt.Name, newLoxFunction(stmt.Name.Lexeme, stmt.Function, funTypeFunction, newEnv))
+	newEnv.Assign(stmt.Name, newLoxFunction(stmt.Name.Token.Lexeme, stmt.Function, funTypeFunction, newEnv))
 	return newEnv
 }
 
 func (i *Interpreter) execClassDecl(env environment, stmt ast.ClassDecl) environment {
-	if stmt.Name.Lexeme == token.PlaceholderIdent {
+	if stmt.Name.Token.Lexeme == token.PlaceholderIdent {
 		return env
 	}
 	newEnv := env.Declare(stmt.Name)
-	newEnv.Assign(stmt.Name, newLoxClass(stmt.Name.Lexeme, stmt.Methods(), newEnv))
+	newEnv.Assign(stmt.Name, newLoxClass(stmt.Name.Token.Lexeme, stmt.Methods(), newEnv))
 	return newEnv
 }
 
@@ -263,8 +263,8 @@ func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 		return i.evalGroupExpr(env, expr)
 	case ast.LiteralExpr:
 		return i.evalLiteralExpr(expr)
-	case ast.VariableExpr:
-		return i.evalVariableExpr(env, expr)
+	case ast.IdentExpr:
+		return i.evalIdentExpr(env, expr)
 	case ast.ThisExpr:
 		return i.evalThisExpr(env, expr)
 	case ast.CallExpr:
@@ -312,12 +312,12 @@ func (i *Interpreter) evalLiteralExpr(expr ast.LiteralExpr) loxObject {
 	}
 }
 
-func (i *Interpreter) evalVariableExpr(env environment, expr ast.VariableExpr) loxObject {
-	return env.Get(expr.Name)
+func (i *Interpreter) evalIdentExpr(env environment, expr ast.IdentExpr) loxObject {
+	return env.Get(expr.Ident)
 }
 
 func (i *Interpreter) evalThisExpr(env environment, expr ast.ThisExpr) loxObject {
-	return env.Get(expr.This)
+	return env.Get(ast.Ident{Token: expr.This})
 }
 
 func (i *Interpreter) evalCallExpr(env environment, expr ast.CallExpr) loxObject {
@@ -454,7 +454,7 @@ func (i *Interpreter) evalTernaryExpr(env environment, expr ast.TernaryExpr) lox
 
 func (i *Interpreter) evalAssignmentExpr(env environment, expr ast.AssignmentExpr) loxObject {
 	value := i.evalExpr(env, expr.Right)
-	if expr.Left.Lexeme != token.PlaceholderIdent {
+	if expr.Left.Token.Lexeme != token.PlaceholderIdent {
 		env.Assign(expr.Left, value)
 	}
 	return value
