@@ -9,20 +9,26 @@ func Walk(node Node, f func(Node) bool) {
 	switch node := node.(type) {
 	case Program:
 		walkSlice(node.Stmts, f)
+	case Ident:
 	case CommentStmt:
 	case InlineCommentStmt:
 		Walk(node.Stmt, f)
 	case VarDecl:
+		Walk(node.Name, f)
 		if node.Initialiser != nil {
 			Walk(node.Initialiser, f)
 		}
 	case FunDecl:
+		Walk(node.Name, f)
 		Walk(node.Function, f)
 	case Function:
+		walkSlice(node.Params, f)
 		walkSlice(node.Body.Stmts, f)
 	case ClassDecl:
+		Walk(node.Name, f)
 		walkSlice(node.Body, f)
 	case MethodDecl:
+		Walk(node.Name, f)
 		Walk(node.Function, f)
 	case ExprStmt:
 		Walk(node.Expr, f)
@@ -63,12 +69,14 @@ func Walk(node Node, f func(Node) bool) {
 		Walk(node.Expr, f)
 	case LiteralExpr:
 	case IdentExpr:
+		Walk(node.Ident, f)
 	case ThisExpr:
 	case CallExpr:
 		Walk(node.Callee, f)
 		walkSlice(node.Args, f)
 	case GetExpr:
 		Walk(node.Object, f)
+		Walk(node.Name, f)
 	case UnaryExpr:
 		Walk(node.Right, f)
 	case BinaryExpr:
@@ -79,9 +87,11 @@ func Walk(node Node, f func(Node) bool) {
 		Walk(node.Then, f)
 		Walk(node.Else, f)
 	case AssignmentExpr:
+		Walk(node.Left, f)
 		Walk(node.Right, f)
 	case SetExpr:
 		Walk(node.Object, f)
+		Walk(node.Name, f)
 		Walk(node.Value, f)
 	}
 }
