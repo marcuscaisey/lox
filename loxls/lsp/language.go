@@ -20,7 +20,7 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case ast.Ident:
-			if posInRange(params.Position, n) {
+			if inRange(params.Position, n) {
 				ident = n
 			}
 			return false

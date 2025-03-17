@@ -19,8 +19,8 @@ func newRange(start, end token.Position) *protocol.Range {
 	}
 }
 
-// posInRange reports whether a [protocol.Position] is contained within a [token.Range].
-func posInRange(pos *protocol.Position, rang token.Range) bool {
+// inRange reports whether a [protocol.Position] is contained within a [token.Range].
+func inRange(pos *protocol.Position, rang token.Range) bool {
 	start := rang.Start()
 	end := rang.End()
 	line := pos.Line + 1
