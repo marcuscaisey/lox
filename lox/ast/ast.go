@@ -81,7 +81,7 @@ type VarDecl struct {
 	stmt
 }
 
-func (d VarDecl) Start() token.Position { return d.Name.Start() }
+func (d VarDecl) Start() token.Position { return d.Var.Start() }
 func (d VarDecl) End() token.Position   { return d.Semicolon.EndPos }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
