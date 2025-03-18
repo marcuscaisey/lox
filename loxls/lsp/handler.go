@@ -45,6 +45,8 @@ func (h *Handler) HandleRequest(method string, jsonParams *json.RawMessage) (any
 		return h.shutdown()
 	case "textDocument/definition":
 		return handleRequest(h.textDocumentDefinition, jsonParams)
+	case "textDocument/references":
+		return handleRequest(h.textDocumentReferences, jsonParams)
 	case "textDocument/documentSymbol":
 		return handleRequest(h.textDocumentDocumentSymbol, jsonParams)
 	case "textDocument/formatting":

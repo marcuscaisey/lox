@@ -28,6 +28,9 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 			DefinitionProvider: &protocol.BooleanOrDefinitionOptions{
 				Value: protocol.Boolean(true),
 			},
+			ReferencesProvider: &protocol.BooleanOrReferenceOptions{
+				Value: protocol.Boolean(true),
+			},
 			DocumentSymbolProvider: &protocol.BooleanOrDocumentSymbolOptions{
 				Value: protocol.Boolean(true),
 			},

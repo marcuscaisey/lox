@@ -5250,6 +5250,26 @@ func (d DefinitionOrDefinitionLinkSlice) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.Value)
 }
 
+// Value-object that contains additional information when
+// requesting references.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceContext
+type ReferenceContext struct {
+	// Include the declaration of the current symbol.
+	IncludeDeclaration bool `json:"includeDeclaration"`
+}
+
+// Parameters for a {@link ReferencesRequest}.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceParams
+type ReferenceParams struct {
+	*TextDocumentPositionParams
+	*WorkDoneProgressParams
+	*PartialResultParams
+
+	Context *ReferenceContext `json:"context"`
+}
+
 // Parameters for a {@link DocumentSymbolRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolParams

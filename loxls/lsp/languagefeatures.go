@@ -16,11 +16,53 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		return nil, err
 	}
 
+	definition, ok := h.definition(doc, params.Position)
+	if !ok {
+		return nil, nil
+	}
+
+	return &protocol.LocationOrLocationSlice{
+		Value: &protocol.Location{
+			Uri:   doc.URI,
+			Range: newRange(definition.Start(), definition.End()),
+		},
+	}, nil
+}
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
+func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*protocol.LocationSlice, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	definition, ok := h.definition(doc, params.Position)
+	if !ok {
+		return nil, nil
+	}
+
+	var locations protocol.LocationSlice
+	for ident, decl := range doc.IdentDecls {
+		if decl == definition {
+			if ident == definition && !params.Context.IncludeDeclaration {
+				continue
+			}
+			locations = append(locations, &protocol.Location{
+				Uri:   doc.URI,
+				Range: newRange(ident.Start(), ident.End()),
+			})
+		}
+	}
+
+	return &locations, nil
+}
+
+func (h *Handler) definition(doc *document, pos *protocol.Position) (ast.Ident, bool) {
 	var ident ast.Ident
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case ast.Ident:
-			if inRange(params.Position, n) {
+			if inRange(pos, n) {
 				ident = n
 			}
 			return false
@@ -29,20 +71,11 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		}
 	})
 	if ident == (ast.Ident{}) {
-		return nil, nil
+		return ast.Ident{}, false
 	}
 
-	decl, ok := doc.IdentDecls[ident]
-	if !ok {
-		return nil, nil
-	}
-
-	return &protocol.LocationOrLocationSlice{
-		Value: &protocol.Location{
-			Uri:   doc.URI,
-			Range: newRange(decl.Start(), decl.End()),
-		},
-	}, nil
+	definition, ok := doc.IdentDecls[ident]
+	return definition, ok
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol
