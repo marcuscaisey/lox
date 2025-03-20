@@ -37,6 +37,9 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 			DocumentFormattingProvider: &protocol.BooleanOrDocumentFormattingOptions{
 				Value: protocol.Boolean(true),
 			},
+			RenameProvider: &protocol.BooleanOrRenameOptions{
+				Value: protocol.Boolean(true),
+			},
 		},
 		ServerInfo: &protocol.InitializeResultServerInfo{
 			Name:    "loxls",

@@ -15,6 +15,7 @@ import (
 
 type document struct {
 	URI        string
+	Version    int
 	Text       string
 	Program    ast.Program
 	IdentDecls map[ast.Ident]ast.Ident
@@ -23,7 +24,7 @@ type document struct {
 
 // document returns the document with the given URI, or an error if it doesn't exist.
 func (h *Handler) document(uri string) (*document, error) {
-	doc, ok := h.docsByURI[uri]
+	doc, ok := h.docs[uri]
 	if !ok {
 		return nil, jsonrpc.NewError(jsonrpc.InvalidParams, "Document not found", map[string]any{"uri": uri})
 	}
@@ -79,8 +80,9 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		}
 	}
 
-	h.docsByURI[uri] = &document{
+	h.docs[uri] = &document{
 		URI:        uri,
+		Version:    version,
 		Text:       src,
 		Program:    program,
 		IdentDecls: identDecls,
@@ -100,6 +102,6 @@ func (h *Handler) textDocumentDidClose(params *protocol.DidCloseTextDocumentPara
 	if err != nil {
 		return err
 	}
-	delete(h.docsByURI, doc.URI)
+	delete(h.docs, doc.URI)
 	return nil
 }

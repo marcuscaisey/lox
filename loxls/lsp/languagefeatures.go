@@ -29,34 +29,6 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 	}, nil
 }
 
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
-func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*protocol.LocationSlice, error) {
-	doc, err := h.document(params.TextDocument.Uri)
-	if err != nil {
-		return nil, err
-	}
-
-	definition, ok := h.definition(doc, params.Position)
-	if !ok {
-		return nil, nil
-	}
-
-	var locations protocol.LocationSlice
-	for ident, decl := range doc.IdentDecls {
-		if decl == definition {
-			if ident == definition && !params.Context.IncludeDeclaration {
-				continue
-			}
-			locations = append(locations, &protocol.Location{
-				Uri:   doc.URI,
-				Range: newRange(ident.Start(), ident.End()),
-			})
-		}
-	}
-
-	return &locations, nil
-}
-
 func (h *Handler) definition(doc *document, pos *protocol.Position) (ast.Ident, bool) {
 	var ident ast.Ident
 	ast.Walk(doc.Program, func(n ast.Node) bool {
@@ -76,6 +48,43 @@ func (h *Handler) definition(doc *document, pos *protocol.Position) (ast.Ident, 
 
 	definition, ok := doc.IdentDecls[ident]
 	return definition, ok
+}
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
+func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*protocol.LocationSlice, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	definition, ok := h.definition(doc, params.Position)
+	if !ok {
+		return nil, nil
+	}
+
+	references := h.references(doc, definition)
+	var locations protocol.LocationSlice
+	for _, reference := range references {
+		if reference == definition && !params.Context.IncludeDeclaration {
+			continue
+		}
+		locations = append(locations, &protocol.Location{
+			Uri:   doc.URI,
+			Range: newRange(reference.Start(), reference.End()),
+		})
+	}
+
+	return &locations, nil
+}
+
+func (h *Handler) references(doc *document, definition ast.Ident) []ast.Ident {
+	var references []ast.Ident
+	for ident, decl := range doc.IdentDecls {
+		if decl == definition {
+			references = append(references, ident)
+		}
+	}
+	return references
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol
@@ -198,6 +207,44 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 				End:   &protocol.Position{Line: len(textLines)},
 			},
 			NewText: formatted,
+		},
+	}, nil
+}
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rename
+func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.WorkspaceEdit, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	definition, ok := h.definition(doc, params.Position)
+	if !ok {
+		return nil, nil
+	}
+
+	references := h.references(doc, definition)
+	edits := make([]*protocol.TextEditOrAnnotatedTextEdit, len(references))
+	for i, reference := range references {
+		edits[i] = &protocol.TextEditOrAnnotatedTextEdit{
+			Value: &protocol.TextEdit{
+				Range:   newRange(reference.Start(), reference.End()),
+				NewText: params.NewName,
+			},
+		}
+	}
+
+	return &protocol.WorkspaceEdit{
+		DocumentChanges: []*protocol.TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile{
+			{
+				Value: &protocol.TextDocumentEdit{
+					TextDocument: &protocol.OptionalVersionedTextDocumentIdentifier{
+						TextDocumentIdentifier: &protocol.TextDocumentIdentifier{Uri: doc.URI},
+						Version:                doc.Version,
+					},
+					Edits: edits,
+				},
+			},
 		},
 	}, nil
 }

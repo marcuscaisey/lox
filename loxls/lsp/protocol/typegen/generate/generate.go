@@ -86,11 +86,13 @@ func (g *generator) genTypeDecl(namespace string, typ *metamodel.Type) string {
 		return g.baseType(typ.Name)
 	case metamodel.StructureLiteralType:
 		return g.genStructDeclForLiteral(namespace, typ.Value)
+	case metamodel.StringLiteralType:
+		return g.genStringLiteralDecl(namespace, typ.Value)
 	case metamodel.ArrayType:
 		return g.sliceType(namespace, typ.Element)
 	case metamodel.MapType:
 		return g.mapType(namespace, typ.Key, typ.Value)
-	case metamodel.AndType, metamodel.BooleanLiteralType, metamodel.IntegerLiteralType, metamodel.StringLiteralType, metamodel.TupleType:
+	case metamodel.AndType, metamodel.BooleanLiteralType, metamodel.IntegerLiteralType, metamodel.TupleType:
 		panic(fmt.Sprintf("unhandled type: %T", typ))
 	}
 	panic("unreachable")
@@ -491,6 +493,41 @@ type {{.name}} struct {
 	g.typeDecls = append(g.typeDecls, decl)
 
 	return "*" + name
+}
+
+func (g *generator) genStringLiteralDecl(name string, value string) string {
+	if g.gennedTypes[name] {
+		return name
+	}
+	g.gennedTypes[name] = true
+
+	const text = `
+type {{.name}} struct{}
+
+func ({{.name}}) String() string {
+	return "{{.value}}"
+}
+
+func (*{{.name}}) UnmarshalJSON(data []byte) error {
+	var value string
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	if value != "{{.value}}" {
+		return fmt.Errorf("cannot unmarshal %v into {{.name}}: value must be {{.value}}", value)
+	}
+	return nil
+}
+
+func ({{.name}}) MarshalJSON() ([]byte, error) {
+	return json.Marshal("{{.value}}")
+}
+`
+	data := map[string]any{"name": name, "value": value}
+	decl := mustExecuteTemplate(text, data)
+	g.typeDecls = append(g.typeDecls, decl)
+
+	return name
 }
 
 func (g *generator) sliceType(namespace string, elementType *metamodel.Type) string {
