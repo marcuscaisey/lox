@@ -301,7 +301,7 @@ func (r *identResolver) resolveIdent(ident ast.Ident, op identOp) {
 			// If we're in a function which was declared in the same or a deeper scope than the identifier was declared
 			// in, then we can't definitely say that the identifier has been defined yet. It might be defined later
 			// before the function is called.
-			if op == identOpRead && !scope.IsDefined(ident.Token.Lexeme) && !(r.inFun && level <= r.funScopeLevel) {
+			if op == identOpRead && !scope.IsDefined(ident.Token.Lexeme) && !(r.inFun && level <= r.funScopeLevel) { //nolint:staticcheck
 				r.errs.Addf(ident, "%s has not been defined", ident.Token.Lexeme)
 			}
 			return
