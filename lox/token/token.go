@@ -32,7 +32,7 @@ const (
 	thisIdent = "this"
 )
 
-//go:generate go run golang.org/x/tools/cmd/stringer -type Type
+//go:generate go tool stringer -type Type
 
 // Type is the type of a lexical token of Lox code.
 type Type int

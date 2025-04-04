@@ -11,7 +11,7 @@ ifdef RUN
 endif
 
 test: golox
-	go run gotest.tools/gotestsum ../test -pwd=${PWD} -interpreter=${BUILD_PATH} ${extra_test_args}
+	go run gotestsum ../test -pwd=${PWD} -interpreter=${BUILD_PATH} ${extra_test_args}
 
 update_tests: golox
-	go run gotest.tools/gotestsum ../test -pwd=${PWD} -interpreter=${BUILD_PATH} -update ${extra_test_args}
+	go run gotestsum ../test -pwd=${PWD} -interpreter=${BUILD_PATH} -update ${extra_test_args}
