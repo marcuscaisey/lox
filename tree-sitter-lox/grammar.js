@@ -56,10 +56,12 @@ module.exports = grammar({
     modifiers: () => repeat1(choice("static", "get", "set")),
 
     _function: ($) =>
-      seq(
-        field("name", $.identifier),
-        field("parameters", $.parameters),
-        field("body", $.block_statement),
+      prec.right(
+        seq(
+          field("name", $.identifier),
+          field("parameters", $.parameters),
+          field("body", optional($.block_statement)),
+        ),
       ),
 
     parameters: ($) =>
