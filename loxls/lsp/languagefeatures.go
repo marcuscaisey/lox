@@ -16,7 +16,8 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		return nil, err
 	}
 
-	definition, ok := h.definition(doc, params.Position)
+	// TODO: Ignore builtins as they don't have a location.
+	decl, ok := h.declaration(doc, params.Position)
 	if !ok {
 		return nil, nil
 	}
@@ -24,12 +25,12 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 	return &protocol.LocationOrLocationSlice{
 		Value: &protocol.Location{
 			Uri:   doc.URI,
-			Range: newRange(definition.Start(), definition.End()),
+			Range: newRange(decl.Ident().Start(), decl.Ident().End()),
 		},
 	}, nil
 }
 
-func (h *Handler) definition(doc *document, pos *protocol.Position) (ast.Ident, bool) {
+func (h *Handler) declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
 	var ident ast.Ident
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
@@ -43,11 +44,11 @@ func (h *Handler) definition(doc *document, pos *protocol.Position) (ast.Ident, 
 		}
 	})
 	if ident == (ast.Ident{}) {
-		return ast.Ident{}, false
+		return nil, false
 	}
 
-	definition, ok := doc.IdentDecls[ident]
-	return definition, ok
+	decl, ok := doc.IdentDecls[ident]
+	return decl, ok
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
@@ -57,15 +58,15 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*pro
 		return nil, err
 	}
 
-	definition, ok := h.definition(doc, params.Position)
+	decl, ok := h.declaration(doc, params.Position)
 	if !ok {
 		return nil, nil
 	}
 
-	references := h.references(doc, definition)
+	references := h.references(doc, decl)
 	var locations protocol.LocationSlice
 	for _, reference := range references {
-		if reference == definition && !params.Context.IncludeDeclaration {
+		if reference == decl.Ident() && !params.Context.IncludeDeclaration {
 			continue
 		}
 		locations = append(locations, &protocol.Location{
@@ -77,14 +78,85 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*pro
 	return &locations, nil
 }
 
-func (h *Handler) references(doc *document, definition ast.Ident) []ast.Ident {
+func (h *Handler) references(doc *document, decl ast.Decl) []ast.Ident {
 	var references []ast.Ident
-	for ident, decl := range doc.IdentDecls {
-		if decl == definition {
+	for ident, identDecl := range doc.IdentDecls {
+		if identDecl.Start() == decl.Start() {
 			references = append(references, ident)
 		}
 	}
 	return references
+}
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
+func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hover, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	decl, ok := h.declaration(doc, params.Position)
+	if !ok {
+		return nil, nil
+	}
+
+	var contents string
+	switch decl := decl.(type) {
+	case ast.VarDecl, ast.ParamDecl:
+		contents = fmt.Sprintf("var %s", decl.Ident().Token.Lexeme)
+	case ast.FunDecl:
+		contents = fmt.Sprintf("fun %s(%s)", decl.Name.Token.Lexeme, formatParams(decl.Function.Params))
+	case ast.ClassDecl:
+		var b strings.Builder
+		fmt.Fprintf(&b, "class %s", decl.Name.Token.Lexeme)
+		if methods := decl.Methods(); len(methods) > 0 {
+			fmt.Fprint(&b, " {\n")
+			for _, methodDecl := range methods {
+				fmt.Fprintf(&b, "    %s\n", hoverMethodDecl(methodDecl))
+			}
+			fmt.Fprint(&b, "}")
+		}
+		contents = b.String()
+	case ast.MethodDecl:
+		contents = hoverMethodDecl(decl)
+	}
+
+	if h.hoverContentFormat == protocol.MarkupKindMarkdown {
+		contents = fmt.Sprintf("```lox\n%s\n```", contents)
+	}
+
+	return &protocol.Hover{
+		// TODO: Generate better name for type.
+		Contents: &protocol.MarkupContentOrMarkedStringOrMarkedStringSlice{
+			Value: &protocol.MarkupContent{
+				Kind:  protocol.MarkupKindMarkdown,
+				Value: contents,
+			},
+		},
+	}, nil
+}
+
+func hoverMethodDecl(decl ast.MethodDecl) string {
+	var b strings.Builder
+	for _, modifier := range decl.Modifiers {
+		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
+	}
+	fmt.Fprintf(&b, "%s(%s)", decl.Name.Token.Lexeme, formatParams(decl.Function.Params))
+	return b.String()
+}
+
+func formatParams(params []ast.ParamDecl) string {
+	if len(params) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for i, param := range params {
+		fmt.Fprint(&b, param.Name.Token.Lexeme)
+		if i < len(params)-1 {
+			fmt.Fprint(&b, ", ")
+		}
+	}
+	return b.String()
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol
@@ -108,7 +180,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 		case ast.FunDecl:
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
 				Name:           n.Name.Token.Lexeme,
-				Detail:         format.Signature(n.Function),
+				Detail:         signature(n.Function),
 				Kind:           protocol.SymbolKindFunction,
 				Range:          newRange(n.Start(), n.End()),
 				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
@@ -140,7 +212,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				}
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
 					Name:           fmt.Sprintf("%s.%s%s", class.Name, decl.Name.Token.Lexeme, modifiers),
-					Detail:         format.Signature(decl.Function),
+					Detail:         signature(decl.Function),
 					Kind:           kind,
 					Range:          newRange(decl.Start(), decl.End()),
 					SelectionRange: newRange(decl.Name.Start(), decl.Name.End()),
@@ -157,6 +229,14 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 		symbols = toSymbolInformations(docSymbols, doc.URI)
 	}
 	return &protocol.SymbolInformationSliceOrDocumentSymbolSlice{Value: symbols}, nil
+}
+
+func signature(fun ast.Function) string {
+	params := make([]string, len(fun.Params))
+	for i, param := range fun.Params {
+		params[i] = format.Node(param)
+	}
+	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
 }
 
 func toSymbolInformations(docSymbols protocol.DocumentSymbolSlice, uri string) protocol.SymbolInformationSlice {
@@ -218,12 +298,12 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 		return nil, err
 	}
 
-	definition, ok := h.definition(doc, params.Position)
+	decl, ok := h.declaration(doc, params.Position)
 	if !ok {
 		return nil, nil
 	}
 
-	references := h.references(doc, definition)
+	references := h.references(doc, decl)
 	edits := make([]*protocol.TextEditOrAnnotatedTextEdit, len(references))
 	for i, reference := range references {
 		edits[i] = &protocol.TextEditOrAnnotatedTextEdit{

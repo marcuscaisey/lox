@@ -219,7 +219,7 @@ func (p *parser) parseMethodDecl() (ast.MethodDecl, bool) {
 
 func (p *parser) parseFun() ast.Function {
 	leftParen := p.expect(token.LeftParen)
-	var params token.Ranges[ast.Ident]
+	var params token.Ranges[ast.ParamDecl]
 	if !p.match(token.RightParen) {
 		params = p.parseParams()
 		p.expect(token.RightParen)
@@ -233,11 +233,14 @@ func (p *parser) parseFun() ast.Function {
 	}
 }
 
-func (p *parser) parseParams() token.Ranges[ast.Ident] {
-	var params token.Ranges[ast.Ident]
+func (p *parser) parseParams() token.Ranges[ast.ParamDecl] {
+	var params token.Ranges[ast.ParamDecl]
 	for {
 		tok := p.expectf(token.Ident, "expected parameter name")
-		params = append(params, ast.Ident{Token: tok})
+		paramDecl := ast.ParamDecl{
+			Name: ast.Ident{Token: tok},
+		}
+		params = append(params, paramDecl)
 		if !p.match(token.Comma) {
 			break
 		}

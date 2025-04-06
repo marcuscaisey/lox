@@ -5073,20 +5073,163 @@ type TextDocumentPositionParams struct {
 	Position *Position `json:"position"`
 }
 
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#partialResultParams
-type PartialResultParams struct {
-	// An optional token that a server can use to report partial results (e.g. streaming) to
-	// the client.
-	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
-}
-
-// Parameters for a {@link DefinitionRequest}.
+// Parameters for a {@link HoverRequest}.
 //
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionParams
-type DefinitionParams struct {
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hoverParams
+type HoverParams struct {
 	*TextDocumentPositionParams
 	*WorkDoneProgressParams
-	*PartialResultParams
+}
+
+// A `MarkupContent` literal represents a string value which content is interpreted base on its
+// kind flag. Currently the protocol supports `plaintext` and `markdown` as markup kinds.
+//
+// If the kind is `markdown` then the value can contain fenced code blocks like in GitHub issues.
+// See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
+//
+// Here is an example how such a string can be constructed using JavaScript / TypeScript:
+// ```ts
+//
+//	let markdown: MarkdownContent = {
+//	 kind: MarkupKind.Markdown,
+//	 value: [
+//	   '# Header',
+//	   'Some text',
+//	   '```typescript',
+//	   'someCode();',
+//	   '```'
+//	 ].join('\n')
+//	};
+//
+// ```
+//
+// *Please Note* that clients might sanitize the return markdown. A client could decide to
+// remove HTML from the markdown to avoid script execution.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#markupContent
+type MarkupContent struct {
+	// The type of the Markup
+	Kind MarkupKind `json:"kind"`
+	// The content itself
+	Value string `json:"value"`
+}
+
+type MarkedStringOr2 struct {
+	Language string `json:"language"`
+
+	Value string `json:"value"`
+}
+
+// StringOrMarkedStringOr2 contains either of the following types:
+//   - [String]
+//   - [*MarkedStringOr2]
+type StringOrMarkedStringOr2 struct {
+	Value StringOrMarkedStringOr2Value
+}
+
+// StringOrMarkedStringOr2Value is either of the following types:
+//   - [String]
+//   - [*MarkedStringOr2]
+//
+//gosumtype:decl StringOrMarkedStringOr2Value
+type StringOrMarkedStringOr2Value interface {
+	isStringOrMarkedStringOr2Value()
+}
+
+func (String) isStringOrMarkedStringOr2Value()           {}
+func (*MarkedStringOr2) isStringOrMarkedStringOr2Value() {}
+
+func (s *StringOrMarkedStringOr2) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var stringValue String
+	if err := json.Unmarshal(data, &stringValue); err == nil {
+		s.Value = stringValue
+		return nil
+	}
+	var markedStringOr2Value *MarkedStringOr2
+	if err := json.Unmarshal(data, &markedStringOr2Value); err == nil {
+		s.Value = markedStringOr2Value
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*StringOrMarkedStringOr2](),
+	}
+}
+
+func (s StringOrMarkedStringOr2) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Value)
+}
+
+// MarkedString can be used to render human readable text. It is either a markdown string
+// or a code-block that provides a language and a code snippet. The language identifier
+// is semantically equal to the optional language identifier in fenced code blocks in GitHub
+// issues. See https://help.github.com/articles/creating-and-highlighting-code-blocks/#syntax-highlighting
+//
+// The pair of a language and a value is an equivalent to markdown:
+// ```${language}
+// ${value}
+// ```
+//
+// Note that markdown strings will be sanitized - that means html will be escaped.
+// Deprecated: use MarkupContent instead.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#markedString
+type MarkedString = *StringOrMarkedStringOr2
+
+type MarkedStringSlice []MarkedString
+
+// MarkupContentOrMarkedStringOrMarkedStringSlice contains either of the following types:
+//   - [*MarkupContent]
+//   - [MarkedString]
+//   - [MarkedStringSlice]
+type MarkupContentOrMarkedStringOrMarkedStringSlice struct {
+	Value MarkupContentOrMarkedStringOrMarkedStringSliceValue
+}
+
+// MarkupContentOrMarkedStringOrMarkedStringSliceValue is either of the following types:
+//   - [*MarkupContent]
+//   - [MarkedString]
+//   - [MarkedStringSlice]
+//
+//gosumtype:decl MarkupContentOrMarkedStringOrMarkedStringSliceValue
+type MarkupContentOrMarkedStringOrMarkedStringSliceValue interface {
+	isMarkupContentOrMarkedStringOrMarkedStringSliceValue()
+}
+
+func (*MarkupContent) isMarkupContentOrMarkedStringOrMarkedStringSliceValue()    {}
+func (MarkedString) isMarkupContentOrMarkedStringOrMarkedStringSliceValue()      {}
+func (MarkedStringSlice) isMarkupContentOrMarkedStringOrMarkedStringSliceValue() {}
+
+func (m *MarkupContentOrMarkedStringOrMarkedStringSlice) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var markupContentValue *MarkupContent
+	if err := json.Unmarshal(data, &markupContentValue); err == nil {
+		m.Value = markupContentValue
+		return nil
+	}
+	var markedStringValue MarkedString
+	if err := json.Unmarshal(data, &markedStringValue); err == nil {
+		m.Value = markedStringValue
+		return nil
+	}
+	var markedStringSliceValue MarkedStringSlice
+	if err := json.Unmarshal(data, &markedStringSliceValue); err == nil {
+		m.Value = markedStringSliceValue
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*MarkupContentOrMarkedStringOrMarkedStringSlice](),
+	}
+}
+
+func (m MarkupContentOrMarkedStringOrMarkedStringSlice) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.Value)
 }
 
 // A range in a text document expressed as (zero-based) start and end positions.
@@ -5109,6 +5252,33 @@ type Range struct {
 	Start *Position `json:"start"`
 	// The range's end position.
 	End *Position `json:"end"`
+}
+
+// The result of a hover request.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hover
+type Hover struct {
+	// The hover's content
+	Contents *MarkupContentOrMarkedStringOrMarkedStringSlice `json:"contents"`
+	// An optional range inside the text document that is used to
+	// visualize the hover, e.g. by changing the background color.
+	Range *Range `json:"range,omitempty"`
+}
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#partialResultParams
+type PartialResultParams struct {
+	// An optional token that a server can use to report partial results (e.g. streaming) to
+	// the client.
+	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
+}
+
+// Parameters for a {@link DefinitionRequest}.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionParams
+type DefinitionParams struct {
+	*TextDocumentPositionParams
+	*WorkDoneProgressParams
+	*PartialResultParams
 }
 
 // Represents a location inside a resource, such as a line

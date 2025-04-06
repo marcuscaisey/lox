@@ -24,6 +24,8 @@ func Walk(node Node, f func(Node) bool) {
 	case Function:
 		walkSlice(node.Params, f)
 		walkSlice(node.Body.Stmts, f)
+	case ParamDecl:
+		Walk(node.Name, f)
 	case ClassDecl:
 		Walk(node.Name, f)
 		walkSlice(node.Body, f)

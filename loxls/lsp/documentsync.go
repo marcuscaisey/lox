@@ -18,7 +18,7 @@ type document struct {
 	Version    int
 	Text       string
 	Program    ast.Program
-	IdentDecls map[ast.Ident]ast.Ident
+	IdentDecls map[ast.Ident]ast.Decl
 	HasErrors  bool
 }
 
@@ -59,7 +59,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithComments())
 
 	var loxErrs lox.Errors
-	var identDecls map[ast.Ident]ast.Ident
+	var identDecls map[ast.Ident]ast.Decl
 	if err != nil {
 		if !errors.As(err, &loxErrs) {
 			return err

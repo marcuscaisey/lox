@@ -9,24 +9,29 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
-const version = "0.5.0"
+const version = "0.6.0"
 
 // Handler handles JSON-RPC requests and notifications.
 type Handler struct {
+	// Dependencies
 	client *client
 	log    *logger
 
+	// Internal state
 	initialized  bool
 	shuttingDown bool
 	docs         map[string]*document
 
+	// Client capability info
 	clientSupportsHierarchicalDocumentSymbols bool
+	hoverContentFormat                        protocol.MarkupKind
 }
 
 // NewHandler returns a new Handler.
 func NewHandler() *Handler {
 	return &Handler{
-		docs: map[string]*document{},
+		docs:               map[string]*document{},
+		hoverContentFormat: protocol.MarkupKindPlainText,
 	}
 }
 
@@ -47,6 +52,8 @@ func (h *Handler) HandleRequest(method string, jsonParams *json.RawMessage) (any
 		return handleRequest(h.textDocumentDefinition, jsonParams)
 	case "textDocument/references":
 		return handleRequest(h.textDocumentReferences, jsonParams)
+	case "textDocument/hover":
+		return handleRequest(h.textDocumentHover, jsonParams)
 	case "textDocument/documentSymbol":
 		return handleRequest(h.textDocumentDocumentSymbol, jsonParams)
 	case "textDocument/formatting":
@@ -85,14 +92,14 @@ func (h *Handler) handleNotification(method string, jsonParams *json.RawMessage)
 	switch method {
 	case "initialized":
 		// No further initialisation needed
+	case "exit":
+		return h.exit()
 	case "textDocument/didOpen":
 		return handleNotification(method, h.textDocumentDidOpen, jsonParams)
 	case "textDocument/didChange":
 		return handleNotification(method, h.textDocumentDidChange, jsonParams)
 	case "textDocument/didClose":
 		return handleNotification(method, h.textDocumentDidClose, jsonParams)
-	case "exit":
-		return h.exit()
 	default:
 		return fmt.Errorf("%s method not found", method)
 	}

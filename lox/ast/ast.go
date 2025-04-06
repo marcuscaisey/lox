@@ -72,39 +72,67 @@ type InlineCommentStmt struct {
 func (s InlineCommentStmt) Start() token.Position { return s.Stmt.Start() }
 func (s InlineCommentStmt) End() token.Position   { return s.Comment.EndPos }
 
+// Decl is the interface which all declaration nodes implement.
+//
+//gosumtype:decl Decl
+type Decl interface {
+	Stmt
+	// Ident returns the identifier being declared.
+	Ident() Ident
+	isDecl()
+}
+
+type decl struct {
+	stmt
+}
+
+func (decl) isDecl() {}
+
 // VarDecl is a variable declaration, such as var a = 123 or var b.
 type VarDecl struct {
 	Var         token.Token
 	Name        Ident `print:"named"`
 	Initialiser Expr  `print:"named"`
 	Semicolon   token.Token
-	stmt
+	decl
 }
 
 func (d VarDecl) Start() token.Position { return d.Var.Start() }
 func (d VarDecl) End() token.Position   { return d.Semicolon.EndPos }
+func (d VarDecl) Ident() Ident          { return d.Name }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {
 	Fun      token.Token
 	Name     Ident    `print:"named"`
 	Function Function `print:"named"`
-	stmt
+	decl
 }
 
 func (d FunDecl) Start() token.Position { return d.Fun.StartPos }
 func (d FunDecl) End() token.Position   { return d.Function.Body.End() }
+func (d FunDecl) Ident() Ident          { return d.Name }
 
 // Function is a function's parameters and body.
 type Function struct {
 	LeftParen token.Token
-	Params    token.Ranges[Ident] `print:"named"`
-	Body      BlockStmt           `print:"named"`
+	Params    token.Ranges[ParamDecl] `print:"named"`
+	Body      BlockStmt               `print:"named"`
 	node
 }
 
 func (f Function) Start() token.Position { return f.LeftParen.StartPos }
 func (f Function) End() token.Position   { return f.Body.End() }
+
+// ParamDecl is a parameter declaration, such as x or y.
+type ParamDecl struct {
+	Name Ident `print:"named"`
+	decl
+}
+
+func (p ParamDecl) Start() token.Position { return p.Name.Start() }
+func (p ParamDecl) End() token.Position   { return p.Name.End() }
+func (p ParamDecl) Ident() Ident          { return p.Name }
 
 // ClassDecl is a class declaration, such as
 //
@@ -118,11 +146,12 @@ type ClassDecl struct {
 	Name       Ident              `print:"named"`
 	Body       token.Ranges[Stmt] `print:"named"`
 	RightBrace token.Token
-	stmt
+	decl
 }
 
 func (c ClassDecl) Start() token.Position { return c.Class.StartPos }
 func (c ClassDecl) End() token.Position   { return c.RightBrace.EndPos }
+func (c ClassDecl) Ident() Ident          { return c.Name }
 
 // Methods returns the methods of the class.
 func (c ClassDecl) Methods() []MethodDecl {
@@ -144,7 +173,7 @@ type MethodDecl struct {
 	Modifiers []token.Token `print:"named"`
 	Name      Ident         `print:"named"`
 	Function  Function      `print:"named"`
-	stmt
+	decl
 }
 
 func (m MethodDecl) Start() token.Position {
@@ -154,6 +183,7 @@ func (m MethodDecl) Start() token.Position {
 	return m.Name.Start()
 }
 func (m MethodDecl) End() token.Position { return m.Function.Body.End() }
+func (m MethodDecl) Ident() Ident        { return m.Name }
 
 // HasModifier reports whether the declaration has a modifier of the target type.
 func (m MethodDecl) HasModifier(target token.Type) bool {

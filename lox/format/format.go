@@ -28,6 +28,8 @@ func Node(node ast.Node) string {
 		return formatFunDecl(node)
 	case ast.Function:
 		return formatFun(node)
+	case ast.ParamDecl:
+		return formatParamDecl(node)
 	case ast.ClassDecl:
 		return formatClassDecl(node)
 	case ast.MethodDecl:
@@ -133,6 +135,10 @@ func formatFun(fun ast.Function) string {
 	}
 	fmt.Fprintf(&b, ") %s", formatBlock(fun.Body.Stmts))
 	return b.String()
+}
+
+func formatParamDecl(decl ast.ParamDecl) string {
+	return formatIdent(decl.Name)
 }
 
 func formatClassDecl(decl ast.ClassDecl) string {
@@ -312,13 +318,4 @@ func indent(s string) string {
 		}
 	}
 	return strings.Join(lines, "\n")
-}
-
-// Signature returns a string representation of the functions signature.
-func Signature(fun ast.Function) string {
-	params := make([]string, len(fun.Params))
-	for i, param := range fun.Params {
-		params[i] = Node(param)
-	}
-	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
 }

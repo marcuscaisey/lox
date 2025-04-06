@@ -37,7 +37,7 @@ linters:
       - linters:
           - revive
         path: ast/ast.go
-        text: 'exported: exported method \w+\.(Start|End) should have comment or be unexported'
+        text: 'exported: exported method \w+\.(Start|End|Ident) should have comment or be unexported'
 
 formatters:
   # Enable specific formatter.

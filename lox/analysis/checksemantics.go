@@ -103,7 +103,7 @@ func (c *semanticChecker) walkFun(fun ast.Function, funType funType) {
 	}
 }
 
-func (c *semanticChecker) checkNumParams(params token.Ranges[ast.Ident]) {
+func (c *semanticChecker) checkNumParams(params token.Ranges[ast.ParamDecl]) {
 	if len(params) > maxParams {
 		c.errs.Addf(params[maxParams], "cannot define more than %d function parameters", maxParams)
 	}

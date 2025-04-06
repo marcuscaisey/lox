@@ -287,7 +287,7 @@ type loxFunction struct {
 func newLoxFunction(name string, fun ast.Function, typ funType, closure environment) *loxFunction {
 	paramNames := make([]string, len(fun.Params))
 	for i, param := range fun.Params {
-		paramNames[i] = param.Token.Lexeme
+		paramNames[i] = param.Name.Token.Lexeme
 	}
 	f := &loxFunction{
 		name:    name,

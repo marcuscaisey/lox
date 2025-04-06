@@ -14,6 +14,9 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 		if documentSymbol := textDocument.DocumentSymbol; documentSymbol != nil {
 			h.clientSupportsHierarchicalDocumentSymbols = documentSymbol.HierarchicalDocumentSymbolSupport
 		}
+		if hover := textDocument.Hover; hover != nil && len(hover.ContentFormat) > 0 {
+			h.hoverContentFormat = hover.ContentFormat[0]
+		}
 	}
 
 	return &protocol.InitializeResult{
@@ -24,6 +27,9 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 					OpenClose: true,
 					Change:    protocol.TextDocumentSyncKindFull,
 				},
+			},
+			HoverProvider: &protocol.BooleanOrHoverOptions{
+				Value: protocol.Boolean(true),
 			},
 			DefinitionProvider: &protocol.BooleanOrDefinitionOptions{
 				Value: protocol.Boolean(true),
