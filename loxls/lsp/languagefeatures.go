@@ -126,7 +126,6 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 	}
 
 	return &protocol.Hover{
-		// TODO: Generate better name for type.
 		Contents: &protocol.MarkupContentOrMarkedStringOrMarkedStringSlice{
 			Value: &protocol.MarkupContent{
 				Kind:  protocol.MarkupKindMarkdown,
