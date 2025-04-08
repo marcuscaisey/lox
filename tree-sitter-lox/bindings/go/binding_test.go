@@ -3,8 +3,8 @@ package tree_sitter_lox_test
 import (
 	"testing"
 
-	tree_sitter "github.com/smacker/go-tree-sitter"
-	"github.com/tree-sitter/tree-sitter-lox"
+	tree_sitter "github.com/tree-sitter/go-tree-sitter"
+	tree_sitter_lox "github.com/marcuscaisey/lox/bindings/go"
 )
 
 func TestCanLoadGrammar(t *testing.T) {

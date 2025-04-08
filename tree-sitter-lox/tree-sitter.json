@@ -1,0 +1,39 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "lox",
+      "camelcase": "Lox",
+      "scope": "source.lox",
+      "file-types": [
+        "lox"
+      ],
+      "highlights": "queries/lox/highlights.scm",
+      "injection-regex": "^lox$",
+      "class-name": "TreeSitterLox"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "Lox grammar for tree-sitter",
+    "authors": [
+      {
+        "name": "Marcus Caisey",
+        "email": "marcus@teckna.com"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/marcuscaisey/lox"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": true,
+    "node": true,
+    "python": true,
+    "rust": true,
+    "swift": true,
+    "zig": false
+  }
+}

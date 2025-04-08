@@ -2,20 +2,18 @@
   "name": "tree-sitter-lox",
   "version": "0.1.0",
   "description": "Lox grammar for tree-sitter",
-  "scripts": {
-    "pretest": "tree-sitter generate",
-    "test": "tree-sitter test",
-    "build": "tree-sitter generate",
-    "parse": "tree-sitter parse",
-    "install": "node-gyp-build",
-    "prebuildify": "prebuildify --napi --strip"
+  "repository": "https://github.com/marcuscaisey/lox",
+  "license": "MIT",
+  "author": {
+    "name": "Marcus Caisey",
+    "email": "marcus@teckna.com"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/marcuscaisey/lox.git"
-  },
+  "main": "bindings/node",
+  "types": "bindings/node",
   "keywords": [
-    "parser",
+    "incremental",
+    "parsing",
+    "tree-sitter",
     "lox"
   ],
   "files": [
@@ -26,15 +24,13 @@
     "queries/*",
     "src/**"
   ],
-  "author": "Marcus Caisey",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/marcuscaisey/lox/issues"
-  },
-  "homepage": "https://github.com/marcuscaisey/lox#readme",
   "dependencies": {
     "node-addon-api": "8.x",
     "node-gyp-build": "^4.8.0"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "0.25.x",
+    "prebuildify": "^6.0.0"
   },
   "peerDependencies": {
     "tree-sitter": "0.22.x"
@@ -44,19 +40,12 @@
       "optional": true
     }
   },
-  "devDependencies": {
-    "tree-sitter-cli": "0.25.x",
-    "prebuildify": "^6.0.0"
-  },
-  "main": "bindings/node",
-  "types": "bindings/node",
-  "tree-sitter": [
-    {
-      "scope": "source.lox",
-      "file-types": [
-        "lox"
-      ],
-      "highlights": "queries/lox/highlights.scm"
-    }
-  ]
+  "scripts": {
+    "pretest": "tree-sitter generate",
+    "test": "tree-sitter test",
+    "build": "tree-sitter generate",
+    "parse": "tree-sitter parse",
+    "install": "node-gyp-build",
+    "prebuildify": "prebuildify --napi --strip"
+  }
 }
