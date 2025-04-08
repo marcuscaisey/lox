@@ -11,7 +11,7 @@ nil;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (number))
   (expression_statement
@@ -35,13 +35,13 @@ fun(x, y) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (function_expression
       parameters: (parameters
         (identifier)
         (identifier))
-      body: (block_statement
+      body: (block
         (return_statement
           (binary_expression
             left: (identifier)
@@ -55,7 +55,7 @@ Group Expression
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (group_expression
       expression: (number))))
@@ -70,7 +70,7 @@ _;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (identifier))
   (expression_statement
@@ -86,7 +86,7 @@ foo();
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (call_expression
       callee: (identifier)
@@ -100,7 +100,7 @@ foo(1);
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (call_expression
       callee: (identifier)
@@ -115,7 +115,7 @@ foo(1, 2);
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (call_expression
       callee: (identifier)
@@ -131,7 +131,7 @@ d(1, 2)(3, 4);
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (call_expression
       callee: (call_expression
@@ -151,7 +151,7 @@ foo.bar;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (get_expression
       object: (identifier)
@@ -165,7 +165,7 @@ foo.bar.baz;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (get_expression
       object: (get_expression
@@ -181,7 +181,7 @@ foo().bar;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (get_expression
       object: (call_expression
@@ -198,7 +198,7 @@ Unary Expression
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (unary_expression
       right: (number)))
@@ -215,7 +215,7 @@ Unary Expression - Right Associativity
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (unary_expression
       right: (unary_expression
@@ -246,7 +246,7 @@ Binary Expression
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (binary_expression
       left: (number)
@@ -325,7 +325,7 @@ Binary Expression - Left Associativity
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (binary_expression
       left: (binary_expression
@@ -419,7 +419,7 @@ Ternary Expression
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (ternary_expression
       condition: (number)
@@ -434,7 +434,7 @@ Ternary Expression - Right Associativity
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (ternary_expression
       condition: (number)
@@ -452,7 +452,7 @@ a = 1;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (assignment_expression
       left: (identifier)
@@ -466,7 +466,7 @@ a.b = 1;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (assignment_expression
       left: (get_expression
@@ -482,7 +482,7 @@ a = b = 1;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (assignment_expression
       left: (identifier)
@@ -498,7 +498,7 @@ Precedence
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (binary_expression
       left: (number)

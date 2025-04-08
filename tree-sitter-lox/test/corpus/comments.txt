@@ -9,7 +9,7 @@ print 2;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (comment)
   (comment)
   (print_statement
@@ -33,7 +33,7 @@ print 2;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (comment)
   (comment)
   (print_statement

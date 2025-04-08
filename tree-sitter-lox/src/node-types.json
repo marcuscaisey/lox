@@ -279,7 +279,7 @@
     }
   },
   {
-    "type": "block_statement",
+    "type": "block",
     "named": true,
     "fields": {},
     "children": {
@@ -287,7 +287,7 @@
       "required": false,
       "types": [
         {
-          "type": "block_statement",
+          "type": "block",
           "named": true
         },
         {
@@ -552,7 +552,7 @@
         "required": true,
         "types": [
           {
-            "type": "block_statement",
+            "type": "block",
             "named": true
           },
           {
@@ -746,7 +746,7 @@
         "required": false,
         "types": [
           {
-            "type": "block_statement",
+            "type": "block",
             "named": true
           }
         ]
@@ -782,7 +782,7 @@
         "required": true,
         "types": [
           {
-            "type": "block_statement",
+            "type": "block",
             "named": true
           }
         ]
@@ -1016,7 +1016,7 @@
         "required": false,
         "types": [
           {
-            "type": "block_statement",
+            "type": "block",
             "named": true
           },
           {
@@ -1058,7 +1058,7 @@
         "required": true,
         "types": [
           {
-            "type": "block_statement",
+            "type": "block",
             "named": true
           },
           {
@@ -1106,7 +1106,7 @@
         "required": false,
         "types": [
           {
-            "type": "block_statement",
+            "type": "block",
             "named": true
           }
         ]
@@ -1231,66 +1231,6 @@
     }
   },
   {
-    "type": "program",
-    "named": true,
-    "root": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "block_statement",
-          "named": true
-        },
-        {
-          "type": "break_statement",
-          "named": true
-        },
-        {
-          "type": "class_declaration",
-          "named": true
-        },
-        {
-          "type": "continue_statement",
-          "named": true
-        },
-        {
-          "type": "expression_statement",
-          "named": true
-        },
-        {
-          "type": "for_statement",
-          "named": true
-        },
-        {
-          "type": "function_declaration",
-          "named": true
-        },
-        {
-          "type": "if_statement",
-          "named": true
-        },
-        {
-          "type": "print_statement",
-          "named": true
-        },
-        {
-          "type": "return_statement",
-          "named": true
-        },
-        {
-          "type": "variable_declaration",
-          "named": true
-        },
-        {
-          "type": "while_statement",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "return_statement",
     "named": true,
     "fields": {},
@@ -1352,6 +1292,66 @@
         },
         {
           "type": "unary_expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "source_file",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "break_statement",
+          "named": true
+        },
+        {
+          "type": "class_declaration",
+          "named": true
+        },
+        {
+          "type": "continue_statement",
+          "named": true
+        },
+        {
+          "type": "expression_statement",
+          "named": true
+        },
+        {
+          "type": "for_statement",
+          "named": true
+        },
+        {
+          "type": "function_declaration",
+          "named": true
+        },
+        {
+          "type": "if_statement",
+          "named": true
+        },
+        {
+          "type": "print_statement",
+          "named": true
+        },
+        {
+          "type": "return_statement",
+          "named": true
+        },
+        {
+          "type": "variable_declaration",
+          "named": true
+        },
+        {
+          "type": "while_statement",
           "named": true
         }
       ]
@@ -1704,7 +1704,7 @@
         "required": true,
         "types": [
           {
-            "type": "block_statement",
+            "type": "block",
             "named": true
           },
           {

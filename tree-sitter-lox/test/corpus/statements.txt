@@ -6,7 +6,7 @@ Expression Statement
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (expression_statement
     (binary_expression
       left: (number)
@@ -20,7 +20,7 @@ print 1 + 2;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (print_statement
     (binary_expression
       left: (number)
@@ -38,11 +38,11 @@ var a = 1;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (variable_declaration
     (identifier)
     (number))
-  (block_statement
+  (block
     (variable_declaration
       (identifier)
       (number))
@@ -57,8 +57,8 @@ Block Statement - Empty
 
 --------------------------------------------------------------------------------
 
-(program
-  (block_statement))
+(source_file
+  (block))
 
 ================================================================================
 If Statement
@@ -70,12 +70,12 @@ if (1 < 2) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (if_statement
     condition: (binary_expression
       left: (number)
       right: (number))
-    then: (block_statement
+    then: (block
       (print_statement
         (number)))))
 
@@ -91,15 +91,15 @@ if (1 < 2) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (if_statement
     condition: (binary_expression
       left: (number)
       right: (number))
-    then: (block_statement
+    then: (block
       (print_statement
         (number)))
-    else: (block_statement
+    else: (block
       (print_statement
         (number)))))
 
@@ -115,19 +115,19 @@ if (1 < 2) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (if_statement
     condition: (binary_expression
       left: (number)
       right: (number))
-    then: (block_statement
+    then: (block
       (print_statement
         (number)))
     else: (if_statement
       condition: (binary_expression
         left: (number)
         right: (number))
-      then: (block_statement
+      then: (block
         (print_statement
           (number))))))
 
@@ -144,17 +144,17 @@ if (1 < 2) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (if_statement
     condition: (binary_expression
       left: (number)
       right: (number))
-    then: (block_statement
+    then: (block
       (if_statement
         condition: (binary_expression
           left: (number)
           right: (number))
-        then: (block_statement
+        then: (block
           (print_statement
             (number))))
       (print_statement
@@ -171,7 +171,7 @@ else
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (if_statement
     condition: (binary_expression
       left: (number)
@@ -193,7 +193,7 @@ if (1 < 2)
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (if_statement
     condition: (binary_expression
       left: (number)
@@ -217,12 +217,12 @@ while (1 < 2) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (while_statement
     condition: (binary_expression
       left: (number)
       right: (number))
-    body: (block_statement
+    body: (block
       (print_statement
         (number)))))
 
@@ -239,17 +239,17 @@ while (1 < 2) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (while_statement
     condition: (binary_expression
       left: (number)
       right: (number))
-    body: (block_statement
+    body: (block
       (while_statement
         condition: (binary_expression
           left: (number)
           right: (number))
-        body: (block_statement
+        body: (block
           (print_statement
             (number))))
       (print_statement
@@ -264,7 +264,7 @@ while (1 < 2)
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (while_statement
     condition: (binary_expression
       left: (number)
@@ -282,7 +282,7 @@ for (var i = 0; i < 3; i = i + 1) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (for_statement
     initialiser: (variable_declaration
       name: (identifier)
@@ -295,7 +295,7 @@ for (var i = 0; i < 3; i = i + 1) {
       right: (binary_expression
         left: (identifier)
         right: (number)))
-    body: (block_statement
+    body: (block
       (print_statement
         (identifier)))))
 
@@ -310,7 +310,7 @@ for (i = 0; i < 3; i = i + 1) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (variable_declaration
     name: (identifier))
   (for_statement
@@ -326,7 +326,7 @@ for (i = 0; i < 3; i = i + 1) {
       right: (binary_expression
         left: (identifier)
         right: (number)))
-    body: (block_statement
+    body: (block
       (print_statement
         (identifier)))))
 
@@ -342,7 +342,7 @@ for (var i = 0; i < 3; i = i + 1) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (for_statement
     initialiser: (variable_declaration
       name: (identifier)
@@ -355,7 +355,7 @@ for (var i = 0; i < 3; i = i + 1) {
       right: (binary_expression
         left: (identifier)
         right: (number)))
-    body: (block_statement
+    body: (block
       (for_statement
         initialiser: (variable_declaration
           name: (identifier)
@@ -368,7 +368,7 @@ for (var i = 0; i < 3; i = i + 1) {
           right: (binary_expression
             left: (identifier)
             right: (number)))
-        body: (block_statement
+        body: (block
           (print_statement
             (binary_expression
               left: (identifier)
@@ -385,7 +385,7 @@ for (var i = 0; i < 3; i = i + 1)
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (for_statement
     initialiser: (variable_declaration
       name: (identifier)
@@ -423,7 +423,7 @@ for (;;) {
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (for_statement
     condition: (binary_expression
       left: (identifier)
@@ -433,7 +433,7 @@ for (;;) {
       right: (binary_expression
         left: (identifier)
         right: (number)))
-    body: (block_statement
+    body: (block
       (print_statement
         (identifier))))
   (for_statement
@@ -445,7 +445,7 @@ for (;;) {
       right: (binary_expression
         left: (identifier)
         right: (number)))
-    body: (block_statement
+    body: (block
       (print_statement
         (identifier))))
   (for_statement
@@ -455,11 +455,11 @@ for (;;) {
     condition: (binary_expression
       left: (identifier)
       right: (number))
-    body: (block_statement
+    body: (block
       (print_statement
         (identifier))))
   (for_statement
-    body: (block_statement
+    body: (block
       (print_statement
         (identifier)))))
 
@@ -471,7 +471,7 @@ break;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (break_statement))
 
 ================================================================================
@@ -482,5 +482,5 @@ continue;
 
 --------------------------------------------------------------------------------
 
-(program
+(source_file
   (continue_statement))

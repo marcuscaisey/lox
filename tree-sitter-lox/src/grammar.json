@@ -3,7 +3,7 @@
   "name": "lox",
   "word": "identifier",
   "rules": {
-    "program": {
+    "source_file": {
       "type": "REPEAT",
       "content": {
         "type": "CHOICE",
@@ -211,7 +211,7 @@
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "block_statement"
+                  "name": "block"
                 },
                 {
                   "type": "BLANK"
@@ -289,7 +289,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "block_statement"
+          "name": "block"
         },
         {
           "type": "SYMBOL",
@@ -347,7 +347,7 @@
         }
       ]
     },
-    "block_statement": {
+    "block": {
       "type": "SEQ",
       "members": [
         {
@@ -716,7 +716,7 @@
           "name": "body",
           "content": {
             "type": "SYMBOL",
-            "name": "block_statement"
+            "name": "block"
           }
         }
       ]

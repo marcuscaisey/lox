@@ -26,7 +26,7 @@ module.exports = grammar({
   word: ($) => $.identifier,
 
   rules: {
-    program: ($) => repeat(choice($._declaration, $._statement)),
+    source_file: ($) => repeat(choice($._declaration, $._statement)),
 
     // Declarations
     _declaration: ($) =>
@@ -60,7 +60,7 @@ module.exports = grammar({
         seq(
           field("name", $.identifier),
           field("parameters", $.parameters),
-          field("body", optional($.block_statement)),
+          field("body", optional($.block)),
         ),
       ),
 
@@ -75,7 +75,7 @@ module.exports = grammar({
       choice(
         $.expression_statement,
         $.print_statement,
-        $.block_statement,
+        $.block,
         $.if_statement,
         $.while_statement,
         $.for_statement,
@@ -89,7 +89,7 @@ module.exports = grammar({
 
     print_statement: ($) => seq("print", $._expression, ";"),
 
-    block_statement: ($) =>
+    block: ($) =>
       seq("{", repeat(choice($._declaration, $._statement)), "}"),
 
     if_statement: ($) =>
@@ -164,7 +164,7 @@ module.exports = grammar({
       seq(
         "fun",
         field("parameters", $.parameters),
-        field("body", $.block_statement),
+        field("body", $.block),
       ),
 
     group_expression: ($) => seq("(", field("expression", $._expression), ")"),
