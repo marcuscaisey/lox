@@ -33,11 +33,11 @@
   },
   "homepage": "https://github.com/marcuscaisey/lox#readme",
   "dependencies": {
-    "node-addon-api": "^7.1.0",
+    "node-addon-api": "8.x",
     "node-gyp-build": "^4.8.0"
   },
   "peerDependencies": {
-    "tree-sitter": "^0.21.0"
+    "tree-sitter": "0.22.x"
   },
   "peerDependenciesMeta": {
     "tree_sitter": {
@@ -45,7 +45,7 @@
     }
   },
   "devDependencies": {
-    "tree-sitter-cli": "^0.22.6",
+    "tree-sitter-cli": "0.25.x",
     "prebuildify": "^6.0.0"
   },
   "main": "bindings/node",
