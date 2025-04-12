@@ -14,6 +14,13 @@ import (
 // Option can be passed to [Parse] to configure its behaviour.
 type Option func(*parser)
 
+// WithFilename sets the filename of the source code being parsed.
+func WithFilename(filename string) Option {
+	return func(p *parser) {
+		p.lexer.SetFilename(filename)
+	}
+}
+
 // WithComments enables the parsing of comments.
 func WithComments() Option {
 	return func(p *parser) {

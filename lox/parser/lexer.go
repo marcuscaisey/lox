@@ -35,13 +35,12 @@ func newLexer(r io.Reader) (*lexer, error) {
 	if err != nil {
 		return nil, err
 	}
-	filename := name(r)
 
 	l := &lexer{
 		src:        src,
 		errHandler: func(token.Token, string, ...any) {},
 		pos: token.Position{
-			File:   token.NewFile(filename, src),
+			File:   token.NewFile("", src),
 			Line:   1,
 			Column: 0,
 		},
@@ -52,16 +51,13 @@ func newLexer(r io.Reader) (*lexer, error) {
 	return l, nil
 }
 
-func name(v any) string {
-	if n, ok := v.(interface{ Name() string }); ok {
-		return n.Name()
-	}
-	return ""
-}
-
 // SetErrorHandler sets the error handler function which will be called when a syntax error is encountered.
 func (l *lexer) SetErrorHandler(errHandler errorHandler) {
 	l.errHandler = errHandler
+}
+
+func (l *lexer) SetFilename(filename string) {
+	l.pos.File.Name = filename
 }
 
 // Next returns the next token. An EOF token is returned if the end of the source code has been reached.

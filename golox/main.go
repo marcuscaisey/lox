@@ -38,7 +38,7 @@ func main() {
 	flag.Parse()
 
 	if *cmd != "" {
-		if err := run(strings.NewReader(*cmd), interpreter.New()); err != nil {
+		if err := run("", strings.NewReader(*cmd), interpreter.New()); err != nil {
 			log.Fatal(err)
 		}
 		return
@@ -59,8 +59,8 @@ func main() {
 	}
 }
 
-func run(r io.Reader, interpreter *interpreter.Interpreter) error {
-	root, err := parser.Parse(r)
+func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) error {
+	root, err := parser.Parse(r, parser.WithFilename(filename))
 	if *printAST {
 		ast.Print(root)
 		return err
@@ -103,7 +103,7 @@ func runREPL() error {
 			}
 			panic(fmt.Sprintf("unexpected error from readline: %s", err))
 		}
-		if err := run(strings.NewReader(line), interpreter); err != nil {
+		if err := run("", strings.NewReader(line), interpreter); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
@@ -111,11 +111,11 @@ func runREPL() error {
 	return nil
 }
 
-func runFile(name string) error {
-	f, err := os.Open(name)
+func runFile(filename string) error {
+	f, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	return run(f, interpreter.New())
+	return run(filename, f, interpreter.New())
 }

@@ -58,10 +58,10 @@ func run(path string) error {
 		if err != nil {
 			return err
 		}
-		reader = newNamedReader(bytes.NewReader(data), path)
+		reader = bytes.NewReader(data)
 	}
 
-	program, err := parser.Parse(reader, parser.WithComments())
+	program, err := parser.Parse(reader, parser.WithFilename(path), parser.WithComments())
 	if *printAST {
 		ast.Print(program)
 		return err
@@ -80,17 +80,4 @@ func run(path string) error {
 	}
 
 	return nil
-}
-
-type namedReader struct {
-	io.Reader
-	name string
-}
-
-func newNamedReader(r io.Reader, name string) io.Reader {
-	return namedReader{Reader: r, name: name}
-}
-
-func (n namedReader) Name() string {
-	return n.name
 }
