@@ -53,7 +53,7 @@ func readOrDownload(version string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("downloading: reading response body: %w", err)
 	}
-	if err := os.MkdirAll(path.Dir(cachePath), 0750); err != nil {
+	if err := os.MkdirAll(path.Dir(cachePath), 0755); err != nil {
 		return nil, fmt.Errorf("writing to cache: %w", err)
 	}
 	if err := os.WriteFile(cachePath, body, 0644); err != nil {
