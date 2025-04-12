@@ -32,7 +32,7 @@ func sprint(node Node, depth int) string {
 	nodeValue := reflect.ValueOf(node)
 
 	var children []string
-	for i := 0; i < nodeType.NumField(); i++ {
+	for i := range nodeType.NumField() {
 		field := nodeType.Field(i)
 		value := nodeValue.Field(i)
 
@@ -53,7 +53,7 @@ func sprint(node Node, depth int) string {
 				prefix = "  "
 				extraDepth = 1
 			}
-			for j := 0; j < value.Len(); j++ {
+			for j := range value.Len() {
 				child, ok := childString(value.Index(j), depth+1+extraDepth)
 				if !ok {
 					panic(fmt.Sprintf("%s field %s element %d has unsupported type: %T", nodeType.Name(), field.Name, j, value.Index(j).Interface()))

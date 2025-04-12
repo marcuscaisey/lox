@@ -83,7 +83,7 @@ func runTests(t *testing.T, runner testRunner, path string) {
 
 func snakeToPascalCase(s string) string {
 	var b strings.Builder
-	for _, part := range strings.Split(s, "_") {
+	for part := range strings.SplitSeq(s, "_") {
 		r, size := utf8.DecodeRuneInString(part)
 		b.WriteRune(unicode.ToUpper(r))
 		b.WriteString(part[size:])

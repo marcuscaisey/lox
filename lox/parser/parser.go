@@ -562,11 +562,9 @@ func (p *parser) parseFunExpr(funTok token.Token) ast.FunExpr {
 
 // match reports whether the current token is one of the given types and advances the parser if so.
 func (p *parser) match(types ...token.Type) bool {
-	for _, t := range types {
-		if p.tok.Type == t {
-			p.next()
-			return true
-		}
+	if slices.Contains(types, p.tok.Type) {
+		p.next()
+		return true
 	}
 	return false
 }

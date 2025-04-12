@@ -294,7 +294,7 @@ func NewFile(name string, contents []byte) *File {
 		contents: contents,
 	}
 	f.lineOffsets = append(f.lineOffsets, 0)
-	for i := 0; i < len(contents); i++ {
+	for i := range contents {
 		if contents[i] == '\n' {
 			f.lineOffsets = append(f.lineOffsets, i+1)
 		}
