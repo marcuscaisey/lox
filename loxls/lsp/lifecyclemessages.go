@@ -8,8 +8,6 @@ import (
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialize
 func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.InitializeResult, error) {
-	h.initialized = true
-
 	if textDocument := params.Capabilities.TextDocument; textDocument != nil {
 		if documentSymbol := textDocument.DocumentSymbol; documentSymbol != nil {
 			h.clientSupportsHierarchicalDocumentSymbols = documentSymbol.HierarchicalDocumentSymbolSupport
@@ -19,6 +17,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 		}
 	}
 
+	h.initialized = true
 	return &protocol.InitializeResult{
 		Capabilities: &protocol.ServerCapabilities{
 			PositionEncoding: protocol.PositionEncodingKindUTF16,
