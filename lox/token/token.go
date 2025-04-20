@@ -257,7 +257,11 @@ func (p Position) Format(f fmt.State, verb rune) {
 	case 's':
 		fmt.Fprint(f, p.String())
 	default:
-		fmt.Fprintf(f, fmt.FormatString(f, verb), p)
+		fmt.Fprintf(f, fmt.FormatString(f, verb), struct {
+			File   *File
+			Line   int
+			Column int
+		}(p))
 	}
 }
 
