@@ -59,12 +59,12 @@ module.exports = grammar({
       prec.right(
         seq(
           field("name", $.identifier),
-          field("parameters", $.parameters),
+          field("parameters", $.parameter_list),
           field("body", optional($.block)),
         ),
       ),
 
-    parameters: ($) =>
+    parameter_list: ($) =>
       seq(
         "(",
         optional(seq(optional($.identifier), repeat(seq(",", $.identifier)))),
@@ -163,7 +163,7 @@ module.exports = grammar({
     function_expression: ($) =>
       seq(
         "fun",
-        field("parameters", $.parameters),
+        field("parameters", $.parameter_list),
         field("body", $.block),
       ),
 
@@ -176,7 +176,7 @@ module.exports = grammar({
     call_expression: ($) =>
       prec(
         "postfix",
-        seq(field("callee", $._expression), field("arguments", $.arguments)),
+        seq(field("callee", $._expression), field("arguments", $.argument_list)),
       ),
 
     get_expression: ($) =>
@@ -185,7 +185,7 @@ module.exports = grammar({
         seq(field("object", $._expression), ".", field("name", $.identifier)),
       ),
 
-    arguments: ($) =>
+    argument_list: ($) =>
       seq(
         "(",
         optional(

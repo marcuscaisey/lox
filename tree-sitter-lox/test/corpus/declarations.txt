@@ -27,7 +27,7 @@ fun greet() {
 (source_file
   (function_declaration
     name: (identifier)
-    parameters: (parameters)
+    parameters: (parameter_list)
     body: (block
       (print_statement
         (string)))))
@@ -45,7 +45,7 @@ fun id(x) {
 (source_file
   (function_declaration
     name: (identifier)
-    parameters: (parameters
+    parameters: (parameter_list
       (identifier))
     body: (block
       (return_statement
@@ -64,7 +64,7 @@ fun add(x, y) {
 (source_file
   (function_declaration
     name: (identifier)
-    parameters: (parameters
+    parameters: (parameter_list
       (identifier)
       (identifier))
     body: (block
@@ -89,12 +89,12 @@ fun add(x) {
 (source_file
   (function_declaration
     name: (identifier)
-    parameters: (parameters
+    parameters: (parameter_list
       (identifier))
     body: (block
       (function_declaration
         name: (identifier)
-        parameters: (parameters
+        parameters: (parameter_list
           (identifier))
         body: (block
           (return_statement
@@ -115,7 +115,7 @@ fun add(x)
 (source_file
   (function_declaration
     name: (identifier)
-    parameters: (parameters
+    parameters: (parameter_list
       (identifier))))
 
 ================================================================================
@@ -149,7 +149,7 @@ class Breakfast {
     body: (class_body
       (method_declaration
         name: (identifier)
-        parameters: (parameters)
+        parameters: (parameter_list)
         body: (block
           (print_statement
             (string)))))))
@@ -172,7 +172,7 @@ class Breakfast {
     body: (class_body
       (method_declaration
         name: (identifier)
-        parameters: (parameters
+        parameters: (parameter_list
           (identifier))
         body: (block
           (print_statement
@@ -200,7 +200,7 @@ class Breakfast {
     body: (class_body
       (method_declaration
         name: (identifier)
-        parameters: (parameters
+        parameters: (parameter_list
           (identifier)
           (identifier))
         body: (block
@@ -237,13 +237,13 @@ class Breakfast {
     body: (class_body
       (method_declaration
         name: (identifier)
-        parameters: (parameters)
+        parameters: (parameter_list)
         body: (block
           (print_statement
             (string))))
       (method_declaration
         name: (identifier)
-        parameters: (parameters)
+        parameters: (parameter_list)
         body: (block
           (print_statement
             (string)))))))
@@ -266,7 +266,7 @@ class Person {
     body: (class_body
       (method_declaration
         name: (identifier)
-        parameters: (parameters
+        parameters: (parameter_list
           (identifier))
         body: (block
           (expression_statement
@@ -295,7 +295,7 @@ class Math {
       (method_declaration
         (modifiers)
         name: (identifier)
-        parameters: (parameters
+        parameters: (parameter_list
           (identifier))
         body: (block
           (return_statement
@@ -322,7 +322,7 @@ class Circle {
       (method_declaration
         (modifiers)
         name: (identifier)
-        parameters: (parameters)
+        parameters: (parameter_list)
         body: (block
           (return_statement
             (binary_expression
@@ -358,7 +358,7 @@ class Circle {
       (method_declaration
         (modifiers)
         name: (identifier)
-        parameters: (parameters
+        parameters: (parameter_list
           (identifier))
         body: (block
           (if_statement
@@ -369,7 +369,7 @@ class Circle {
               (expression_statement
                 (call_expression
                   callee: (identifier)
-                  arguments: (arguments
+                  arguments: (argument_list
                     (string))))))
           (expression_statement
             (assignment_expression
@@ -396,11 +396,11 @@ class Foo {
       (method_declaration
         (modifiers)
         name: (identifier)
-        parameters: (parameters)
+        parameters: (parameter_list)
         body: (block))
       (method_declaration
         (modifiers)
         name: (identifier)
-        parameters: (parameters
+        parameters: (parameter_list
           (identifier))
         body: (block)))))

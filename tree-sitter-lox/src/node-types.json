@@ -1,6 +1,6 @@
 [
   {
-    "type": "arguments",
+    "type": "argument_list",
     "named": true,
     "fields": {},
     "children": {
@@ -356,7 +356,7 @@
         "required": true,
         "types": [
           {
-            "type": "arguments",
+            "type": "argument_list",
             "named": true
           }
         ]
@@ -766,7 +766,7 @@
         "required": true,
         "types": [
           {
-            "type": "parameters",
+            "type": "parameter_list",
             "named": true
           }
         ]
@@ -792,7 +792,7 @@
         "required": true,
         "types": [
           {
-            "type": "parameters",
+            "type": "parameter_list",
             "named": true
           }
         ]
@@ -1126,7 +1126,7 @@
         "required": true,
         "types": [
           {
-            "type": "parameters",
+            "type": "parameter_list",
             "named": true
           }
         ]
@@ -1149,7 +1149,7 @@
     "fields": {}
   },
   {
-    "type": "parameters",
+    "type": "parameter_list",
     "named": true,
     "fields": {},
     "children": {

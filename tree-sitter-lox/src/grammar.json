@@ -200,7 +200,7 @@
             "name": "parameters",
             "content": {
               "type": "SYMBOL",
-              "name": "parameters"
+              "name": "parameter_list"
             }
           },
           {
@@ -222,7 +222,7 @@
         ]
       }
     },
-    "parameters": {
+    "parameter_list": {
       "type": "SEQ",
       "members": [
         {
@@ -708,7 +708,7 @@
           "name": "parameters",
           "content": {
             "type": "SYMBOL",
-            "name": "parameters"
+            "name": "parameter_list"
           }
         },
         {
@@ -769,7 +769,7 @@
             "name": "arguments",
             "content": {
               "type": "SYMBOL",
-              "name": "arguments"
+              "name": "argument_list"
             }
           }
         ]
@@ -804,7 +804,7 @@
         ]
       }
     },
-    "arguments": {
+    "argument_list": {
       "type": "SEQ",
       "members": [
         {
