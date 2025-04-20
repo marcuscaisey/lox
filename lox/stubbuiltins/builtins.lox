@@ -1,0 +1,15 @@
+// This file provides stubs for Lox's built-ins.
+// Built-ins are not actually implemented in Lox, but these stubs allow tools to pretend that they are.
+
+// Returns the number of seconds since the Unix epoch.
+fun clock() {}
+
+// Returns the type of the object.
+fun type(object) {
+    _ = object;
+}
+
+// Throws a runtime error with the given message.
+fun error(msg) {
+    _ = msg;
+}

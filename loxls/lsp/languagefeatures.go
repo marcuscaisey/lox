@@ -16,7 +16,6 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		return nil, err
 	}
 
-	// TODO: Ignore builtins as they don't have a location.
 	decl, ok := h.declaration(doc, params.Position)
 	if !ok {
 		return nil, nil
@@ -24,7 +23,7 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 
 	return &protocol.LocationOrLocationSlice{
 		Value: &protocol.Location{
-			Uri:   doc.URI,
+			Uri:   filenameToURI(decl.Start().File.Name),
 			Range: newRange(decl.Ident().Start(), decl.Ident().End()),
 		},
 	}, nil
@@ -70,7 +69,7 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*pro
 			continue
 		}
 		locations = append(locations, &protocol.Location{
-			Uri:   doc.URI,
+			Uri:   filenameToURI(reference.Start().File.Name),
 			Range: newRange(reference.Start(), reference.End()),
 		})
 	}
@@ -326,4 +325,8 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 			},
 		},
 	}, nil
+}
+
+func filenameToURI(filename string) string {
+	return fmt.Sprintf("file://%s", filename)
 }

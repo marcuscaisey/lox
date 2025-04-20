@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/marcuscaisey/lox/lox/ast"
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
@@ -18,9 +19,11 @@ type Handler struct {
 	log    *logger
 
 	// Internal state
-	initialized  bool
-	shuttingDown bool
-	docs         map[string]*document
+	initialized          bool
+	shuttingDown         bool
+	stubBuiltinsFilename string
+	stubBuiltins         []ast.Decl
+	docs                 map[string]*document
 
 	// Client capability info
 	clientSupportsHierarchicalDocumentSymbols bool

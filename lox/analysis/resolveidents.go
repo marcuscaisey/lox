@@ -26,6 +26,7 @@ func WithREPLMode() ResolveIdentsOption {
 // ResolveIdents resolves the identifiers in a program to their declarations.
 // It returns a map from identifier to the statement which declared it. If an error is returned then a possibly
 // incomplete map will still be returned along with it.
+// builtins is a list of builtin declarations to add to the global scope.
 //
 // For example, given the following code:
 //
@@ -49,23 +50,21 @@ func WithREPLMode() ResolveIdentsOption {
 //   - used and not declared (best effort for globals)
 //   - used before they are defined (best effort for globals)
 //
-// Some checks are best effort for global identifiers as it's not always possible to (easily) determine how they're used
-// without running the program. For example, in the following example, whether the program is valid depends on whether
-// the global variable x is defined before printX is called.
+// Some checks are best effort for global identifiers as it's not always possible to determine how they're used without
+// running the program. For example, in the following example, whether the program is valid depends on whether the
+// global variable x is defined before printX is called.
 //
 //	fun printX() {
 //	    print x;
 //	}
 //	var x = 1;
 //	printX();
-func ResolveIdents(program ast.Program, opts ...ResolveIdentsOption) (map[ast.Ident]ast.Decl, lox.Errors) {
-	r := newIdentResolver(program, opts...)
-	return r.Resolve()
+func ResolveIdents(program ast.Program, builtins []ast.Decl, opts ...ResolveIdentsOption) (map[ast.Ident]ast.Decl, lox.Errors) {
+	r := newIdentResolver(opts...)
+	return r.Resolve(program, builtins)
 }
 
 type identResolver struct {
-	program ast.Program
-
 	scopes                 *stack.Stack[scope]
 	globalScope            scope
 	globalDecls            map[string]ast.Decl
@@ -79,9 +78,8 @@ type identResolver struct {
 	replMode bool
 }
 
-func newIdentResolver(program ast.Program, opts ...ResolveIdentsOption) *identResolver {
+func newIdentResolver(opts ...ResolveIdentsOption) *identResolver {
 	r := &identResolver{
-		program:                program,
 		scopes:                 stack.New[scope](),
 		forwardDeclaredGlobals: map[string]bool{},
 		identDecls:             map[ast.Ident]ast.Decl{},
@@ -92,18 +90,25 @@ func newIdentResolver(program ast.Program, opts ...ResolveIdentsOption) *identRe
 	return r
 }
 
-func (r *identResolver) Resolve() (map[ast.Ident]ast.Decl, lox.Errors) {
-	r.resolve()
+func (r *identResolver) Resolve(program ast.Program, builtins []ast.Decl) (map[ast.Ident]ast.Decl, lox.Errors) {
+	r.resolve(program, builtins)
 	return r.identDecls, r.errs
 }
 
-func (r *identResolver) resolve() {
+func (r *identResolver) resolve(program ast.Program, builtins []ast.Decl) {
 	endScope := r.beginScope()
 	defer endScope()
+
 	r.globalScope = r.scopes.Peek()
-	r.declareBuiltins(r.globalScope)
-	r.globalDecls = r.readGlobalDecls(r.program)
-	ast.Walk(r.program, r.walk)
+	for _, decl := range builtins {
+		name := decl.Ident().Token.Lexeme
+		r.globalScope.Declare(decl)
+		r.globalScope.Define(name)
+		r.globalScope.Use(name)
+	}
+	r.globalDecls = r.readGlobalDecls(program)
+
+	ast.Walk(program, r.walk)
 }
 
 func (r *identResolver) readGlobalDecls(program ast.Program) map[string]ast.Decl {
@@ -117,14 +122,6 @@ func (r *identResolver) readGlobalDecls(program ast.Program) map[string]ast.Decl
 		}
 	}
 	return decls
-}
-
-func (r *identResolver) declareBuiltins(scope scope) {
-	for _, name := range lox.AllBuiltins {
-		scope.DeclareName(name)
-		scope.Define(name)
-		scope.Use(name) // We don't want to raise unused declaration errors for builtins.
-	}
 }
 
 type declStatus int

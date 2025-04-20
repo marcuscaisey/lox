@@ -9,13 +9,15 @@ import (
 	"github.com/marcuscaisey/lox/lox"
 	"github.com/marcuscaisey/lox/lox/analysis"
 	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/lox/stubbuiltins"
 	"github.com/marcuscaisey/lox/lox/token"
 )
 
 // Interpreter is the interpreter for the language.
 type Interpreter struct {
-	globals   environment
-	callStack *callStack
+	globals      environment
+	callStack    *callStack
+	stubBuiltins []ast.Decl
 
 	replMode bool
 }
@@ -38,8 +40,9 @@ func New(opts ...Option) *Interpreter {
 		globals = globals.Define(name, builtin)
 	}
 	interpreter := &Interpreter{
-		globals:   globals,
-		callStack: newCallStack(),
+		globals:      globals,
+		callStack:    newCallStack(),
+		stubBuiltins: stubbuiltins.MustParse("builtins.lox"),
 	}
 	for _, opt := range opts {
 		opt(interpreter)
@@ -54,7 +57,7 @@ func (i *Interpreter) Interpret(program ast.Program) error {
 	if i.replMode {
 		opts = append(opts, analysis.WithREPLMode())
 	}
-	_, errs := analysis.ResolveIdents(program, opts...)
+	_, errs := analysis.ResolveIdents(program, i.stubBuiltins, opts...)
 	errs = append(errs, analysis.CheckSemantics(program)...)
 	if err := errs.Err(); err != nil {
 		return err

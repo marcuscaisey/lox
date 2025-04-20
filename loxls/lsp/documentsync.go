@@ -56,27 +56,38 @@ func (h *Handler) textDocumentDidChange(params *protocol.DidChangeTextDocumentPa
 }
 
 func (h *Handler) updateDoc(uri string, version int, src string) error {
-	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithComments())
+	filename, err := uriToFilename(uri)
+	if err != nil {
+		return fmt.Errorf("updating document: %w", err)
+	}
+	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithFilename(filename), parser.WithComments())
 
 	var loxErrs lox.Errors
 	var identDecls map[ast.Ident]ast.Decl
 	if err != nil {
 		if !errors.As(err, &loxErrs) {
-			return err
+			return fmt.Errorf("updating document: %w", err)
 		}
 	} else {
-		identDecls, loxErrs = analysis.ResolveIdents(program)
+		var builtins []ast.Decl
+		if filename != h.stubBuiltinsFilename {
+			builtins = h.stubBuiltins
+		}
+		identDecls, loxErrs = analysis.ResolveIdents(program, builtins)
 		loxErrs = append(loxErrs, analysis.CheckSemantics(program)...)
 		loxErrs.Sort()
 	}
 
-	diagnostics := make([]*protocol.Diagnostic, len(loxErrs))
-	for i, e := range loxErrs {
-		diagnostics[i] = &protocol.Diagnostic{
-			Range:    newRange(e.Start, e.End),
-			Severity: protocol.DiagnosticSeverityError,
-			Source:   "loxls",
-			Message:  e.Msg,
+	diagnostics := []*protocol.Diagnostic{}
+	if filename != h.stubBuiltinsFilename {
+		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
+		for i, e := range loxErrs {
+			diagnostics[i] = &protocol.Diagnostic{
+				Range:    newRange(e.Start, e.End),
+				Severity: protocol.DiagnosticSeverityError,
+				Source:   "loxls",
+				Message:  e.Msg,
+			}
 		}
 	}
 
@@ -94,6 +105,13 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		Version:     version,
 		Diagnostics: diagnostics,
 	})
+}
+
+func uriToFilename(uri string) (string, error) {
+	if !strings.HasPrefix(uri, "file://") {
+		return "", fmt.Errorf("invalid URI %q: must start with file://", uri)
+	}
+	return strings.TrimPrefix(uri, "file://"), nil
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didClose
