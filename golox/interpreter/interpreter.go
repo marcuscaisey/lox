@@ -53,11 +53,7 @@ func New(opts ...Option) *Interpreter {
 // Interpret interprets a program and returns an error if one occurred.
 // Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program ast.Program) error {
-	var opts []analysis.ResolveIdentsOption
-	if i.replMode {
-		opts = append(opts, analysis.WithREPLMode())
-	}
-	_, errs := analysis.ResolveIdents(program, i.stubBuiltins, opts...)
+	_, errs := analysis.ResolveIdents(program, i.stubBuiltins, analysis.WithREPLMode(i.replMode))
 	errs = append(errs, analysis.CheckSemantics(program)...)
 	if err := errs.Err(); err != nil {
 		return err

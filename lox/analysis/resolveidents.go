@@ -17,9 +17,9 @@ type ResolveIdentsOption func(*identResolver)
 //   - declared and never used
 //   - declared more than once in the same scope
 //   - used before they are declared
-func WithREPLMode() ResolveIdentsOption {
+func WithREPLMode(enabled bool) ResolveIdentsOption {
 	return func(i *identResolver) {
-		i.replMode = true
+		i.replMode = enabled
 	}
 }
 

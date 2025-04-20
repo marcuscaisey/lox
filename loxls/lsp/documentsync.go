@@ -60,7 +60,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if err != nil {
 		return fmt.Errorf("updating document: %w", err)
 	}
-	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithFilename(filename), parser.WithComments())
+	program, err := parser.Parse(strings.NewReader(string(src)), parser.WithFilename(filename), parser.WithComments(true))
 
 	var loxErrs lox.Errors
 	var identDecls map[ast.Ident]ast.Decl

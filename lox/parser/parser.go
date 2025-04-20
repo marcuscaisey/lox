@@ -22,9 +22,9 @@ func WithFilename(filename string) Option {
 }
 
 // WithComments enables the parsing of comments.
-func WithComments() Option {
+func WithComments(enabled bool) Option {
 	return func(p *parser) {
-		p.parseComments = true
+		p.parseComments = enabled
 	}
 }
 

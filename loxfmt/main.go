@@ -61,7 +61,7 @@ func run(path string) error {
 		reader = bytes.NewReader(data)
 	}
 
-	program, err := parser.Parse(reader, parser.WithFilename(path), parser.WithComments())
+	program, err := parser.Parse(reader, parser.WithFilename(path), parser.WithComments(true))
 	if *printAST {
 		ast.Print(program)
 		return err
