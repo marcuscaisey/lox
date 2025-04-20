@@ -72,6 +72,7 @@ func (r interpreterRunner) runInterpreter(t *testing.T, path string) interpreter
 		t.Fatal(err)
 	}
 	t.Logf("%s %s", relInterpeter, relPath)
+	t.Logf("go run ./golox %s", relPath)
 
 	stdout, err := cmd.Output()
 

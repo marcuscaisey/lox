@@ -60,6 +60,7 @@ func (r formatterRunner) runFormatter(t *testing.T, path string, flags ...string
 	}
 	argsWithRelPath := append(slices.Clone(flags), relPath)
 	t.Logf("%s %s", relFormatter, strings.Join(argsWithRelPath, " "))
+	t.Logf("go run ./loxfmt %s", strings.Join(argsWithRelPath, " "))
 
 	stdout, err := cmd.Output()
 	exitErr := &exec.ExitError{}
