@@ -216,10 +216,13 @@ type Position struct {
 
 // Compare returns
 //
-//	-1 if p is comes before other in the file,
-//	 0 if p and other are the same position,
-//	+1 if p comes after other in the file.
+//	-1 if p's file comes before other's or p and other are in the same file and p comes before other,
+//	 0 if p and other are the same position in the same file,
+//	+1 if p's file comes after other's or p and other are in the same file and p comes after other.
 func (p Position) Compare(other Position) int {
+	if p.File.Name != other.File.Name {
+		return cmp.Compare(p.File.Name, other.File.Name)
+	}
 	if p.Line == other.Line {
 		return cmp.Compare(p.Column, other.Column)
 	}
