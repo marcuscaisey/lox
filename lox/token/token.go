@@ -237,7 +237,7 @@ func (p Position) ColumnUTF16() int {
 
 func (p Position) String() string {
 	var prefix string
-	if p.File != nil && p.File.Name != "" {
+	if p.File.Name != "" {
 		prefix = p.File.Name + ":"
 	}
 	line := p.File.Line(p.Line)
@@ -251,7 +251,7 @@ func (p Position) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'm':
 		var prefix string
-		if p.File != nil && p.File.Name != "" {
+		if p.File.Name != "" {
 			prefix = ansi.Sprint("${CYAN}", p.File.Name, "${DEFAULT}:")
 		}
 		line := p.File.Line(p.Line)
