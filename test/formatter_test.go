@@ -15,8 +15,8 @@ var (
 	noFormatComment = "// noformat"
 )
 
-func newFormatterRunner(pwd string, formatter string) formatterRunner {
-	return formatterRunner{
+func newFormatterRunner(pwd string, formatter string) *formatterRunner {
+	return &formatterRunner{
 		pwd:       pwd,
 		formatter: formatter,
 	}
@@ -27,7 +27,7 @@ type formatterRunner struct {
 	formatter string
 }
 
-func (r formatterRunner) Test(t *testing.T, path string) {
+func (r *formatterRunner) Test(t *testing.T, path string) {
 	want, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -43,7 +43,7 @@ func (r formatterRunner) Test(t *testing.T, path string) {
 	}
 }
 
-func (r formatterRunner) runFormatter(t *testing.T, path string, flags ...string) []byte {
+func (r *formatterRunner) runFormatter(t *testing.T, path string, flags ...string) []byte {
 	args := append(slices.Clone(flags), path)
 	cmd := exec.Command(*formatter, args...)
 	relFormatter, err := filepath.Rel(r.pwd, r.formatter)
@@ -74,7 +74,7 @@ func (r formatterRunner) runFormatter(t *testing.T, path string, flags ...string
 	return stdout
 }
 
-func (r formatterRunner) Update(t *testing.T, path string) {
+func (r *formatterRunner) Update(t *testing.T, path string) {
 	contents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

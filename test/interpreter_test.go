@@ -17,8 +17,8 @@ var (
 	errorRe  = regexp.MustCompile(`// error: (.+)`)
 )
 
-func newInterpreterRunner(pwd string, interpreter string) interpreterRunner {
-	return interpreterRunner{
+func newInterpreterRunner(pwd string, interpreter string) *interpreterRunner {
+	return &interpreterRunner{
 		pwd:         pwd,
 		interpreter: interpreter,
 	}
@@ -29,7 +29,7 @@ type interpreterRunner struct {
 	interpreter string
 }
 
-func (r interpreterRunner) Test(t *testing.T, path string) {
+func (r *interpreterRunner) Test(t *testing.T, path string) {
 	want := r.parseExpectedResult(t, path)
 	got := r.runInterpreter(t, path)
 
@@ -57,7 +57,7 @@ type interpreterResult struct {
 	ExitCode int
 }
 
-func (r interpreterRunner) runInterpreter(t *testing.T, path string) interpreterResult {
+func (r *interpreterRunner) runInterpreter(t *testing.T, path string) *interpreterResult {
 	cmd := exec.Command(r.interpreter, path)
 	relInterpeter, err := filepath.Rel(r.pwd, r.interpreter)
 	if err != nil {
@@ -86,7 +86,7 @@ func (r interpreterRunner) runInterpreter(t *testing.T, path string) interpreter
 		errors = append(errors, match[1])
 	}
 
-	return interpreterResult{
+	return &interpreterResult{
 		Stdout:   stdout,
 		Stderr:   exitErr.Stderr,
 		Errors:   errors,
@@ -94,7 +94,7 @@ func (r interpreterRunner) runInterpreter(t *testing.T, path string) interpreter
 	}
 }
 
-func (r interpreterRunner) parseExpectedResult(t *testing.T, path string) interpreterResult {
+func (r *interpreterRunner) parseExpectedResult(t *testing.T, path string) *interpreterResult {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -102,7 +102,7 @@ func (r interpreterRunner) parseExpectedResult(t *testing.T, path string) interp
 
 	errors := r.parseExpectedErrors(data)
 
-	result := interpreterResult{
+	result := &interpreterResult{
 		Stdout: r.parseExpectedStdout(data),
 		Errors: errors,
 	}
@@ -113,7 +113,7 @@ func (r interpreterRunner) parseExpectedResult(t *testing.T, path string) interp
 	return result
 }
 
-func (r interpreterRunner) parseExpectedStdout(data []byte) []byte {
+func (r *interpreterRunner) parseExpectedStdout(data []byte) []byte {
 	var b bytes.Buffer
 	for _, match := range printsRe.FindAllSubmatch(data, -1) {
 		if !bytes.Equal(match[1], []byte("<empty>")) {
@@ -124,7 +124,7 @@ func (r interpreterRunner) parseExpectedStdout(data []byte) []byte {
 	return b.Bytes()
 }
 
-func (r interpreterRunner) parseExpectedErrors(data []byte) [][]byte {
+func (r *interpreterRunner) parseExpectedErrors(data []byte) [][]byte {
 	var errors [][]byte
 	for _, match := range errorRe.FindAllSubmatch(data, -1) {
 		errors = append(errors, match[1])
@@ -132,7 +132,7 @@ func (r interpreterRunner) parseExpectedErrors(data []byte) [][]byte {
 	return errors
 }
 
-func (r interpreterRunner) Update(t *testing.T, path string) {
+func (r *interpreterRunner) Update(t *testing.T, path string) {
 	t.Logf("updating expected output for %s", path)
 
 	result := r.runInterpreter(t, path)
@@ -167,7 +167,7 @@ func (r interpreterRunner) Update(t *testing.T, path string) {
 	}
 }
 
-func (r interpreterRunner) updateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte) []byte {
+func (r *interpreterRunner) updateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte) []byte {
 	var lines [][]byte
 	if len(stdout) > 0 {
 		lines = bytes.Split(bytes.TrimSuffix(stdout, []byte("\n")), []byte("\n"))
@@ -198,7 +198,7 @@ func (r interpreterRunner) updateExpectedStdout(t *testing.T, path string, data 
 	return b.Bytes()
 }
 
-func (r interpreterRunner) updateExpectedErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
+func (r *interpreterRunner) updateExpectedErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
 	matches := errorRe.FindAllSubmatchIndex(data, -1)
 	if len(errors) != len(matches) {
 		t.Fatalf(`%d "// error:" %s found in %s but %d %s printed to stderr, these should be equal`,
