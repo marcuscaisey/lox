@@ -412,7 +412,7 @@ func ({{$receiver}} *{{$.name}}) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
+func ({{$receiver}} *{{$.name}}) MarshalJSON() ([]byte, error) {
 	return json.Marshal({{$receiver}}.Value)
 }
 {{end}}

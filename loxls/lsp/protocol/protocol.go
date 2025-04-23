@@ -53,7 +53,7 @@ func (i *IntegerOrString) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (i IntegerOrString) MarshalJSON() ([]byte, error) {
+func (i *IntegerOrString) MarshalJSON() ([]byte, error) {
 	return json.Marshal(i.Value)
 }
 
@@ -1537,7 +1537,7 @@ func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) UnmarshalJSO
 	}
 }
 
-func (b BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -1587,7 +1587,7 @@ func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2) UnmarshalJSON
 	}
 }
 
-func (b BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -2147,7 +2147,7 @@ func (l *LSPObjectOrLSPArrayOrStringOrIntegerOrUintegerOrDecimalOrBoolean) Unmar
 	}
 }
 
-func (l LSPObjectOrLSPArrayOrStringOrIntegerOrUintegerOrDecimalOrBoolean) MarshalJSON() ([]byte, error) {
+func (l *LSPObjectOrLSPArrayOrStringOrIntegerOrUintegerOrDecimalOrBoolean) MarshalJSON() ([]byte, error) {
 	return json.Marshal(l.Value)
 }
 
@@ -2394,7 +2394,7 @@ func (b *BooleanOrSaveOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrSaveOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrSaveOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -2456,7 +2456,7 @@ func (t *TextDocumentSyncOptionsOrTextDocumentSyncKind) UnmarshalJSON(data []byt
 	}
 }
 
-func (t TextDocumentSyncOptionsOrTextDocumentSyncKind) MarshalJSON() ([]byte, error) {
+func (t *TextDocumentSyncOptionsOrTextDocumentSyncKind) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Value)
 }
 
@@ -2537,7 +2537,7 @@ func (n *NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentF
 	}
 }
 
-func (n NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3) MarshalJSON() ([]byte, error) {
+func (n *NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n.Value)
 }
 
@@ -2589,7 +2589,7 @@ func (s *StringOrNotebookDocumentFilter) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (s StringOrNotebookDocumentFilter) MarshalJSON() ([]byte, error) {
+func (s *StringOrNotebookDocumentFilter) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Value)
 }
 
@@ -2660,7 +2660,7 @@ func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOpt
 	}
 }
 
-func (n NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2) MarshalJSON() ([]byte, error) {
+func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n.Value)
 }
 
@@ -2748,7 +2748,7 @@ func (n *NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions) U
 	}
 }
 
-func (n NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (n *NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(n.Value)
 }
 
@@ -2845,7 +2845,7 @@ func (b *BooleanOrHoverOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrHoverOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrHoverOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -2947,7 +2947,7 @@ func (t *TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3) Un
 	}
 }
 
-func (t TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3) MarshalJSON() ([]byte, error) {
+func (t *TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Value)
 }
 
@@ -3029,7 +3029,7 @@ func (t *TextDocumentFilterOrNotebookCellTextDocumentFilter) UnmarshalJSON(data 
 	}
 }
 
-func (t TextDocumentFilterOrNotebookCellTextDocumentFilter) MarshalJSON() ([]byte, error) {
+func (t *TextDocumentFilterOrNotebookCellTextDocumentFilter) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Value)
 }
 
@@ -3114,7 +3114,7 @@ func (b *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions) UnmarshalJ
 	}
 }
 
-func (b BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3164,7 +3164,7 @@ func (b *BooleanOrDefinitionOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrDefinitionOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrDefinitionOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3229,7 +3229,7 @@ func (b *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions) Unma
 	}
 }
 
-func (b BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3294,7 +3294,7 @@ func (b *BooleanOrImplementationOptionsOrImplementationRegistrationOptions) Unma
 	}
 }
 
-func (b BooleanOrImplementationOptionsOrImplementationRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrImplementationOptionsOrImplementationRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3344,7 +3344,7 @@ func (b *BooleanOrReferenceOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrReferenceOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrReferenceOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3394,7 +3394,7 @@ func (b *BooleanOrDocumentHighlightOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrDocumentHighlightOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrDocumentHighlightOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3449,7 +3449,7 @@ func (b *BooleanOrDocumentSymbolOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrDocumentSymbolOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrDocumentSymbolOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3509,7 +3509,7 @@ func (b *BooleanOrCodeActionOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrCodeActionOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrCodeActionOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3592,7 +3592,7 @@ func (b *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions) Unmars
 	}
 }
 
-func (b BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3647,7 +3647,7 @@ func (b *BooleanOrWorkspaceSymbolOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrWorkspaceSymbolOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrWorkspaceSymbolOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3697,7 +3697,7 @@ func (b *BooleanOrDocumentFormattingOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrDocumentFormattingOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrDocumentFormattingOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3752,7 +3752,7 @@ func (b *BooleanOrDocumentRangeFormattingOptions) UnmarshalJSON(data []byte) err
 	}
 }
 
-func (b BooleanOrDocumentRangeFormattingOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrDocumentRangeFormattingOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3816,7 +3816,7 @@ func (b *BooleanOrRenameOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrRenameOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrRenameOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3880,7 +3880,7 @@ func (b *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions) Unmarsha
 	}
 }
 
-func (b BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -3945,7 +3945,7 @@ func (b *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions) Unma
 	}
 }
 
-func (b BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4027,7 +4027,7 @@ func (b *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions) Unmars
 	}
 }
 
-func (b BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4092,7 +4092,7 @@ func (b *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptio
 	}
 }
 
-func (b BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4148,7 +4148,7 @@ func (b *BooleanOrSemanticTokensOptionsRangeOr2) UnmarshalJSON(data []byte) erro
 	}
 }
 
-func (b BooleanOrSemanticTokensOptionsRangeOr2) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrSemanticTokensOptionsRangeOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4196,7 +4196,7 @@ func (b *BooleanOrSemanticTokensOptionsFullOr2) UnmarshalJSON(data []byte) error
 	}
 }
 
-func (b BooleanOrSemanticTokensOptionsFullOr2) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrSemanticTokensOptionsFullOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4263,7 +4263,7 @@ func (s *SemanticTokensOptionsOrSemanticTokensRegistrationOptions) UnmarshalJSON
 	}
 }
 
-func (s SemanticTokensOptionsOrSemanticTokensRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (s *SemanticTokensOptionsOrSemanticTokensRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Value)
 }
 
@@ -4325,7 +4325,7 @@ func (b *BooleanOrMonikerOptionsOrMonikerRegistrationOptions) UnmarshalJSON(data
 	}
 }
 
-func (b BooleanOrMonikerOptionsOrMonikerRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrMonikerOptionsOrMonikerRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4398,7 +4398,7 @@ func (b *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions) Unmars
 	}
 }
 
-func (b BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4470,7 +4470,7 @@ func (b *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions) UnmarshalJ
 	}
 }
 
-func (b BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4545,7 +4545,7 @@ func (b *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions) UnmarshalJSON(
 	}
 }
 
-func (b BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4618,7 +4618,7 @@ func (d *DiagnosticOptionsOrDiagnosticRegistrationOptions) UnmarshalJSON(data []
 	}
 }
 
-func (d DiagnosticOptionsOrDiagnosticRegistrationOptions) MarshalJSON() ([]byte, error) {
+func (d *DiagnosticOptionsOrDiagnosticRegistrationOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.Value)
 }
 
@@ -4671,7 +4671,7 @@ func (b *BooleanOrInlineCompletionOptions) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (b BooleanOrInlineCompletionOptions) MarshalJSON() ([]byte, error) {
+func (b *BooleanOrInlineCompletionOptions) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b.Value)
 }
 
@@ -4714,7 +4714,7 @@ func (s *StringOrBoolean) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (s StringOrBoolean) MarshalJSON() ([]byte, error) {
+func (s *StringOrBoolean) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Value)
 }
 
@@ -5159,7 +5159,7 @@ func (s *StringOrMarkedStringOr2) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (s StringOrMarkedStringOr2) MarshalJSON() ([]byte, error) {
+func (s *StringOrMarkedStringOr2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Value)
 }
 
@@ -5228,7 +5228,7 @@ func (m *MarkupContentOrMarkedStringOrMarkedStringSlice) UnmarshalJSON(data []by
 	}
 }
 
-func (m MarkupContentOrMarkedStringOrMarkedStringSlice) MarshalJSON() ([]byte, error) {
+func (m *MarkupContentOrMarkedStringOrMarkedStringSlice) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m.Value)
 }
 
@@ -5332,7 +5332,7 @@ func (l *LocationOrLocationSlice) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (l LocationOrLocationSlice) MarshalJSON() ([]byte, error) {
+func (l *LocationOrLocationSlice) MarshalJSON() ([]byte, error) {
 	return json.Marshal(l.Value)
 }
 
@@ -5416,7 +5416,7 @@ func (d *DefinitionOrDefinitionLinkSlice) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (d DefinitionOrDefinitionLinkSlice) MarshalJSON() ([]byte, error) {
+func (d *DefinitionOrDefinitionLinkSlice) MarshalJSON() ([]byte, error) {
 	return json.Marshal(d.Value)
 }
 
@@ -5567,7 +5567,7 @@ func (s *SymbolInformationSliceOrDocumentSymbolSlice) UnmarshalJSON(data []byte)
 	}
 }
 
-func (s SymbolInformationSliceOrDocumentSymbolSlice) MarshalJSON() ([]byte, error) {
+func (s *SymbolInformationSliceOrDocumentSymbolSlice) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.Value)
 }
 
@@ -5699,7 +5699,7 @@ func (t *TextEditOrAnnotatedTextEdit) UnmarshalJSON(data []byte) error {
 	}
 }
 
-func (t TextEditOrAnnotatedTextEdit) MarshalJSON() ([]byte, error) {
+func (t *TextEditOrAnnotatedTextEdit) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Value)
 }
 
@@ -5920,7 +5920,7 @@ func (t *TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile) UnmarshalJSON(dat
 	}
 }
 
-func (t TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile) MarshalJSON() ([]byte, error) {
+func (t *TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Value)
 }
 
@@ -6143,7 +6143,7 @@ func (i *IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChang
 	}
 }
 
-func (i IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent) MarshalJSON() ([]byte, error) {
+func (i *IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(i.Value)
 }
 
