@@ -19,7 +19,7 @@ var Source []byte
 // MustParse parses the stubs of Lox's built-ins and returns the declarations.
 // filename is the name of the file that the declarations will be associated with.
 func MustParse(filename string) []ast.Decl {
-	program, err := parser.Parse(bytes.NewBuffer(Source), parser.WithFilename(filename), parser.WithComments(true))
+	program, err := parser.Parse(bytes.NewBuffer(Source), filename, parser.WithComments(true))
 	if err != nil {
 		panic(fmt.Sprintf("parsing built-in stubs: %s", err))
 	}

@@ -30,7 +30,8 @@ type lexer struct {
 }
 
 // newLexer constructs a lexer which will lex the source code read from an io.Reader.
-func newLexer(r io.Reader) (*lexer, error) {
+// filename is the name of the file being lexed.
+func newLexer(r io.Reader, filename string) (*lexer, error) {
 	src, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -40,7 +41,7 @@ func newLexer(r io.Reader) (*lexer, error) {
 		src:        src,
 		errHandler: func(token.Token, string, ...any) {},
 		pos: token.Position{
-			File:   token.NewFile("", src),
+			File:   token.NewFile(filename, src),
 			Line:   1,
 			Column: 0,
 		},
@@ -54,10 +55,6 @@ func newLexer(r io.Reader) (*lexer, error) {
 // SetErrorHandler sets the error handler function which will be called when a syntax error is encountered.
 func (l *lexer) SetErrorHandler(errHandler errorHandler) {
 	l.errHandler = errHandler
-}
-
-func (l *lexer) SetFilename(filename string) {
-	l.pos.File.Name = filename
 }
 
 // Next returns the next token. An EOF token is returned if the end of the source code has been reached.

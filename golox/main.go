@@ -60,7 +60,7 @@ func main() {
 }
 
 func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) error {
-	root, err := parser.Parse(r, parser.WithFilename(filename))
+	root, err := parser.Parse(r, filename)
 	if *printAST {
 		ast.Print(root)
 		return err

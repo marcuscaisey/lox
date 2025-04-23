@@ -14,13 +14,6 @@ import (
 // Option can be passed to [Parse] to configure its behaviour.
 type Option func(*parser)
 
-// WithFilename sets the filename of the source code being parsed.
-func WithFilename(filename string) Option {
-	return func(p *parser) {
-		p.lexer.SetFilename(filename)
-	}
-}
-
 // WithComments enables the parsing of comments.
 func WithComments(enabled bool) Option {
 	return func(p *parser) {
@@ -29,10 +22,11 @@ func WithComments(enabled bool) Option {
 }
 
 // Parse parses the source code read from r.
+// filename is the name of the file being parsed.
 // If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
 // this error will be a [lox.Errors] containing all of the errors.
-func Parse(r io.Reader, opts ...Option) (ast.Program, error) {
-	lexer, err := newLexer(r)
+func Parse(r io.Reader, filename string, opts ...Option) (ast.Program, error) {
+	lexer, err := newLexer(r, filename)
 	if err != nil {
 		return ast.Program{}, fmt.Errorf("parsing lox source: %w", err)
 	}

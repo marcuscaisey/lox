@@ -23,7 +23,7 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 
 	return &protocol.LocationOrLocationSlice{
 		Value: &protocol.Location{
-			Uri:   filenameToURI(decl.Start().File.Name),
+			Uri:   filenameToURI(decl.Start().File.Name()),
 			Range: newRange(decl.Ident().Start(), decl.Ident().End()),
 		},
 	}, nil
@@ -69,7 +69,7 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*pro
 			continue
 		}
 		locations = append(locations, &protocol.Location{
-			Uri:   filenameToURI(reference.Start().File.Name),
+			Uri:   filenameToURI(reference.Start().File.Name()),
 			Range: newRange(reference.Start(), reference.End()),
 		})
 	}

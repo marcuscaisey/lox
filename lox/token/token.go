@@ -220,8 +220,8 @@ type Position struct {
 //	 0 if p and other are the same position in the same file,
 //	+1 if p's file comes after other's or p and other are in the same file and p comes after other.
 func (p Position) Compare(other Position) int {
-	if p.File.Name != other.File.Name {
-		return cmp.Compare(p.File.Name, other.File.Name)
+	if p.File.name != other.File.name {
+		return cmp.Compare(p.File.name, other.File.name)
 	}
 	if p.Line == other.Line {
 		return cmp.Compare(p.Column, other.Column)
@@ -237,8 +237,8 @@ func (p Position) ColumnUTF16() int {
 
 func (p Position) String() string {
 	var prefix string
-	if p.File.Name != "" {
-		prefix = p.File.Name + ":"
+	if p.File.name != "" {
+		prefix = p.File.name + ":"
 	}
 	line := p.File.Line(p.Line)
 	col := runewidth.StringWidth(string(line[:p.Column])) + 1
@@ -251,8 +251,8 @@ func (p Position) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'm':
 		var prefix string
-		if p.File.Name != "" {
-			prefix = ansi.Sprint("${CYAN}", p.File.Name, "${DEFAULT}:")
+		if p.File.name != "" {
+			prefix = ansi.Sprint("${CYAN}", p.File.name, "${DEFAULT}:")
 		}
 		line := p.File.Line(p.Line)
 		col := runewidth.StringWidth(string(line[:p.Column])) + 1
@@ -289,7 +289,7 @@ func (r Ranges[T]) End() Position {
 
 // File is a simple representation of a file.
 type File struct {
-	Name        string
+	name        string
 	contents    []byte
 	lineOffsets []int
 }
@@ -297,7 +297,7 @@ type File struct {
 // NewFile returns a new File with the given contents.
 func NewFile(name string, contents []byte) *File {
 	f := &File{
-		Name:     name,
+		name:     name,
 		contents: contents,
 	}
 	f.lineOffsets = append(f.lineOffsets, 0)
@@ -307,6 +307,11 @@ func NewFile(name string, contents []byte) *File {
 		}
 	}
 	return f
+}
+
+// Name returns the name of the file.
+func (f *File) Name() string {
+	return f.name
 }
 
 // Line returns the nth line of the file.
