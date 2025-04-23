@@ -51,7 +51,7 @@ func (h *Handler) declaration(doc *document, pos *protocol.Position) (ast.Decl, 
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
-func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*protocol.LocationSlice, error) {
+func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (protocol.LocationSlice, error) {
 	doc, err := h.document(params.TextDocument.Uri)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (*pro
 		})
 	}
 
-	return &locations, nil
+	return locations, nil
 }
 
 func (h *Handler) references(doc *document, decl ast.Decl) []ast.Ident {
