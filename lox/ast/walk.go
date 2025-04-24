@@ -10,8 +10,8 @@ func Walk(node Node, f func(Node) bool) {
 	case *Program:
 		walkSlice(node.Stmts, f)
 	case *Ident:
-	case *CommentStmt:
-	case *InlineCommentStmt:
+	case *Comment:
+	case *InlineComment:
 		Walk(node.Stmt, f)
 	case *VarDecl:
 		Walk(node.Name, f)

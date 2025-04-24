@@ -18,9 +18,9 @@ func Node(node ast.Node) string {
 		return formatProgram(node)
 	case *ast.Ident:
 		return formatIdent(node)
-	case *ast.CommentStmt:
-		return formatCommentStmt(node)
-	case *ast.InlineCommentStmt:
+	case *ast.Comment:
+		return formatComment(node)
+	case *ast.InlineComment:
 		return formatCommentedStmt(node)
 	case *ast.VarDecl:
 		return formatVarDecl(node)
@@ -104,11 +104,11 @@ func formatStmts[T ast.Stmt](stmts []T) string {
 	return b.String()
 }
 
-func formatCommentStmt(stmt *ast.CommentStmt) string {
+func formatComment(stmt *ast.Comment) string {
 	return stmt.Comment.Lexeme
 }
 
-func formatCommentedStmt(stmt *ast.InlineCommentStmt) string {
+func formatCommentedStmt(stmt *ast.InlineComment) string {
 	return fmt.Sprintf("%s %s", Node(stmt.Stmt), stmt.Comment.Lexeme)
 }
 

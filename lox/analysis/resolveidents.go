@@ -114,8 +114,8 @@ func (r *identResolver) resolve(program *ast.Program, builtins []ast.Decl) {
 func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Decl {
 	decls := map[string]ast.Decl{}
 	for _, stmt := range program.Stmts {
-		if inlineCommentStmt, ok := stmt.(*ast.InlineCommentStmt); ok {
-			stmt = inlineCommentStmt.Stmt
+		if inlineComment, ok := stmt.(*ast.InlineComment); ok {
+			stmt = inlineComment.Stmt
 		}
 		if decl, ok := stmt.(ast.Decl); ok {
 			decls[decl.Ident().Token.Lexeme] = decl

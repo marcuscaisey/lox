@@ -74,7 +74,7 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
 	for !slices.Contains(types, p.tok.Type) {
 		stmt := p.safelyParseDecl()
-		if _, ok := stmt.(*ast.CommentStmt); ok && !p.parseComments {
+		if _, ok := stmt.(*ast.Comment); ok && !p.parseComments {
 			continue
 		}
 		stmts = append(stmts, stmt)
@@ -120,7 +120,7 @@ func (p *parser) parseDecl() ast.Stmt {
 	var stmt ast.Stmt
 	switch tok := p.tok; {
 	case p.match(token.Comment):
-		stmt = p.parseCommentStmt(tok)
+		stmt = p.parseComment(tok)
 	case p.match(token.Var):
 		stmt = p.parseVarDecl(tok)
 	case p.tok.Type == token.Fun && p.nextTok.Type == token.Ident:
@@ -132,15 +132,15 @@ func (p *parser) parseDecl() ast.Stmt {
 		stmt = p.parseStmt()
 	}
 
-	if inlineCommentStmt, ok := p.parseInlineCommentStmt(stmt); ok {
-		return inlineCommentStmt
+	if inlineComment, ok := p.parseInlineComment(stmt); ok {
+		return inlineComment
 	}
 
 	return stmt
 }
 
-func (p *parser) parseCommentStmt(commentTok token.Token) *ast.CommentStmt {
-	return &ast.CommentStmt{Comment: commentTok}
+func (p *parser) parseComment(commentTok token.Token) *ast.Comment {
+	return &ast.Comment{Comment: commentTok}
 }
 
 func (p *parser) parseVarDecl(varTok token.Token) *ast.VarDecl {
@@ -172,7 +172,7 @@ func (p *parser) parseClassDecl(classTok token.Token) *ast.ClassDecl {
 			if !ok {
 				break
 			}
-			comment := p.parseCommentStmt(tok)
+			comment := p.parseComment(tok)
 			if p.parseComments {
 				body = append(body, comment)
 			}
@@ -272,19 +272,19 @@ func (p *parser) parseStmt() ast.Stmt {
 		stmt = p.parseExprStmt()
 	}
 
-	if inlineCommentStmt, ok := p.parseInlineCommentStmt(stmt); ok {
+	if inlineCommentStmt, ok := p.parseInlineComment(stmt); ok {
 		return inlineCommentStmt
 	}
 
 	return stmt
 }
 
-func (p *parser) parseInlineCommentStmt(stmt ast.Stmt) (*ast.InlineCommentStmt, bool) {
+func (p *parser) parseInlineComment(stmt ast.Stmt) (*ast.InlineComment, bool) {
 	comment, ok := p.matchFunc(func(tok token.Token) bool {
 		return tok.Type == token.Comment && tok.StartPos.Line == stmt.End().Line
 	})
 	if ok && p.parseComments {
-		return &ast.InlineCommentStmt{Stmt: stmt, Comment: comment}, true
+		return &ast.InlineComment{Stmt: stmt, Comment: comment}, true
 	}
 	return nil, false
 }

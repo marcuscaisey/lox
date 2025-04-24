@@ -49,28 +49,28 @@ type stmt struct {
 
 func (stmt) isStmt() {}
 
-// CommentStmt is a comment on its own line, such as
+// Comment is a comment on its own line, such as
 //
 //	// comment
-type CommentStmt struct {
+type Comment struct {
 	Comment token.Token `print:"unnamed"`
 	stmt
 }
 
-func (c *CommentStmt) Start() token.Position { return c.Comment.StartPos }
-func (c *CommentStmt) End() token.Position   { return c.Comment.EndPos }
+func (c *Comment) Start() token.Position { return c.Comment.StartPos }
+func (c *Comment) End() token.Position   { return c.Comment.EndPos }
 
-// InlineCommentStmt is a statement with a comment on the same line, such as
+// InlineComment is a statement with a comment on the same line, such as
 //
 //	print 1; // *comment
-type InlineCommentStmt struct {
+type InlineComment struct {
 	Stmt    Stmt        `print:"unnamed"`
 	Comment token.Token `print:"named"`
 	stmt
 }
 
-func (s *InlineCommentStmt) Start() token.Position { return s.Stmt.Start() }
-func (s *InlineCommentStmt) End() token.Position   { return s.Comment.EndPos }
+func (s *InlineComment) Start() token.Position { return s.Stmt.Start() }
+func (s *InlineComment) End() token.Position   { return s.Comment.EndPos }
 
 // Decl is the interface which all declaration nodes implement.
 //
