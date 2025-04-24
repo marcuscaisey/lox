@@ -14,79 +14,79 @@ const indentSize = 4
 // Node formats node in canonical Lox style and returns the result. node is expected to be a syntactically correct.
 func Node(node ast.Node) string {
 	switch node := node.(type) {
-	case ast.Program:
+	case *ast.Program:
 		return formatProgram(node)
-	case ast.Ident:
+	case *ast.Ident:
 		return formatIdent(node)
-	case ast.CommentStmt:
+	case *ast.CommentStmt:
 		return formatCommentStmt(node)
-	case ast.InlineCommentStmt:
+	case *ast.InlineCommentStmt:
 		return formatCommentedStmt(node)
-	case ast.VarDecl:
+	case *ast.VarDecl:
 		return formatVarDecl(node)
-	case ast.FunDecl:
+	case *ast.FunDecl:
 		return formatFunDecl(node)
-	case ast.Function:
+	case *ast.Function:
 		return formatFun(node)
-	case ast.ParamDecl:
+	case *ast.ParamDecl:
 		return formatParamDecl(node)
-	case ast.ClassDecl:
+	case *ast.ClassDecl:
 		return formatClassDecl(node)
-	case ast.MethodDecl:
+	case *ast.MethodDecl:
 		return formatMethodDecl(node)
-	case ast.ExprStmt:
+	case *ast.ExprStmt:
 		return formatExprStmt(node)
-	case ast.PrintStmt:
+	case *ast.PrintStmt:
 		return formatPrintStmt(node)
-	case ast.BlockStmt:
+	case *ast.BlockStmt:
 		return formatBlockStmt(node)
-	case ast.IfStmt:
+	case *ast.IfStmt:
 		return formatIfStmt(node)
-	case ast.WhileStmt:
+	case *ast.WhileStmt:
 		return formatWhileStmt(node)
-	case ast.ForStmt:
+	case *ast.ForStmt:
 		return formatForStmt(node)
-	case ast.BreakStmt:
+	case *ast.BreakStmt:
 		return formatBreakStmt(node)
-	case ast.ContinueStmt:
+	case *ast.ContinueStmt:
 		return formatContinueStmt(node)
-	case ast.ReturnStmt:
+	case *ast.ReturnStmt:
 		return formatReturnStmt(node)
-	case ast.FunExpr:
+	case *ast.FunExpr:
 		return formatFunExpr(node)
-	case ast.GroupExpr:
+	case *ast.GroupExpr:
 		return formatGroupExpr(node)
-	case ast.LiteralExpr:
+	case *ast.LiteralExpr:
 		return formatLiteralExpr(node)
-	case ast.IdentExpr:
+	case *ast.IdentExpr:
 		return formatIdentExpr(node)
-	case ast.ThisExpr:
+	case *ast.ThisExpr:
 		return formatThisExpr(node)
-	case ast.CallExpr:
+	case *ast.CallExpr:
 		return formatCallExpr(node)
-	case ast.GetExpr:
+	case *ast.GetExpr:
 		return formatGetExpr(node)
-	case ast.UnaryExpr:
+	case *ast.UnaryExpr:
 		return formatUnaryExpr(node)
-	case ast.BinaryExpr:
+	case *ast.BinaryExpr:
 		return formatBinaryExpr(node)
-	case ast.TernaryExpr:
+	case *ast.TernaryExpr:
 		return formatTernaryExpr(node)
-	case ast.AssignmentExpr:
+	case *ast.AssignmentExpr:
 		return formatAssignmentExpr(node)
-	case ast.SetExpr:
+	case *ast.SetExpr:
 		return formatSetExpr(node)
-	case ast.IllegalStmt:
+	case *ast.IllegalStmt:
 		panic("IllegalStmt cannot be formatted")
 	}
 	panic("unreachable")
 }
 
-func formatIdent(ident ast.Ident) string {
+func formatIdent(ident *ast.Ident) string {
 	return ident.Token.Lexeme
 }
 
-func formatProgram(program ast.Program) string {
+func formatProgram(program *ast.Program) string {
 	return fmt.Sprint(formatStmts(program.Stmts), "\n")
 }
 
@@ -104,15 +104,15 @@ func formatStmts[T ast.Stmt](stmts []T) string {
 	return b.String()
 }
 
-func formatCommentStmt(stmt ast.CommentStmt) string {
+func formatCommentStmt(stmt *ast.CommentStmt) string {
 	return stmt.Comment.Lexeme
 }
 
-func formatCommentedStmt(stmt ast.InlineCommentStmt) string {
+func formatCommentedStmt(stmt *ast.InlineCommentStmt) string {
 	return fmt.Sprintf("%s %s", Node(stmt.Stmt), stmt.Comment.Lexeme)
 }
 
-func formatVarDecl(decl ast.VarDecl) string {
+func formatVarDecl(decl *ast.VarDecl) string {
 	if decl.Initialiser != nil {
 		return fmt.Sprintf("var %s = %s;", Node(decl.Name), Node(decl.Initialiser))
 	} else {
@@ -120,11 +120,11 @@ func formatVarDecl(decl ast.VarDecl) string {
 	}
 }
 
-func formatFunDecl(decl ast.FunDecl) string {
+func formatFunDecl(decl *ast.FunDecl) string {
 	return fmt.Sprintf("fun %s%s", Node(decl.Name), Node(decl.Function))
 }
 
-func formatFun(fun ast.Function) string {
+func formatFun(fun *ast.Function) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "(")
 	for i, param := range fun.Params {
@@ -137,15 +137,15 @@ func formatFun(fun ast.Function) string {
 	return b.String()
 }
 
-func formatParamDecl(decl ast.ParamDecl) string {
+func formatParamDecl(decl *ast.ParamDecl) string {
 	return formatIdent(decl.Name)
 }
 
-func formatClassDecl(decl ast.ClassDecl) string {
+func formatClassDecl(decl *ast.ClassDecl) string {
 	return fmt.Sprintf("class %s %s", Node(decl.Name), formatBlock(decl.Body))
 }
 
-func formatMethodDecl(decl ast.MethodDecl) string {
+func formatMethodDecl(decl *ast.MethodDecl) string {
 	var b strings.Builder
 	for _, modifier := range decl.Modifiers {
 		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
@@ -154,15 +154,15 @@ func formatMethodDecl(decl ast.MethodDecl) string {
 	return b.String()
 }
 
-func formatExprStmt(stmt ast.ExprStmt) string {
+func formatExprStmt(stmt *ast.ExprStmt) string {
 	return fmt.Sprintf("%s;", Node(stmt.Expr))
 }
 
-func formatPrintStmt(stmt ast.PrintStmt) string {
+func formatPrintStmt(stmt *ast.PrintStmt) string {
 	return fmt.Sprintf("print %s;", Node(stmt.Expr))
 }
 
-func formatBlockStmt(stmt ast.BlockStmt) string {
+func formatBlockStmt(stmt *ast.BlockStmt) string {
 	return formatBlock(stmt.Stmts)
 }
 
@@ -174,11 +174,11 @@ func formatBlock[T ast.Stmt](stmts []T) string {
 	}
 }
 
-func formatIfStmt(stmt ast.IfStmt) string {
+func formatIfStmt(stmt *ast.IfStmt) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "if (%s)", Node(stmt.Condition))
 	var thenIsBlock bool
-	if _, thenIsBlock = stmt.Then.(ast.BlockStmt); thenIsBlock {
+	if _, thenIsBlock = stmt.Then.(*ast.BlockStmt); thenIsBlock {
 		fmt.Fprint(&b, " ", Node(stmt.Then))
 	} else {
 		fmt.Fprint(&b, "\n", indent(Node(stmt.Then)))
@@ -190,7 +190,7 @@ func formatIfStmt(stmt ast.IfStmt) string {
 			fmt.Fprint(&b, "\n")
 		}
 		switch stmt.Else.(type) {
-		case ast.IfStmt, ast.BlockStmt:
+		case *ast.IfStmt, *ast.BlockStmt:
 			fmt.Fprint(&b, "else ", Node(stmt.Else))
 		default:
 			fmt.Fprint(&b, "else\n", indent(Node(stmt.Else)))
@@ -199,15 +199,15 @@ func formatIfStmt(stmt ast.IfStmt) string {
 	return b.String()
 }
 
-func formatWhileStmt(stmt ast.WhileStmt) string {
-	if _, ok := stmt.Body.(ast.BlockStmt); ok {
+func formatWhileStmt(stmt *ast.WhileStmt) string {
+	if _, ok := stmt.Body.(*ast.BlockStmt); ok {
 		return fmt.Sprintf("while (%s) %s", Node(stmt.Condition), Node(stmt.Body))
 	} else {
 		return fmt.Sprintf("while (%s)\n%s", Node(stmt.Condition), indent(Node(stmt.Body)))
 	}
 }
 
-func formatForStmt(stmt ast.ForStmt) string {
+func formatForStmt(stmt *ast.ForStmt) string {
 	var b strings.Builder
 	fmt.Fprint(&b, "for (")
 	if stmt.Initialise != nil {
@@ -223,7 +223,7 @@ func formatForStmt(stmt ast.ForStmt) string {
 		fmt.Fprintf(&b, " %s", Node(stmt.Update))
 	}
 	fmt.Fprint(&b, ")")
-	if _, ok := stmt.Body.(ast.BlockStmt); ok {
+	if _, ok := stmt.Body.(*ast.BlockStmt); ok {
 		fmt.Fprintf(&b, " %s", Node(stmt.Body))
 	} else {
 		fmt.Fprintf(&b, "\n%s", indent(Node(stmt.Body)))
@@ -231,15 +231,15 @@ func formatForStmt(stmt ast.ForStmt) string {
 	return b.String()
 }
 
-func formatBreakStmt(ast.BreakStmt) string {
+func formatBreakStmt(*ast.BreakStmt) string {
 	return "break;"
 }
 
-func formatContinueStmt(ast.ContinueStmt) string {
+func formatContinueStmt(*ast.ContinueStmt) string {
 	return "continue;"
 }
 
-func formatReturnStmt(stmt ast.ReturnStmt) string {
+func formatReturnStmt(stmt *ast.ReturnStmt) string {
 	if stmt.Value != nil {
 		return fmt.Sprintf("return %s;", Node(stmt.Value))
 	} else {
@@ -247,27 +247,27 @@ func formatReturnStmt(stmt ast.ReturnStmt) string {
 	}
 }
 
-func formatFunExpr(expr ast.FunExpr) string {
+func formatFunExpr(expr *ast.FunExpr) string {
 	return fmt.Sprintf("fun%s", Node(expr.Function))
 }
 
-func formatGroupExpr(expr ast.GroupExpr) string {
+func formatGroupExpr(expr *ast.GroupExpr) string {
 	return fmt.Sprintf("(%s)", Node(expr.Expr))
 }
 
-func formatLiteralExpr(expr ast.LiteralExpr) string {
+func formatLiteralExpr(expr *ast.LiteralExpr) string {
 	return expr.Value.Lexeme
 }
 
-func formatIdentExpr(expr ast.IdentExpr) string {
+func formatIdentExpr(expr *ast.IdentExpr) string {
 	return expr.Ident.Token.Lexeme
 }
 
-func formatThisExpr(ast.ThisExpr) string {
+func formatThisExpr(*ast.ThisExpr) string {
 	return "this"
 }
 
-func formatCallExpr(expr ast.CallExpr) string {
+func formatCallExpr(expr *ast.CallExpr) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s(", Node(expr.Callee))
 	for i, arg := range expr.Args {
@@ -280,15 +280,15 @@ func formatCallExpr(expr ast.CallExpr) string {
 	return b.String()
 }
 
-func formatGetExpr(expr ast.GetExpr) string {
+func formatGetExpr(expr *ast.GetExpr) string {
 	return fmt.Sprintf("%s.%s", Node(expr.Object), Node(expr.Name))
 }
 
-func formatUnaryExpr(expr ast.UnaryExpr) string {
+func formatUnaryExpr(expr *ast.UnaryExpr) string {
 	return fmt.Sprintf("%s%s", expr.Op.Lexeme, Node(expr.Right))
 }
 
-func formatBinaryExpr(expr ast.BinaryExpr) string {
+func formatBinaryExpr(expr *ast.BinaryExpr) string {
 	leftSpace := " "
 	if expr.Op.Type == token.Comma {
 		// Comma operator is a special case where we don't want a space before it. A binary expression with a comma
@@ -298,15 +298,15 @@ func formatBinaryExpr(expr ast.BinaryExpr) string {
 	return fmt.Sprintf("%s%s%s %s", Node(expr.Left), leftSpace, expr.Op.Lexeme, Node(expr.Right))
 }
 
-func formatTernaryExpr(expr ast.TernaryExpr) string {
+func formatTernaryExpr(expr *ast.TernaryExpr) string {
 	return fmt.Sprint(Node(expr.Condition), " ? ", Node(expr.Then), " : ", Node(expr.Else))
 }
 
-func formatAssignmentExpr(expr ast.AssignmentExpr) string {
+func formatAssignmentExpr(expr *ast.AssignmentExpr) string {
 	return fmt.Sprintf("%s = %s", Node(expr.Left), Node(expr.Right))
 }
 
-func formatSetExpr(expr ast.SetExpr) string {
+func formatSetExpr(expr *ast.SetExpr) string {
 	return fmt.Sprintf("%s.%s = %s", Node(expr.Object), Node(expr.Name), Node(expr.Value))
 }
 

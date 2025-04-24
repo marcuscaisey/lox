@@ -7,47 +7,47 @@ func Walk(node Node, f func(Node) bool) {
 		return
 	}
 	switch node := node.(type) {
-	case Program:
+	case *Program:
 		walkSlice(node.Stmts, f)
-	case Ident:
-	case CommentStmt:
-	case InlineCommentStmt:
+	case *Ident:
+	case *CommentStmt:
+	case *InlineCommentStmt:
 		Walk(node.Stmt, f)
-	case VarDecl:
+	case *VarDecl:
 		Walk(node.Name, f)
 		if node.Initialiser != nil {
 			Walk(node.Initialiser, f)
 		}
-	case FunDecl:
+	case *FunDecl:
 		Walk(node.Name, f)
 		Walk(node.Function, f)
-	case Function:
+	case *Function:
 		walkSlice(node.Params, f)
 		walkSlice(node.Body.Stmts, f)
-	case ParamDecl:
+	case *ParamDecl:
 		Walk(node.Name, f)
-	case ClassDecl:
+	case *ClassDecl:
 		Walk(node.Name, f)
 		walkSlice(node.Body, f)
-	case MethodDecl:
+	case *MethodDecl:
 		Walk(node.Name, f)
 		Walk(node.Function, f)
-	case ExprStmt:
+	case *ExprStmt:
 		Walk(node.Expr, f)
-	case PrintStmt:
+	case *PrintStmt:
 		Walk(node.Expr, f)
-	case BlockStmt:
+	case *BlockStmt:
 		walkSlice(node.Stmts, f)
-	case IfStmt:
+	case *IfStmt:
 		Walk(node.Condition, f)
 		Walk(node.Then, f)
 		if node.Else != nil {
 			Walk(node.Else, f)
 		}
-	case WhileStmt:
+	case *WhileStmt:
 		Walk(node.Condition, f)
 		Walk(node.Body, f)
-	case ForStmt:
+	case *ForStmt:
 		if node.Initialise != nil {
 			Walk(node.Initialise, f)
 		}
@@ -58,40 +58,40 @@ func Walk(node Node, f func(Node) bool) {
 			Walk(node.Update, f)
 		}
 		Walk(node.Body, f)
-	case IllegalStmt:
-	case BreakStmt:
-	case ContinueStmt:
-	case ReturnStmt:
+	case *IllegalStmt:
+	case *BreakStmt:
+	case *ContinueStmt:
+	case *ReturnStmt:
 		if node.Value != nil {
 			Walk(node.Value, f)
 		}
-	case FunExpr:
+	case *FunExpr:
 		Walk(node.Function, f)
-	case GroupExpr:
+	case *GroupExpr:
 		Walk(node.Expr, f)
-	case LiteralExpr:
-	case IdentExpr:
+	case *LiteralExpr:
+	case *IdentExpr:
 		Walk(node.Ident, f)
-	case ThisExpr:
-	case CallExpr:
+	case *ThisExpr:
+	case *CallExpr:
 		Walk(node.Callee, f)
 		walkSlice(node.Args, f)
-	case GetExpr:
+	case *GetExpr:
 		Walk(node.Object, f)
 		Walk(node.Name, f)
-	case UnaryExpr:
+	case *UnaryExpr:
 		Walk(node.Right, f)
-	case BinaryExpr:
+	case *BinaryExpr:
 		Walk(node.Left, f)
 		Walk(node.Right, f)
-	case TernaryExpr:
+	case *TernaryExpr:
 		Walk(node.Condition, f)
 		Walk(node.Then, f)
 		Walk(node.Else, f)
-	case AssignmentExpr:
+	case *AssignmentExpr:
 		Walk(node.Left, f)
 		Walk(node.Right, f)
-	case SetExpr:
+	case *SetExpr:
 		Walk(node.Object, f)
 		Walk(node.Name, f)
 		Walk(node.Value, f)

@@ -59,7 +59,7 @@ func WithREPLMode(enabled bool) ResolveIdentsOption {
 //	}
 //	var x = 1;
 //	printX();
-func ResolveIdents(program ast.Program, builtins []ast.Decl, opts ...ResolveIdentsOption) (map[ast.Ident]ast.Decl, lox.Errors) {
+func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...ResolveIdentsOption) (map[*ast.Ident]ast.Decl, lox.Errors) {
 	r := newIdentResolver(opts...)
 	return r.Resolve(program, builtins)
 }
@@ -72,7 +72,7 @@ type identResolver struct {
 	inFun                  bool
 	funScopeLevel          int
 
-	identDecls map[ast.Ident]ast.Decl
+	identDecls map[*ast.Ident]ast.Decl
 	errs       lox.Errors
 
 	replMode bool
@@ -82,7 +82,7 @@ func newIdentResolver(opts ...ResolveIdentsOption) *identResolver {
 	r := &identResolver{
 		scopes:                 stack.New[scope](),
 		forwardDeclaredGlobals: map[string]bool{},
-		identDecls:             map[ast.Ident]ast.Decl{},
+		identDecls:             map[*ast.Ident]ast.Decl{},
 	}
 	for _, opt := range opts {
 		opt(r)
@@ -90,12 +90,12 @@ func newIdentResolver(opts ...ResolveIdentsOption) *identResolver {
 	return r
 }
 
-func (r *identResolver) Resolve(program ast.Program, builtins []ast.Decl) (map[ast.Ident]ast.Decl, lox.Errors) {
+func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, lox.Errors) {
 	r.resolve(program, builtins)
 	return r.identDecls, r.errs
 }
 
-func (r *identResolver) resolve(program ast.Program, builtins []ast.Decl) {
+func (r *identResolver) resolve(program *ast.Program, builtins []ast.Decl) {
 	endScope := r.beginScope()
 	defer endScope()
 
@@ -111,10 +111,10 @@ func (r *identResolver) resolve(program ast.Program, builtins []ast.Decl) {
 	ast.Walk(program, r.walk)
 }
 
-func (r *identResolver) readGlobalDecls(program ast.Program) map[string]ast.Decl {
+func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Decl {
 	decls := map[string]ast.Decl{}
 	for _, stmt := range program.Stmts {
-		if inlineCommentStmt, ok := stmt.(ast.InlineCommentStmt); ok {
+		if inlineCommentStmt, ok := stmt.(*ast.InlineCommentStmt); ok {
 			stmt = inlineCommentStmt.Stmt
 		}
 		if decl, ok := stmt.(ast.Decl); ok {
@@ -139,13 +139,13 @@ type decl struct {
 // scope represents a lexical scope and keeps track of the identifiers declared in that scope
 type scope struct {
 	decls            map[string]*decl
-	undeclaredUsages map[string][]ast.Ident
+	undeclaredUsages map[string][]*ast.Ident
 }
 
 func newScope() scope {
 	return scope{
 		decls:            map[string]*decl{},
-		undeclaredUsages: map[string][]ast.Ident{},
+		undeclaredUsages: map[string][]*ast.Ident{},
 	}
 }
 
@@ -153,8 +153,8 @@ func newScope() scope {
 func (s scope) DeclareName(name string) {
 	// TODO: This makes builtins appear as if they're variables (i.e. when hovered over in the editor). Come up with a
 	// better way to handle these.
-	s.Declare(ast.VarDecl{
-		Name: ast.Ident{
+	s.Declare(&ast.VarDecl{
+		Name: &ast.Ident{
 			Token: token.Token{Lexeme: name},
 		},
 	})
@@ -186,7 +186,7 @@ func (s scope) Use(name string) {
 }
 
 // UseUndeclared marks an undeclared identifier as used in the scope.
-func (s scope) UseUndeclared(ident ast.Ident) {
+func (s scope) UseUndeclared(ident *ast.Ident) {
 	s.undeclaredUsages[ident.Token.Lexeme] = append(s.undeclaredUsages[ident.Token.Lexeme], ident)
 }
 
@@ -215,8 +215,8 @@ func (s scope) UnusedDeclarations() iter.Seq[ast.Decl] {
 }
 
 // UndeclaredIdents returns an iterator over the identifiers in the scope that were used before they were declared.
-func (s scope) UndeclaredUsages() iter.Seq[ast.Ident] {
-	return func(yield func(ast.Ident) bool) {
+func (s scope) UndeclaredUsages() iter.Seq[*ast.Ident] {
+	return func(yield func(*ast.Ident) bool) {
 		for _, idents := range s.undeclaredUsages {
 			for _, ident := range idents {
 				if !yield(ident) {
@@ -264,7 +264,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 	}
 }
 
-func (r *identResolver) defineIdent(ident ast.Ident) {
+func (r *identResolver) defineIdent(ident *ast.Ident) {
 	if ident.Token.Lexeme == token.PlaceholderIdent {
 		return
 	}
@@ -283,7 +283,7 @@ const (
 	identOpWrite
 )
 
-func (r *identResolver) resolveIdent(ident ast.Ident, op identOp) {
+func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 	if ident.Token.Lexeme == token.PlaceholderIdent {
 		return
 	}
@@ -312,21 +312,21 @@ func (r *identResolver) resolveIdent(ident ast.Ident, op identOp) {
 
 func (r *identResolver) walk(node ast.Node) bool {
 	switch node := node.(type) {
-	case ast.VarDecl:
+	case *ast.VarDecl:
 		r.walkVarDecl(node)
-	case ast.FunDecl:
+	case *ast.FunDecl:
 		r.walkFunDecl(node)
-	case ast.ClassDecl:
+	case *ast.ClassDecl:
 		r.walkClassDecl(node)
-	case ast.BlockStmt:
+	case *ast.BlockStmt:
 		r.walkBlockStmt(node)
-	case ast.ForStmt:
+	case *ast.ForStmt:
 		r.walkForStmt(node)
-	case ast.FunExpr:
+	case *ast.FunExpr:
 		r.walkFunExpr(node)
-	case ast.IdentExpr:
+	case *ast.IdentExpr:
 		r.resolveIdentExpr(node)
-	case ast.AssignmentExpr:
+	case *ast.AssignmentExpr:
 		r.walkAssignmentExpr(node)
 	default:
 		return true
@@ -334,7 +334,7 @@ func (r *identResolver) walk(node ast.Node) bool {
 	return false
 }
 
-func (r *identResolver) walkVarDecl(decl ast.VarDecl) {
+func (r *identResolver) walkVarDecl(decl *ast.VarDecl) {
 	if decl.Initialiser != nil {
 		ast.Walk(decl.Initialiser, r.walk)
 		r.declareIdent(decl)
@@ -344,7 +344,7 @@ func (r *identResolver) walkVarDecl(decl ast.VarDecl) {
 	}
 }
 
-func (r *identResolver) walkFunDecl(decl ast.FunDecl) {
+func (r *identResolver) walkFunDecl(decl *ast.FunDecl) {
 	r.declareIdent(decl)
 	r.defineIdent(decl.Name)
 	prevFunScopeLevel := r.funScopeLevel
@@ -353,7 +353,7 @@ func (r *identResolver) walkFunDecl(decl ast.FunDecl) {
 	r.walkFun(decl.Function)
 }
 
-func (r *identResolver) walkFun(fun ast.Function) {
+func (r *identResolver) walkFun(fun *ast.Function) {
 	endScope := r.beginScope()
 	defer endScope()
 
@@ -370,7 +370,7 @@ func (r *identResolver) walkFun(fun ast.Function) {
 	}
 }
 
-func (r *identResolver) walkClassDecl(decl ast.ClassDecl) {
+func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	r.declareIdent(decl)
 	r.defineIdent(decl.Name)
 	endScope := r.beginScope()
@@ -384,7 +384,7 @@ func (r *identResolver) walkClassDecl(decl ast.ClassDecl) {
 	}
 }
 
-func (r *identResolver) walkBlockStmt(block ast.BlockStmt) {
+func (r *identResolver) walkBlockStmt(block *ast.BlockStmt) {
 	exitScope := r.beginScope()
 	defer exitScope()
 	for _, stmt := range block.Stmts {
@@ -392,7 +392,7 @@ func (r *identResolver) walkBlockStmt(block ast.BlockStmt) {
 	}
 }
 
-func (r *identResolver) walkForStmt(stmt ast.ForStmt) {
+func (r *identResolver) walkForStmt(stmt *ast.ForStmt) {
 	endScope := r.beginScope()
 	defer endScope()
 	if stmt.Initialise != nil {
@@ -407,15 +407,15 @@ func (r *identResolver) walkForStmt(stmt ast.ForStmt) {
 	ast.Walk(stmt.Body, r.walk)
 }
 
-func (r *identResolver) walkFunExpr(expr ast.FunExpr) {
+func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
 	r.walkFun(expr.Function)
 }
 
-func (r *identResolver) resolveIdentExpr(expr ast.IdentExpr) {
+func (r *identResolver) resolveIdentExpr(expr *ast.IdentExpr) {
 	r.resolveIdent(expr.Ident, identOpRead)
 }
 
-func (r *identResolver) walkAssignmentExpr(expr ast.AssignmentExpr) {
+func (r *identResolver) walkAssignmentExpr(expr *ast.AssignmentExpr) {
 	ast.Walk(expr.Right, r.walk)
 	r.resolveIdent(expr.Left, identOpWrite)
 	r.defineIdent(expr.Left)

@@ -25,10 +25,10 @@ func WithComments(enabled bool) Option {
 // filename is the name of the file being parsed.
 // If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
 // this error will be a [lox.Errors] containing all of the errors.
-func Parse(r io.Reader, filename string, opts ...Option) (ast.Program, error) {
+func Parse(r io.Reader, filename string, opts ...Option) (*ast.Program, error) {
 	lexer, err := newLexer(r, filename)
 	if err != nil {
-		return ast.Program{}, fmt.Errorf("parsing lox source: %w", err)
+		return nil, fmt.Errorf("parsing lox source: %w", err)
 	}
 
 	p := &parser{lexer: lexer}
@@ -57,15 +57,15 @@ type parser struct {
 // Parse parses the source code and returns the root node of the abstract syntax tree.
 // If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
 // this error will be a [lox.Errors] containing all of the errors.
-func (p *parser) Parse() (ast.Program, error) {
+func (p *parser) Parse() (*ast.Program, error) {
 	// Populate tok and nextTok
 	p.next()
 	p.next()
 	return p.parseProgram(), p.errs.Err()
 }
 
-func (p *parser) parseProgram() ast.Program {
-	return ast.Program{
+func (p *parser) parseProgram() *ast.Program {
+	return &ast.Program{
 		Stmts: p.parseDeclsUntil(token.EOF),
 	}
 }
@@ -74,7 +74,7 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
 	for !slices.Contains(types, p.tok.Type) {
 		stmt := p.safelyParseDecl()
-		if _, ok := stmt.(ast.CommentStmt); ok && !p.parseComments {
+		if _, ok := stmt.(*ast.CommentStmt); ok && !p.parseComments {
 			continue
 		}
 		stmts = append(stmts, stmt)
@@ -88,7 +88,7 @@ func (p *parser) safelyParseDecl() (stmt ast.Stmt) {
 		if r := recover(); r != nil {
 			if _, ok := r.(unwind); ok {
 				to := p.sync()
-				stmt = ast.IllegalStmt{From: from, To: to}
+				stmt = &ast.IllegalStmt{From: from, To: to}
 			} else {
 				panic(r)
 			}
@@ -139,30 +139,30 @@ func (p *parser) parseDecl() ast.Stmt {
 	return stmt
 }
 
-func (p *parser) parseCommentStmt(commentTok token.Token) ast.CommentStmt {
-	return ast.CommentStmt{Comment: commentTok}
+func (p *parser) parseCommentStmt(commentTok token.Token) *ast.CommentStmt {
+	return &ast.CommentStmt{Comment: commentTok}
 }
 
-func (p *parser) parseVarDecl(varTok token.Token) ast.VarDecl {
+func (p *parser) parseVarDecl(varTok token.Token) *ast.VarDecl {
 	name := p.expectf(token.Ident, "expected variable name")
 	var value ast.Expr
 	if p.match(token.Equal) {
 		value = p.parseExpr()
 	}
 	semicolon := p.expectSemicolon()
-	return ast.VarDecl{Var: varTok, Name: ast.Ident{Token: name}, Initialiser: value, Semicolon: semicolon}
+	return &ast.VarDecl{Var: varTok, Name: &ast.Ident{Token: name}, Initialiser: value, Semicolon: semicolon}
 }
 
-func (p *parser) parseFunDecl(funTok token.Token) ast.FunDecl {
+func (p *parser) parseFunDecl(funTok token.Token) *ast.FunDecl {
 	name := p.expectf(token.Ident, "expected function name")
-	return ast.FunDecl{
+	return &ast.FunDecl{
 		Fun:      funTok,
-		Name:     ast.Ident{Token: name},
+		Name:     &ast.Ident{Token: name},
 		Function: p.parseFun(),
 	}
 }
 
-func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
+func (p *parser) parseClassDecl(classTok token.Token) *ast.ClassDecl {
 	name := p.expectf(token.Ident, "expected class name")
 	p.expect(token.LeftBrace)
 	var body []ast.Stmt
@@ -185,15 +185,15 @@ func (p *parser) parseClassDecl(classTok token.Token) ast.ClassDecl {
 		}
 	}
 	rightBrace := p.expect(token.RightBrace)
-	return ast.ClassDecl{
+	return &ast.ClassDecl{
 		Class:      classTok,
-		Name:       ast.Ident{Token: name},
+		Name:       &ast.Ident{Token: name},
 		Body:       body,
 		RightBrace: rightBrace,
 	}
 }
 
-func (p *parser) parseMethodDecl() (ast.MethodDecl, bool) {
+func (p *parser) parseMethodDecl() (*ast.MethodDecl, bool) {
 	var modifiers []token.Token
 	if tok, ok := p.match2(token.Static); ok {
 		modifiers = append(modifiers, tok)
@@ -208,38 +208,38 @@ func (p *parser) parseMethodDecl() (ast.MethodDecl, bool) {
 	} else if tok, ok := p.match2(token.Ident); ok {
 		name = tok
 	} else {
-		return ast.MethodDecl{}, false
+		return nil, false
 	}
 
-	return ast.MethodDecl{
+	return &ast.MethodDecl{
 		Modifiers: modifiers,
-		Name:      ast.Ident{Token: name},
+		Name:      &ast.Ident{Token: name},
 		Function:  p.parseFun(),
 	}, true
 }
 
-func (p *parser) parseFun() ast.Function {
+func (p *parser) parseFun() *ast.Function {
 	leftParen := p.expect(token.LeftParen)
-	var params token.Ranges[ast.ParamDecl]
+	var params token.Ranges[*ast.ParamDecl]
 	if !p.match(token.RightParen) {
 		params = p.parseParams()
 		p.expect(token.RightParen)
 	}
 	leftBrace := p.expect(token.LeftBrace)
 	body := p.parseBlock(leftBrace)
-	return ast.Function{
+	return &ast.Function{
 		LeftParen: leftParen,
 		Params:    params,
 		Body:      body,
 	}
 }
 
-func (p *parser) parseParams() token.Ranges[ast.ParamDecl] {
-	var params token.Ranges[ast.ParamDecl]
+func (p *parser) parseParams() token.Ranges[*ast.ParamDecl] {
+	var params token.Ranges[*ast.ParamDecl]
 	for {
 		tok := p.expectf(token.Ident, "expected parameter name")
-		paramDecl := ast.ParamDecl{
-			Name: ast.Ident{Token: tok},
+		paramDecl := &ast.ParamDecl{
+			Name: &ast.Ident{Token: tok},
 		}
 		params = append(params, paramDecl)
 		if !p.match(token.Comma) {
@@ -279,35 +279,35 @@ func (p *parser) parseStmt() ast.Stmt {
 	return stmt
 }
 
-func (p *parser) parseInlineCommentStmt(stmt ast.Stmt) (ast.InlineCommentStmt, bool) {
+func (p *parser) parseInlineCommentStmt(stmt ast.Stmt) (*ast.InlineCommentStmt, bool) {
 	comment, ok := p.matchFunc(func(tok token.Token) bool {
 		return tok.Type == token.Comment && tok.StartPos.Line == stmt.End().Line
 	})
 	if ok && p.parseComments {
-		return ast.InlineCommentStmt{Stmt: stmt, Comment: comment}, true
+		return &ast.InlineCommentStmt{Stmt: stmt, Comment: comment}, true
 	}
-	return ast.InlineCommentStmt{}, false
+	return nil, false
 }
 
-func (p *parser) parseExprStmt() ast.ExprStmt {
+func (p *parser) parseExprStmt() *ast.ExprStmt {
 	expr := p.parseExpr()
 	semicolon := p.expectSemicolon()
-	return ast.ExprStmt{Expr: expr, Semicolon: semicolon}
+	return &ast.ExprStmt{Expr: expr, Semicolon: semicolon}
 }
 
-func (p *parser) parsePrintStmt(printTok token.Token) ast.PrintStmt {
+func (p *parser) parsePrintStmt(printTok token.Token) *ast.PrintStmt {
 	expr := p.parseExpr()
 	semicolon := p.expectSemicolon()
-	return ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
+	return &ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
 }
 
-func (p *parser) parseBlock(leftBrace token.Token) ast.BlockStmt {
+func (p *parser) parseBlock(leftBrace token.Token) *ast.BlockStmt {
 	stmts := p.parseDeclsUntil(token.RightBrace, token.EOF)
 	rightBrace := p.expect(token.RightBrace)
-	return ast.BlockStmt{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
+	return &ast.BlockStmt{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
 }
 
-func (p *parser) parseIfStmt(ifTok token.Token) ast.IfStmt {
+func (p *parser) parseIfStmt(ifTok token.Token) *ast.IfStmt {
 	p.expect(token.LeftParen)
 	condition := p.parseExpr()
 	p.expect(token.RightParen)
@@ -316,18 +316,18 @@ func (p *parser) parseIfStmt(ifTok token.Token) ast.IfStmt {
 	if p.match(token.Else) {
 		elseBranch = p.parseStmt()
 	}
-	return ast.IfStmt{If: ifTok, Condition: condition, Then: thenBranch, Else: elseBranch}
+	return &ast.IfStmt{If: ifTok, Condition: condition, Then: thenBranch, Else: elseBranch}
 }
 
-func (p *parser) parseWhileStmt(whileTok token.Token) ast.WhileStmt {
+func (p *parser) parseWhileStmt(whileTok token.Token) *ast.WhileStmt {
 	p.expect(token.LeftParen)
 	condition := p.parseExpr()
 	p.expect(token.RightParen)
 	body := p.parseStmt()
-	return ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
+	return &ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
 }
 
-func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
+func (p *parser) parseForStmt(forTok token.Token) *ast.ForStmt {
 	p.expect(token.LeftParen)
 	var initialise ast.Stmt
 	switch tok := p.tok; {
@@ -348,27 +348,27 @@ func (p *parser) parseForStmt(forTok token.Token) ast.ForStmt {
 		p.expect(token.RightParen)
 	}
 	body := p.parseStmt()
-	return ast.ForStmt{For: forTok, Initialise: initialise, Condition: condition, Update: update, Body: body}
+	return &ast.ForStmt{For: forTok, Initialise: initialise, Condition: condition, Update: update, Body: body}
 }
 
-func (p *parser) parseBreakStmt(breakTok token.Token) ast.BreakStmt {
+func (p *parser) parseBreakStmt(breakTok token.Token) *ast.BreakStmt {
 	semicolon := p.expectSemicolon()
-	return ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
+	return &ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
 }
 
-func (p *parser) parseContinueStmt(continueTok token.Token) ast.ContinueStmt {
+func (p *parser) parseContinueStmt(continueTok token.Token) *ast.ContinueStmt {
 	semicolon := p.expectSemicolon()
-	return ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
+	return &ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
 }
 
-func (p *parser) parseReturnStmt(returnTok token.Token) ast.ReturnStmt {
+func (p *parser) parseReturnStmt(returnTok token.Token) *ast.ReturnStmt {
 	semicolon, ok := p.match2(token.Semicolon)
 	var value ast.Expr
 	if !ok {
 		value = p.parseExpr()
 		semicolon = p.expectSemicolon()
 	}
-	return ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
+	return &ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
 }
 
 func (p *parser) parseExpr() ast.Expr {
@@ -383,15 +383,15 @@ func (p *parser) parseAssignmentExpr() ast.Expr {
 	expr := p.parseTernaryExpr()
 	if p.match(token.Equal) {
 		switch left := expr.(type) {
-		case ast.IdentExpr:
+		case *ast.IdentExpr:
 			right := p.parseAssignmentExpr()
-			expr = ast.AssignmentExpr{
+			expr = &ast.AssignmentExpr{
 				Left:  left.Ident,
 				Right: right,
 			}
-		case ast.GetExpr:
+		case *ast.GetExpr:
 			right := p.parseAssignmentExpr()
-			expr = ast.SetExpr{
+			expr = &ast.SetExpr{
 				Object: left.Object,
 				Name:   left.Name,
 				Value:  right,
@@ -409,7 +409,7 @@ func (p *parser) parseTernaryExpr() ast.Expr {
 		then := p.parseExpr()
 		p.expect(token.Colon)
 		elseExpr := p.parseTernaryExpr()
-		expr = ast.TernaryExpr{
+		expr = &ast.TernaryExpr{
 			Condition: expr,
 			Then:      then,
 			Else:      elseExpr,
@@ -452,7 +452,7 @@ func (p *parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) 
 			break
 		}
 		right := next()
-		expr = ast.BinaryExpr{
+		expr = &ast.BinaryExpr{
 			Left:  expr,
 			Op:    op,
 			Right: right,
@@ -464,7 +464,7 @@ func (p *parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) 
 func (p *parser) parseUnaryExpr() ast.Expr {
 	if op, ok := p.match2(token.Bang, token.Minus); ok {
 		right := p.parseUnaryExpr()
-		return ast.UnaryExpr{
+		return &ast.UnaryExpr{
 			Op:    op,
 			Right: right,
 		}
@@ -483,16 +483,16 @@ func (p *parser) parseCallExpr() ast.Expr {
 				args = p.parseArgs()
 				rightParen = p.expect(token.RightParen)
 			}
-			expr = ast.CallExpr{
+			expr = &ast.CallExpr{
 				Callee:     expr,
 				Args:       args,
 				RightParen: rightParen,
 			}
 		case p.match(token.Dot):
 			name := p.expectf(token.Ident, "expected property name")
-			expr = ast.GetExpr{
+			expr = &ast.GetExpr{
 				Object: expr,
-				Name:   ast.Ident{Token: name},
+				Name:   &ast.Ident{Token: name},
 			}
 		default:
 			return expr
@@ -514,17 +514,17 @@ func (p *parser) parseArgs() []ast.Expr {
 func (p *parser) parsePrimaryExpr() ast.Expr {
 	switch tok := p.tok; {
 	case p.match(token.Number, token.String, token.True, token.False, token.Nil):
-		return ast.LiteralExpr{Value: tok}
+		return &ast.LiteralExpr{Value: tok}
 	case p.match(token.Ident):
-		return ast.IdentExpr{Ident: ast.Ident{Token: tok}}
+		return &ast.IdentExpr{Ident: &ast.Ident{Token: tok}}
 	case p.match(token.This):
-		return ast.ThisExpr{This: tok}
+		return &ast.ThisExpr{This: tok}
 	case p.match(token.Fun):
 		return p.parseFunExpr(tok)
 	case p.match(token.LeftParen):
 		expr := p.parseExpr()
 		rightParen := p.expect(token.RightParen)
-		return ast.GroupExpr{LeftParen: tok, Expr: expr, RightParen: rightParen}
+		return &ast.GroupExpr{LeftParen: tok, Expr: expr, RightParen: rightParen}
 	// Error productions
 	case p.match(token.EqualEqual, token.BangEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus):
 		p.addErrorf(tok, "binary operator %m must have left and right operands", tok.Type)
@@ -540,7 +540,7 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 			right = p.parseUnaryExpr()
 		default:
 		}
-		return ast.BinaryExpr{
+		return &ast.BinaryExpr{
 			Op:    tok,
 			Right: right,
 		}
@@ -554,8 +554,8 @@ func (p *parser) parsePrimaryExpr() ast.Expr {
 	}
 }
 
-func (p *parser) parseFunExpr(funTok token.Token) ast.FunExpr {
-	return ast.FunExpr{
+func (p *parser) parseFunExpr(funTok token.Token) *ast.FunExpr {
+	return &ast.FunExpr{
 		Fun:      funTok,
 		Function: p.parseFun(),
 	}

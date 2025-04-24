@@ -23,7 +23,7 @@ const (
 //   - property setter must have exactly one parameter
 //   - functions cannot have more than 255 parameters
 //   - function calls cannot have more than 255 arguments
-func CheckSemantics(program ast.Program) lox.Errors {
+func CheckSemantics(program *ast.Program) lox.Errors {
 	c := newSemanticChecker()
 	return c.Check(program)
 }
@@ -39,54 +39,54 @@ func newSemanticChecker() *semanticChecker {
 	return &semanticChecker{}
 }
 
-func (c *semanticChecker) Check(program ast.Program) lox.Errors {
+func (c *semanticChecker) Check(program *ast.Program) lox.Errors {
 	ast.Walk(program, c.walk)
 	return c.errs
 }
 
 func (c *semanticChecker) walk(node ast.Node) bool {
 	switch node := node.(type) {
-	case ast.FunDecl:
+	case *ast.FunDecl:
 		c.walkFun(node.Function, funTypeFunction)
 		return false
-	case ast.ClassDecl:
+	case *ast.ClassDecl:
 		c.checkNoWriteOnlyProperties(node.Methods())
-	case ast.MethodDecl:
+	case *ast.MethodDecl:
 		c.checkNumPropertyParams(node)
 		c.walkFun(node.Function, methodFunType(node))
 		return false
-	case ast.WhileStmt:
+	case *ast.WhileStmt:
 		c.walkWhileStmt(node)
 		return false
-	case ast.ForStmt:
+	case *ast.ForStmt:
 		c.walkForStmt(node)
 		return false
-	case ast.BreakStmt:
+	case *ast.BreakStmt:
 		c.checkBreakInLoop(node)
-	case ast.ContinueStmt:
+	case *ast.ContinueStmt:
 		c.checkContinueInLoop(node)
-	case ast.ReturnStmt:
+	case *ast.ReturnStmt:
 		c.checkReturnInFun(node)
 		c.checkNoConstructorReturn(node)
-	case ast.FunExpr:
+	case *ast.FunExpr:
 		c.walkFun(node.Function, funTypeFunction)
 		return false
-	case ast.IdentExpr:
+	case *ast.IdentExpr:
 		c.checkNoPlaceholderAccess(node)
-	case ast.ThisExpr:
+	case *ast.ThisExpr:
 		c.checkThisInMethod(node)
-	case ast.CallExpr:
+	case *ast.CallExpr:
 		c.checkNumArgs(node.Args)
-	case ast.GetExpr:
+	case *ast.GetExpr:
 		c.checkNoPlaceholderFieldAccess(node.Name)
-	case ast.SetExpr:
+	case *ast.SetExpr:
 		c.checkNoPlaceholderFieldAccess(node.Name)
 	default:
 	}
 	return true
 }
 
-func (c *semanticChecker) walkFun(fun ast.Function, funType funType) {
+func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
 	c.checkNumParams(fun.Params)
 
 	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
@@ -103,20 +103,20 @@ func (c *semanticChecker) walkFun(fun ast.Function, funType funType) {
 	}
 }
 
-func (c *semanticChecker) checkNumParams(params token.Ranges[ast.ParamDecl]) {
+func (c *semanticChecker) checkNumParams(params token.Ranges[*ast.ParamDecl]) {
 	if len(params) > maxParams {
 		c.errs.Addf(params[maxParams], "cannot define more than %d function parameters", maxParams)
 	}
 }
 
-func (c *semanticChecker) walkWhileStmt(stmt ast.WhileStmt) {
+func (c *semanticChecker) walkWhileStmt(stmt *ast.WhileStmt) {
 	ast.Walk(stmt.Condition, c.walk)
 	endLoop := c.beginLoop()
 	defer endLoop()
 	ast.Walk(stmt.Body, c.walk)
 }
 
-func (c *semanticChecker) walkForStmt(stmt ast.ForStmt) {
+func (c *semanticChecker) walkForStmt(stmt *ast.ForStmt) {
 	if stmt.Initialise != nil {
 		ast.Walk(stmt.Initialise, c.walk)
 	}
@@ -138,9 +138,9 @@ func (c *semanticChecker) beginLoop() func() {
 	return func() { c.inLoop = prev }
 }
 
-func (c *semanticChecker) checkNoWriteOnlyProperties(methods []ast.MethodDecl) {
+func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) {
 	gettersByName := map[string]bool{}
-	setterIdentsByName := map[string]ast.Ident{}
+	setterIdentsByName := map[string]*ast.Ident{}
 	for _, methodDecl := range methods {
 		switch {
 		case methodDecl.HasModifier(token.Get):
@@ -156,7 +156,7 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []ast.MethodDecl) {
 	}
 }
 
-func (c *semanticChecker) checkNumPropertyParams(decl ast.MethodDecl) {
+func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
 	switch {
 	case decl.HasModifier(token.Get) && len(decl.Function.Params) > 0:
 		c.errs.Add(decl.Function.Params[0:], "property getter cannot have parameters")
@@ -170,43 +170,43 @@ func (c *semanticChecker) checkNumPropertyParams(decl ast.MethodDecl) {
 
 }
 
-func (c *semanticChecker) checkBreakInLoop(stmt ast.BreakStmt) {
+func (c *semanticChecker) checkBreakInLoop(stmt *ast.BreakStmt) {
 	if !c.inLoop {
 		c.errs.Addf(stmt, "%m can only be used inside a loop", token.Break)
 	}
 }
 
-func (c *semanticChecker) checkContinueInLoop(stmt ast.ContinueStmt) {
+func (c *semanticChecker) checkContinueInLoop(stmt *ast.ContinueStmt) {
 	if !c.inLoop {
 		c.errs.Addf(stmt, "%m can only be used inside a loop", token.Continue)
 	}
 }
 
-func (c *semanticChecker) checkReturnInFun(stmt ast.ReturnStmt) {
+func (c *semanticChecker) checkReturnInFun(stmt *ast.ReturnStmt) {
 	if c.curFunType == funTypeNone {
 		c.errs.Addf(stmt, "%m can only be used inside a function definition", token.Return)
 	}
 }
 
-func (c *semanticChecker) checkNoConstructorReturn(stmt ast.ReturnStmt) {
+func (c *semanticChecker) checkNoConstructorReturn(stmt *ast.ReturnStmt) {
 	if stmt.Value != nil && c.curFunType.IsConstructor() {
 		c.errs.Addf(stmt, "%s() cannot return a value", token.ConstructorIdent)
 	}
 }
 
-func (c *semanticChecker) checkNoPlaceholderAccess(expr ast.IdentExpr) {
+func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
 	if expr.Ident.Token.Lexeme == token.PlaceholderIdent {
 		c.errs.Addf(expr.Ident, "%s cannot be used as a value", token.PlaceholderIdent)
 	}
 }
 
-func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident ast.Ident) {
+func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
 	if ident.Token.Lexeme == token.PlaceholderIdent {
 		c.errs.Addf(ident, "%s cannot be used as a field name", token.PlaceholderIdent)
 	}
 }
 
-func (c *semanticChecker) checkThisInMethod(expr ast.ThisExpr) {
+func (c *semanticChecker) checkThisInMethod(expr *ast.ThisExpr) {
 	if !c.curFunType.IsMethod() {
 		c.errs.Addf(expr, "%m can only be used inside a method definition", token.This)
 	}
@@ -235,7 +235,7 @@ func (f funType) IsConstructor() bool {
 	return f&funTypeConstructorFlag != 0
 }
 
-func methodFunType(decl ast.MethodDecl) funType {
+func methodFunType(decl *ast.MethodDecl) funType {
 	typ := funTypeFunction | funTypeMethodFlag
 	if decl.IsConstructor() {
 		typ |= funTypeConstructorFlag
