@@ -36,7 +36,7 @@ func Walk(node Node, f func(Node) bool) {
 		Walk(node.Expr, f)
 	case *PrintStmt:
 		Walk(node.Expr, f)
-	case *BlockStmt:
+	case *Block:
 		walkSlice(node.Stmts, f)
 	case *IfStmt:
 		Walk(node.Condition, f)

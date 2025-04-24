@@ -117,7 +117,7 @@ func (d *FunDecl) Ident() *Ident         { return d.Name }
 type Function struct {
 	LeftParen token.Token
 	Params    token.Ranges[*ParamDecl] `print:"named"`
-	Body      *BlockStmt               `print:"named"`
+	Body      *Block                   `print:"named"`
 	node
 }
 
@@ -221,21 +221,21 @@ type PrintStmt struct {
 func (p *PrintStmt) Start() token.Position { return p.Print.StartPos }
 func (p *PrintStmt) End() token.Position   { return p.Semicolon.EndPos }
 
-// BlockStmt is a block statement, such as
+// Block is a block, such as
 //
 //	{
 //	    var a = 123;
 //	    var b = 456;
 //	}
-type BlockStmt struct {
+type Block struct {
 	LeftBrace  token.Token
 	Stmts      token.Ranges[Stmt] `print:"unnamed"`
 	RightBrace token.Token
 	stmt
 }
 
-func (b *BlockStmt) Start() token.Position { return b.LeftBrace.StartPos }
-func (b *BlockStmt) End() token.Position   { return b.RightBrace.EndPos }
+func (b *Block) Start() token.Position { return b.LeftBrace.StartPos }
+func (b *Block) End() token.Position   { return b.RightBrace.EndPos }
 
 // IfStmt is an if statement, such as
 //

@@ -38,7 +38,7 @@ func Node(node ast.Node) string {
 		return formatExprStmt(node)
 	case *ast.PrintStmt:
 		return formatPrintStmt(node)
-	case *ast.BlockStmt:
+	case *ast.Block:
 		return formatBlockStmt(node)
 	case *ast.IfStmt:
 		return formatIfStmt(node)
@@ -162,7 +162,7 @@ func formatPrintStmt(stmt *ast.PrintStmt) string {
 	return fmt.Sprintf("print %s;", Node(stmt.Expr))
 }
 
-func formatBlockStmt(stmt *ast.BlockStmt) string {
+func formatBlockStmt(stmt *ast.Block) string {
 	return formatBlock(stmt.Stmts)
 }
 
@@ -178,7 +178,7 @@ func formatIfStmt(stmt *ast.IfStmt) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "if (%s)", Node(stmt.Condition))
 	var thenIsBlock bool
-	if _, thenIsBlock = stmt.Then.(*ast.BlockStmt); thenIsBlock {
+	if _, thenIsBlock = stmt.Then.(*ast.Block); thenIsBlock {
 		fmt.Fprint(&b, " ", Node(stmt.Then))
 	} else {
 		fmt.Fprint(&b, "\n", indent(Node(stmt.Then)))
@@ -190,7 +190,7 @@ func formatIfStmt(stmt *ast.IfStmt) string {
 			fmt.Fprint(&b, "\n")
 		}
 		switch stmt.Else.(type) {
-		case *ast.IfStmt, *ast.BlockStmt:
+		case *ast.IfStmt, *ast.Block:
 			fmt.Fprint(&b, "else ", Node(stmt.Else))
 		default:
 			fmt.Fprint(&b, "else\n", indent(Node(stmt.Else)))
@@ -200,7 +200,7 @@ func formatIfStmt(stmt *ast.IfStmt) string {
 }
 
 func formatWhileStmt(stmt *ast.WhileStmt) string {
-	if _, ok := stmt.Body.(*ast.BlockStmt); ok {
+	if _, ok := stmt.Body.(*ast.Block); ok {
 		return fmt.Sprintf("while (%s) %s", Node(stmt.Condition), Node(stmt.Body))
 	} else {
 		return fmt.Sprintf("while (%s)\n%s", Node(stmt.Condition), indent(Node(stmt.Body)))
@@ -223,7 +223,7 @@ func formatForStmt(stmt *ast.ForStmt) string {
 		fmt.Fprintf(&b, " %s", Node(stmt.Update))
 	}
 	fmt.Fprint(&b, ")")
-	if _, ok := stmt.Body.(*ast.BlockStmt); ok {
+	if _, ok := stmt.Body.(*ast.Block); ok {
 		fmt.Fprintf(&b, " %s", Node(stmt.Body))
 	} else {
 		fmt.Fprintf(&b, "\n%s", indent(Node(stmt.Body)))

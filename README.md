@@ -622,16 +622,16 @@ program =  decl* EOF ;
 decl       = var_decl | fun_decl | class_decl | stmt ;
 var_decl   = "var" IDENT ( "=" expr )? ";" ;
 fun_decl   = "fun" function ;
-function   = IDENT "(" parameters? ")" block_stmt ;
+function   = IDENT "(" parameters? ")" block ;
 parameters = IDENT ( "," IDENT )* ;
 class_decl = "class" IDENT "{" method* "}" ;
 method     = "static"? ( "get" | "set" )? function ;
 
-stmt          = expr_stmt | print_stmt | block_stmt | if_stmt | while_stmt | for_stmt | break_stmt
+stmt          = expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | break_stmt
               | continue_stmt ;
 expr_stmt     = expr ";" ;
 print_stmt    = "print" expr ";" ;
-block_stmt    = "{" decl* "}" ;
+block         = "{" decl* "}" ;
 if_stmt       = "if" "(" expr ")" stmt ( "else" stmt )? ;
 while_stmt    = "while" "(" expr ")" stmt ;
 for_stmt      = "for" "(" ( var_decl | expr_stmt | ";" ) expr? ";" expr? ")" stmt ;
@@ -660,5 +660,5 @@ primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | IDENT | "this
                     | "+" multiplicative_expr
                     | ( "*" | "/" ) unary_expr ;
 group_expr          = "(" expr ")" ;
-fun_expr            = "fun" "(" parameters? ")" block_stmt ;
+fun_expr            = "fun" "(" parameters? ")" block ;
 ```

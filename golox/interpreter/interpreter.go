@@ -111,8 +111,8 @@ func (i *Interpreter) execStmt(env environment, stmt ast.Stmt) (stmtResult, envi
 		i.execExprStmt(env, stmt)
 	case *ast.PrintStmt:
 		i.execPrintStmt(env, stmt)
-	case *ast.BlockStmt:
-		result = i.execBlockStmt(env, stmt)
+	case *ast.Block:
+		result = i.execBlock(env, stmt)
 	case *ast.IfStmt:
 		result = i.execIfStmt(env, stmt)
 	case *ast.WhileStmt:
@@ -176,7 +176,7 @@ func (i *Interpreter) execPrintStmt(env environment, stmt *ast.PrintStmt) {
 	fmt.Println(value.String())
 }
 
-func (i *Interpreter) execBlockStmt(env environment, stmt *ast.BlockStmt) stmtResult {
+func (i *Interpreter) execBlock(env environment, stmt *ast.Block) stmtResult {
 	return i.executeBlock(env.Child(), stmt.Stmts)
 }
 

@@ -301,10 +301,10 @@ func (p *parser) parsePrintStmt(printTok token.Token) *ast.PrintStmt {
 	return &ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
 }
 
-func (p *parser) parseBlock(leftBrace token.Token) *ast.BlockStmt {
+func (p *parser) parseBlock(leftBrace token.Token) *ast.Block {
 	stmts := p.parseDeclsUntil(token.RightBrace, token.EOF)
 	rightBrace := p.expect(token.RightBrace)
-	return &ast.BlockStmt{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
+	return &ast.Block{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
 }
 
 func (p *parser) parseIfStmt(ifTok token.Token) *ast.IfStmt {

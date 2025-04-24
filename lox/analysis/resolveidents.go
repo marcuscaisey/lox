@@ -318,8 +318,8 @@ func (r *identResolver) walk(node ast.Node) bool {
 		r.walkFunDecl(node)
 	case *ast.ClassDecl:
 		r.walkClassDecl(node)
-	case *ast.BlockStmt:
-		r.walkBlockStmt(node)
+	case *ast.Block:
+		r.walkBlock(node)
 	case *ast.ForStmt:
 		r.walkForStmt(node)
 	case *ast.FunExpr:
@@ -384,7 +384,7 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	}
 }
 
-func (r *identResolver) walkBlockStmt(block *ast.BlockStmt) {
+func (r *identResolver) walkBlock(block *ast.Block) {
 	exitScope := r.beginScope()
 	defer exitScope()
 	for _, stmt := range block.Stmts {
