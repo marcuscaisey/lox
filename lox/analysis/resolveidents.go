@@ -65,8 +65,8 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...ResolveIde
 }
 
 type identResolver struct {
-	scopes                 *stack.Stack[scope]
-	globalScope            scope
+	scopes                 *stack.Stack[*scope]
+	globalScope            *scope
 	globalDecls            map[string]ast.Decl
 	forwardDeclaredGlobals map[string]bool
 	inFun                  bool
@@ -80,7 +80,7 @@ type identResolver struct {
 
 func newIdentResolver(opts ...ResolveIdentsOption) *identResolver {
 	r := &identResolver{
-		scopes:                 stack.New[scope](),
+		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
 		identDecls:             map[*ast.Ident]ast.Decl{},
 	}
@@ -142,15 +142,15 @@ type scope struct {
 	undeclaredUsages map[string][]*ast.Ident
 }
 
-func newScope() scope {
-	return scope{
+func newScope() *scope {
+	return &scope{
 		decls:            map[string]*decl{},
 		undeclaredUsages: map[string][]*ast.Ident{},
 	}
 }
 
 // DeclareName marks an identifier which is not defined in code as declared in the scope.
-func (s scope) DeclareName(name string) {
+func (s *scope) DeclareName(name string) {
 	// TODO: This makes builtins appear as if they're variables (i.e. when hovered over in the editor). Come up with a
 	// better way to handle these.
 	s.Declare(&ast.VarDecl{
@@ -161,7 +161,7 @@ func (s scope) DeclareName(name string) {
 }
 
 // Declare marks an identifier as declared by a statement in the scope.
-func (s scope) Declare(stmt ast.Decl) {
+func (s *scope) Declare(stmt ast.Decl) {
 	decl := &decl{Stmt: stmt}
 	name := stmt.Ident().Token.Lexeme
 	if _, ok := s.undeclaredUsages[name]; ok {
@@ -171,38 +171,38 @@ func (s scope) Declare(stmt ast.Decl) {
 }
 
 // Declaration returns the statement which declared an identifier in the scope.
-func (s scope) Declaration(name string) ast.Decl {
+func (s *scope) Declaration(name string) ast.Decl {
 	return s.decls[name].Stmt
 }
 
 // Define marks an identifier as defined in the scope.
-func (s scope) Define(name string) {
+func (s *scope) Define(name string) {
 	s.decls[name].Status |= declStatusDefined
 }
 
 // Use marks an identifier as used in the scope.
-func (s scope) Use(name string) {
+func (s *scope) Use(name string) {
 	s.decls[name].Status |= declStatusUsed
 }
 
 // UseUndeclared marks an undeclared identifier as used in the scope.
-func (s scope) UseUndeclared(ident *ast.Ident) {
+func (s *scope) UseUndeclared(ident *ast.Ident) {
 	s.undeclaredUsages[ident.Token.Lexeme] = append(s.undeclaredUsages[ident.Token.Lexeme], ident)
 }
 
 // IsDeclared reports whether the identifier has been declared in the scope.
-func (s scope) IsDeclared(name string) bool {
+func (s *scope) IsDeclared(name string) bool {
 	_, ok := s.decls[name]
 	return ok
 }
 
 // IsDefined reports whether the identifier has been defined in the scope.
-func (s scope) IsDefined(name string) bool {
+func (s *scope) IsDefined(name string) bool {
 	return s.decls[name].Status&declStatusDefined != 0
 }
 
 // UnusedDeclarations returns an iterator over the declarations of names in the scope which have not been used.
-func (s scope) UnusedDeclarations() iter.Seq[ast.Decl] {
+func (s *scope) UnusedDeclarations() iter.Seq[ast.Decl] {
 	return func(yield func(ast.Decl) bool) {
 		for _, decl := range s.decls {
 			if decl.Status&declStatusUsed == 0 {
@@ -215,7 +215,7 @@ func (s scope) UnusedDeclarations() iter.Seq[ast.Decl] {
 }
 
 // UndeclaredIdents returns an iterator over the identifiers in the scope that were used before they were declared.
-func (s scope) UndeclaredUsages() iter.Seq[*ast.Ident] {
+func (s *scope) UndeclaredUsages() iter.Seq[*ast.Ident] {
 	return func(yield func(*ast.Ident) bool) {
 		for _, idents := range s.undeclaredUsages {
 			for _, ident := range idents {
