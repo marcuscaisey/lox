@@ -121,7 +121,11 @@ func formatVarDecl(decl *ast.VarDecl) string {
 }
 
 func formatFunDecl(decl *ast.FunDecl) string {
-	return fmt.Sprintf("fun %s%s", Node(decl.Name), Node(decl.Function))
+	formatted := fmt.Sprintf("fun %s%s", Node(decl.Name), Node(decl.Function))
+	if len(decl.Doc) > 0 {
+		formatted = fmt.Sprintf("%s\n%s", formatStmts(decl.Doc), formatted)
+	}
+	return formatted
 }
 
 func formatFun(fun *ast.Function) string {
@@ -142,7 +146,11 @@ func formatParamDecl(decl *ast.ParamDecl) string {
 }
 
 func formatClassDecl(decl *ast.ClassDecl) string {
-	return fmt.Sprintf("class %s %s", Node(decl.Name), formatBlock(decl.Body))
+	formatted := fmt.Sprintf("class %s %s", Node(decl.Name), formatBlock(decl.Body))
+	if len(decl.Doc) > 0 {
+		formatted = fmt.Sprintf("%s\n%s", formatStmts(decl.Doc), formatted)
+	}
+	return formatted
 }
 
 func formatMethodDecl(decl *ast.MethodDecl) string {
