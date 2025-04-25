@@ -30,6 +30,10 @@ func sprint(node Node, depth int) string {
 
 	nodeType := reflect.TypeOf(node)
 	nodeValue := reflect.ValueOf(node)
+	if nodeType.Kind() == reflect.Pointer {
+		nodeType = nodeType.Elem()
+		nodeValue = nodeValue.Elem()
+	}
 
 	var children []string
 	for i := range nodeType.NumField() {
