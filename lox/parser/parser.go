@@ -75,6 +75,7 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var doc token.Ranges[*ast.Comment]
 	for !slices.Contains(types, p.tok.Type) {
 		stmt := p.safelyParseDecl()
+
 		if len(doc) > 0 && stmt.Start().Line != doc[len(doc)-1].Start().Line+1 {
 			doc = doc[:0]
 		}
@@ -84,11 +85,19 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 			}
 			doc = append(doc, comment)
 		}
-		if funDecl, ok := stmt.(*ast.FunDecl); ok {
-			funDecl.Doc = doc
-			stmts = stmts[:len(stmts)-len(doc)]
-			doc = nil
+
+		switch decl := stmt.(type) {
+		case *ast.FunDecl:
+			decl.Doc = doc
+		case *ast.ClassDecl:
+			decl.Doc = doc
+		default:
+			goto appendStmt
 		}
+		stmts = stmts[:len(stmts)-len(doc)]
+		doc = nil
+
+	appendStmt:
 		stmts = append(stmts, stmt)
 	}
 	return stmts

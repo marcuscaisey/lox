@@ -6,6 +6,7 @@ import (
 
 	"github.com/marcuscaisey/lox/lox/ast"
 	"github.com/marcuscaisey/lox/lox/format"
+	"github.com/marcuscaisey/lox/lox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
@@ -106,13 +107,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		header = fmt.Sprintf("var %s", decl.Ident().Token.Lexeme)
 	case *ast.FunDecl:
 		header = fmt.Sprintf("fun %s(%s)", decl.Name.Token.Lexeme, formatParams(decl.Function.Params))
-		if len(decl.Doc) > 0 {
-			lines := make([]string, len(decl.Doc))
-			for i, comment := range decl.Doc {
-				lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
-			}
-			body = strings.Join(lines, "\n")
-		}
+		body = hoverDeclDoc(decl.Doc)
 	case *ast.ClassDecl:
 		var b strings.Builder
 		fmt.Fprintf(&b, "class %s", decl.Name.Token.Lexeme)
@@ -124,6 +119,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			fmt.Fprint(&b, "}")
 		}
 		header = b.String()
+		body = hoverDeclDoc(decl.Doc)
 	case *ast.MethodDecl:
 		header = hoverMethodDecl(decl)
 	}
@@ -149,6 +145,14 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			},
 		},
 	}, nil
+}
+
+func hoverDeclDoc(doc token.Ranges[*ast.Comment]) string {
+	lines := make([]string, len(doc))
+	for i, comment := range doc {
+		lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
+	}
+	return strings.Join(lines, "\n")
 }
 
 func hoverMethodDecl(decl *ast.MethodDecl) string {

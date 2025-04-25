@@ -143,6 +143,7 @@ func (p *ParamDecl) Ident() *Ident         { return p.Name }
 //	  }
 //	}
 type ClassDecl struct {
+	Doc        token.Ranges[*Comment] `print:"named"`
 	Class      token.Token
 	Name       *Ident             `print:"named"`
 	Body       token.Ranges[Stmt] `print:"named"`
