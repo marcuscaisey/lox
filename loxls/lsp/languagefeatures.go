@@ -99,12 +99,20 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		return nil, nil
 	}
 
-	var contents string
+	var header string
+	var body string
 	switch decl := decl.(type) {
 	case *ast.VarDecl, *ast.ParamDecl:
-		contents = fmt.Sprintf("var %s", decl.Ident().Token.Lexeme)
+		header = fmt.Sprintf("var %s", decl.Ident().Token.Lexeme)
 	case *ast.FunDecl:
-		contents = fmt.Sprintf("fun %s(%s)", decl.Name.Token.Lexeme, formatParams(decl.Function.Params))
+		header = fmt.Sprintf("fun %s(%s)", decl.Name.Token.Lexeme, formatParams(decl.Function.Params))
+		if len(decl.Doc) > 0 {
+			lines := make([]string, len(decl.Doc))
+			for i, comment := range decl.Doc {
+				lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
+			}
+			body = strings.Join(lines, "\n")
+		}
 	case *ast.ClassDecl:
 		var b strings.Builder
 		fmt.Fprintf(&b, "class %s", decl.Name.Token.Lexeme)
@@ -115,13 +123,22 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			}
 			fmt.Fprint(&b, "}")
 		}
-		contents = b.String()
+		header = b.String()
 	case *ast.MethodDecl:
-		contents = hoverMethodDecl(decl)
+		header = hoverMethodDecl(decl)
 	}
 
+	var contents string
 	if h.hoverContentFormat == protocol.MarkupKindMarkdown {
-		contents = fmt.Sprintf("```lox\n%s\n```", contents)
+		contents = fmt.Sprintf("```lox\n%s\n```", header)
+		if body != "" {
+			contents = fmt.Sprintf("%s\n---\n%s", contents, body)
+		}
+	} else {
+		contents = header
+		if body != "" {
+			contents = fmt.Sprintf("%s\n%s", header, body)
+		}
 	}
 
 	return &protocol.Hover{

@@ -103,6 +103,7 @@ func (d *VarDecl) Ident() *Ident         { return d.Name }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {
+	Doc      token.Ranges[*Comment] `print:"named"`
 	Fun      token.Token
 	Name     *Ident    `print:"named"`
 	Function *Function `print:"named"`

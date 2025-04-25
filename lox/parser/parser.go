@@ -72,10 +72,22 @@ func (p *parser) parseProgram() *ast.Program {
 
 func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
+	var doc token.Ranges[*ast.Comment]
 	for !slices.Contains(types, p.tok.Type) {
 		stmt := p.safelyParseDecl()
-		if _, ok := stmt.(*ast.Comment); ok && !p.parseComments {
-			continue
+		if len(doc) > 0 && stmt.Start().Line != doc[len(doc)-1].Start().Line+1 {
+			doc = doc[:0]
+		}
+		if comment, ok := stmt.(*ast.Comment); ok {
+			if !p.parseComments {
+				continue
+			}
+			doc = append(doc, comment)
+		}
+		if funDecl, ok := stmt.(*ast.FunDecl); ok {
+			funDecl.Doc = doc
+			stmts = stmts[:len(stmts)-len(doc)]
+			doc = nil
 		}
 		stmts = append(stmts, stmt)
 	}
