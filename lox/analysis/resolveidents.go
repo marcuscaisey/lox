@@ -380,6 +380,7 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	scope.Define(token.CurrentInstanceIdent)
 	scope.Use(token.CurrentInstanceIdent)
 	for _, methodDecl := range decl.Methods() {
+		r.identDecls[methodDecl.Name] = methodDecl
 		r.walkFun(methodDecl.Function)
 	}
 }
