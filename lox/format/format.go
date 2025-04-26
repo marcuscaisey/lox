@@ -121,11 +121,12 @@ func formatVarDecl(decl *ast.VarDecl) string {
 }
 
 func formatFunDecl(decl *ast.FunDecl) string {
-	formatted := fmt.Sprintf("fun %s%s", Node(decl.Name), Node(decl.Function))
+	var b strings.Builder
 	if len(decl.Doc) > 0 {
-		formatted = fmt.Sprintf("%s\n%s", formatStmts(decl.Doc), formatted)
+		fmt.Fprintf(&b, "%s\n", formatStmts(decl.Doc))
 	}
-	return formatted
+	fmt.Fprintf(&b, "fun %s%s", Node(decl.Name), Node(decl.Function))
+	return b.String()
 }
 
 func formatFun(fun *ast.Function) string {
@@ -146,15 +147,19 @@ func formatParamDecl(decl *ast.ParamDecl) string {
 }
 
 func formatClassDecl(decl *ast.ClassDecl) string {
-	formatted := fmt.Sprintf("class %s %s", Node(decl.Name), formatBlock(decl.Body))
+	var b strings.Builder
 	if len(decl.Doc) > 0 {
-		formatted = fmt.Sprintf("%s\n%s", formatStmts(decl.Doc), formatted)
+		fmt.Fprintf(&b, "%s\n", formatStmts(decl.Doc))
 	}
-	return formatted
+	fmt.Fprintf(&b, "class %s %s", Node(decl.Name), formatBlock(decl.Body))
+	return b.String()
 }
 
 func formatMethodDecl(decl *ast.MethodDecl) string {
 	var b strings.Builder
+	if len(decl.Doc) > 0 {
+		fmt.Fprintf(&b, "%s\n", formatStmts(decl.Doc))
+	}
 	for _, modifier := range decl.Modifiers {
 		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
 	}

@@ -188,6 +188,7 @@ func (p *parser) parseClassDecl(classTok token.Token) *ast.ClassDecl {
 	p.expect(token.LeftBrace)
 	var body []ast.Stmt
 	for {
+		var doc token.Ranges[*ast.Comment]
 		for {
 			tok, ok := p.match2(token.Comment)
 			if !ok {
@@ -195,11 +196,18 @@ func (p *parser) parseClassDecl(classTok token.Token) *ast.ClassDecl {
 			}
 			comment := p.parseComment(tok)
 			if p.parseComments {
+				if len(doc) > 0 && comment.Start().Line != doc[len(doc)-1].Start().Line+1 {
+					doc = doc[:0]
+				}
 				body = append(body, comment)
+				doc = append(doc, comment)
 			}
 		}
 
 		if decl, ok := p.parseMethodDecl(); ok {
+			decl.Doc = doc
+			body = body[:len(body)-len(doc)]
+			doc = nil
 			body = append(body, decl)
 		} else {
 			break

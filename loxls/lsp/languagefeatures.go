@@ -114,14 +114,15 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		if methods := decl.Methods(); len(methods) > 0 {
 			fmt.Fprint(&b, " {\n")
 			for _, methodDecl := range methods {
-				fmt.Fprintf(&b, "    %s\n", hoverMethodDecl(methodDecl))
+				fmt.Fprintf(&b, "    %s\n", hoverMethodDeclHeader(methodDecl))
 			}
 			fmt.Fprint(&b, "}")
 		}
 		header = b.String()
 		body = hoverDeclDoc(decl.Doc)
 	case *ast.MethodDecl:
-		header = hoverMethodDecl(decl)
+		header = hoverMethodDeclHeader(decl)
+		body = hoverDeclDoc(decl.Doc)
 	}
 
 	var contents string
@@ -155,7 +156,7 @@ func hoverDeclDoc(doc token.Ranges[*ast.Comment]) string {
 	return strings.Join(lines, "\n")
 }
 
-func hoverMethodDecl(decl *ast.MethodDecl) string {
+func hoverMethodDeclHeader(decl *ast.MethodDecl) string {
 	var b strings.Builder
 	for _, modifier := range decl.Modifiers {
 		fmt.Fprintf(&b, "%s ", modifier.Lexeme)

@@ -172,9 +172,10 @@ func (c *ClassDecl) Methods() []*MethodDecl {
 //	  return "baz";
 //	}
 type MethodDecl struct {
-	Modifiers []token.Token `print:"named"`
-	Name      *Ident        `print:"named"`
-	Function  *Function     `print:"named"`
+	Doc       token.Ranges[*Comment] `print:"named"`
+	Modifiers []token.Token          `print:"named"`
+	Name      *Ident                 `print:"named"`
+	Function  *Function              `print:"named"`
 	decl
 }
 
