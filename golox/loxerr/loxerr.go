@@ -1,4 +1,5 @@
-package lox
+// Package loxerr defines the type which describes an error during execution of a Lox program.
+package loxerr
 
 import (
 	"fmt"
@@ -8,8 +9,8 @@ import (
 
 	"github.com/mattn/go-runewidth"
 
-	"github.com/marcuscaisey/lox/lox/ansi"
-	"github.com/marcuscaisey/lox/lox/token"
+	"github.com/marcuscaisey/lox/golox/ansi"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 // Error describes an error that occurred during the execution of a Lox program.
@@ -20,14 +21,14 @@ type Error struct {
 	End   token.Position
 }
 
-// NewError creates a [*Error] with the given message and range.
-func NewError(rang token.Range, message string) error {
-	return NewErrorf(rang, "%s", message)
+// New creates a [*Error] with the given message and range.
+func New(rang token.Range, message string) error {
+	return Newf(rang, "%s", message)
 }
 
-// NewErrorf creates a [*Error].
+// Newf creates a [*Error].
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
-func NewErrorf(rang token.Range, format string, args ...any) error {
+func Newf(rang token.Range, format string, args ...any) error {
 	e := &Error{
 		Msg: fmt.Sprintf(format, args...),
 	}
@@ -100,15 +101,15 @@ func (e *Error) Error() string {
 type Errors []*Error
 
 // Add adds a [*Error] to the list of errors.
-// The parameters are the same as for [NewError].
+// The parameters are the same as for [New].
 func (e *Errors) Add(rang token.Range, message string) {
-	*e = append(*e, NewError(rang, message).(*Error))
+	*e = append(*e, New(rang, message).(*Error))
 }
 
 // Addf adds a [*Error] to the list of errors.
-// The parameters are the same as for [NewErrorf].
+// The parameters are the same as for [Newf].
 func (e *Errors) Addf(rang token.Range, format string, args ...any) {
-	*e = append(*e, NewErrorf(rang, format, args...).(*Error))
+	*e = append(*e, Newf(rang, format, args...).(*Error))
 }
 
 // Sort sorts the errors by their start position.

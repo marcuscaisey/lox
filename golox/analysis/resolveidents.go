@@ -3,10 +3,10 @@ package analysis
 import (
 	"iter"
 
-	"github.com/marcuscaisey/lox/lox"
-	"github.com/marcuscaisey/lox/lox/ast"
-	"github.com/marcuscaisey/lox/lox/stack"
-	"github.com/marcuscaisey/lox/lox/token"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/loxerr"
+	"github.com/marcuscaisey/lox/golox/stack"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 // ResolveIdentsOption can be passed to [ResolveIdents] to configure the resolving behaviour.
@@ -59,7 +59,7 @@ func WithREPLMode(enabled bool) ResolveIdentsOption {
 //	}
 //	var x = 1;
 //	printX();
-func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...ResolveIdentsOption) (map[*ast.Ident]ast.Decl, lox.Errors) {
+func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...ResolveIdentsOption) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
 	r := newIdentResolver(opts...)
 	return r.Resolve(program, builtins)
 }
@@ -73,7 +73,7 @@ type identResolver struct {
 	funScopeLevel          int
 
 	identDecls map[*ast.Ident]ast.Decl
-	errs       lox.Errors
+	errs       loxerr.Errors
 
 	replMode bool
 }
@@ -90,7 +90,7 @@ func newIdentResolver(opts ...ResolveIdentsOption) *identResolver {
 	return r
 }
 
-func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, lox.Errors) {
+func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
 	r.resolve(program, builtins)
 	return r.identDecls, r.errs
 }

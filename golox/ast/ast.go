@@ -2,7 +2,7 @@
 package ast
 
 import (
-	"github.com/marcuscaisey/lox/lox/token"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 // Node is the interface which all AST nodes implement.

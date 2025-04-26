@@ -6,9 +6,9 @@ import (
 	"io"
 	"slices"
 
-	"github.com/marcuscaisey/lox/lox"
-	"github.com/marcuscaisey/lox/lox/ast"
-	"github.com/marcuscaisey/lox/lox/token"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/loxerr"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 // Option can be passed to [Parse] to configure its behaviour.
@@ -24,7 +24,7 @@ func WithComments(enabled bool) Option {
 // Parse parses the source code read from r.
 // filename is the name of the file being parsed.
 // If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
-// this error will be a [lox.Errors] containing all of the errors.
+// this error will be a [loxerr.Errors] containing all of the errors.
 func Parse(r io.Reader, filename string, opts ...Option) (*ast.Program, error) {
 	lexer, err := newLexer(r, filename)
 	if err != nil {
@@ -48,7 +48,7 @@ type parser struct {
 	tok     token.Token // token currently being considered
 	nextTok token.Token
 
-	errs       lox.Errors
+	errs       loxerr.Errors
 	lastErrPos token.Position
 
 	parseComments bool
@@ -56,7 +56,7 @@ type parser struct {
 
 // Parse parses the source code and returns the root node of the abstract syntax tree.
 // If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
-// this error will be a [lox.Errors] containing all of the errors.
+// this error will be a [loxerr.Errors] containing all of the errors.
 func (p *parser) Parse() (*ast.Program, error) {
 	// Populate tok and nextTok
 	p.next()

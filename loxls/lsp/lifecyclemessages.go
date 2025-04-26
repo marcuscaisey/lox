@@ -6,7 +6,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/marcuscaisey/lox/lox/stubbuiltins"
+	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marcuscaisey/lox/lox/ast"
-	"github.com/marcuscaisey/lox/lox/token"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 const indentSize = 4

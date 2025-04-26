@@ -1,9 +1,9 @@
 package analysis
 
 import (
-	"github.com/marcuscaisey/lox/lox"
-	"github.com/marcuscaisey/lox/lox/ast"
-	"github.com/marcuscaisey/lox/lox/token"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/loxerr"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 //   - property setter must have exactly one parameter
 //   - functions cannot have more than 255 parameters
 //   - function calls cannot have more than 255 arguments
-func CheckSemantics(program *ast.Program) lox.Errors {
+func CheckSemantics(program *ast.Program) loxerr.Errors {
 	c := newSemanticChecker()
 	return c.Check(program)
 }
@@ -32,14 +32,14 @@ type semanticChecker struct {
 	inLoop     bool
 	curFunType funType
 
-	errs lox.Errors
+	errs loxerr.Errors
 }
 
 func newSemanticChecker() *semanticChecker {
 	return &semanticChecker{}
 }
 
-func (c *semanticChecker) Check(program *ast.Program) lox.Errors {
+func (c *semanticChecker) Check(program *ast.Program) loxerr.Errors {
 	ast.Walk(program, c.walk)
 	return c.errs
 }

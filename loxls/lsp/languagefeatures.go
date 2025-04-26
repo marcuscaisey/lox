@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marcuscaisey/lox/lox/ast"
-	"github.com/marcuscaisey/lox/lox/format"
-	"github.com/marcuscaisey/lox/lox/token"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/format"
+	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 

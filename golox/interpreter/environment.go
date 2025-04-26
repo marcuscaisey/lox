@@ -3,8 +3,8 @@ package interpreter
 import (
 	"fmt"
 
-	"github.com/marcuscaisey/lox/lox"
-	"github.com/marcuscaisey/lox/lox/ast"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/loxerr"
 )
 
 // environment stores the values of identifiers in a lexical scope.
@@ -46,7 +46,7 @@ func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
 		e.values[ident.Token.Lexeme] = nil
 		return e
 	} else {
-		panic(lox.NewErrorf(ident, "%s has already been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, "%s has already been declared", ident.Token.Lexeme))
 	}
 }
 
@@ -69,7 +69,7 @@ func (e *globalEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	if _, ok := e.values[ident.Token.Lexeme]; ok {
 		e.values[ident.Token.Lexeme] = value
 	} else {
-		panic(lox.NewErrorf(ident, "%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, "%s has not been declared", ident.Token.Lexeme))
 	}
 }
 
@@ -78,10 +78,10 @@ func (e *globalEnvironment) Get(ident *ast.Ident) loxObject {
 		if value != nil {
 			return value
 		} else {
-			panic(lox.NewErrorf(ident, "%s has not been defined", ident.Token.Lexeme))
+			panic(loxerr.Newf(ident, "%s has not been defined", ident.Token.Lexeme))
 		}
 	} else {
-		panic(lox.NewErrorf(ident, "%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, "%s has not been declared", ident.Token.Lexeme))
 	}
 }
 

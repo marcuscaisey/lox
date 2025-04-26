@@ -8,9 +8,9 @@ import (
 
 	"github.com/mattn/go-runewidth"
 
-	"github.com/marcuscaisey/lox/lox/ansi"
-	"github.com/marcuscaisey/lox/lox/stack"
-	"github.com/marcuscaisey/lox/lox/token"
+	"github.com/marcuscaisey/lox/golox/ansi"
+	"github.com/marcuscaisey/lox/golox/stack"
+	"github.com/marcuscaisey/lox/golox/token"
 )
 
 type callStack struct {

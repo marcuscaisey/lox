@@ -9,7 +9,7 @@ import (
 
 	"github.com/mattn/go-runewidth"
 
-	"github.com/marcuscaisey/lox/lox/ansi"
+	"github.com/marcuscaisey/lox/golox/ansi"
 )
 
 func init() {

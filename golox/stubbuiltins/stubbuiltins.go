@@ -7,8 +7,8 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/marcuscaisey/lox/lox/ast"
-	"github.com/marcuscaisey/lox/lox/parser"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/parser"
 )
 
 // Source is the source code for stubs of Lox's built-ins.

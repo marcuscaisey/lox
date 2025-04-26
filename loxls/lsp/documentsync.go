@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marcuscaisey/lox/lox"
-	"github.com/marcuscaisey/lox/lox/analysis"
-	"github.com/marcuscaisey/lox/lox/ast"
-	"github.com/marcuscaisey/lox/lox/parser"
+	"github.com/marcuscaisey/lox/golox/analysis"
+	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/loxerr"
+	"github.com/marcuscaisey/lox/golox/parser"
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
@@ -62,7 +62,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	}
 	program, err := parser.Parse(strings.NewReader(string(src)), filename, parser.WithComments(true))
 
-	var loxErrs lox.Errors
+	var loxErrs loxerr.Errors
 	var identDecls map[*ast.Ident]ast.Decl
 	if err != nil {
 		if !errors.As(err, &loxErrs) {

@@ -14,7 +14,7 @@ import (
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
 
-	"github.com/marcuscaisey/lox/lox/ansi"
+	"github.com/marcuscaisey/lox/golox/ansi"
 )
 
 func init() {
