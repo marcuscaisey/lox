@@ -1,0 +1,4 @@
+class _ {
+    // This is a Lox method declaration.
+    _() {}
+}
