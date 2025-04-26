@@ -66,11 +66,11 @@ func (p *parser) Parse() (*ast.Program, error) {
 
 func (p *parser) parseProgram() *ast.Program {
 	return &ast.Program{
-		Stmts: p.parseDeclsUntil(token.EOF),
+		Stmts: p.safelyParseDeclsUntil(token.EOF),
 	}
 }
 
-func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
+func (p *parser) safelyParseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
 	var doc token.Ranges[*ast.Comment]
 	for !slices.Contains(types, p.tok.Type) {
@@ -323,7 +323,7 @@ func (p *parser) parsePrintStmt(printTok token.Token) *ast.PrintStmt {
 }
 
 func (p *parser) parseBlock(leftBrace token.Token) *ast.Block {
-	stmts := p.parseDeclsUntil(token.RightBrace, token.EOF)
+	stmts := p.safelyParseDeclsUntil(token.RightBrace, token.EOF)
 	rightBrace := p.expect(token.RightBrace)
 	return &ast.Block{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
 }
