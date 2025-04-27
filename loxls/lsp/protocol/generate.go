@@ -13,6 +13,7 @@ package protocol
 //typegen:method textDocument/references
 //typegen:method textDocument/hover
 //typegen:method textDocument/documentSymbol
+//typegen:method textDocument/completion
 //typegen:method textDocument/publishDiagnostics
 //typegen:method textDocument/formatting
 //typegen:method textDocument/rename

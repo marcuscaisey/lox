@@ -281,6 +281,24 @@ func toSymbolInformations(docSymbols protocol.DocumentSymbolSlice, uri string) p
 	return symbolInfos
 }
 
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_completion
+func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*protocol.CompletionItemSliceOrCompletionList, error) {
+	keywords := []string{"print", "var", "true", "false", "nil", "if", "while", "for", "fun", "class"}
+
+	var items []*protocol.CompletionItem
+	for _, keyword := range keywords {
+		items = append(items, &protocol.CompletionItem{
+			Label: keyword,
+			Kind:  protocol.CompletionItemKindKeyword,
+		})
+	}
+	return &protocol.CompletionItemSliceOrCompletionList{
+		Value: &protocol.CompletionList{
+			Items: items,
+		},
+	}, nil
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting
 func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingParams) ([]*protocol.TextEdit, error) {
 	doc, err := h.document(params.TextDocument.Uri)

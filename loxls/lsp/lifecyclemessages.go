@@ -28,6 +28,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 	h.stubBuiltinsFilename = stubBuiltinsFilename
 	h.stubBuiltins = stubbuiltins.MustParse(stubBuiltinsFilename)
 
+	// TODO: do we need to handle client completion capabilities?
 	h.initialized = true
 	return &protocol.InitializeResult{
 		Capabilities: &protocol.ServerCapabilities{
@@ -38,6 +39,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 					Change:    protocol.TextDocumentSyncKindFull,
 				},
 			},
+			CompletionProvider: &protocol.CompletionOptions{},
 			HoverProvider: &protocol.BooleanOrHoverOptions{
 				Value: protocol.Boolean(true),
 			},

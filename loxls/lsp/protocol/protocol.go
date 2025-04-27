@@ -5073,12 +5073,95 @@ type TextDocumentPositionParams struct {
 	Position *Position `json:"position"`
 }
 
-// Parameters for a {@link HoverRequest}.
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#partialResultParams
+type PartialResultParams struct {
+	// An optional token that a server can use to report partial results (e.g. streaming) to
+	// the client.
+	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
+}
+
+// How a completion was triggered
 //
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hoverParams
-type HoverParams struct {
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionTriggerKind
+type CompletionTriggerKind uint32
+
+const (
+	// Completion was triggered by typing an identifier (24x7 code
+	// complete), manual invocation (e.g Ctrl+Space) or via API.
+	CompletionTriggerKindInvoked CompletionTriggerKind = 1
+	// Completion was triggered by a trigger character specified by
+	// the `triggerCharacters` properties of the `CompletionRegistrationOptions`.
+	CompletionTriggerKindTriggerCharacter CompletionTriggerKind = 2
+	// Completion was re-triggered as current completion list is incomplete
+	CompletionTriggerKindTriggerForIncompleteCompletions CompletionTriggerKind = 3
+)
+
+var validCompletionTriggerKindValues = map[uint32]bool{
+	1: true,
+	2: true,
+	3: true,
+}
+
+func (c *CompletionTriggerKind) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var uint32Value uint32
+	if err := json.Unmarshal(data, &uint32Value); err != nil {
+		return err
+	}
+	if !validCompletionTriggerKindValues[uint32Value] {
+		return fmt.Errorf("cannot unmarshal %v into CompletionTriggerKind: custom values are not supported", uint32Value)
+	}
+	*c = CompletionTriggerKind(uint32Value)
+
+	return nil
+}
+
+func (c CompletionTriggerKind) MarshalJSON() ([]byte, error) {
+	var uint32Value = uint32(c)
+	if !validCompletionTriggerKindValues[uint32Value] {
+		return nil, fmt.Errorf("cannot marshal %v into CompletionTriggerKind: custom values are not supported", uint32Value)
+	}
+	return json.Marshal(uint32Value)
+
+}
+
+// Contains additional information about the context in which a completion request is triggered.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionContext
+type CompletionContext struct {
+	// How the completion was triggered.
+	TriggerKind CompletionTriggerKind `json:"triggerKind"`
+	// The trigger character (a single character) that has trigger code complete.
+	// Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`
+	TriggerCharacter string `json:"triggerCharacter,omitempty"`
+}
+
+// Completion parameters
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionParams
+type CompletionParams struct {
 	*TextDocumentPositionParams
 	*WorkDoneProgressParams
+	*PartialResultParams
+	// The completion context. This is only available if the client specifies
+	// to send this using the client capability `textDocument.completion.contextSupport === true`
+	Context *CompletionContext `json:"context,omitempty"`
+}
+
+// Additional details for a completion item label.
+//
+// @since 3.17.0
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemLabelDetails
+type CompletionItemLabelDetails struct {
+	// An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
+	// without any spacing. Should be used for function signatures and type annotations.
+	Detail string `json:"detail,omitempty"`
+	// An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
+	// for fully qualified names and file paths.
+	Description string `json:"description,omitempty"`
 }
 
 // A `MarkupContent` literal represents a string value which content is interpreted base on its
@@ -5112,6 +5195,484 @@ type MarkupContent struct {
 	Kind MarkupKind `json:"kind"`
 	// The content itself
 	Value string `json:"value"`
+}
+
+// StringOrMarkupContent contains either of the following types:
+//   - [String]
+//   - [*MarkupContent]
+type StringOrMarkupContent struct {
+	Value StringOrMarkupContentValue
+}
+
+// StringOrMarkupContentValue is either of the following types:
+//   - [String]
+//   - [*MarkupContent]
+//
+//gosumtype:decl StringOrMarkupContentValue
+type StringOrMarkupContentValue interface {
+	isStringOrMarkupContentValue()
+}
+
+func (String) isStringOrMarkupContentValue()         {}
+func (*MarkupContent) isStringOrMarkupContentValue() {}
+
+func (s *StringOrMarkupContent) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var stringValue String
+	if err := json.Unmarshal(data, &stringValue); err == nil {
+		s.Value = stringValue
+		return nil
+	}
+	var markupContentValue *MarkupContent
+	if err := json.Unmarshal(data, &markupContentValue); err == nil {
+		s.Value = markupContentValue
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*StringOrMarkupContent](),
+	}
+}
+
+func (s *StringOrMarkupContent) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Value)
+}
+
+// Defines whether the insert text in a completion item should be interpreted as
+// plain text or a snippet.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#insertTextFormat
+type InsertTextFormat uint32
+
+const (
+	// The primary text to be inserted is treated as a plain string.
+	InsertTextFormatPlainText InsertTextFormat = 1
+	// The primary text to be inserted is treated as a snippet.
+	//
+	// A snippet can define tab stops and placeholders with `$1`, `$2`
+	// and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+	// the end of the snippet. Placeholders with equal identifiers are linked,
+	// that is typing in one will update others too.
+	//
+	// See also: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#snippet_syntax
+	InsertTextFormatSnippet InsertTextFormat = 2
+)
+
+var validInsertTextFormatValues = map[uint32]bool{
+	1: true,
+	2: true,
+}
+
+func (i *InsertTextFormat) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var uint32Value uint32
+	if err := json.Unmarshal(data, &uint32Value); err != nil {
+		return err
+	}
+	if !validInsertTextFormatValues[uint32Value] {
+		return fmt.Errorf("cannot unmarshal %v into InsertTextFormat: custom values are not supported", uint32Value)
+	}
+	*i = InsertTextFormat(uint32Value)
+
+	return nil
+}
+
+func (i InsertTextFormat) MarshalJSON() ([]byte, error) {
+	var uint32Value = uint32(i)
+	if !validInsertTextFormatValues[uint32Value] {
+		return nil, fmt.Errorf("cannot marshal %v into InsertTextFormat: custom values are not supported", uint32Value)
+	}
+	return json.Marshal(uint32Value)
+
+}
+
+// A range in a text document expressed as (zero-based) start and end positions.
+//
+// If you want to specify a range that contains a line including the line ending
+// character(s) then use an end position denoting the start of the next line.
+// For example:
+// ```ts
+//
+//	{
+//	    start: { line: 5, character: 23 }
+//	    end : { line 6, character : 0 }
+//	}
+//
+// ```
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#range
+type Range struct {
+	// The range's start position.
+	Start *Position `json:"start"`
+	// The range's end position.
+	End *Position `json:"end"`
+}
+
+// A text edit applicable to a text document.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit
+type TextEdit struct {
+	// The range of the text document to be manipulated. To insert
+	// text into a document create a range where start === end.
+	Range *Range `json:"range"`
+	// The string to be inserted. For delete operations use an
+	// empty string.
+	NewText string `json:"newText"`
+}
+
+// A special text edit to provide an insert and a replace operation.
+//
+// @since 3.16.0
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#insertReplaceEdit
+type InsertReplaceEdit struct {
+	// The string to be inserted.
+	NewText string `json:"newText"`
+	// The range if the insert is requested
+	Insert *Range `json:"insert"`
+	// The range if the replace is requested.
+	Replace *Range `json:"replace"`
+}
+
+// TextEditOrInsertReplaceEdit contains either of the following types:
+//   - [*TextEdit]
+//   - [*InsertReplaceEdit]
+type TextEditOrInsertReplaceEdit struct {
+	Value TextEditOrInsertReplaceEditValue
+}
+
+// TextEditOrInsertReplaceEditValue is either of the following types:
+//   - [*TextEdit]
+//   - [*InsertReplaceEdit]
+//
+//gosumtype:decl TextEditOrInsertReplaceEditValue
+type TextEditOrInsertReplaceEditValue interface {
+	isTextEditOrInsertReplaceEditValue()
+}
+
+func (*TextEdit) isTextEditOrInsertReplaceEditValue()          {}
+func (*InsertReplaceEdit) isTextEditOrInsertReplaceEditValue() {}
+
+func (t *TextEditOrInsertReplaceEdit) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var textEditValue *TextEdit
+	if err := json.Unmarshal(data, &textEditValue); err == nil {
+		t.Value = textEditValue
+		return nil
+	}
+	var insertReplaceEditValue *InsertReplaceEdit
+	if err := json.Unmarshal(data, &insertReplaceEditValue); err == nil {
+		t.Value = insertReplaceEditValue
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*TextEditOrInsertReplaceEdit](),
+	}
+}
+
+func (t *TextEditOrInsertReplaceEdit) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Value)
+}
+
+// Represents a reference to a command. Provides a title which
+// will be used to represent a command in the UI and, optionally,
+// an array of arguments which will be passed to the command handler
+// function when invoked.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#command
+type Command struct {
+	// Title of the command, like `save`.
+	Title string `json:"title"`
+	// The identifier of the actual command handler.
+	Command string `json:"command"`
+	// Arguments that the command handler should be
+	// invoked with.
+	Arguments []LSPAny `json:"arguments,omitempty"`
+}
+
+// A completion item represents a text snippet that is
+// proposed to complete text that is being typed.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItem
+type CompletionItem struct {
+	// The label of this completion item.
+	//
+	// The label property is also by default the text that
+	// is inserted when selecting this completion.
+	//
+	// If label details are provided the label itself should
+	// be an unqualified name of the completion item.
+	Label string `json:"label"`
+	// Additional details for the label
+	//
+	// @since 3.17.0
+	LabelDetails *CompletionItemLabelDetails `json:"labelDetails,omitempty"`
+	// The kind of this completion item. Based of the kind
+	// an icon is chosen by the editor.
+	Kind CompletionItemKind `json:"kind,omitempty"`
+	// Tags for this completion item.
+	//
+	// @since 3.15.0
+	Tags []CompletionItemTag `json:"tags,omitempty"`
+	// A human-readable string with additional information
+	// about this item, like type or symbol information.
+	Detail string `json:"detail,omitempty"`
+	// A human-readable string that represents a doc-comment.
+	Documentation *StringOrMarkupContent `json:"documentation,omitempty"`
+	// Indicates if this item is deprecated.
+	// Deprecated: Use `tags` instead.
+	Deprecated bool `json:"deprecated,omitempty"`
+	// Select this item when showing.
+	//
+	// *Note* that only one completion item can be selected and that the
+	// tool / client decides which item that is. The rule is that the *first*
+	// item of those that match best is selected.
+	Preselect bool `json:"preselect,omitempty"`
+	// A string that should be used when comparing this item
+	// with other items. When `falsy` the {@link CompletionItem.label label}
+	// is used.
+	SortText string `json:"sortText,omitempty"`
+	// A string that should be used when filtering a set of
+	// completion items. When `falsy` the {@link CompletionItem.label label}
+	// is used.
+	FilterText string `json:"filterText,omitempty"`
+	// A string that should be inserted into a document when selecting
+	// this completion. When `falsy` the {@link CompletionItem.label label}
+	// is used.
+	//
+	// The `insertText` is subject to interpretation by the client side.
+	// Some tools might not take the string literally. For example
+	// VS Code when code complete is requested in this example
+	// `con<cursor position>` and a completion item with an `insertText` of
+	// `console` is provided it will only insert `sole`. Therefore it is
+	// recommended to use `textEdit` instead since it avoids additional client
+	// side interpretation.
+	InsertText string `json:"insertText,omitempty"`
+	// The format of the insert text. The format applies to both the
+	// `insertText` property and the `newText` property of a provided
+	// `textEdit`. If omitted defaults to `InsertTextFormat.PlainText`.
+	//
+	// Please note that the insertTextFormat doesn't apply to
+	// `additionalTextEdits`.
+	InsertTextFormat InsertTextFormat `json:"insertTextFormat,omitempty"`
+	// How whitespace and indentation is handled during completion
+	// item insertion. If not provided the clients default value depends on
+	// the `textDocument.completion.insertTextMode` client capability.
+	//
+	// @since 3.16.0
+	InsertTextMode InsertTextMode `json:"insertTextMode,omitempty"`
+	// An {@link TextEdit edit} which is applied to a document when selecting
+	// this completion. When an edit is provided the value of
+	// {@link CompletionItem.insertText insertText} is ignored.
+	//
+	// Most editors support two different operations when accepting a completion
+	// item. One is to insert a completion text and the other is to replace an
+	// existing text with a completion text. Since this can usually not be
+	// predetermined by a server it can report both ranges. Clients need to
+	// signal support for `InsertReplaceEdits` via the
+	// `textDocument.completion.insertReplaceSupport` client capability
+	// property.
+	//
+	// *Note 1:* The text edit's range as well as both ranges from an insert
+	// replace edit must be a [single line] and they must contain the position
+	// at which completion has been requested.
+	// *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
+	// must be a prefix of the edit's replace range, that means it must be
+	// contained and starting at the same position.
+	//
+	// @since 3.16.0 additional type `InsertReplaceEdit`
+	TextEdit *TextEditOrInsertReplaceEdit `json:"textEdit,omitempty"`
+	// The edit text used if the completion item is part of a CompletionList and
+	// CompletionList defines an item default for the text edit range.
+	//
+	// Clients will only honor this property if they opt into completion list
+	// item defaults using the capability `completionList.itemDefaults`.
+	//
+	// If not provided and a list's default range is provided the label
+	// property is used as a text.
+	//
+	// @since 3.17.0
+	TextEditText string `json:"textEditText,omitempty"`
+	// An optional array of additional {@link TextEdit text edits} that are applied when
+	// selecting this completion. Edits must not overlap (including the same insert position)
+	// with the main {@link CompletionItem.textEdit edit} nor with themselves.
+	//
+	// Additional text edits should be used to change text unrelated to the current cursor position
+	// (for example adding an import statement at the top of the file if the completion item will
+	// insert an unqualified type).
+	AdditionalTextEdits []*TextEdit `json:"additionalTextEdits,omitempty"`
+	// An optional set of characters that when pressed while this completion is active will accept it first and
+	// then type that character. *Note* that all commit characters should have `length=1` and that superfluous
+	// characters will be ignored.
+	CommitCharacters []string `json:"commitCharacters,omitempty"`
+	// An optional {@link Command command} that is executed *after* inserting this completion. *Note* that
+	// additional modifications to the current document should be described with the
+	// {@link CompletionItem.additionalTextEdits additionalTextEdits}-property.
+	Command *Command `json:"command,omitempty"`
+	// A data entry field that is preserved on a completion item between a
+	// {@link CompletionRequest} and a {@link CompletionResolveRequest}.
+	Data LSPAny `json:"data,omitempty"`
+}
+
+type CompletionItemSlice []*CompletionItem
+
+type CompletionListItemDefaultsEditRangeOr2 struct {
+	Insert *Range `json:"insert"`
+
+	Replace *Range `json:"replace"`
+}
+
+// RangeOrCompletionListItemDefaultsEditRangeOr2 contains either of the following types:
+//   - [*Range]
+//   - [*CompletionListItemDefaultsEditRangeOr2]
+type RangeOrCompletionListItemDefaultsEditRangeOr2 struct {
+	Value RangeOrCompletionListItemDefaultsEditRangeOr2Value
+}
+
+// RangeOrCompletionListItemDefaultsEditRangeOr2Value is either of the following types:
+//   - [*Range]
+//   - [*CompletionListItemDefaultsEditRangeOr2]
+//
+//gosumtype:decl RangeOrCompletionListItemDefaultsEditRangeOr2Value
+type RangeOrCompletionListItemDefaultsEditRangeOr2Value interface {
+	isRangeOrCompletionListItemDefaultsEditRangeOr2Value()
+}
+
+func (*Range) isRangeOrCompletionListItemDefaultsEditRangeOr2Value() {}
+func (*CompletionListItemDefaultsEditRangeOr2) isRangeOrCompletionListItemDefaultsEditRangeOr2Value() {
+}
+
+func (r *RangeOrCompletionListItemDefaultsEditRangeOr2) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var rangeValue *Range
+	if err := json.Unmarshal(data, &rangeValue); err == nil {
+		r.Value = rangeValue
+		return nil
+	}
+	var completionListItemDefaultsEditRangeOr2Value *CompletionListItemDefaultsEditRangeOr2
+	if err := json.Unmarshal(data, &completionListItemDefaultsEditRangeOr2Value); err == nil {
+		r.Value = completionListItemDefaultsEditRangeOr2Value
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*RangeOrCompletionListItemDefaultsEditRangeOr2](),
+	}
+}
+
+func (r *RangeOrCompletionListItemDefaultsEditRangeOr2) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r.Value)
+}
+
+type CompletionListItemDefaults struct {
+	// A default commit character set.
+	//
+	// @since 3.17.0
+	CommitCharacters []string `json:"commitCharacters,omitempty"`
+	// A default edit range.
+	//
+	// @since 3.17.0
+	EditRange *RangeOrCompletionListItemDefaultsEditRangeOr2 `json:"editRange,omitempty"`
+	// A default insert text format.
+	//
+	// @since 3.17.0
+	InsertTextFormat InsertTextFormat `json:"insertTextFormat,omitempty"`
+	// A default insert text mode.
+	//
+	// @since 3.17.0
+	InsertTextMode InsertTextMode `json:"insertTextMode,omitempty"`
+	// A default data value.
+	//
+	// @since 3.17.0
+	Data LSPAny `json:"data,omitempty"`
+}
+
+// Represents a collection of {@link CompletionItem completion items} to be presented
+// in the editor.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionList
+type CompletionList struct {
+	// This list it not complete. Further typing results in recomputing this list.
+	//
+	// Recomputed lists have all their items replaced (not appended) in the
+	// incomplete completion sessions.
+	IsIncomplete bool `json:"isIncomplete"`
+	// In many cases the items of an actual completion result share the same
+	// value for properties like `commitCharacters` or the range of a text
+	// edit. A completion list can therefore define item defaults which will
+	// be used if a completion item itself doesn't specify the value.
+	//
+	// If a completion list specifies a default value and a completion item
+	// also specifies a corresponding value the one from the item is used.
+	//
+	// Servers are only allowed to return default values if the client
+	// signals support for this via the `completionList.itemDefaults`
+	// capability.
+	//
+	// @since 3.17.0
+	ItemDefaults *CompletionListItemDefaults `json:"itemDefaults,omitempty"`
+	// The completion items.
+	Items []*CompletionItem `json:"items"`
+}
+
+// CompletionItemSliceOrCompletionList contains either of the following types:
+//   - [CompletionItemSlice]
+//   - [*CompletionList]
+type CompletionItemSliceOrCompletionList struct {
+	Value CompletionItemSliceOrCompletionListValue
+}
+
+// CompletionItemSliceOrCompletionListValue is either of the following types:
+//   - [CompletionItemSlice]
+//   - [*CompletionList]
+//
+//gosumtype:decl CompletionItemSliceOrCompletionListValue
+type CompletionItemSliceOrCompletionListValue interface {
+	isCompletionItemSliceOrCompletionListValue()
+}
+
+func (CompletionItemSlice) isCompletionItemSliceOrCompletionListValue() {}
+func (*CompletionList) isCompletionItemSliceOrCompletionListValue()     {}
+
+func (c *CompletionItemSliceOrCompletionList) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var completionItemSliceValue CompletionItemSlice
+	if err := json.Unmarshal(data, &completionItemSliceValue); err == nil {
+		c.Value = completionItemSliceValue
+		return nil
+	}
+	var completionListValue *CompletionList
+	if err := json.Unmarshal(data, &completionListValue); err == nil {
+		c.Value = completionListValue
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*CompletionItemSliceOrCompletionList](),
+	}
+}
+
+func (c *CompletionItemSliceOrCompletionList) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.Value)
+}
+
+// Parameters for a {@link HoverRequest}.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hoverParams
+type HoverParams struct {
+	*TextDocumentPositionParams
+	*WorkDoneProgressParams
 }
 
 type MarkedStringOr2 struct {
@@ -5232,28 +5793,6 @@ func (m *MarkupContentOrMarkedStringOrMarkedStringSlice) MarshalJSON() ([]byte, 
 	return json.Marshal(m.Value)
 }
 
-// A range in a text document expressed as (zero-based) start and end positions.
-//
-// If you want to specify a range that contains a line including the line ending
-// character(s) then use an end position denoting the start of the next line.
-// For example:
-// ```ts
-//
-//	{
-//	    start: { line: 5, character: 23 }
-//	    end : { line 6, character : 0 }
-//	}
-//
-// ```
-//
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#range
-type Range struct {
-	// The range's start position.
-	Start *Position `json:"start"`
-	// The range's end position.
-	End *Position `json:"end"`
-}
-
 // The result of a hover request.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hover
@@ -5263,13 +5802,6 @@ type Hover struct {
 	// An optional range inside the text document that is used to
 	// visualize the hover, e.g. by changing the background color.
 	Range *Range `json:"range,omitempty"`
-}
-
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#partialResultParams
-type PartialResultParams struct {
-	// An optional token that a server can use to report partial results (e.g. streaming) to
-	// the client.
-	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
 }
 
 // Parameters for a {@link DefinitionRequest}.
@@ -5602,18 +6134,6 @@ type DocumentFormattingParams struct {
 	TextDocument *TextDocumentIdentifier `json:"textDocument"`
 	// The format options.
 	Options *FormattingOptions `json:"options"`
-}
-
-// A text edit applicable to a text document.
-//
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit
-type TextEdit struct {
-	// The range of the text document to be manipulated. To insert
-	// text into a document create a range where start === end.
-	Range *Range `json:"range"`
-	// The string to be inserted. For delete operations use an
-	// empty string.
-	NewText string `json:"newText"`
 }
 
 // The parameters of a {@link RenameRequest}.
