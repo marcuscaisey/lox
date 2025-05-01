@@ -23,7 +23,7 @@ func Walk(node Node, f func(Node) bool) {
 		Walk(node.Function, f)
 	case *Function:
 		walkSlice(node.Params, f)
-		walkSlice(node.Body.Stmts, f)
+		Walk(node.Body, f)
 	case *ParamDecl:
 		Walk(node.Name, f)
 	case *ClassDecl:
