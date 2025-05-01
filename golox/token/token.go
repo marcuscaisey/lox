@@ -5,7 +5,6 @@ import (
 	"cmp"
 	"fmt"
 	"unicode"
-	"unicode/utf16"
 
 	"github.com/mattn/go-runewidth"
 
@@ -227,12 +226,6 @@ func (p Position) Compare(other Position) int {
 		return cmp.Compare(p.Column, other.Column)
 	}
 	return cmp.Compare(p.Line, other.Line)
-}
-
-// ColumnUTF16 returns the column offset in UTF-16 code units.
-func (p Position) ColumnUTF16() int {
-	line := p.File.Line(p.Line)
-	return len(utf16.Encode([]rune(string(line[:p.Column]))))
 }
 
 func (p Position) String() string {
