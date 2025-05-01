@@ -118,7 +118,10 @@ func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Dec
 			stmt = inlineComment.Stmt
 		}
 		if decl, ok := stmt.(ast.Decl); ok {
-			decls[decl.Ident().Token.Lexeme] = decl
+			name := decl.Ident().Token.Lexeme
+			if _, ok := decls[name]; !ok {
+				decls[decl.Ident().Token.Lexeme] = decl
+			}
 		}
 	}
 	return decls
@@ -254,6 +257,9 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 		return
 	}
 	if r.scopes.Len() == 1 && r.forwardDeclaredGlobals[ident.Token.Lexeme] {
+		if r.scopes.Peek().Declaration(ident.Token.Lexeme) != stmt {
+			r.errs.Addf(ident, "%s has already been declared", ident.Token.Lexeme)
+		}
 		return
 	}
 	if scope := r.scopes.Peek(); scope.IsDeclared(ident.Token.Lexeme) {
