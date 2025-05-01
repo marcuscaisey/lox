@@ -308,6 +308,7 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 	}
 	if decl, ok := r.globalDecls[ident.Token.Lexeme]; ok && r.inFun {
 		r.globalScope.Declare(decl)
+		r.identDecls[decl.Ident()] = decl
 		r.globalScope.Use(ident.Token.Lexeme)
 		r.forwardDeclaredGlobals[ident.Token.Lexeme] = true
 		r.identDecls[ident] = decl
