@@ -299,7 +299,8 @@ func (f *ForStmt) End() token.Position   { return f.Body.End() }
 
 // IllegalStmt is an illegal statement, used as a placeholder when parsing fails.
 type IllegalStmt struct {
-	From, To token.Token
+	From token.Token `print:"named"`
+	To   token.Token `print:"named"`
 	stmt
 }
 
