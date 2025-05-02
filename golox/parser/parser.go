@@ -48,8 +48,9 @@ type parser struct {
 	tok     token.Token // token currently being considered
 	nextTok token.Token
 
-	errs       loxerr.Errors
-	lastErrPos token.Position
+	parsingBlock bool
+	errs         loxerr.Errors
+	lastErrPos   token.Position
 
 	parseComments bool
 }
@@ -128,6 +129,10 @@ func (p *parser) sync() token.Token {
 			finalTok := p.tok
 			p.next()
 			return finalTok
+		case token.RightBrace:
+			if p.parsingBlock {
+				return p.prevTok
+			}
 		case token.Print, token.Var, token.If, token.LeftBrace, token.While, token.For, token.Break, token.Continue, token.EOF:
 			return finalTok
 		default:
@@ -184,6 +189,8 @@ func (p *parser) parseFunDecl(funTok token.Token) *ast.FunDecl {
 }
 
 func (p *parser) parseClassDecl(classTok token.Token) *ast.ClassDecl {
+	p.parsingBlock = true
+	defer func() { p.parsingBlock = false }()
 	name := p.expectf(token.Ident, "expected class name")
 	p.expect(token.LeftBrace)
 	var body []ast.Stmt
@@ -331,6 +338,8 @@ func (p *parser) parsePrintStmt(printTok token.Token) *ast.PrintStmt {
 }
 
 func (p *parser) parseBlock(leftBrace token.Token) *ast.Block {
+	p.parsingBlock = true
+	defer func() { p.parsingBlock = false }()
 	stmts := p.safelyParseDeclsUntil(token.RightBrace, token.EOF)
 	rightBrace := p.expect(token.RightBrace)
 	return &ast.Block{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
