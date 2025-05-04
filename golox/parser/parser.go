@@ -73,7 +73,7 @@ func (p *parser) parseProgram() *ast.Program {
 
 func (p *parser) safelyParseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
-	var doc token.Ranges[*ast.Comment]
+	var doc []*ast.Comment
 	for !slices.Contains(types, p.tok.Type) {
 		stmt := p.safelyParseDecl()
 
@@ -208,7 +208,7 @@ func (p *parser) parseClassDecl(classTok token.Token) (*ast.ClassDecl, bool) {
 		return decl, false
 	}
 	for {
-		var doc token.Ranges[*ast.Comment]
+		var doc []*ast.Comment
 		for {
 			tok, ok := p.match2(token.Comment)
 			if !ok {
@@ -295,8 +295,8 @@ func (p *parser) parseFun() (*ast.Function, bool) {
 	return fun, true
 }
 
-func (p *parser) parseParams() (token.Ranges[*ast.ParamDecl], bool) {
-	var params token.Ranges[*ast.ParamDecl]
+func (p *parser) parseParams() ([]*ast.ParamDecl, bool) {
+	var params []*ast.ParamDecl
 	for {
 		decl := &ast.ParamDecl{}
 		var ok bool

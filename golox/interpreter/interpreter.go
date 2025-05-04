@@ -354,8 +354,9 @@ func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObjec
 			"%s() missing %d argument%s: %s", callable.CallableName(), arity-len(args), argumentSuffix, missingArgsStr,
 		))
 	case len(args) > arity:
-		panic(loxerr.Newf(
-			expr.Args[arity:],
+		panic(loxerr.NewSpanningRangesf(
+			expr.Args[arity],
+			expr.Args[len(expr.Args)-1],
 			"%s() accepts %d arguments but %d were given", callable.CallableName(), arity, len(args),
 		))
 	}

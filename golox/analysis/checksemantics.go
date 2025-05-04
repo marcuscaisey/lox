@@ -103,7 +103,7 @@ func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
 	}
 }
 
-func (c *semanticChecker) checkNumParams(params token.Ranges[*ast.ParamDecl]) {
+func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {
 	if len(params) > maxParams {
 		c.errs.Addf(params[maxParams], "cannot define more than %d function parameters", maxParams)
 	}
@@ -159,12 +159,12 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) 
 func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
 	switch {
 	case decl.HasModifier(token.Get) && len(decl.Function.Params) > 0:
-		c.errs.Add(decl.Function.Params[0:], "property getter cannot have parameters")
+		c.errs.AddSpanningRangesf(decl.Function.Params[0], decl.Function.Params[len(decl.Function.Params)-1], "property getter cannot have parameters")
 	case decl.HasModifier(token.Set):
 		if len(decl.Function.Params) == 0 {
 			c.errs.Add(decl.Name, "property setter must have a parameter")
 		} else if len(decl.Function.Params) > 1 {
-			c.errs.Add(decl.Function.Params[1:], "property setter can only have one parameter")
+			c.errs.AddSpanningRangesf(decl.Function.Params[1], decl.Function.Params[len(decl.Function.Params)-1], "property setter can only have one parameter")
 		}
 	}
 

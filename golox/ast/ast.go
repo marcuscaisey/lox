@@ -19,7 +19,7 @@ func (node) isNode() {}
 
 // Program is the root node of the AST.
 type Program struct {
-	Stmts token.Ranges[Stmt] `print:"unnamed"`
+	Stmts []Stmt `print:"unnamed"`
 	node
 }
 
@@ -103,7 +103,7 @@ func (d *VarDecl) Ident() *Ident         { return d.Name }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {
-	Doc      token.Ranges[*Comment] `print:"named"`
+	Doc      []*Comment `print:"named"`
 	Fun      token.Token
 	Name     *Ident    `print:"named"`
 	Function *Function `print:"named"`
@@ -117,8 +117,8 @@ func (d *FunDecl) Ident() *Ident         { return d.Name }
 // Function is a function's parameters and body.
 type Function struct {
 	LeftParen token.Token
-	Params    token.Ranges[*ParamDecl] `print:"named"`
-	Body      *Block                   `print:"named"`
+	Params    []*ParamDecl `print:"named"`
+	Body      *Block       `print:"named"`
 	node
 }
 
@@ -143,10 +143,10 @@ func (p *ParamDecl) Ident() *Ident         { return p.Name }
 //	  }
 //	}
 type ClassDecl struct {
-	Doc        token.Ranges[*Comment] `print:"named"`
+	Doc        []*Comment `print:"named"`
 	Class      token.Token
-	Name       *Ident             `print:"named"`
-	Body       token.Ranges[Stmt] `print:"named"`
+	Name       *Ident `print:"named"`
+	Body       []Stmt `print:"named"`
 	RightBrace token.Token
 	decl
 }
@@ -172,10 +172,10 @@ func (c *ClassDecl) Methods() []*MethodDecl {
 //	  return "baz";
 //	}
 type MethodDecl struct {
-	Doc       token.Ranges[*Comment] `print:"named"`
-	Modifiers []token.Token          `print:"named"`
-	Name      *Ident                 `print:"named"`
-	Function  *Function              `print:"named"`
+	Doc       []*Comment    `print:"named"`
+	Modifiers []token.Token `print:"named"`
+	Name      *Ident        `print:"named"`
+	Function  *Function     `print:"named"`
 	decl
 }
 
@@ -232,7 +232,7 @@ func (p *PrintStmt) End() token.Position   { return p.Semicolon.EndPos }
 //	}
 type Block struct {
 	LeftBrace  token.Token
-	Stmts      token.Ranges[Stmt] `print:"unnamed"`
+	Stmts      []Stmt `print:"unnamed"`
 	RightBrace token.Token
 	stmt
 }
@@ -392,8 +392,8 @@ func (t *ThisExpr) End() token.Position   { return t.This.EndPos }
 
 // CallExpr is a call expression, such as add(x, 1).
 type CallExpr struct {
-	Callee     Expr               `print:"named"`
-	Args       token.Ranges[Expr] `print:"named"`
+	Callee     Expr   `print:"named"`
+	Args       []Expr `print:"named"`
 	RightParen token.Token
 	expr
 }

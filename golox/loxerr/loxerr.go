@@ -26,16 +26,24 @@ func New(rang token.Range, message string) error {
 	return Newf(rang, "%s", message)
 }
 
+// NewSpanningRangesf creates an [*Error] which spans the given [token.Range]s.
+// The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
+func NewSpanningRangesf(start, end token.Range, message string, args ...any) error {
+	return newf(start.Start(), end.End(), message, args...)
+}
+
 // Newf creates a [*Error].
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
 func Newf(rang token.Range, format string, args ...any) error {
-	e := &Error{
-		Msg: fmt.Sprintf(format, args...),
-	}
-	e.Start = rang.Start()
-	e.End = rang.End()
-	return e
+	return newf(rang.Start(), rang.End(), format, args...)
+}
 
+func newf(start, end token.Position, format string, args ...any) error {
+	return &Error{
+		Msg:   fmt.Sprintf(format, args...),
+		Start: start,
+		End:   end,
+	}
 }
 
 // Error formats the error by displaying the error message and highlighting the range of characters in the source code
@@ -110,6 +118,12 @@ func (e *Errors) Add(rang token.Range, message string) {
 // The parameters are the same as for [Newf].
 func (e *Errors) Addf(rang token.Range, format string, args ...any) {
 	*e = append(*e, Newf(rang, format, args...).(*Error))
+}
+
+// AddSpanningRangesf adds an [*Error] to the list of errors.
+// The parameters are the same as for [NewSpanningRangesf].
+func (e *Errors) AddSpanningRangesf(start, end token.Range, format string, args ...any) {
+	*e = append(*e, NewSpanningRangesf(start, end, format, args...).(*Error))
 }
 
 // Sort sorts the errors by their start position.

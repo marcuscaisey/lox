@@ -267,19 +267,6 @@ type Range interface {
 	End() Position   // End returns the position of the character immediately after the range.
 }
 
-// Ranges is a slice of [Range].
-type Ranges[T Range] []T
-
-// Start returns the position of the first character of the first range.
-func (r Ranges[T]) Start() Position {
-	return r[0].Start()
-}
-
-// End returns the position of the character immediately after the last range.
-func (r Ranges[T]) End() Position {
-	return r[len(r)-1].End()
-}
-
 // File is a simple representation of a file.
 type File struct {
 	name        string

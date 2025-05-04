@@ -6,7 +6,6 @@ import (
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/format"
-	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
@@ -148,7 +147,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 	}, nil
 }
 
-func hoverDeclDoc(doc token.Ranges[*ast.Comment]) string {
+func hoverDeclDoc(doc []*ast.Comment) string {
 	lines := make([]string, len(doc))
 	for i, comment := range doc {
 		lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
