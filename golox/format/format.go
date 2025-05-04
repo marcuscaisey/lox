@@ -76,8 +76,6 @@ func Node(node ast.Node) string {
 		return formatAssignmentExpr(node)
 	case *ast.SetExpr:
 		return formatSetExpr(node)
-	case *ast.IllegalStmt:
-		panic("IllegalStmt cannot be formatted")
 	}
 	panic("unreachable")
 }

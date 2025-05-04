@@ -105,95 +105,108 @@ func (p *parser) safelyParseDeclsUntil(types ...token.Type) []ast.Stmt {
 }
 
 func (p *parser) safelyParseDecl() (stmt ast.Stmt) {
-	from := p.tok
-	defer func() {
-		if r := recover(); r != nil {
-			if _, ok := r.(unwind); ok {
-				to := p.sync()
-				stmt = &ast.IllegalStmt{From: from, To: to}
-			} else {
-				panic(r)
-			}
-		}
-	}()
-	return p.parseDecl()
+	stmt, ok := p.parseDecl()
+	if !ok {
+		p.sync()
+	}
+	return stmt
 }
 
 // sync synchronises the parser with the next statement. This is used to recover from a parsing error.
-// The final token before the next statement is returned.
-func (p *parser) sync() token.Token {
-	finalTok := p.tok
+func (p *parser) sync() {
 	for {
 		switch p.tok.Type {
 		case token.Semicolon:
-			finalTok := p.tok
 			p.next()
-			return finalTok
+			return
 		case token.RightBrace:
 			if p.parsingBlock {
-				return p.prevTok
+				return
 			}
 		case token.Print, token.Var, token.If, token.LeftBrace, token.While, token.For, token.Break, token.Continue, token.EOF:
-			return finalTok
+			return
 		default:
 		}
-		finalTok = p.tok
 		p.next()
 	}
 }
 
-func (p *parser) parseDecl() ast.Stmt {
+func (p *parser) parseDecl() (ast.Stmt, bool) {
 	var stmt ast.Stmt
+	ok := true
 	switch tok := p.tok; {
 	case p.match(token.Comment):
 		stmt = p.parseComment(tok)
 	case p.match(token.Var):
-		stmt = p.parseVarDecl(tok)
+		stmt, ok = p.parseVarDecl(tok)
 	case p.tok.Type == token.Fun && p.nextTok.Type == token.Ident:
 		p.match(token.Fun)
-		stmt = p.parseFunDecl(tok)
+		stmt, ok = p.parseFunDecl(tok)
 	case p.match(token.Class):
-		stmt = p.parseClassDecl(tok)
+		stmt, ok = p.parseClassDecl(tok)
 	default:
-		stmt = p.parseStmt()
+		stmt, ok = p.parseStmt()
+	}
+	if !ok {
+		return stmt, false
 	}
 
 	if inlineComment, ok := p.parseInlineComment(stmt); ok {
-		return inlineComment
+		return inlineComment, ok
 	}
 
-	return stmt
+	return stmt, true
 }
 
 func (p *parser) parseComment(commentTok token.Token) *ast.Comment {
 	return &ast.Comment{Comment: commentTok}
 }
 
-func (p *parser) parseVarDecl(varTok token.Token) *ast.VarDecl {
-	name := p.expectf(token.Ident, "expected variable name")
-	var value ast.Expr
+func (p *parser) parseVarDecl(varTok token.Token) (*ast.VarDecl, bool) {
+	decl := &ast.VarDecl{Var: varTok}
+	var ok bool
+	if decl.Name, ok = p.parseIdent("expected variable name"); !ok {
+		return decl, false
+	}
 	if p.match(token.Equal) {
-		value = p.parseExpr()
+		if decl.Initialiser, ok = p.parseExpr(); !ok {
+			return decl, false
+		}
 	}
-	semicolon := p.expectSemicolon()
-	return &ast.VarDecl{Var: varTok, Name: &ast.Ident{Token: name}, Initialiser: value, Semicolon: semicolon}
+	if decl.Semicolon, ok = p.expectSemicolon2(); !ok {
+		return decl, false
+	}
+	return decl, true
 }
 
-func (p *parser) parseFunDecl(funTok token.Token) *ast.FunDecl {
-	name := p.expectf(token.Ident, "expected function name")
-	return &ast.FunDecl{
-		Fun:      funTok,
-		Name:     &ast.Ident{Token: name},
-		Function: p.parseFun(),
+func (p *parser) parseFunDecl(funTok token.Token) (*ast.FunDecl, bool) {
+	decl := &ast.FunDecl{Fun: funTok}
+	var ok bool
+	if decl.Name, ok = p.parseIdent("expected function name"); !ok {
+		return decl, false
 	}
+	if decl.Function, ok = p.parseFun(); !ok {
+		return decl, false
+	}
+	return decl, true
 }
 
-func (p *parser) parseClassDecl(classTok token.Token) *ast.ClassDecl {
+func (p *parser) parseClassDecl(classTok token.Token) (*ast.ClassDecl, bool) {
 	p.parsingBlock = true
 	defer func() { p.parsingBlock = false }()
-	name := p.expectf(token.Ident, "expected class name")
-	p.expect(token.LeftBrace)
-	var body []ast.Stmt
+
+	decl := &ast.ClassDecl{Class: classTok}
+	var ok bool
+
+	if decl.Name, ok = p.parseIdent("expected class name"); !ok {
+		return decl, false
+	}
+
+	// TODO: parse as block and error on invalid statement types instead?
+	// This would centralise the doc comment parsing
+	if !p.expect(token.LeftBrace) {
+		return decl, false
+	}
 	for {
 		var doc token.Ranges[*ast.Comment]
 		for {
@@ -206,113 +219,130 @@ func (p *parser) parseClassDecl(classTok token.Token) *ast.ClassDecl {
 				if len(doc) > 0 && comment.Start().Line != doc[len(doc)-1].Start().Line+1 {
 					doc = doc[:0]
 				}
-				body = append(body, comment)
+				decl.Body = append(decl.Body, comment)
 				doc = append(doc, comment)
 			}
 		}
 
-		if decl, ok := p.parseMethodDecl(); ok {
-			decl.Doc = doc
-			body = body[:len(body)-len(doc)]
-			doc = nil
-			body = append(body, decl)
-		} else {
+		methodDecl, ok := p.parseMethodDecl()
+		if !ok {
+			decl.Body = append(decl.Body, methodDecl)
+			// TODO: can we sync so that the next method can be parsed?
+			return decl, false
+		} else if methodDecl == nil {
 			break
 		}
+		methodDecl.Doc = doc
+		decl.Body = append(decl.Body[:len(decl.Body)-len(doc)], methodDecl)
+		doc = nil
 	}
-	rightBrace := p.expect(token.RightBrace)
-	return &ast.ClassDecl{
-		Class:      classTok,
-		Name:       &ast.Ident{Token: name},
-		Body:       body,
-		RightBrace: rightBrace,
+	if decl.RightBrace, ok = p.expect2(token.RightBrace); !ok {
+		return decl, false
 	}
+
+	return decl, true
 }
 
 func (p *parser) parseMethodDecl() (*ast.MethodDecl, bool) {
-	var modifiers []token.Token
+	decl := &ast.MethodDecl{}
+	var ok bool
+
 	if tok, ok := p.match2(token.Static); ok {
-		modifiers = append(modifiers, tok)
+		decl.Modifiers = append(decl.Modifiers, tok)
 	}
 	if tok, ok := p.match2(token.Get, token.Set); ok {
-		modifiers = append(modifiers, tok)
+		decl.Modifiers = append(decl.Modifiers, tok)
 	}
 
-	var name token.Token
-	if len(modifiers) > 0 {
-		name = p.expectf(token.Ident, "expected method name")
+	if len(decl.Modifiers) > 0 {
+		if decl.Name, ok = p.parseIdent("expected method name"); !ok {
+			return decl, false
+		}
 	} else if tok, ok := p.match2(token.Ident); ok {
-		name = tok
+		decl.Name = &ast.Ident{Token: tok}
 	} else {
-		return nil, false
+		return nil, true
 	}
 
-	return &ast.MethodDecl{
-		Modifiers: modifiers,
-		Name:      &ast.Ident{Token: name},
-		Function:  p.parseFun(),
-	}, true
+	if decl.Function, ok = p.parseFun(); !ok {
+		return decl, false
+	}
+
+	return decl, true
 }
 
-func (p *parser) parseFun() *ast.Function {
-	leftParen := p.expect(token.LeftParen)
-	var params token.Ranges[*ast.ParamDecl]
+func (p *parser) parseFun() (*ast.Function, bool) {
+	fun := &ast.Function{}
+	var ok bool
+	if fun.LeftParen, ok = p.expect2(token.LeftParen); !ok {
+		return fun, false
+	}
 	if !p.match(token.RightParen) {
-		params = p.parseParams()
-		p.expect(token.RightParen)
+		if fun.Params, ok = p.parseParams(); !ok {
+			return fun, false
+		}
+		if !p.expect(token.RightParen) {
+			return fun, false
+		}
 	}
-	leftBrace := p.expect(token.LeftBrace)
-	body := p.parseBlock(leftBrace)
-	return &ast.Function{
-		LeftParen: leftParen,
-		Params:    params,
-		Body:      body,
+	leftBrace, ok := p.expect2(token.LeftBrace)
+	if !ok {
+		return fun, false
 	}
+	if fun.Body, ok = p.parseBlock(leftBrace); !ok {
+		return fun, false
+	}
+	return fun, true
 }
 
-func (p *parser) parseParams() token.Ranges[*ast.ParamDecl] {
+func (p *parser) parseParams() (token.Ranges[*ast.ParamDecl], bool) {
 	var params token.Ranges[*ast.ParamDecl]
 	for {
-		tok := p.expectf(token.Ident, "expected parameter name")
-		paramDecl := &ast.ParamDecl{
-			Name: &ast.Ident{Token: tok},
+		decl := &ast.ParamDecl{}
+		var ok bool
+		if decl.Name, ok = p.parseIdent("expected parameter name"); !ok {
+			return params, false
 		}
-		params = append(params, paramDecl)
+		params = append(params, decl)
 		if !p.match(token.Comma) {
 			break
 		}
 	}
-	return params
+	return params, true
 }
 
-func (p *parser) parseStmt() ast.Stmt {
+func (p *parser) parseStmt() (ast.Stmt, bool) {
 	var stmt ast.Stmt
+	var ok bool
 	switch tok := p.tok; {
 	case p.match(token.Print):
-		stmt = p.parsePrintStmt(tok)
+		stmt, ok = p.parsePrintStmt(tok)
 	case p.match(token.LeftBrace):
-		stmt = p.parseBlock(tok)
+		stmt, ok = p.parseBlock(tok)
 	case p.match(token.If):
-		stmt = p.parseIfStmt(tok)
+		stmt, ok = p.parseIfStmt(tok)
 	case p.match(token.While):
-		stmt = p.parseWhileStmt(tok)
+		stmt, ok = p.parseWhileStmt(tok)
 	case p.match(token.For):
-		stmt = p.parseForStmt(tok)
+		stmt, ok = p.parseForStmt(tok)
 	case p.match(token.Break):
-		stmt = p.parseBreakStmt(tok)
+		stmt, ok = p.parseBreakStmt(tok)
 	case p.match(token.Continue):
-		stmt = p.parseContinueStmt(tok)
+		stmt, ok = p.parseContinueStmt(tok)
 	case p.match(token.Return):
-		stmt = p.parseReturnStmt(tok)
+		stmt, ok = p.parseReturnStmt(tok)
 	default:
-		stmt = p.parseExprStmt()
+		stmt, ok = p.parseExprStmt()
+	}
+	if !ok {
+		return stmt, false
 	}
 
-	if inlineCommentStmt, ok := p.parseInlineComment(stmt); ok {
-		return inlineCommentStmt
+	if inlineComment, ok := p.parseInlineComment(stmt); ok {
+		return inlineComment, ok
 	}
 
-	return stmt
+	return stmt, true
 }
 
 func (p *parser) parseInlineComment(stmt ast.Stmt) (*ast.InlineComment, bool) {
@@ -325,278 +355,384 @@ func (p *parser) parseInlineComment(stmt ast.Stmt) (*ast.InlineComment, bool) {
 	return nil, false
 }
 
-func (p *parser) parseExprStmt() *ast.ExprStmt {
-	expr := p.parseExpr()
-	semicolon := p.expectSemicolon()
-	return &ast.ExprStmt{Expr: expr, Semicolon: semicolon}
+func (p *parser) parseExprStmt() (*ast.ExprStmt, bool) {
+	stmt := &ast.ExprStmt{}
+	var ok bool
+	if stmt.Expr, ok = p.parseExpr(); !ok {
+		return stmt, false
+	}
+	if stmt.Semicolon, ok = p.expectSemicolon2(); !ok {
+		return stmt, false
+	}
+	return stmt, true
 }
 
-func (p *parser) parsePrintStmt(printTok token.Token) *ast.PrintStmt {
-	expr := p.parseExpr()
-	semicolon := p.expectSemicolon()
-	return &ast.PrintStmt{Print: printTok, Expr: expr, Semicolon: semicolon}
+func (p *parser) parsePrintStmt(printTok token.Token) (*ast.PrintStmt, bool) {
+	stmt := &ast.PrintStmt{Print: printTok}
+	var ok bool
+	if stmt.Expr, ok = p.parseExpr(); !ok {
+		return stmt, false
+	}
+	if stmt.Semicolon, ok = p.expectSemicolon2(); !ok {
+		return stmt, false
+	}
+	return stmt, true
 }
 
-func (p *parser) parseBlock(leftBrace token.Token) *ast.Block {
+func (p *parser) parseBlock(leftBrace token.Token) (*ast.Block, bool) {
 	p.parsingBlock = true
 	defer func() { p.parsingBlock = false }()
-	stmts := p.safelyParseDeclsUntil(token.RightBrace, token.EOF)
-	rightBrace := p.expect(token.RightBrace)
-	return &ast.Block{LeftBrace: leftBrace, Stmts: stmts, RightBrace: rightBrace}
-}
-
-func (p *parser) parseIfStmt(ifTok token.Token) *ast.IfStmt {
-	p.expect(token.LeftParen)
-	condition := p.parseExpr()
-	p.expect(token.RightParen)
-	thenBranch := p.parseStmt()
-	var elseBranch ast.Stmt
-	if p.match(token.Else) {
-		elseBranch = p.parseStmt()
+	decl := &ast.Block{LeftBrace: leftBrace}
+	var ok bool
+	decl.Stmts = p.safelyParseDeclsUntil(token.RightBrace, token.EOF)
+	if decl.RightBrace, ok = p.expect2(token.RightBrace); !ok {
+		return decl, false
 	}
-	return &ast.IfStmt{If: ifTok, Condition: condition, Then: thenBranch, Else: elseBranch}
+	return decl, true
 }
 
-func (p *parser) parseWhileStmt(whileTok token.Token) *ast.WhileStmt {
-	p.expect(token.LeftParen)
-	condition := p.parseExpr()
-	p.expect(token.RightParen)
-	body := p.parseStmt()
-	return &ast.WhileStmt{While: whileTok, Condition: condition, Body: body}
+func (p *parser) parseIfStmt(ifTok token.Token) (*ast.IfStmt, bool) {
+	stmt := &ast.IfStmt{If: ifTok}
+	var ok bool
+	if !p.expect(token.LeftParen) {
+		return stmt, false
+	}
+	if stmt.Condition, ok = p.parseExpr(); !ok {
+		return stmt, false
+	}
+	if !p.expect(token.RightParen) {
+		return stmt, false
+	}
+	if stmt.Then, ok = p.parseStmt(); !ok {
+		return stmt, false
+	}
+	if p.match(token.Else) {
+		if stmt.Else, ok = p.parseStmt(); !ok {
+			return stmt, false
+		}
+	}
+	return stmt, true
 }
 
-func (p *parser) parseForStmt(forTok token.Token) *ast.ForStmt {
-	p.expect(token.LeftParen)
-	var initialise ast.Stmt
+func (p *parser) parseWhileStmt(whileTok token.Token) (*ast.WhileStmt, bool) {
+	stmt := &ast.WhileStmt{While: whileTok}
+	var ok bool
+	if !p.expect(token.LeftParen) {
+		return stmt, false
+	}
+	if stmt.Condition, ok = p.parseExpr(); !ok {
+		return stmt, false
+	}
+	if !p.expect(token.RightParen) {
+		return stmt, false
+	}
+	if stmt.Body, ok = p.parseStmt(); !ok {
+		return stmt, false
+	}
+	return stmt, true
+}
+
+func (p *parser) parseForStmt(forTok token.Token) (*ast.ForStmt, bool) {
+	stmt := &ast.ForStmt{For: forTok}
+	var ok bool
+
+	if !p.expect(token.LeftParen) {
+		return stmt, false
+	}
 	switch tok := p.tok; {
 	case p.match(token.Var):
-		initialise = p.parseVarDecl(tok)
+		stmt.Initialise, ok = p.parseVarDecl(tok)
 	case p.match(token.Semicolon):
+		ok = true
 	default:
-		initialise = p.parseExprStmt()
+		stmt.Initialise, ok = p.parseExprStmt()
 	}
-	var condition ast.Expr
-	if !p.match(token.Semicolon) {
-		condition = p.parseExpr()
-		p.expectSemicolon()
-	}
-	var update ast.Expr
-	if !p.match(token.RightParen) {
-		update = p.parseExpr()
-		p.expect(token.RightParen)
-	}
-	body := p.parseStmt()
-	return &ast.ForStmt{For: forTok, Initialise: initialise, Condition: condition, Update: update, Body: body}
-}
-
-func (p *parser) parseBreakStmt(breakTok token.Token) *ast.BreakStmt {
-	semicolon := p.expectSemicolon()
-	return &ast.BreakStmt{Break: breakTok, Semicolon: semicolon}
-}
-
-func (p *parser) parseContinueStmt(continueTok token.Token) *ast.ContinueStmt {
-	semicolon := p.expectSemicolon()
-	return &ast.ContinueStmt{Continue: continueTok, Semicolon: semicolon}
-}
-
-func (p *parser) parseReturnStmt(returnTok token.Token) *ast.ReturnStmt {
-	semicolon, ok := p.match2(token.Semicolon)
-	var value ast.Expr
 	if !ok {
-		value = p.parseExpr()
-		semicolon = p.expectSemicolon()
+		return stmt, false
 	}
-	return &ast.ReturnStmt{Return: returnTok, Value: value, Semicolon: semicolon}
+
+	if !p.match(token.Semicolon) {
+		if stmt.Condition, ok = p.parseExpr(); !ok {
+			return stmt, false
+		}
+		if !p.expectSemicolon() {
+			return stmt, false
+		}
+	}
+
+	if !p.match(token.RightParen) {
+		if stmt.Update, ok = p.parseExpr(); !ok {
+			return stmt, false
+		}
+		if !p.expect(token.RightParen) {
+			return stmt, false
+		}
+	}
+
+	if stmt.Body, ok = p.parseStmt(); !ok {
+		return stmt, false
+	}
+
+	return stmt, true
 }
 
-func (p *parser) parseExpr() ast.Expr {
+func (p *parser) parseBreakStmt(breakTok token.Token) (*ast.BreakStmt, bool) {
+	stmt := &ast.BreakStmt{Break: breakTok}
+	var ok bool
+	if stmt.Semicolon, ok = p.expectSemicolon2(); !ok {
+		return stmt, false
+	}
+	return stmt, true
+}
+
+func (p *parser) parseContinueStmt(continueTok token.Token) (*ast.ContinueStmt, bool) {
+	stmt := &ast.ContinueStmt{Continue: continueTok}
+	var ok bool
+	if stmt.Semicolon, ok = p.expectSemicolon2(); !ok {
+		return stmt, false
+	}
+	return stmt, true
+}
+
+func (p *parser) parseReturnStmt(returnTok token.Token) (*ast.ReturnStmt, bool) {
+	stmt := &ast.ReturnStmt{Return: returnTok}
+	var ok bool
+	if stmt.Semicolon, ok = p.match2(token.Semicolon); !ok {
+		if stmt.Value, ok = p.parseExpr(); !ok {
+			return stmt, false
+		}
+		if stmt.Semicolon, ok = p.expectSemicolon2(); !ok {
+			return stmt, false
+		}
+	}
+	return stmt, true
+}
+
+func (p *parser) parseExpr() (ast.Expr, bool) {
 	return p.parseCommaExpr()
 }
 
-func (p *parser) parseCommaExpr() ast.Expr {
+func (p *parser) parseCommaExpr() (ast.Expr, bool) {
 	return p.parseBinaryExpr(p.parseAssignmentExpr, token.Comma)
 }
 
-func (p *parser) parseAssignmentExpr() ast.Expr {
-	expr := p.parseTernaryExpr()
+func (p *parser) parseAssignmentExpr() (ast.Expr, bool) {
+	var expr ast.Expr
+	var ok bool
+	if expr, ok = p.parseTernaryExpr(); !ok {
+		return expr, false
+	}
 	if p.match(token.Equal) {
 		switch left := expr.(type) {
 		case *ast.IdentExpr:
-			right := p.parseAssignmentExpr()
-			expr = &ast.AssignmentExpr{
-				Left:  left.Ident,
-				Right: right,
+			assignmentExpr := &ast.AssignmentExpr{Left: left.Ident}
+			expr = assignmentExpr
+			if assignmentExpr.Right, ok = p.parseAssignmentExpr(); !ok {
+				return expr, false
 			}
 		case *ast.GetExpr:
-			right := p.parseAssignmentExpr()
-			expr = &ast.SetExpr{
-				Object: left.Object,
-				Name:   left.Name,
-				Value:  right,
+			setExpr := &ast.SetExpr{Object: left.Object, Name: left.Name}
+			expr = setExpr
+			if setExpr.Value, ok = p.parseAssignmentExpr(); !ok {
+				return expr, false
 			}
 		default:
 			p.addError(expr, "invalid assignment target")
 		}
 	}
-	return expr
+	return expr, true
 }
 
-func (p *parser) parseTernaryExpr() ast.Expr {
-	expr := p.parseLogicalOrExpr()
+func (p *parser) parseTernaryExpr() (ast.Expr, bool) {
+	var expr ast.Expr
+	var ok bool
+	if expr, ok = p.parseLogicalOrExpr(); !ok {
+		return expr, false
+	}
 	if p.match(token.Question) {
-		then := p.parseExpr()
-		p.expect(token.Colon)
-		elseExpr := p.parseTernaryExpr()
-		expr = &ast.TernaryExpr{
-			Condition: expr,
-			Then:      then,
-			Else:      elseExpr,
+		ternaryExpr := &ast.TernaryExpr{Condition: expr}
+		expr = ternaryExpr
+		if ternaryExpr.Then, ok = p.parseExpr(); !ok {
+			return expr, false
+		}
+		if !p.expect(token.Colon) {
+			return expr, false
+		}
+		if ternaryExpr.Else, ok = p.parseTernaryExpr(); !ok {
+			return expr, false
 		}
 	}
-	return expr
+	return expr, true
 }
 
-func (p *parser) parseLogicalOrExpr() ast.Expr {
+func (p *parser) parseLogicalOrExpr() (ast.Expr, bool) {
 	return p.parseBinaryExpr(p.parseLogicalAndExpr, token.Or)
 }
 
-func (p *parser) parseLogicalAndExpr() ast.Expr {
+func (p *parser) parseLogicalAndExpr() (ast.Expr, bool) {
 	return p.parseBinaryExpr(p.parseEqualityExpr, token.And)
 }
 
-func (p *parser) parseEqualityExpr() ast.Expr {
+func (p *parser) parseEqualityExpr() (ast.Expr, bool) {
 	return p.parseBinaryExpr(p.parseRelationalExpr, token.EqualEqual, token.BangEqual)
 }
 
-func (p *parser) parseRelationalExpr() ast.Expr {
+func (p *parser) parseRelationalExpr() (ast.Expr, bool) {
 	return p.parseBinaryExpr(p.parseAdditiveExpr, token.Less, token.LessEqual, token.Greater, token.GreaterEqual)
 }
 
-func (p *parser) parseAdditiveExpr() ast.Expr {
+func (p *parser) parseAdditiveExpr() (ast.Expr, bool) {
 	return p.parseBinaryExpr(p.parseMultiplicativeExpr, token.Plus, token.Minus)
 }
 
-func (p *parser) parseMultiplicativeExpr() ast.Expr {
+func (p *parser) parseMultiplicativeExpr() (ast.Expr, bool) {
 	return p.parseBinaryExpr(p.parseUnaryExpr, token.Asterisk, token.Slash, token.Percent)
 }
 
 // parseBinaryExpr parses a binary expression which uses the given operators. next is a function which parses an
 // expression of next highest precedence.
-func (p *parser) parseBinaryExpr(next func() ast.Expr, operators ...token.Type) ast.Expr {
-	expr := next()
+func (p *parser) parseBinaryExpr(next func() (ast.Expr, bool), operators ...token.Type) (ast.Expr, bool) {
+	var expr ast.Expr
+	var ok bool
+	if expr, ok = next(); !ok {
+		return expr, false
+	}
 	for {
-		op, ok := p.match2(operators...)
-		if !ok {
+		binaryExpr := &ast.BinaryExpr{Left: expr}
+		if binaryExpr.Op, ok = p.match2(operators...); !ok {
 			break
 		}
-		right := next()
-		expr = &ast.BinaryExpr{
-			Left:  expr,
-			Op:    op,
-			Right: right,
+		expr = binaryExpr
+		if binaryExpr.Right, ok = next(); !ok {
+			return expr, false
 		}
 	}
-	return expr
+	return expr, true
 }
 
-func (p *parser) parseUnaryExpr() ast.Expr {
+func (p *parser) parseUnaryExpr() (ast.Expr, bool) {
 	if op, ok := p.match2(token.Bang, token.Minus); ok {
-		right := p.parseUnaryExpr()
-		return &ast.UnaryExpr{
-			Op:    op,
-			Right: right,
+		expr := &ast.UnaryExpr{Op: op}
+		if expr.Right, ok = p.parseUnaryExpr(); !ok {
+			return expr, false
 		}
+		return expr, true
 	}
 	return p.parseCallExpr()
 }
 
-func (p *parser) parseCallExpr() ast.Expr {
-	expr := p.parsePrimaryExpr()
+func (p *parser) parseCallExpr() (ast.Expr, bool) {
+	var expr ast.Expr
+	var ok bool
+	if expr, ok = p.parsePrimaryExpr(); !ok {
+		return expr, false
+	}
 	for {
 		switch {
 		case p.match(token.LeftParen):
-			var args []ast.Expr
-			rightParen, ok := p.match2(token.RightParen)
-			if !ok {
-				args = p.parseArgs()
-				rightParen = p.expect(token.RightParen)
-			}
-			expr = &ast.CallExpr{
-				Callee:     expr,
-				Args:       args,
-				RightParen: rightParen,
+			callExpr := &ast.CallExpr{Callee: expr}
+			expr = callExpr
+			if callExpr.RightParen, ok = p.match2(token.RightParen); !ok {
+				if callExpr.Args, ok = p.parseArgs(); !ok {
+					return expr, false
+				}
+				if callExpr.RightParen, ok = p.expect2(token.RightParen); !ok {
+					return expr, false
+				}
 			}
 		case p.match(token.Dot):
-			name := p.expectf(token.Ident, "expected property name")
-			expr = &ast.GetExpr{
-				Object: expr,
-				Name:   &ast.Ident{Token: name},
+			getExpr := &ast.GetExpr{Object: expr}
+			expr = getExpr
+			if getExpr.Name, ok = p.parseIdent("expected property name"); !ok {
+				return expr, false
 			}
 		default:
-			return expr
+			return expr, true
 		}
 	}
 }
 
-func (p *parser) parseArgs() []ast.Expr {
+func (p *parser) parseArgs() ([]ast.Expr, bool) {
 	var args []ast.Expr
 	for {
-		args = append(args, p.parseAssignmentExpr())
+		arg, ok := p.parseAssignmentExpr()
+		args = append(args, arg)
+		if !ok {
+			return args, false
+		}
 		if !p.match(token.Comma) {
 			break
 		}
 	}
-	return args
+	return args, true
 }
 
-func (p *parser) parsePrimaryExpr() ast.Expr {
+func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 	switch tok := p.tok; {
 	case p.match(token.Number, token.String, token.True, token.False, token.Nil):
-		return &ast.LiteralExpr{Value: tok}
+		return &ast.LiteralExpr{Value: tok}, true
 	case p.match(token.Ident):
-		return &ast.IdentExpr{Ident: &ast.Ident{Token: tok}}
+		return &ast.IdentExpr{Ident: &ast.Ident{Token: tok}}, true
 	case p.match(token.This):
-		return &ast.ThisExpr{This: tok}
+		return &ast.ThisExpr{This: tok}, true
 	case p.match(token.Fun):
 		return p.parseFunExpr(tok)
 	case p.match(token.LeftParen):
-		expr := p.parseExpr()
-		rightParen := p.expect(token.RightParen)
-		return &ast.GroupExpr{LeftParen: tok, Expr: expr, RightParen: rightParen}
+		expr := &ast.GroupExpr{LeftParen: tok}
+		var ok bool
+		if expr.Expr, ok = p.parseExpr(); !ok {
+			return expr, false
+		}
+		if expr.RightParen, ok = p.expect2(token.RightParen); !ok {
+			return expr, false
+		}
+		return expr, true
 	// Error productions
 	case p.match(token.EqualEqual, token.BangEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus):
 		p.addErrorf(tok, "binary operator %m must have left and right operands", tok.Type)
-		var right ast.Expr
+		expr := &ast.BinaryExpr{Op: tok}
+		var parseExpr func() (ast.Expr, bool)
 		switch tok.Type {
 		case token.EqualEqual, token.BangEqual:
-			right = p.parseEqualityExpr()
+			parseExpr = p.parseEqualityExpr
 		case token.Less, token.LessEqual, token.Greater, token.GreaterEqual:
-			right = p.parseRelationalExpr()
+			parseExpr = p.parseRelationalExpr
 		case token.Plus:
-			right = p.parseMultiplicativeExpr()
+			parseExpr = p.parseAdditiveExpr
 		case token.Asterisk, token.Slash:
-			right = p.parseUnaryExpr()
+			parseExpr = p.parseMultiplicativeExpr
 		default:
 		}
-		return &ast.BinaryExpr{
-			Op:    tok,
-			Right: right,
+		var ok bool
+		if expr.Right, ok = parseExpr(); !ok {
+			return expr, false
 		}
+		return expr, true
 	default:
 		if tok.Type == token.Comment {
 			p.addError(tok, "comments can only appear where declarations can appear or at the end of statements")
 		} else {
 			p.addError(tok, "expected expression")
 		}
-		panic(unwind{})
+		return nil, false
 	}
 }
 
-func (p *parser) parseFunExpr(funTok token.Token) *ast.FunExpr {
-	return &ast.FunExpr{
-		Fun:      funTok,
-		Function: p.parseFun(),
+func (p *parser) parseFunExpr(funTok token.Token) (*ast.FunExpr, bool) {
+	expr := &ast.FunExpr{Fun: funTok}
+	var ok bool
+	if expr.Function, ok = p.parseFun(); !ok {
+		return expr, false
 	}
+	return expr, true
+}
+
+func (p *parser) parseIdent(errMsg string) (*ast.Ident, bool) {
+	name, ok := p.expect2f(token.Ident, "%s", errMsg)
+	if !ok {
+		return nil, false
+	}
+	return &ast.Ident{Token: name}, true
 }
 
 // match reports whether the current token is one of the given types and advances the parser if so.
@@ -624,31 +760,41 @@ func (p *parser) matchFunc(f func(token.Token) bool) (token.Token, bool) {
 	return tok, false
 }
 
-// expect returns the current token and advances the parser if it has the given type. Otherwise, an "expected %m" error
-// is added and the method panics to unwind the stack.
-func (p *parser) expect(t token.Type) token.Token {
-	return p.expectf(t, "expected %m", t)
+// expect reports whether the current token is of the given type. If it is, the parser is advanced. Otherwise, an
+// "expected %m" error is added.
+func (p *parser) expect(t token.Type) bool {
+	_, ok := p.expect2(t)
+	return ok
 }
 
-// expectf is like expect but accepts a format string for the error message.
-func (p *parser) expectf(t token.Type, format string, a ...any) token.Token {
-	if tok, ok := p.match2(t); ok {
-		return tok
-	}
-	p.addErrorf(p.tok, format, a...)
-	panic(unwind{})
+// expect2 is like expect but also returns the matched token.
+func (p *parser) expect2(t token.Type) (token.Token, bool) {
+	return p.expect2f(t, "expected %m", t)
 }
 
-// expectSemicolon returns the current token and advances the parser if it is a semicolon. Otherwise, an "expected
-// trailing %m" error is added and the method panics to unwind the stack.
-func (p *parser) expectSemicolon() token.Token {
-	if tok, ok := p.match2(token.Semicolon); ok {
-		return tok
+// expect2f is like expect2 but accepts a format string for the error message.
+func (p *parser) expect2f(t token.Type, format string, a ...any) (token.Token, bool) {
+	tok, ok := p.match2(t)
+	if !ok {
+		p.addErrorf(p.tok, format, a...)
 	}
-	if p.lastErrPos != p.tok.Start() {
+	return tok, ok
+}
+
+// expectSemicolon reports whether the current token is a semicolon. If it is, the parser is advanced. Otherwise, an
+// "expected trailing ;" error is added.
+func (p *parser) expectSemicolon() bool {
+	ok := p.match(token.Semicolon)
+	if !ok && p.lastErrPos != p.tok.Start() {
 		p.addErrorf(p.prevTok, "expected trailing %m", token.Semicolon)
 	}
-	panic(unwind{})
+	return ok
+}
+
+// expectSemicolon2 is like expectSemicolon but also returns the matched token.
+func (p *parser) expectSemicolon2() (token.Token, bool) {
+	tok := p.tok
+	return tok, p.expectSemicolon()
 }
 
 // next advances the parser to the next token.
@@ -670,7 +816,3 @@ func (p *parser) addErrorf(rang token.Range, format string, args ...any) {
 	p.lastErrPos = start
 	p.errs.Addf(rang, format, args...)
 }
-
-// unwind is used as a panic value so that we can unwind the stack and recover from a parsing error without having to
-// check for errors after every call to each parsing method.
-type unwind struct{}

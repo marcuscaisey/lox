@@ -75,10 +75,6 @@ func sprint(node Node, depth int) string {
 			prefix = field.Name + ": "
 		}
 
-		if value.Kind() == reflect.Interface && value.IsNil() {
-			continue
-		}
-
 		child, ok := childString(value, depth+1)
 		if !ok {
 			panic(fmt.Sprintf("%s field %s has unsupported type: %T", nodeType.Name(), field.Name, value.Interface()))
@@ -90,6 +86,9 @@ func sprint(node Node, depth int) string {
 }
 
 func childString(value reflect.Value, depth int) (string, bool) {
+	if (value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface) && value.IsNil() {
+		return "nil", true
+	}
 	var child string
 	switch value := value.Interface().(type) {
 	case token.Token:

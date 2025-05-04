@@ -125,7 +125,7 @@ func (i *Interpreter) execStmt(env environment, stmt ast.Stmt) (stmtResult, envi
 		result = i.execContinueStmt()
 	case *ast.ReturnStmt:
 		result = i.execReturnStmt(env, stmt)
-	case *ast.Comment, *ast.InlineComment, *ast.IllegalStmt, *ast.ParamDecl, *ast.MethodDecl:
+	case *ast.Comment, *ast.InlineComment, *ast.ParamDecl, *ast.MethodDecl:
 		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
 	}
 	return result, newEnv

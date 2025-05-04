@@ -297,16 +297,6 @@ type ForStmt struct {
 func (f *ForStmt) Start() token.Position { return f.For.StartPos }
 func (f *ForStmt) End() token.Position   { return f.Body.End() }
 
-// IllegalStmt is an illegal statement, used as a placeholder when parsing fails.
-type IllegalStmt struct {
-	From token.Token `print:"named"`
-	To   token.Token `print:"named"`
-	stmt
-}
-
-func (i *IllegalStmt) Start() token.Position { return i.From.StartPos }
-func (i *IllegalStmt) End() token.Position   { return i.To.EndPos }
-
 // BreakStmt is a break statement
 type BreakStmt struct {
 	Break     token.Token

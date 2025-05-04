@@ -58,7 +58,6 @@ func Walk(node Node, f func(Node) bool) {
 			Walk(node.Update, f)
 		}
 		Walk(node.Body, f)
-	case *IllegalStmt:
 	case *BreakStmt:
 	case *ContinueStmt:
 	case *ReturnStmt:
