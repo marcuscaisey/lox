@@ -151,7 +151,7 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) 
 	}
 	for name, ident := range setterIdentsByName {
 		if !gettersByName[name] {
-			c.errs.Add(ident, "write-only properties are not allowed")
+			c.errs.Addf(ident, "write-only properties are not allowed")
 		}
 	}
 }
@@ -162,7 +162,7 @@ func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
 		c.errs.AddSpanningRangesf(decl.Function.Params[0], decl.Function.Params[len(decl.Function.Params)-1], "property getter cannot have parameters")
 	case decl.HasModifier(token.Set):
 		if len(decl.Function.Params) == 0 {
-			c.errs.Add(decl.Name, "property setter must have a parameter")
+			c.errs.Addf(decl.Name, "property setter must have a parameter")
 		} else if len(decl.Function.Params) > 1 {
 			c.errs.AddSpanningRangesf(decl.Function.Params[1], decl.Function.Params[len(decl.Function.Params)-1], "property setter can only have one parameter")
 		}

@@ -363,7 +363,7 @@ func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObjec
 
 	result := i.call(expr.Start(), callable, args)
 	if errorMsg, ok := result.(errorMsg); ok {
-		panic(loxerr.New(expr, string(errorMsg)))
+		panic(loxerr.Newf(expr, "%s", string(errorMsg)))
 	}
 	return result
 }

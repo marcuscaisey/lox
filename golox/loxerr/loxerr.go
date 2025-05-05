@@ -21,21 +21,16 @@ type Error struct {
 	End   token.Position
 }
 
-// New creates a [*Error] with the given message and range.
-func New(rang token.Range, message string) error {
-	return Newf(rang, "%s", message)
+// Newf creates a [*Error].
+// The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
+func Newf(rang token.Range, format string, args ...any) error {
+	return newf(rang.Start(), rang.End(), format, args...)
 }
 
 // NewSpanningRangesf creates an [*Error] which spans the given [token.Range]s.
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
 func NewSpanningRangesf(start, end token.Range, message string, args ...any) error {
 	return newf(start.Start(), end.End(), message, args...)
-}
-
-// Newf creates a [*Error].
-// The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
-func Newf(rang token.Range, format string, args ...any) error {
-	return newf(rang.Start(), rang.End(), format, args...)
 }
 
 func newf(start, end token.Position, format string, args ...any) error {
@@ -107,12 +102,6 @@ func (e *Error) Error() string {
 
 // Errors is a list of [*Error]s.
 type Errors []*Error
-
-// Add adds a [*Error] to the list of errors.
-// The parameters are the same as for [New].
-func (e *Errors) Add(rang token.Range, message string) {
-	*e = append(*e, New(rang, message).(*Error))
-}
 
 // Addf adds a [*Error] to the list of errors.
 // The parameters are the same as for [Newf].

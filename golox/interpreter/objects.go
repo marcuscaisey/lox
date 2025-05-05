@@ -104,12 +104,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 			return n * right
 		case token.Slash:
 			if right == 0 {
-				panic(loxerr.New(op, "cannot divide by 0"))
+				panic(loxerr.Newf(op, "cannot divide by 0"))
 			}
 			return n / right
 		case token.Percent:
 			if right == 0 {
-				panic(loxerr.New(op, "cannot modulo by 0"))
+				panic(loxerr.Newf(op, "cannot modulo by 0"))
 			}
 			return loxNumber(math.Mod(float64(n), float64(right)))
 		case token.Plus:
