@@ -36,11 +36,12 @@ func sprint(node Node, depth int) string {
 	}
 
 	var children []string
+	printTags := parsePrintTags(nodeType)
 	for i := range nodeType.NumField() {
 		field := nodeType.Field(i)
 		value := nodeValue.Field(i)
 
-		named, ok := parsePrintTag(nodeType.Name(), field)
+		tag, ok := printTags[field.Name]
 		if !ok {
 			continue
 		}
@@ -48,44 +49,44 @@ func sprint(node Node, depth int) string {
 		if field.Type.Kind() == reflect.Slice {
 			prefix := ""
 			extraDepth := 0
-			if named {
-				children = append(children, field.Name+": [")
+			if tag == "named" {
+				children = append(children, fmt.Sprintf("(%s [", field.Name))
 				if value.Len() == 0 {
-					children[len(children)-1] += "]"
+					children[len(children)-1] += "])"
 					continue
 				}
 				prefix = "  "
 				extraDepth = 1
 			}
 			for j := range value.Len() {
-				child, ok := childString(value.Index(j), depth+1+extraDepth)
+				child, ok := formatValue(value.Index(j), depth+1+extraDepth)
 				if !ok {
 					panic(fmt.Sprintf("%s field %s element %d has unsupported type: %T", nodeType.Name(), field.Name, j, value.Index(j).Interface()))
 				}
 				children = append(children, prefix+child)
 			}
-			if named {
+			if tag == "named" {
 				children = append(children, "]")
 			}
 			continue
 		}
 
-		prefix := ""
-		if named {
-			prefix = field.Name + ": "
-		}
-
-		child, ok := childString(value, depth+1)
+		formattedValue, ok := formatValue(value, depth+1)
 		if !ok {
 			panic(fmt.Sprintf("%s field %s has unsupported type: %T", nodeType.Name(), field.Name, value.Interface()))
 		}
-		children = append(children, prefix+child)
+
+		if tag == "unnamed" {
+			return fmt.Sprintf("(%s %s)", nodeType.Name(), formattedValue)
+		}
+
+		children = append(children, fmt.Sprintf("(%s %s)", field.Name, formattedValue))
 	}
 
 	return sexpr(nodeType.Name(), depth, children...)
 }
 
-func childString(value reflect.Value, depth int) (string, bool) {
+func formatValue(value reflect.Value, depth int) (string, bool) {
 	if (value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface) && value.IsNil() {
 		return "nil", true
 	}
@@ -115,10 +116,30 @@ func sexpr(name string, depth int, children ...string) string {
 	return b.String()
 }
 
-func parsePrintTag(structName string, field reflect.StructField) (named bool, ok bool) {
+func parsePrintTags(nodeType reflect.Type) map[string]string {
+	printTags := map[string]string{}
+	unnamedTagCount := 0
+	for i := range nodeType.NumField() {
+		field := nodeType.Field(i)
+		tag, ok := parsePrintTag(nodeType.Name(), field)
+		if !ok {
+			continue
+		}
+		printTags[field.Name] = tag
+		if tag == "unnamed" {
+			unnamedTagCount++
+		}
+	}
+	if len(printTags) > 1 && unnamedTagCount > 0 {
+		panic(fmt.Sprintf(`%s has %d field(s) with an "unnamed" print tag and %d field(s) with a "named" print tag (%s). Only one field can have a print tag if the "unnamed" tag is used.`, nodeType.Name(), unnamedTagCount, len(printTags)-unnamedTagCount, printTags))
+	}
+	return printTags
+}
+
+func parsePrintTag(structName string, field reflect.StructField) (tag string, ok bool) {
 	tags := strings.Split(field.Tag.Get("print"), ",")
 	if len(tags) == 1 && tags[0] == "" {
-		return false, false
+		return "", false
 	}
 
 	for _, tag := range tags {
@@ -127,11 +148,11 @@ func parsePrintTag(structName string, field reflect.StructField) (named bool, ok
 			if slices.Contains(tags, "unnamed") && slices.Contains(tags, "named") {
 				panic(fmt.Sprintf(`%s field %s has both "named" and "unnamed" print tags`, structName, field.Name))
 			}
-			return tag == "named", true
+			return tag, true
 		default:
 			panic(fmt.Sprintf("%s field %s has invalid print tag: %q", structName, field.Name, tag))
 		}
 	}
 
-	return false, false
+	return "", false
 }

@@ -64,7 +64,7 @@ func (c *Comment) End() token.Position   { return c.Comment.EndPos }
 //
 //	print 1; // *comment
 type InlineComment struct {
-	Stmt    Stmt        `print:"unnamed"`
+	Stmt    Stmt        `print:"named"`
 	Comment token.Token `print:"named"`
 	stmt
 }
