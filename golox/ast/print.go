@@ -92,11 +92,7 @@ func childString(value reflect.Value, depth int) (string, bool) {
 	var child string
 	switch value := value.Interface().(type) {
 	case token.Token:
-		if value.Type == token.EOF {
-			child = "EOF"
-		} else {
-			child = value.Lexeme
-		}
+		child = value.Lexeme
 	case *Ident:
 		child = value.Token.Lexeme
 	case Node:
