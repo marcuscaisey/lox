@@ -88,7 +88,7 @@ func sprint(node Node, depth int) string {
 
 func formatValue(value reflect.Value, depth int) (string, bool) {
 	if (value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface) && value.IsNil() {
-		return "nil", true
+		return "EMPTY", true
 	}
 	var child string
 	switch value := value.Interface().(type) {
