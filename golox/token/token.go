@@ -202,6 +202,11 @@ func (t Token) End() Position {
 	return t.EndPos
 }
 
+// IsZero reports whether t is the zero value.
+func (t Token) IsZero() bool {
+	return t == Token{}
+}
+
 func (t Token) String() string {
 	return fmt.Sprintf("%s: %s [%s]", t.StartPos, t.Lexeme, t.Type)
 }

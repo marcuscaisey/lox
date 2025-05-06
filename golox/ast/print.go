@@ -83,7 +83,11 @@ func sprint(node Node, depth int) string {
 		children = append(children, fmt.Sprintf("(%s %s)", field.Name, formattedValue))
 	}
 
-	return sexpr(nodeType.Name(), depth, children...)
+	namePrefix := ""
+	if !node.IsValid() {
+		namePrefix = "Invalid"
+	}
+	return sexpr(namePrefix+nodeType.Name(), depth, children...)
 }
 
 func formatValue(value reflect.Value, depth int) (string, bool) {
