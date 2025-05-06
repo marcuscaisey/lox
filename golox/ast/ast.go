@@ -62,8 +62,8 @@ type Comment struct {
 	stmt
 }
 
-func (c *Comment) Start() token.Position { return c.Comment.StartPos }
-func (c *Comment) End() token.Position   { return c.Comment.EndPos }
+func (c *Comment) Start() token.Position { return c.Comment.Start() }
+func (c *Comment) End() token.Position   { return c.Comment.End() }
 func (c *Comment) IsValid() bool         { return c != nil && !c.Comment.IsZero() }
 
 // InlineComment is a statement with a comment on the same line, such as
@@ -76,7 +76,7 @@ type InlineComment struct {
 }
 
 func (i *InlineComment) Start() token.Position { return i.Stmt.Start() }
-func (i *InlineComment) End() token.Position   { return i.Comment.EndPos }
+func (i *InlineComment) End() token.Position   { return i.Comment.End() }
 func (i *InlineComment) IsValid() bool {
 	return i != nil && isValid(i.Stmt) && !i.Comment.IsZero()
 }
@@ -107,7 +107,7 @@ type VarDecl struct {
 }
 
 func (v *VarDecl) Start() token.Position { return v.Var.Start() }
-func (v *VarDecl) End() token.Position   { return v.Semicolon.EndPos }
+func (v *VarDecl) End() token.Position   { return v.Semicolon.End() }
 func (v *VarDecl) IsValid() bool {
 	return v != nil && !v.Var.IsZero() && isValidOptional(v.Initialiser) && isValid(v.Name) && !v.Semicolon.IsZero()
 }
@@ -122,7 +122,7 @@ type FunDecl struct {
 	decl
 }
 
-func (f *FunDecl) Start() token.Position { return f.Fun.StartPos }
+func (f *FunDecl) Start() token.Position { return f.Fun.Start() }
 func (f *FunDecl) End() token.Position   { return f.Function.Body.End() }
 func (f *FunDecl) IsValid() bool {
 	return f != nil && isValidSlice(f.Doc) && !f.Fun.IsZero() && isValid(f.Name) && isValid(f.Function)
@@ -137,7 +137,7 @@ type Function struct {
 	node
 }
 
-func (f *Function) Start() token.Position { return f.LeftParen.StartPos }
+func (f *Function) Start() token.Position { return f.LeftParen.Start() }
 func (f *Function) End() token.Position   { return f.Body.End() }
 func (f *Function) IsValid() bool {
 	return f != nil && !f.LeftParen.IsZero() && isValidSlice(f.Params) && isValid(f.Body)
@@ -170,8 +170,8 @@ type ClassDecl struct {
 	decl
 }
 
-func (c *ClassDecl) Start() token.Position { return c.Class.StartPos }
-func (c *ClassDecl) End() token.Position   { return c.RightBrace.EndPos }
+func (c *ClassDecl) Start() token.Position { return c.Class.Start() }
+func (c *ClassDecl) End() token.Position   { return c.RightBrace.End() }
 func (c *ClassDecl) IsValid() bool {
 	return c != nil && isValidSlice(c.Doc) && !c.Class.IsZero() && isValid(c.Name) && isValidSlice(c.Body) && !c.RightBrace.IsZero()
 }
@@ -203,7 +203,7 @@ type MethodDecl struct {
 
 func (m *MethodDecl) Start() token.Position {
 	if len(m.Modifiers) > 0 {
-		return m.Modifiers[0].StartPos
+		return m.Modifiers[0].Start()
 	}
 	return m.Name.Start()
 }
@@ -236,7 +236,7 @@ type ExprStmt struct {
 }
 
 func (e *ExprStmt) Start() token.Position { return e.Expr.Start() }
-func (e *ExprStmt) End() token.Position   { return e.Semicolon.EndPos }
+func (e *ExprStmt) End() token.Position   { return e.Semicolon.End() }
 func (e *ExprStmt) IsValid() bool         { return e != nil && isValid(e.Expr) && !e.Semicolon.IsZero() }
 
 // PrintStmt is a print statement, such as print "abc".
@@ -247,8 +247,8 @@ type PrintStmt struct {
 	stmt
 }
 
-func (p *PrintStmt) Start() token.Position { return p.Print.StartPos }
-func (p *PrintStmt) End() token.Position   { return p.Semicolon.EndPos }
+func (p *PrintStmt) Start() token.Position { return p.Print.Start() }
+func (p *PrintStmt) End() token.Position   { return p.Semicolon.End() }
 func (p *PrintStmt) IsValid() bool {
 	return p != nil && !p.Print.IsZero() && isValid(p.Expr) && !p.Semicolon.IsZero()
 }
@@ -266,8 +266,8 @@ type Block struct {
 	stmt
 }
 
-func (b *Block) Start() token.Position { return b.LeftBrace.StartPos }
-func (b *Block) End() token.Position   { return b.RightBrace.EndPos }
+func (b *Block) Start() token.Position { return b.LeftBrace.Start() }
+func (b *Block) End() token.Position   { return b.RightBrace.End() }
 func (b *Block) IsValid() bool {
 	return b != nil && !b.LeftBrace.IsZero() && isValidSlice(b.Stmts) && !b.RightBrace.IsZero()
 }
@@ -288,7 +288,7 @@ type IfStmt struct {
 	stmt
 }
 
-func (i *IfStmt) Start() token.Position { return i.If.StartPos }
+func (i *IfStmt) Start() token.Position { return i.If.Start() }
 func (i *IfStmt) End() token.Position {
 	if i.Else != nil {
 		return i.Else.End()
@@ -312,7 +312,7 @@ type WhileStmt struct {
 	stmt
 }
 
-func (w *WhileStmt) Start() token.Position { return w.While.StartPos }
+func (w *WhileStmt) Start() token.Position { return w.While.Start() }
 func (w *WhileStmt) End() token.Position   { return w.Body.End() }
 func (w *WhileStmt) IsValid() bool {
 	return w != nil && !w.While.IsZero() && isValid(w.Condition) && isValid(w.Body)
@@ -332,7 +332,7 @@ type ForStmt struct {
 	stmt
 }
 
-func (f *ForStmt) Start() token.Position { return f.For.StartPos }
+func (f *ForStmt) Start() token.Position { return f.For.Start() }
 func (f *ForStmt) End() token.Position   { return f.Body.End() }
 func (f *ForStmt) IsValid() bool {
 	return f != nil && isValidOptional(f.Initialise) && isValidOptional(f.Condition) && isValidOptional(f.Update) && isValid(f.Body)
@@ -345,8 +345,8 @@ type BreakStmt struct {
 	stmt
 }
 
-func (b *BreakStmt) Start() token.Position { return b.Break.StartPos }
-func (b *BreakStmt) End() token.Position   { return b.Semicolon.EndPos }
+func (b *BreakStmt) Start() token.Position { return b.Break.Start() }
+func (b *BreakStmt) End() token.Position   { return b.Semicolon.End() }
 func (b *BreakStmt) IsValid() bool         { return b != nil && !b.Break.IsZero() && !b.Semicolon.IsZero() }
 
 // ContinueStmt is a continue statement
@@ -356,8 +356,8 @@ type ContinueStmt struct {
 	stmt
 }
 
-func (c *ContinueStmt) Start() token.Position { return c.Continue.StartPos }
-func (c *ContinueStmt) End() token.Position   { return c.Semicolon.EndPos }
+func (c *ContinueStmt) Start() token.Position { return c.Continue.Start() }
+func (c *ContinueStmt) End() token.Position   { return c.Semicolon.End() }
 func (c *ContinueStmt) IsValid() bool {
 	return c != nil && !c.Continue.IsZero() && !c.Semicolon.IsZero()
 }
@@ -370,8 +370,8 @@ type ReturnStmt struct {
 	stmt
 }
 
-func (r *ReturnStmt) Start() token.Position { return r.Return.StartPos }
-func (r *ReturnStmt) End() token.Position   { return r.Semicolon.EndPos }
+func (r *ReturnStmt) Start() token.Position { return r.Return.Start() }
+func (r *ReturnStmt) End() token.Position   { return r.Semicolon.End() }
 func (r *ReturnStmt) IsValid() bool {
 	return r != nil && !r.Return.IsZero() && isValidOptional(r.Value) && !r.Semicolon.IsZero()
 }
@@ -397,7 +397,7 @@ type FunExpr struct {
 	expr
 }
 
-func (f *FunExpr) Start() token.Position { return f.Fun.StartPos }
+func (f *FunExpr) Start() token.Position { return f.Fun.Start() }
 func (f *FunExpr) End() token.Position   { return f.Function.Body.End() }
 func (f *FunExpr) IsValid() bool         { return f != nil && !f.Fun.IsZero() && isValid(f.Function) }
 
@@ -409,8 +409,8 @@ type GroupExpr struct {
 	expr
 }
 
-func (g *GroupExpr) Start() token.Position { return g.LeftParen.StartPos }
-func (g *GroupExpr) End() token.Position   { return g.RightParen.EndPos }
+func (g *GroupExpr) Start() token.Position { return g.LeftParen.Start() }
+func (g *GroupExpr) End() token.Position   { return g.RightParen.End() }
 func (g *GroupExpr) IsValid() bool {
 	return g != nil && !g.LeftParen.IsZero() && isValid(g.Expr) && !g.RightParen.IsZero()
 }
@@ -421,8 +421,8 @@ type LiteralExpr struct {
 	expr
 }
 
-func (l *LiteralExpr) Start() token.Position { return l.Value.StartPos }
-func (l *LiteralExpr) End() token.Position   { return l.Value.EndPos }
+func (l *LiteralExpr) Start() token.Position { return l.Value.Start() }
+func (l *LiteralExpr) End() token.Position   { return l.Value.End() }
 func (l *LiteralExpr) IsValid() bool         { return l != nil && !l.Value.IsZero() }
 
 // IdentExpr is an identifier expression, such as a or b.
@@ -441,8 +441,8 @@ type ThisExpr struct {
 	expr
 }
 
-func (t *ThisExpr) Start() token.Position { return t.This.StartPos }
-func (t *ThisExpr) End() token.Position   { return t.This.EndPos }
+func (t *ThisExpr) Start() token.Position { return t.This.Start() }
+func (t *ThisExpr) End() token.Position   { return t.This.End() }
 func (t *ThisExpr) IsValid() bool         { return t != nil && !t.This.IsZero() }
 
 // CallExpr is a call expression, such as add(x, 1).
@@ -454,7 +454,7 @@ type CallExpr struct {
 }
 
 func (c *CallExpr) Start() token.Position { return c.Callee.Start() }
-func (c *CallExpr) End() token.Position   { return c.RightParen.EndPos }
+func (c *CallExpr) End() token.Position   { return c.RightParen.End() }
 func (c *CallExpr) IsValid() bool {
 	return c != nil && isValid(c.Callee) && isValidSlice(c.Args) && !c.RightParen.IsZero()
 }
@@ -477,7 +477,7 @@ type UnaryExpr struct {
 	expr
 }
 
-func (u *UnaryExpr) Start() token.Position { return u.Op.StartPos }
+func (u *UnaryExpr) Start() token.Position { return u.Op.Start() }
 func (u *UnaryExpr) End() token.Position   { return u.Right.End() }
 func (u *UnaryExpr) IsValid() bool         { return u != nil && !u.Op.IsZero() && isValid(u.Right) }
 

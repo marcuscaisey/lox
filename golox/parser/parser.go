@@ -347,7 +347,7 @@ func (p *parser) parseStmt() (ast.Stmt, bool) {
 
 func (p *parser) parseInlineComment(stmt ast.Stmt) (*ast.InlineComment, bool) {
 	comment, ok := p.matchFunc(func(tok token.Token) bool {
-		return tok.Type == token.Comment && tok.StartPos.Line == stmt.End().Line
+		return tok.Type == token.Comment && tok.Start().Line == stmt.End().Line
 	})
 	if ok && p.parseComments {
 		return &ast.InlineComment{Stmt: stmt, Comment: comment}, true
