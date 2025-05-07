@@ -784,17 +784,13 @@ func (p *parser) expect2f(t token.Type, format string, a ...any) (token.Token, b
 // expectSemicolon reports whether the current token is a semicolon. If it is, the parser is advanced. Otherwise, an
 // "expected trailing ;" error is added.
 func (p *parser) expectSemicolon() bool {
-	ok := p.match(token.Semicolon)
-	if !ok && p.lastErrPos != p.tok.Start() {
-		p.addErrorf(p.prevTok, "expected trailing %m", token.Semicolon)
-	}
+	_, ok := p.expectSemicolon2()
 	return ok
 }
 
 // expectSemicolon2 is like expectSemicolon but also returns the matched token.
 func (p *parser) expectSemicolon2() (token.Token, bool) {
-	tok := p.tok
-	return tok, p.expectSemicolon()
+	return p.expect2f(token.Semicolon, "expected trailing %m", token.Semicolon)
 }
 
 // next advances the parser to the next token.
