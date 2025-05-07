@@ -84,7 +84,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
 		for i, e := range loxErrs {
 			diagnostics[i] = &protocol.Diagnostic{
-				Range:    newRange(e.Start, e.End),
+				Range:    newRange(e),
 				Severity: protocol.DiagnosticSeverityError,
 				Source:   "loxls",
 				Message:  e.Msg,

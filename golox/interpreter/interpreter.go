@@ -67,7 +67,7 @@ func (i *Interpreter) interpretProgram(node *ast.Program) (err error) {
 			if loxErr, ok := r.(*loxerr.Error); ok {
 				err = loxErr
 				if i.callStack.Len() > 0 {
-					i.callStack.Push("", loxErr.Start)
+					i.callStack.Push("", loxErr.Start())
 					err = fmt.Errorf("%w\n\n%s", err, i.callStack.StackTrace())
 					i.callStack.Clear()
 				}

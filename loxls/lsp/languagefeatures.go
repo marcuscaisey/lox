@@ -24,7 +24,7 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 	return &protocol.LocationOrLocationSlice{
 		Value: &protocol.Location{
 			Uri:   filenameToURI(decl.Start().File.Name()),
-			Range: newRange(decl.Ident().Start(), decl.Ident().End()),
+			Range: newRange(decl.Ident()),
 		},
 	}, nil
 }
@@ -70,7 +70,7 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 		}
 		locations = append(locations, &protocol.Location{
 			Uri:   filenameToURI(reference.Start().File.Name()),
-			Range: newRange(reference.Start(), reference.End()),
+			Range: newRange(reference),
 		})
 	}
 
@@ -192,8 +192,8 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
 				Name:           n.Name.Token.Lexeme,
 				Kind:           protocol.SymbolKindVariable,
-				Range:          newRange(n.Start(), n.End()),
-				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
+				Range:          newRange(n),
+				SelectionRange: newRange(n.Name),
 			})
 			return false
 		case *ast.FunDecl:
@@ -201,16 +201,16 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				Name:           n.Name.Token.Lexeme,
 				Detail:         signature(n.Function),
 				Kind:           protocol.SymbolKindFunction,
-				Range:          newRange(n.Start(), n.End()),
-				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
+				Range:          newRange(n),
+				SelectionRange: newRange(n.Name),
 			})
 			return false
 		case *ast.ClassDecl:
 			class := &protocol.DocumentSymbol{
 				Name:           n.Name.Token.Lexeme,
 				Kind:           protocol.SymbolKindClass,
-				Range:          newRange(n.Start(), n.End()),
-				SelectionRange: newRange(n.Name.Start(), n.Name.End()),
+				Range:          newRange(n),
+				SelectionRange: newRange(n.Name),
 			}
 			docSymbols = append(docSymbols, class)
 			for _, decl := range n.Methods() {
@@ -233,8 +233,8 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 					Name:           fmt.Sprintf("%s.%s%s", class.Name, decl.Name.Token.Lexeme, modifiers),
 					Detail:         signature(decl.Function),
 					Kind:           kind,
-					Range:          newRange(decl.Start(), decl.End()),
-					SelectionRange: newRange(decl.Name.Start(), decl.Name.End()),
+					Range:          newRange(decl),
+					SelectionRange: newRange(decl.Name),
 				})
 			}
 			return false
@@ -340,7 +340,7 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 	for i, reference := range references {
 		edits[i] = &protocol.TextEditOrAnnotatedTextEdit{
 			Value: &protocol.TextEdit{
-				Range:   newRange(reference.Start(), reference.End()),
+				Range:   newRange(reference),
 				NewText: params.NewName,
 			},
 		}

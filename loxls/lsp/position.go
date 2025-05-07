@@ -14,13 +14,9 @@ func newPosition(p token.Position) *protocol.Position {
 	}
 }
 
-func columnUTF16(p token.Position) int {
-	line := p.File.Line(p.Line)
-	return len(utf16.Encode([]rune(string(line[:p.Column]))))
-}
-
-// newRange creates a [protocol.Range] from a pair of [token.Position].
-func newRange(start, end token.Position) *protocol.Range {
+func newRange(rang token.Range) *protocol.Range {
+	start := rang.Start()
+	end := rang.End()
 	return &protocol.Range{
 		Start: &protocol.Position{
 			Line:      start.Line - 1,
@@ -48,4 +44,9 @@ func inRange(pos *protocol.Position, rang token.Range) bool {
 	} else {
 		return line > start.Line && line < end.Line
 	}
+}
+
+func columnUTF16(p token.Position) int {
+	line := p.File.Line(p.Line)
+	return len(utf16.Encode([]rune(string(line[:p.Column]))))
 }
