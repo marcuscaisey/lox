@@ -244,7 +244,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 	})
 
 	var symbols protocol.SymbolInformationSliceOrDocumentSymbolSliceValue = docSymbols
-	if !h.clientSupportsHierarchicalDocumentSymbols {
+	if !h.hierarchicalDocumentSymbols {
 		symbols = toSymbolInformations(docSymbols, doc.URI)
 	}
 	return &protocol.SymbolInformationSliceOrDocumentSymbolSlice{Value: symbols}, nil

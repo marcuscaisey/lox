@@ -26,8 +26,8 @@ type Handler struct {
 	docs                 map[string]*document
 
 	// Client capability info
-	clientSupportsHierarchicalDocumentSymbols bool
-	hoverContentFormat                        protocol.MarkupKind
+	hierarchicalDocumentSymbols bool
+	hoverContentFormat          protocol.MarkupKind
 }
 
 // NewHandler returns a new Handler.
