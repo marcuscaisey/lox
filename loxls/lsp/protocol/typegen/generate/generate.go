@@ -140,8 +140,10 @@ func (g *generator) genStructDecl(structure *metamodel.Structure) string {
 		}
 		fields = append(fields, g.genRefTypeDecl(typ.Name))
 	}
-	for _, prop := range structure.Properties {
-		fields = append(fields, g.structField(name, prop))
+	fieldData := make([]*structFieldData, len(structure.Properties))
+	for i, prop := range structure.Properties {
+		fieldData[i] = g.structFieldData(name, prop)
+		fields = append(fields, structField(fieldData[i]))
 	}
 
 	const text = `
@@ -151,32 +153,54 @@ type {{.name}} struct {
 	{{.}}
 	{{- end}}
 }
+
+{{with $receiver := slice $.name 0 1 | lowerFirstLetter}}
+{{range $.fieldData}}
+func ({{$receiver}} *{{$.name}}) Get{{.Name}}() {{.Type}} {
+	if {{$receiver}} == nil {
+		return *new({{.Type}})
+	}
+	return {{$receiver}}.{{.Name}}
+}
+{{end}}
+{{end}}
 `
-	data := map[string]any{"comment": comment, "name": name, "fields": fields}
+	data := map[string]any{"comment": comment, "name": name, "fields": fields, "fieldData": fieldData}
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 
 	return "*" + name
 }
 
-func (g *generator) structField(structName string, prop *metamodel.Property) string {
+type structFieldData struct {
+	Comment  string
+	Optional bool
+	Name     string
+	Type     string
+	JSONName string
+}
+
+func (g *generator) structFieldData(structName string, prop *metamodel.Property) *structFieldData {
+	name := upperFirstLetter(sanitiseName(prop.Name))
+	return &structFieldData{
+		Comment:  g.comment(prop.Documentation, prop.Deprecated),
+		Optional: prop.Optional,
+		Name:     name,
+		Type:     g.genTypeDecl(structName+name, prop.Type),
+		JSONName: prop.Name,
+	}
+}
+
+func structField(data *structFieldData) string {
 	const text = `
-{{- .comment}}
-{{- if .optional}}
-{{.fieldName}} {{.type}} {{jsonTag .jsonName "omitempty"}}
+{{- .data.Comment}}
+{{- if .data.Optional}}
+{{.data.Name}} {{.data.Type}} {{jsonTag .data.JSONName "omitempty"}}
 {{- else}}
-{{.fieldName}} {{.type}} {{jsonTag .jsonName}}
+{{.data.Name}} {{.data.Type}} {{jsonTag .data.JSONName}}
 {{- end -}}
 `
-	fieldName := upperFirstLetter(sanitiseName(prop.Name))
-	data := map[string]any{
-		"comment":   g.comment(prop.Documentation, prop.Deprecated),
-		"optional":  prop.Optional,
-		"fieldName": fieldName,
-		"type":      g.genTypeDecl(structName+fieldName, prop.Type),
-		"jsonName":  prop.Name,
-	}
-	return mustExecuteTemplate(text, data)
+	return mustExecuteTemplate(text, map[string]any{"data": data})
 }
 
 func (g *generator) genTypeAliasDecl(typeAlias *metamodel.TypeAlias) string {
@@ -477,7 +501,7 @@ func (g *generator) genStructDeclForLiteral(name string, structLiteral metamodel
 	comment := g.comment(structLiteral.Documentation, structLiteral.Deprecated)
 	var fields []string
 	for _, prop := range structLiteral.Properties {
-		fields = append(fields, g.structField(name, prop))
+		fields = append(fields, structField(g.structFieldData(name, prop)))
 	}
 
 	const text = `

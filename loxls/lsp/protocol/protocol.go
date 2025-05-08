@@ -66,6 +66,13 @@ type WorkDoneProgressParams struct {
 	WorkDoneToken ProgressToken `json:"workDoneToken,omitempty"`
 }
 
+func (w *WorkDoneProgressParams) GetWorkDoneToken() ProgressToken {
+	if w == nil {
+		return *new(ProgressToken)
+	}
+	return w.WorkDoneToken
+}
+
 type XInitializeParamsClientInfo struct {
 	// The name of the client as defined by the client.
 	Name string `json:"name"`
@@ -203,10 +210,52 @@ type WorkspaceEditClientCapabilities struct {
 	ChangeAnnotationSupport *WorkspaceEditClientCapabilitiesChangeAnnotationSupport `json:"changeAnnotationSupport,omitempty"`
 }
 
+func (w *WorkspaceEditClientCapabilities) GetDocumentChanges() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.DocumentChanges
+}
+
+func (w *WorkspaceEditClientCapabilities) GetResourceOperations() []ResourceOperationKind {
+	if w == nil {
+		return *new([]ResourceOperationKind)
+	}
+	return w.ResourceOperations
+}
+
+func (w *WorkspaceEditClientCapabilities) GetFailureHandling() FailureHandlingKind {
+	if w == nil {
+		return *new(FailureHandlingKind)
+	}
+	return w.FailureHandling
+}
+
+func (w *WorkspaceEditClientCapabilities) GetNormalizesLineEndings() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.NormalizesLineEndings
+}
+
+func (w *WorkspaceEditClientCapabilities) GetChangeAnnotationSupport() *WorkspaceEditClientCapabilitiesChangeAnnotationSupport {
+	if w == nil {
+		return *new(*WorkspaceEditClientCapabilitiesChangeAnnotationSupport)
+	}
+	return w.ChangeAnnotationSupport
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didChangeConfigurationClientCapabilities
 type DidChangeConfigurationClientCapabilities struct {
 	// Did change configuration notification supports dynamic registration.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (d *DidChangeConfigurationClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didChangeWatchedFilesClientCapabilities
@@ -220,6 +269,20 @@ type DidChangeWatchedFilesClientCapabilities struct {
 	//
 	// @since 3.17.0
 	RelativePatternSupport bool `json:"relativePatternSupport,omitempty"`
+}
+
+func (d *DidChangeWatchedFilesClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
+}
+
+func (d *DidChangeWatchedFilesClientCapabilities) GetRelativePatternSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.RelativePatternSupport
 }
 
 // A symbol kind.
@@ -395,12 +458,47 @@ type WorkspaceSymbolClientCapabilities struct {
 	ResolveSupport *WorkspaceSymbolClientCapabilitiesResolveSupport `json:"resolveSupport,omitempty"`
 }
 
+func (w *WorkspaceSymbolClientCapabilities) GetDynamicRegistration() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.DynamicRegistration
+}
+
+func (w *WorkspaceSymbolClientCapabilities) GetSymbolKind() *WorkspaceSymbolClientCapabilitiesSymbolKind {
+	if w == nil {
+		return *new(*WorkspaceSymbolClientCapabilitiesSymbolKind)
+	}
+	return w.SymbolKind
+}
+
+func (w *WorkspaceSymbolClientCapabilities) GetTagSupport() *WorkspaceSymbolClientCapabilitiesTagSupport {
+	if w == nil {
+		return *new(*WorkspaceSymbolClientCapabilitiesTagSupport)
+	}
+	return w.TagSupport
+}
+
+func (w *WorkspaceSymbolClientCapabilities) GetResolveSupport() *WorkspaceSymbolClientCapabilitiesResolveSupport {
+	if w == nil {
+		return *new(*WorkspaceSymbolClientCapabilitiesResolveSupport)
+	}
+	return w.ResolveSupport
+}
+
 // The client capabilities of a {@link ExecuteCommandRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#executeCommandClientCapabilities
 type ExecuteCommandClientCapabilities struct {
 	// Execute command supports dynamic registration.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (e *ExecuteCommandClientCapabilities) GetDynamicRegistration() bool {
+	if e == nil {
+		return *new(bool)
+	}
+	return e.DynamicRegistration
 }
 
 // @since 3.16.0
@@ -417,6 +515,13 @@ type SemanticTokensWorkspaceClientCapabilities struct {
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
+func (s *SemanticTokensWorkspaceClientCapabilities) GetRefreshSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.RefreshSupport
+}
+
 // @since 3.16.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLensWorkspaceClientCapabilities
@@ -429,6 +534,13 @@ type CodeLensWorkspaceClientCapabilities struct {
 	// useful for situation where a server for example detect a project wide
 	// change that requires such a calculation.
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
+}
+
+func (c *CodeLensWorkspaceClientCapabilities) GetRefreshSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.RefreshSupport
 }
 
 // Capabilities relating to events from file operations by the user in the client.
@@ -456,6 +568,55 @@ type FileOperationClientCapabilities struct {
 	WillDelete bool `json:"willDelete,omitempty"`
 }
 
+func (f *FileOperationClientCapabilities) GetDynamicRegistration() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.DynamicRegistration
+}
+
+func (f *FileOperationClientCapabilities) GetDidCreate() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.DidCreate
+}
+
+func (f *FileOperationClientCapabilities) GetWillCreate() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.WillCreate
+}
+
+func (f *FileOperationClientCapabilities) GetDidRename() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.DidRename
+}
+
+func (f *FileOperationClientCapabilities) GetWillRename() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.WillRename
+}
+
+func (f *FileOperationClientCapabilities) GetDidDelete() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.DidDelete
+}
+
+func (f *FileOperationClientCapabilities) GetWillDelete() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.WillDelete
+}
+
 // Client workspace capabilities specific to inline values.
 //
 // @since 3.17.0
@@ -470,6 +631,13 @@ type InlineValueWorkspaceClientCapabilities struct {
 	// useful for situation where a server for example detects a project wide
 	// change that requires such a calculation.
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
+}
+
+func (i *InlineValueWorkspaceClientCapabilities) GetRefreshSupport() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.RefreshSupport
 }
 
 // Client workspace capabilities specific to inlay hints.
@@ -488,6 +656,13 @@ type InlayHintWorkspaceClientCapabilities struct {
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
+func (i *InlayHintWorkspaceClientCapabilities) GetRefreshSupport() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.RefreshSupport
+}
+
 // Workspace client capabilities specific to diagnostic pull requests.
 //
 // @since 3.17.0
@@ -502,6 +677,13 @@ type DiagnosticWorkspaceClientCapabilities struct {
 	// is useful for situation where a server for example detects a project wide
 	// change that requires such a calculation.
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
+}
+
+func (d *DiagnosticWorkspaceClientCapabilities) GetRefreshSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.RefreshSupport
 }
 
 // Client workspace capabilities specific to folding ranges
@@ -522,6 +704,13 @@ type FoldingRangeWorkspaceClientCapabilities struct {
 	// @since 3.18.0
 	// @proposed
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
+}
+
+func (f *FoldingRangeWorkspaceClientCapabilities) GetRefreshSupport() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.RefreshSupport
 }
 
 // Workspace specific client capabilities.
@@ -586,6 +775,111 @@ type WorkspaceClientCapabilities struct {
 	FoldingRange *FoldingRangeWorkspaceClientCapabilities `json:"foldingRange,omitempty"`
 }
 
+func (w *WorkspaceClientCapabilities) GetApplyEdit() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.ApplyEdit
+}
+
+func (w *WorkspaceClientCapabilities) GetWorkspaceEdit() *WorkspaceEditClientCapabilities {
+	if w == nil {
+		return *new(*WorkspaceEditClientCapabilities)
+	}
+	return w.WorkspaceEdit
+}
+
+func (w *WorkspaceClientCapabilities) GetDidChangeConfiguration() *DidChangeConfigurationClientCapabilities {
+	if w == nil {
+		return *new(*DidChangeConfigurationClientCapabilities)
+	}
+	return w.DidChangeConfiguration
+}
+
+func (w *WorkspaceClientCapabilities) GetDidChangeWatchedFiles() *DidChangeWatchedFilesClientCapabilities {
+	if w == nil {
+		return *new(*DidChangeWatchedFilesClientCapabilities)
+	}
+	return w.DidChangeWatchedFiles
+}
+
+func (w *WorkspaceClientCapabilities) GetSymbol() *WorkspaceSymbolClientCapabilities {
+	if w == nil {
+		return *new(*WorkspaceSymbolClientCapabilities)
+	}
+	return w.Symbol
+}
+
+func (w *WorkspaceClientCapabilities) GetExecuteCommand() *ExecuteCommandClientCapabilities {
+	if w == nil {
+		return *new(*ExecuteCommandClientCapabilities)
+	}
+	return w.ExecuteCommand
+}
+
+func (w *WorkspaceClientCapabilities) GetWorkspaceFolders() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.WorkspaceFolders
+}
+
+func (w *WorkspaceClientCapabilities) GetConfiguration() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.Configuration
+}
+
+func (w *WorkspaceClientCapabilities) GetSemanticTokens() *SemanticTokensWorkspaceClientCapabilities {
+	if w == nil {
+		return *new(*SemanticTokensWorkspaceClientCapabilities)
+	}
+	return w.SemanticTokens
+}
+
+func (w *WorkspaceClientCapabilities) GetCodeLens() *CodeLensWorkspaceClientCapabilities {
+	if w == nil {
+		return *new(*CodeLensWorkspaceClientCapabilities)
+	}
+	return w.CodeLens
+}
+
+func (w *WorkspaceClientCapabilities) GetFileOperations() *FileOperationClientCapabilities {
+	if w == nil {
+		return *new(*FileOperationClientCapabilities)
+	}
+	return w.FileOperations
+}
+
+func (w *WorkspaceClientCapabilities) GetInlineValue() *InlineValueWorkspaceClientCapabilities {
+	if w == nil {
+		return *new(*InlineValueWorkspaceClientCapabilities)
+	}
+	return w.InlineValue
+}
+
+func (w *WorkspaceClientCapabilities) GetInlayHint() *InlayHintWorkspaceClientCapabilities {
+	if w == nil {
+		return *new(*InlayHintWorkspaceClientCapabilities)
+	}
+	return w.InlayHint
+}
+
+func (w *WorkspaceClientCapabilities) GetDiagnostics() *DiagnosticWorkspaceClientCapabilities {
+	if w == nil {
+		return *new(*DiagnosticWorkspaceClientCapabilities)
+	}
+	return w.Diagnostics
+}
+
+func (w *WorkspaceClientCapabilities) GetFoldingRange() *FoldingRangeWorkspaceClientCapabilities {
+	if w == nil {
+		return *new(*FoldingRangeWorkspaceClientCapabilities)
+	}
+	return w.FoldingRange
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentSyncClientCapabilities
 type TextDocumentSyncClientCapabilities struct {
 	// Whether text document synchronization supports dynamic registration.
@@ -598,6 +892,34 @@ type TextDocumentSyncClientCapabilities struct {
 	WillSaveWaitUntil bool `json:"willSaveWaitUntil,omitempty"`
 	// The client supports did save notifications.
 	DidSave bool `json:"didSave,omitempty"`
+}
+
+func (t *TextDocumentSyncClientCapabilities) GetDynamicRegistration() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.DynamicRegistration
+}
+
+func (t *TextDocumentSyncClientCapabilities) GetWillSave() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.WillSave
+}
+
+func (t *TextDocumentSyncClientCapabilities) GetWillSaveWaitUntil() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.WillSaveWaitUntil
+}
+
+func (t *TextDocumentSyncClientCapabilities) GetDidSave() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.DidSave
 }
 
 // Describes the content type that a client supports in various
@@ -942,6 +1264,48 @@ type CompletionClientCapabilities struct {
 	CompletionList *CompletionClientCapabilitiesCompletionList `json:"completionList,omitempty"`
 }
 
+func (c *CompletionClientCapabilities) GetDynamicRegistration() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.DynamicRegistration
+}
+
+func (c *CompletionClientCapabilities) GetCompletionItem() *CompletionClientCapabilitiesCompletionItem {
+	if c == nil {
+		return *new(*CompletionClientCapabilitiesCompletionItem)
+	}
+	return c.CompletionItem
+}
+
+func (c *CompletionClientCapabilities) GetCompletionItemKind() *CompletionClientCapabilitiesCompletionItemKind {
+	if c == nil {
+		return *new(*CompletionClientCapabilitiesCompletionItemKind)
+	}
+	return c.CompletionItemKind
+}
+
+func (c *CompletionClientCapabilities) GetInsertTextMode() InsertTextMode {
+	if c == nil {
+		return *new(InsertTextMode)
+	}
+	return c.InsertTextMode
+}
+
+func (c *CompletionClientCapabilities) GetContextSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.ContextSupport
+}
+
+func (c *CompletionClientCapabilities) GetCompletionList() *CompletionClientCapabilitiesCompletionList {
+	if c == nil {
+		return *new(*CompletionClientCapabilitiesCompletionList)
+	}
+	return c.CompletionList
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#hoverClientCapabilities
 type HoverClientCapabilities struct {
 	// Whether hover supports dynamic registration.
@@ -949,6 +1313,20 @@ type HoverClientCapabilities struct {
 	// Client supports the following content formats for the content
 	// property. The order describes the preferred format of the client.
 	ContentFormat []MarkupKind `json:"contentFormat,omitempty"`
+}
+
+func (h *HoverClientCapabilities) GetDynamicRegistration() bool {
+	if h == nil {
+		return *new(bool)
+	}
+	return h.DynamicRegistration
+}
+
+func (h *HoverClientCapabilities) GetContentFormat() []MarkupKind {
+	if h == nil {
+		return *new([]MarkupKind)
+	}
+	return h.ContentFormat
 }
 
 type SignatureHelpClientCapabilitiesSignatureInformationParameterInformation struct {
@@ -990,6 +1368,27 @@ type SignatureHelpClientCapabilities struct {
 	ContextSupport bool `json:"contextSupport,omitempty"`
 }
 
+func (s *SignatureHelpClientCapabilities) GetDynamicRegistration() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.DynamicRegistration
+}
+
+func (s *SignatureHelpClientCapabilities) GetSignatureInformation() *SignatureHelpClientCapabilitiesSignatureInformation {
+	if s == nil {
+		return *new(*SignatureHelpClientCapabilitiesSignatureInformation)
+	}
+	return s.SignatureInformation
+}
+
+func (s *SignatureHelpClientCapabilities) GetContextSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.ContextSupport
+}
+
 // @since 3.14.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#declarationClientCapabilities
@@ -1002,6 +1401,20 @@ type DeclarationClientCapabilities struct {
 	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
+func (d *DeclarationClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
+}
+
+func (d *DeclarationClientCapabilities) GetLinkSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.LinkSupport
+}
+
 // Client Capabilities for a {@link DefinitionRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionClientCapabilities
@@ -1012,6 +1425,20 @@ type DefinitionClientCapabilities struct {
 	//
 	// @since 3.14.0
 	LinkSupport bool `json:"linkSupport,omitempty"`
+}
+
+func (d *DefinitionClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
+}
+
+func (d *DefinitionClientCapabilities) GetLinkSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.LinkSupport
 }
 
 // Since 3.6.0
@@ -1028,6 +1455,20 @@ type TypeDefinitionClientCapabilities struct {
 	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
+func (t *TypeDefinitionClientCapabilities) GetDynamicRegistration() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.DynamicRegistration
+}
+
+func (t *TypeDefinitionClientCapabilities) GetLinkSupport() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.LinkSupport
+}
+
 // @since 3.6.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#implementationClientCapabilities
@@ -1042,6 +1483,20 @@ type ImplementationClientCapabilities struct {
 	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
+func (i *ImplementationClientCapabilities) GetDynamicRegistration() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.DynamicRegistration
+}
+
+func (i *ImplementationClientCapabilities) GetLinkSupport() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.LinkSupport
+}
+
 // Client Capabilities for a {@link ReferencesRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceClientCapabilities
@@ -1050,12 +1505,26 @@ type ReferenceClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+func (r *ReferenceClientCapabilities) GetDynamicRegistration() bool {
+	if r == nil {
+		return *new(bool)
+	}
+	return r.DynamicRegistration
+}
+
 // Client Capabilities for a {@link DocumentHighlightRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentHighlightClientCapabilities
 type DocumentHighlightClientCapabilities struct {
 	// Whether document highlight supports dynamic registration.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (d *DocumentHighlightClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
 }
 
 type DocumentSymbolClientCapabilitiesSymbolKind struct {
@@ -1097,6 +1566,41 @@ type DocumentSymbolClientCapabilities struct {
 	//
 	// @since 3.16.0
 	LabelSupport bool `json:"labelSupport,omitempty"`
+}
+
+func (d *DocumentSymbolClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
+}
+
+func (d *DocumentSymbolClientCapabilities) GetSymbolKind() *DocumentSymbolClientCapabilitiesSymbolKind {
+	if d == nil {
+		return *new(*DocumentSymbolClientCapabilitiesSymbolKind)
+	}
+	return d.SymbolKind
+}
+
+func (d *DocumentSymbolClientCapabilities) GetHierarchicalDocumentSymbolSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.HierarchicalDocumentSymbolSupport
+}
+
+func (d *DocumentSymbolClientCapabilities) GetTagSupport() *DocumentSymbolClientCapabilitiesTagSupport {
+	if d == nil {
+		return *new(*DocumentSymbolClientCapabilitiesTagSupport)
+	}
+	return d.TagSupport
+}
+
+func (d *DocumentSymbolClientCapabilities) GetLabelSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.LabelSupport
 }
 
 // A set of predefined code action kinds
@@ -1216,12 +1720,68 @@ type CodeActionClientCapabilities struct {
 	HonorsChangeAnnotations bool `json:"honorsChangeAnnotations,omitempty"`
 }
 
+func (c *CodeActionClientCapabilities) GetDynamicRegistration() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.DynamicRegistration
+}
+
+func (c *CodeActionClientCapabilities) GetCodeActionLiteralSupport() *CodeActionClientCapabilitiesCodeActionLiteralSupport {
+	if c == nil {
+		return *new(*CodeActionClientCapabilitiesCodeActionLiteralSupport)
+	}
+	return c.CodeActionLiteralSupport
+}
+
+func (c *CodeActionClientCapabilities) GetIsPreferredSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.IsPreferredSupport
+}
+
+func (c *CodeActionClientCapabilities) GetDisabledSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.DisabledSupport
+}
+
+func (c *CodeActionClientCapabilities) GetDataSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.DataSupport
+}
+
+func (c *CodeActionClientCapabilities) GetResolveSupport() *CodeActionClientCapabilitiesResolveSupport {
+	if c == nil {
+		return *new(*CodeActionClientCapabilitiesResolveSupport)
+	}
+	return c.ResolveSupport
+}
+
+func (c *CodeActionClientCapabilities) GetHonorsChangeAnnotations() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.HonorsChangeAnnotations
+}
+
 // The client capabilities  of a {@link CodeLensRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeLensClientCapabilities
 type CodeLensClientCapabilities struct {
 	// Whether code lens supports dynamic registration.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (c *CodeLensClientCapabilities) GetDynamicRegistration() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.DynamicRegistration
 }
 
 // The client capabilities of a {@link DocumentLinkRequest}.
@@ -1236,6 +1796,20 @@ type DocumentLinkClientCapabilities struct {
 	TooltipSupport bool `json:"tooltipSupport,omitempty"`
 }
 
+func (d *DocumentLinkClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
+}
+
+func (d *DocumentLinkClientCapabilities) GetTooltipSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.TooltipSupport
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentColorClientCapabilities
 type DocumentColorClientCapabilities struct {
 	// Whether implementation supports dynamic registration. If this is set to `true`
@@ -1244,12 +1818,26 @@ type DocumentColorClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+func (d *DocumentColorClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
+}
+
 // Client capabilities of a {@link DocumentFormattingRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFormattingClientCapabilities
 type DocumentFormattingClientCapabilities struct {
 	// Whether formatting supports dynamic registration.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (d *DocumentFormattingClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
 }
 
 // Client capabilities of a {@link DocumentRangeFormattingRequest}.
@@ -1265,12 +1853,33 @@ type DocumentRangeFormattingClientCapabilities struct {
 	RangesSupport bool `json:"rangesSupport,omitempty"`
 }
 
+func (d *DocumentRangeFormattingClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
+}
+
+func (d *DocumentRangeFormattingClientCapabilities) GetRangesSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.RangesSupport
+}
+
 // Client capabilities of a {@link DocumentOnTypeFormattingRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentOnTypeFormattingClientCapabilities
 type DocumentOnTypeFormattingClientCapabilities struct {
 	// Whether on type formatting supports dynamic registration.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (d *DocumentOnTypeFormattingClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#prepareSupportDefaultBehavior
@@ -1337,6 +1946,34 @@ type RenameClientCapabilities struct {
 	HonorsChangeAnnotations bool `json:"honorsChangeAnnotations,omitempty"`
 }
 
+func (r *RenameClientCapabilities) GetDynamicRegistration() bool {
+	if r == nil {
+		return *new(bool)
+	}
+	return r.DynamicRegistration
+}
+
+func (r *RenameClientCapabilities) GetPrepareSupport() bool {
+	if r == nil {
+		return *new(bool)
+	}
+	return r.PrepareSupport
+}
+
+func (r *RenameClientCapabilities) GetPrepareSupportDefaultBehavior() PrepareSupportDefaultBehavior {
+	if r == nil {
+		return *new(PrepareSupportDefaultBehavior)
+	}
+	return r.PrepareSupportDefaultBehavior
+}
+
+func (r *RenameClientCapabilities) GetHonorsChangeAnnotations() bool {
+	if r == nil {
+		return *new(bool)
+	}
+	return r.HonorsChangeAnnotations
+}
+
 // A set of predefined range kinds.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#foldingRangeKind
@@ -1392,12 +2029,54 @@ type FoldingRangeClientCapabilities struct {
 	FoldingRange *FoldingRangeClientCapabilitiesFoldingRange `json:"foldingRange,omitempty"`
 }
 
+func (f *FoldingRangeClientCapabilities) GetDynamicRegistration() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.DynamicRegistration
+}
+
+func (f *FoldingRangeClientCapabilities) GetRangeLimit() int {
+	if f == nil {
+		return *new(int)
+	}
+	return f.RangeLimit
+}
+
+func (f *FoldingRangeClientCapabilities) GetLineFoldingOnly() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.LineFoldingOnly
+}
+
+func (f *FoldingRangeClientCapabilities) GetFoldingRangeKind() *FoldingRangeClientCapabilitiesFoldingRangeKind {
+	if f == nil {
+		return *new(*FoldingRangeClientCapabilitiesFoldingRangeKind)
+	}
+	return f.FoldingRangeKind
+}
+
+func (f *FoldingRangeClientCapabilities) GetFoldingRange() *FoldingRangeClientCapabilitiesFoldingRange {
+	if f == nil {
+		return *new(*FoldingRangeClientCapabilitiesFoldingRange)
+	}
+	return f.FoldingRange
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#selectionRangeClientCapabilities
 type SelectionRangeClientCapabilities struct {
 	// Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
 	// the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
 	// capability as well.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (s *SelectionRangeClientCapabilities) GetDynamicRegistration() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.DynamicRegistration
 }
 
 // The diagnostic tags.
@@ -1482,6 +2161,41 @@ type PublishDiagnosticsClientCapabilities struct {
 	DataSupport bool `json:"dataSupport,omitempty"`
 }
 
+func (p *PublishDiagnosticsClientCapabilities) GetRelatedInformation() bool {
+	if p == nil {
+		return *new(bool)
+	}
+	return p.RelatedInformation
+}
+
+func (p *PublishDiagnosticsClientCapabilities) GetTagSupport() *PublishDiagnosticsClientCapabilitiesTagSupport {
+	if p == nil {
+		return *new(*PublishDiagnosticsClientCapabilitiesTagSupport)
+	}
+	return p.TagSupport
+}
+
+func (p *PublishDiagnosticsClientCapabilities) GetVersionSupport() bool {
+	if p == nil {
+		return *new(bool)
+	}
+	return p.VersionSupport
+}
+
+func (p *PublishDiagnosticsClientCapabilities) GetCodeDescriptionSupport() bool {
+	if p == nil {
+		return *new(bool)
+	}
+	return p.CodeDescriptionSupport
+}
+
+func (p *PublishDiagnosticsClientCapabilities) GetDataSupport() bool {
+	if p == nil {
+		return *new(bool)
+	}
+	return p.DataSupport
+}
+
 // @since 3.16.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#callHierarchyClientCapabilities
@@ -1490,6 +2204,13 @@ type CallHierarchyClientCapabilities struct {
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (c *CallHierarchyClientCapabilities) GetDynamicRegistration() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.DynamicRegistration
 }
 
 type Boolean bool
@@ -1683,6 +2404,69 @@ type SemanticTokensClientCapabilities struct {
 	AugmentsSyntaxTokens bool `json:"augmentsSyntaxTokens,omitempty"`
 }
 
+func (s *SemanticTokensClientCapabilities) GetDynamicRegistration() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.DynamicRegistration
+}
+
+func (s *SemanticTokensClientCapabilities) GetRequests() *SemanticTokensClientCapabilitiesRequests {
+	if s == nil {
+		return *new(*SemanticTokensClientCapabilitiesRequests)
+	}
+	return s.Requests
+}
+
+func (s *SemanticTokensClientCapabilities) GetTokenTypes() []string {
+	if s == nil {
+		return *new([]string)
+	}
+	return s.TokenTypes
+}
+
+func (s *SemanticTokensClientCapabilities) GetTokenModifiers() []string {
+	if s == nil {
+		return *new([]string)
+	}
+	return s.TokenModifiers
+}
+
+func (s *SemanticTokensClientCapabilities) GetFormats() []TokenFormat {
+	if s == nil {
+		return *new([]TokenFormat)
+	}
+	return s.Formats
+}
+
+func (s *SemanticTokensClientCapabilities) GetOverlappingTokenSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.OverlappingTokenSupport
+}
+
+func (s *SemanticTokensClientCapabilities) GetMultilineTokenSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.MultilineTokenSupport
+}
+
+func (s *SemanticTokensClientCapabilities) GetServerCancelSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.ServerCancelSupport
+}
+
+func (s *SemanticTokensClientCapabilities) GetAugmentsSyntaxTokens() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.AugmentsSyntaxTokens
+}
+
 // Client capabilities for the linked editing range request.
 //
 // @since 3.16.0
@@ -1693,6 +2477,13 @@ type LinkedEditingRangeClientCapabilities struct {
 	// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 	// return value for the corresponding server capability as well.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (l *LinkedEditingRangeClientCapabilities) GetDynamicRegistration() bool {
+	if l == nil {
+		return *new(bool)
+	}
+	return l.DynamicRegistration
 }
 
 // Client capabilities specific to the moniker request.
@@ -1707,6 +2498,13 @@ type MonikerClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+func (m *MonikerClientCapabilities) GetDynamicRegistration() bool {
+	if m == nil {
+		return *new(bool)
+	}
+	return m.DynamicRegistration
+}
+
 // @since 3.17.0
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#typeHierarchyClientCapabilities
@@ -1717,6 +2515,13 @@ type TypeHierarchyClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+func (t *TypeHierarchyClientCapabilities) GetDynamicRegistration() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.DynamicRegistration
+}
+
 // Client capabilities specific to inline values.
 //
 // @since 3.17.0
@@ -1725,6 +2530,13 @@ type TypeHierarchyClientCapabilities struct {
 type InlineValueClientCapabilities struct {
 	// Whether implementation supports dynamic registration for inline value providers.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (i *InlineValueClientCapabilities) GetDynamicRegistration() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.DynamicRegistration
 }
 
 type InlayHintClientCapabilitiesResolveSupport struct {
@@ -1745,6 +2557,20 @@ type InlayHintClientCapabilities struct {
 	ResolveSupport *InlayHintClientCapabilitiesResolveSupport `json:"resolveSupport,omitempty"`
 }
 
+func (i *InlayHintClientCapabilities) GetDynamicRegistration() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.DynamicRegistration
+}
+
+func (i *InlayHintClientCapabilities) GetResolveSupport() *InlayHintClientCapabilitiesResolveSupport {
+	if i == nil {
+		return *new(*InlayHintClientCapabilitiesResolveSupport)
+	}
+	return i.ResolveSupport
+}
+
 // Client capabilities specific to diagnostic pull requests.
 //
 // @since 3.17.0
@@ -1759,6 +2585,20 @@ type DiagnosticClientCapabilities struct {
 	RelatedDocumentSupport bool `json:"relatedDocumentSupport,omitempty"`
 }
 
+func (d *DiagnosticClientCapabilities) GetDynamicRegistration() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.DynamicRegistration
+}
+
+func (d *DiagnosticClientCapabilities) GetRelatedDocumentSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.RelatedDocumentSupport
+}
+
 // Client capabilities specific to inline completions.
 //
 // @since 3.18.0
@@ -1768,6 +2608,13 @@ type DiagnosticClientCapabilities struct {
 type InlineCompletionClientCapabilities struct {
 	// Whether implementation supports dynamic registration for inline completion providers.
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
+}
+
+func (i *InlineCompletionClientCapabilities) GetDynamicRegistration() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.DynamicRegistration
 }
 
 // Text document specific client capabilities.
@@ -1870,6 +2717,223 @@ type TextDocumentClientCapabilities struct {
 	InlineCompletion *InlineCompletionClientCapabilities `json:"inlineCompletion,omitempty"`
 }
 
+func (t *TextDocumentClientCapabilities) GetSynchronization() *TextDocumentSyncClientCapabilities {
+	if t == nil {
+		return *new(*TextDocumentSyncClientCapabilities)
+	}
+	return t.Synchronization
+}
+
+func (t *TextDocumentClientCapabilities) GetCompletion() *CompletionClientCapabilities {
+	if t == nil {
+		return *new(*CompletionClientCapabilities)
+	}
+	return t.Completion
+}
+
+func (t *TextDocumentClientCapabilities) GetHover() *HoverClientCapabilities {
+	if t == nil {
+		return *new(*HoverClientCapabilities)
+	}
+	return t.Hover
+}
+
+func (t *TextDocumentClientCapabilities) GetSignatureHelp() *SignatureHelpClientCapabilities {
+	if t == nil {
+		return *new(*SignatureHelpClientCapabilities)
+	}
+	return t.SignatureHelp
+}
+
+func (t *TextDocumentClientCapabilities) GetDeclaration() *DeclarationClientCapabilities {
+	if t == nil {
+		return *new(*DeclarationClientCapabilities)
+	}
+	return t.Declaration
+}
+
+func (t *TextDocumentClientCapabilities) GetDefinition() *DefinitionClientCapabilities {
+	if t == nil {
+		return *new(*DefinitionClientCapabilities)
+	}
+	return t.Definition
+}
+
+func (t *TextDocumentClientCapabilities) GetTypeDefinition() *TypeDefinitionClientCapabilities {
+	if t == nil {
+		return *new(*TypeDefinitionClientCapabilities)
+	}
+	return t.TypeDefinition
+}
+
+func (t *TextDocumentClientCapabilities) GetImplementation() *ImplementationClientCapabilities {
+	if t == nil {
+		return *new(*ImplementationClientCapabilities)
+	}
+	return t.Implementation
+}
+
+func (t *TextDocumentClientCapabilities) GetReferences() *ReferenceClientCapabilities {
+	if t == nil {
+		return *new(*ReferenceClientCapabilities)
+	}
+	return t.References
+}
+
+func (t *TextDocumentClientCapabilities) GetDocumentHighlight() *DocumentHighlightClientCapabilities {
+	if t == nil {
+		return *new(*DocumentHighlightClientCapabilities)
+	}
+	return t.DocumentHighlight
+}
+
+func (t *TextDocumentClientCapabilities) GetDocumentSymbol() *DocumentSymbolClientCapabilities {
+	if t == nil {
+		return *new(*DocumentSymbolClientCapabilities)
+	}
+	return t.DocumentSymbol
+}
+
+func (t *TextDocumentClientCapabilities) GetCodeAction() *CodeActionClientCapabilities {
+	if t == nil {
+		return *new(*CodeActionClientCapabilities)
+	}
+	return t.CodeAction
+}
+
+func (t *TextDocumentClientCapabilities) GetCodeLens() *CodeLensClientCapabilities {
+	if t == nil {
+		return *new(*CodeLensClientCapabilities)
+	}
+	return t.CodeLens
+}
+
+func (t *TextDocumentClientCapabilities) GetDocumentLink() *DocumentLinkClientCapabilities {
+	if t == nil {
+		return *new(*DocumentLinkClientCapabilities)
+	}
+	return t.DocumentLink
+}
+
+func (t *TextDocumentClientCapabilities) GetColorProvider() *DocumentColorClientCapabilities {
+	if t == nil {
+		return *new(*DocumentColorClientCapabilities)
+	}
+	return t.ColorProvider
+}
+
+func (t *TextDocumentClientCapabilities) GetFormatting() *DocumentFormattingClientCapabilities {
+	if t == nil {
+		return *new(*DocumentFormattingClientCapabilities)
+	}
+	return t.Formatting
+}
+
+func (t *TextDocumentClientCapabilities) GetRangeFormatting() *DocumentRangeFormattingClientCapabilities {
+	if t == nil {
+		return *new(*DocumentRangeFormattingClientCapabilities)
+	}
+	return t.RangeFormatting
+}
+
+func (t *TextDocumentClientCapabilities) GetOnTypeFormatting() *DocumentOnTypeFormattingClientCapabilities {
+	if t == nil {
+		return *new(*DocumentOnTypeFormattingClientCapabilities)
+	}
+	return t.OnTypeFormatting
+}
+
+func (t *TextDocumentClientCapabilities) GetRename() *RenameClientCapabilities {
+	if t == nil {
+		return *new(*RenameClientCapabilities)
+	}
+	return t.Rename
+}
+
+func (t *TextDocumentClientCapabilities) GetFoldingRange() *FoldingRangeClientCapabilities {
+	if t == nil {
+		return *new(*FoldingRangeClientCapabilities)
+	}
+	return t.FoldingRange
+}
+
+func (t *TextDocumentClientCapabilities) GetSelectionRange() *SelectionRangeClientCapabilities {
+	if t == nil {
+		return *new(*SelectionRangeClientCapabilities)
+	}
+	return t.SelectionRange
+}
+
+func (t *TextDocumentClientCapabilities) GetPublishDiagnostics() *PublishDiagnosticsClientCapabilities {
+	if t == nil {
+		return *new(*PublishDiagnosticsClientCapabilities)
+	}
+	return t.PublishDiagnostics
+}
+
+func (t *TextDocumentClientCapabilities) GetCallHierarchy() *CallHierarchyClientCapabilities {
+	if t == nil {
+		return *new(*CallHierarchyClientCapabilities)
+	}
+	return t.CallHierarchy
+}
+
+func (t *TextDocumentClientCapabilities) GetSemanticTokens() *SemanticTokensClientCapabilities {
+	if t == nil {
+		return *new(*SemanticTokensClientCapabilities)
+	}
+	return t.SemanticTokens
+}
+
+func (t *TextDocumentClientCapabilities) GetLinkedEditingRange() *LinkedEditingRangeClientCapabilities {
+	if t == nil {
+		return *new(*LinkedEditingRangeClientCapabilities)
+	}
+	return t.LinkedEditingRange
+}
+
+func (t *TextDocumentClientCapabilities) GetMoniker() *MonikerClientCapabilities {
+	if t == nil {
+		return *new(*MonikerClientCapabilities)
+	}
+	return t.Moniker
+}
+
+func (t *TextDocumentClientCapabilities) GetTypeHierarchy() *TypeHierarchyClientCapabilities {
+	if t == nil {
+		return *new(*TypeHierarchyClientCapabilities)
+	}
+	return t.TypeHierarchy
+}
+
+func (t *TextDocumentClientCapabilities) GetInlineValue() *InlineValueClientCapabilities {
+	if t == nil {
+		return *new(*InlineValueClientCapabilities)
+	}
+	return t.InlineValue
+}
+
+func (t *TextDocumentClientCapabilities) GetInlayHint() *InlayHintClientCapabilities {
+	if t == nil {
+		return *new(*InlayHintClientCapabilities)
+	}
+	return t.InlayHint
+}
+
+func (t *TextDocumentClientCapabilities) GetDiagnostic() *DiagnosticClientCapabilities {
+	if t == nil {
+		return *new(*DiagnosticClientCapabilities)
+	}
+	return t.Diagnostic
+}
+
+func (t *TextDocumentClientCapabilities) GetInlineCompletion() *InlineCompletionClientCapabilities {
+	if t == nil {
+		return *new(*InlineCompletionClientCapabilities)
+	}
+	return t.InlineCompletion
+}
+
 // Notebook specific client capabilities.
 //
 // @since 3.17.0
@@ -1885,6 +2949,20 @@ type NotebookDocumentSyncClientCapabilities struct {
 	ExecutionSummarySupport bool `json:"executionSummarySupport,omitempty"`
 }
 
+func (n *NotebookDocumentSyncClientCapabilities) GetDynamicRegistration() bool {
+	if n == nil {
+		return *new(bool)
+	}
+	return n.DynamicRegistration
+}
+
+func (n *NotebookDocumentSyncClientCapabilities) GetExecutionSummarySupport() bool {
+	if n == nil {
+		return *new(bool)
+	}
+	return n.ExecutionSummarySupport
+}
+
 // Capabilities specific to the notebook document support.
 //
 // @since 3.17.0
@@ -1895,6 +2973,13 @@ type NotebookDocumentClientCapabilities struct {
 	//
 	// @since 3.17.0
 	Synchronization *NotebookDocumentSyncClientCapabilities `json:"synchronization"`
+}
+
+func (n *NotebookDocumentClientCapabilities) GetSynchronization() *NotebookDocumentSyncClientCapabilities {
+	if n == nil {
+		return *new(*NotebookDocumentSyncClientCapabilities)
+	}
+	return n.Synchronization
 }
 
 type ShowMessageRequestClientCapabilitiesMessageActionItem struct {
@@ -1912,6 +2997,13 @@ type ShowMessageRequestClientCapabilities struct {
 	MessageActionItem *ShowMessageRequestClientCapabilitiesMessageActionItem `json:"messageActionItem,omitempty"`
 }
 
+func (s *ShowMessageRequestClientCapabilities) GetMessageActionItem() *ShowMessageRequestClientCapabilitiesMessageActionItem {
+	if s == nil {
+		return *new(*ShowMessageRequestClientCapabilitiesMessageActionItem)
+	}
+	return s.MessageActionItem
+}
+
 // Client capabilities for the showDocument request.
 //
 // @since 3.16.0
@@ -1921,6 +3013,13 @@ type ShowDocumentClientCapabilities struct {
 	// The client has support for the showDocument
 	// request.
 	Support bool `json:"support"`
+}
+
+func (s *ShowDocumentClientCapabilities) GetSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.Support
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#windowClientCapabilities
@@ -1945,6 +3044,27 @@ type WindowClientCapabilities struct {
 	ShowDocument *ShowDocumentClientCapabilities `json:"showDocument,omitempty"`
 }
 
+func (w *WindowClientCapabilities) GetWorkDoneProgress() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.WorkDoneProgress
+}
+
+func (w *WindowClientCapabilities) GetShowMessage() *ShowMessageRequestClientCapabilities {
+	if w == nil {
+		return *new(*ShowMessageRequestClientCapabilities)
+	}
+	return w.ShowMessage
+}
+
+func (w *WindowClientCapabilities) GetShowDocument() *ShowDocumentClientCapabilities {
+	if w == nil {
+		return *new(*ShowDocumentClientCapabilities)
+	}
+	return w.ShowDocument
+}
+
 type GeneralClientCapabilitiesStaleRequestSupport struct {
 	// The client will actively cancel the request.
 	Cancel bool `json:"cancel"`
@@ -1966,6 +3086,20 @@ type RegularExpressionsClientCapabilities struct {
 	Version string `json:"version,omitempty"`
 }
 
+func (r *RegularExpressionsClientCapabilities) GetEngine() string {
+	if r == nil {
+		return *new(string)
+	}
+	return r.Engine
+}
+
+func (r *RegularExpressionsClientCapabilities) GetVersion() string {
+	if r == nil {
+		return *new(string)
+	}
+	return r.Version
+}
+
 // Client capabilities specific to the used markdown parser.
 //
 // @since 3.16.0
@@ -1981,6 +3115,27 @@ type MarkdownClientCapabilities struct {
 	//
 	// @since 3.17.0
 	AllowedTags []string `json:"allowedTags,omitempty"`
+}
+
+func (m *MarkdownClientCapabilities) GetParser() string {
+	if m == nil {
+		return *new(string)
+	}
+	return m.Parser
+}
+
+func (m *MarkdownClientCapabilities) GetVersion() string {
+	if m == nil {
+		return *new(string)
+	}
+	return m.Version
+}
+
+func (m *MarkdownClientCapabilities) GetAllowedTags() []string {
+	if m == nil {
+		return *new([]string)
+	}
+	return m.AllowedTags
 }
 
 // A set of predefined position encoding kinds.
@@ -2046,6 +3201,34 @@ type GeneralClientCapabilities struct {
 	//
 	// @since 3.17.0
 	PositionEncodings []PositionEncodingKind `json:"positionEncodings,omitempty"`
+}
+
+func (g *GeneralClientCapabilities) GetStaleRequestSupport() *GeneralClientCapabilitiesStaleRequestSupport {
+	if g == nil {
+		return *new(*GeneralClientCapabilitiesStaleRequestSupport)
+	}
+	return g.StaleRequestSupport
+}
+
+func (g *GeneralClientCapabilities) GetRegularExpressions() *RegularExpressionsClientCapabilities {
+	if g == nil {
+		return *new(*RegularExpressionsClientCapabilities)
+	}
+	return g.RegularExpressions
+}
+
+func (g *GeneralClientCapabilities) GetMarkdown() *MarkdownClientCapabilities {
+	if g == nil {
+		return *new(*MarkdownClientCapabilities)
+	}
+	return g.Markdown
+}
+
+func (g *GeneralClientCapabilities) GetPositionEncodings() []PositionEncodingKind {
+	if g == nil {
+		return *new([]PositionEncodingKind)
+	}
+	return g.PositionEncodings
 }
 
 type stringLSPAnyMap map[string]LSPAny
@@ -2183,6 +3366,48 @@ type ClientCapabilities struct {
 	Experimental LSPAny `json:"experimental,omitempty"`
 }
 
+func (c *ClientCapabilities) GetWorkspace() *WorkspaceClientCapabilities {
+	if c == nil {
+		return *new(*WorkspaceClientCapabilities)
+	}
+	return c.Workspace
+}
+
+func (c *ClientCapabilities) GetTextDocument() *TextDocumentClientCapabilities {
+	if c == nil {
+		return *new(*TextDocumentClientCapabilities)
+	}
+	return c.TextDocument
+}
+
+func (c *ClientCapabilities) GetNotebookDocument() *NotebookDocumentClientCapabilities {
+	if c == nil {
+		return *new(*NotebookDocumentClientCapabilities)
+	}
+	return c.NotebookDocument
+}
+
+func (c *ClientCapabilities) GetWindow() *WindowClientCapabilities {
+	if c == nil {
+		return *new(*WindowClientCapabilities)
+	}
+	return c.Window
+}
+
+func (c *ClientCapabilities) GetGeneral() *GeneralClientCapabilities {
+	if c == nil {
+		return *new(*GeneralClientCapabilities)
+	}
+	return c.General
+}
+
+func (c *ClientCapabilities) GetExperimental() LSPAny {
+	if c == nil {
+		return *new(LSPAny)
+	}
+	return c.Experimental
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#traceValues
 type TraceValues string
 
@@ -2269,6 +3494,62 @@ type XInitializeParams struct {
 	Trace TraceValues `json:"trace,omitempty"`
 }
 
+func (x *XInitializeParams) GetProcessId() int {
+	if x == nil {
+		return *new(int)
+	}
+	return x.ProcessId
+}
+
+func (x *XInitializeParams) GetClientInfo() *XInitializeParamsClientInfo {
+	if x == nil {
+		return *new(*XInitializeParamsClientInfo)
+	}
+	return x.ClientInfo
+}
+
+func (x *XInitializeParams) GetLocale() string {
+	if x == nil {
+		return *new(string)
+	}
+	return x.Locale
+}
+
+func (x *XInitializeParams) GetRootPath() string {
+	if x == nil {
+		return *new(string)
+	}
+	return x.RootPath
+}
+
+func (x *XInitializeParams) GetRootUri() string {
+	if x == nil {
+		return *new(string)
+	}
+	return x.RootUri
+}
+
+func (x *XInitializeParams) GetCapabilities() *ClientCapabilities {
+	if x == nil {
+		return *new(*ClientCapabilities)
+	}
+	return x.Capabilities
+}
+
+func (x *XInitializeParams) GetInitializationOptions() LSPAny {
+	if x == nil {
+		return *new(LSPAny)
+	}
+	return x.InitializationOptions
+}
+
+func (x *XInitializeParams) GetTrace() TraceValues {
+	if x == nil {
+		return *new(TraceValues)
+	}
+	return x.Trace
+}
+
 // A workspace folder inside a client.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFolder
@@ -2278,6 +3559,20 @@ type WorkspaceFolder struct {
 	// The name of the workspace folder. Used to refer to this
 	// workspace folder in the user interface.
 	Name string `json:"name"`
+}
+
+func (w *WorkspaceFolder) GetUri() string {
+	if w == nil {
+		return *new(string)
+	}
+	return w.Uri
+}
+
+func (w *WorkspaceFolder) GetName() string {
+	if w == nil {
+		return *new(string)
+	}
+	return w.Name
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceFoldersInitializeParams
@@ -2290,6 +3585,13 @@ type WorkspaceFoldersInitializeParams struct {
 	//
 	// @since 3.6.0
 	WorkspaceFolders []*WorkspaceFolder `json:"workspaceFolders,omitempty"`
+}
+
+func (w *WorkspaceFoldersInitializeParams) GetWorkspaceFolders() []*WorkspaceFolder {
+	if w == nil {
+		return *new([]*WorkspaceFolder)
+	}
+	return w.WorkspaceFolders
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
@@ -2355,6 +3657,13 @@ type SaveOptions struct {
 	IncludeText bool `json:"includeText,omitempty"`
 }
 
+func (s *SaveOptions) GetIncludeText() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.IncludeText
+}
+
 // BooleanOrSaveOptions contains either of the following types:
 //   - [Boolean]
 //   - [*SaveOptions]
@@ -2415,6 +3724,41 @@ type TextDocumentSyncOptions struct {
 	// If present save notifications are sent to the server. If omitted the notification should not be
 	// sent.
 	Save *BooleanOrSaveOptions `json:"save,omitempty"`
+}
+
+func (t *TextDocumentSyncOptions) GetOpenClose() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.OpenClose
+}
+
+func (t *TextDocumentSyncOptions) GetChange() TextDocumentSyncKind {
+	if t == nil {
+		return *new(TextDocumentSyncKind)
+	}
+	return t.Change
+}
+
+func (t *TextDocumentSyncOptions) GetWillSave() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.WillSave
+}
+
+func (t *TextDocumentSyncOptions) GetWillSaveWaitUntil() bool {
+	if t == nil {
+		return *new(bool)
+	}
+	return t.WillSaveWaitUntil
+}
+
+func (t *TextDocumentSyncOptions) GetSave() *BooleanOrSaveOptions {
+	if t == nil {
+		return *new(*BooleanOrSaveOptions)
+	}
+	return t.Save
 }
 
 // TextDocumentSyncOptionsOrTextDocumentSyncKind contains either of the following types:
@@ -2687,6 +4031,20 @@ type NotebookDocumentSyncOptions struct {
 	Save bool `json:"save,omitempty"`
 }
 
+func (n *NotebookDocumentSyncOptions) GetNotebookSelector() []*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 {
+	if n == nil {
+		return *new([]*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2)
+	}
+	return n.NotebookSelector
+}
+
+func (n *NotebookDocumentSyncOptions) GetSave() bool {
+	if n == nil {
+		return *new(bool)
+	}
+	return n.Save
+}
+
 // Static registration options to be returned in the initialize
 // request.
 //
@@ -2695,6 +4053,13 @@ type StaticRegistrationOptions struct {
 	// The id used to register the request. The id can be used to deregister
 	// the request again. See also Registration#id.
 	Id string `json:"id,omitempty"`
+}
+
+func (s *StaticRegistrationOptions) GetId() string {
+	if s == nil {
+		return *new(string)
+	}
+	return s.Id
 }
 
 // Registration options specific to a notebook.
@@ -2757,6 +4122,13 @@ type WorkDoneProgressOptions struct {
 	WorkDoneProgress bool `json:"workDoneProgress,omitempty"`
 }
 
+func (w *WorkDoneProgressOptions) GetWorkDoneProgress() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.WorkDoneProgress
+}
+
 type CompletionOptionsCompletionItem struct {
 	// The server has support for completion item label
 	// details (see also `CompletionItemLabelDetails`) when
@@ -2797,6 +4169,34 @@ type CompletionOptions struct {
 	//
 	// @since 3.17.0
 	CompletionItem *CompletionOptionsCompletionItem `json:"completionItem,omitempty"`
+}
+
+func (c *CompletionOptions) GetTriggerCharacters() []string {
+	if c == nil {
+		return *new([]string)
+	}
+	return c.TriggerCharacters
+}
+
+func (c *CompletionOptions) GetAllCommitCharacters() []string {
+	if c == nil {
+		return *new([]string)
+	}
+	return c.AllCommitCharacters
+}
+
+func (c *CompletionOptions) GetResolveProvider() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.ResolveProvider
+}
+
+func (c *CompletionOptions) GetCompletionItem() *CompletionOptionsCompletionItem {
+	if c == nil {
+		return *new(*CompletionOptionsCompletionItem)
+	}
+	return c.CompletionItem
 }
 
 // Hover options.
@@ -2863,6 +4263,20 @@ type SignatureHelpOptions struct {
 	//
 	// @since 3.15.0
 	RetriggerCharacters []string `json:"retriggerCharacters,omitempty"`
+}
+
+func (s *SignatureHelpOptions) GetTriggerCharacters() []string {
+	if s == nil {
+		return *new([]string)
+	}
+	return s.TriggerCharacters
+}
+
+func (s *SignatureHelpOptions) GetRetriggerCharacters() []string {
+	if s == nil {
+		return *new([]string)
+	}
+	return s.RetriggerCharacters
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#declarationOptions
@@ -2990,6 +4404,20 @@ type NotebookCellTextDocumentFilter struct {
 	Language string `json:"language,omitempty"`
 }
 
+func (n *NotebookCellTextDocumentFilter) GetNotebook() *StringOrNotebookDocumentFilter {
+	if n == nil {
+		return *new(*StringOrNotebookDocumentFilter)
+	}
+	return n.Notebook
+}
+
+func (n *NotebookCellTextDocumentFilter) GetLanguage() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Language
+}
+
 // TextDocumentFilterOrNotebookCellTextDocumentFilter contains either of the following types:
 //   - [TextDocumentFilter]
 //   - [*NotebookCellTextDocumentFilter]
@@ -3057,6 +4485,13 @@ type TextDocumentRegistrationOptions struct {
 	// A document selector to identify the scope of the registration. If set to null
 	// the document selector provided on the client side will be used.
 	DocumentSelector DocumentSelector `json:"documentSelector"`
+}
+
+func (t *TextDocumentRegistrationOptions) GetDocumentSelector() DocumentSelector {
+	if t == nil {
+		return *new(DocumentSelector)
+	}
+	return t.DocumentSelector
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#declarationRegistrationOptions
@@ -3410,6 +4845,13 @@ type DocumentSymbolOptions struct {
 	Label string `json:"label,omitempty"`
 }
 
+func (d *DocumentSymbolOptions) GetLabel() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.Label
+}
+
 // BooleanOrDocumentSymbolOptions contains either of the following types:
 //   - [Boolean]
 //   - [*DocumentSymbolOptions]
@@ -3470,6 +4912,20 @@ type CodeActionOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+func (c *CodeActionOptions) GetCodeActionKinds() []CodeActionKind {
+	if c == nil {
+		return *new([]CodeActionKind)
+	}
+	return c.CodeActionKinds
+}
+
+func (c *CodeActionOptions) GetResolveProvider() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.ResolveProvider
+}
+
 // BooleanOrCodeActionOptions contains either of the following types:
 //   - [Boolean]
 //   - [*CodeActionOptions]
@@ -3522,6 +4978,13 @@ type CodeLensOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+func (c *CodeLensOptions) GetResolveProvider() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.ResolveProvider
+}
+
 // Provider options for a {@link DocumentLinkRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentLinkOptions
@@ -3529,6 +4992,13 @@ type DocumentLinkOptions struct {
 	*WorkDoneProgressOptions
 	// Document links have a resolve provider as well.
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
+}
+
+func (d *DocumentLinkOptions) GetResolveProvider() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.ResolveProvider
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentColorOptions
@@ -3606,6 +5076,13 @@ type WorkspaceSymbolOptions struct {
 	//
 	// @since 3.17.0
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
+}
+
+func (w *WorkspaceSymbolOptions) GetResolveProvider() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.ResolveProvider
 }
 
 // BooleanOrWorkspaceSymbolOptions contains either of the following types:
@@ -3713,6 +5190,13 @@ type DocumentRangeFormattingOptions struct {
 	RangesSupport bool `json:"rangesSupport,omitempty"`
 }
 
+func (d *DocumentRangeFormattingOptions) GetRangesSupport() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.RangesSupport
+}
+
 // BooleanOrDocumentRangeFormattingOptions contains either of the following types:
 //   - [Boolean]
 //   - [*DocumentRangeFormattingOptions]
@@ -3766,6 +5250,20 @@ type DocumentOnTypeFormattingOptions struct {
 	MoreTriggerCharacter []string `json:"moreTriggerCharacter,omitempty"`
 }
 
+func (d *DocumentOnTypeFormattingOptions) GetFirstTriggerCharacter() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.FirstTriggerCharacter
+}
+
+func (d *DocumentOnTypeFormattingOptions) GetMoreTriggerCharacter() []string {
+	if d == nil {
+		return *new([]string)
+	}
+	return d.MoreTriggerCharacter
+}
+
 // Provider options for a {@link RenameRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#renameOptions
@@ -3775,6 +5273,13 @@ type RenameOptions struct {
 	//
 	// @since version 3.12.0
 	PrepareProvider bool `json:"prepareProvider,omitempty"`
+}
+
+func (r *RenameOptions) GetPrepareProvider() bool {
+	if r == nil {
+		return *new(bool)
+	}
+	return r.PrepareProvider
 }
 
 // BooleanOrRenameOptions contains either of the following types:
@@ -3958,6 +5463,13 @@ type ExecuteCommandOptions struct {
 	Commands []string `json:"commands"`
 }
 
+func (e *ExecuteCommandOptions) GetCommands() []string {
+	if e == nil {
+		return *new([]string)
+	}
+	return e.Commands
+}
+
 // Call hierarchy options used during static registration.
 //
 // @since 3.16.0
@@ -4106,6 +5618,20 @@ type SemanticTokensLegend struct {
 	TokenModifiers []string `json:"tokenModifiers"`
 }
 
+func (s *SemanticTokensLegend) GetTokenTypes() []string {
+	if s == nil {
+		return *new([]string)
+	}
+	return s.TokenTypes
+}
+
+func (s *SemanticTokensLegend) GetTokenModifiers() []string {
+	if s == nil {
+		return *new([]string)
+	}
+	return s.TokenModifiers
+}
+
 type SemanticTokensOptionsRangeOr2 struct {
 }
 
@@ -4212,6 +5738,27 @@ type SemanticTokensOptions struct {
 	Range *BooleanOrSemanticTokensOptionsRangeOr2 `json:"range,omitempty"`
 	// Server supports providing semantic tokens for a full document.
 	Full *BooleanOrSemanticTokensOptionsFullOr2 `json:"full,omitempty"`
+}
+
+func (s *SemanticTokensOptions) GetLegend() *SemanticTokensLegend {
+	if s == nil {
+		return *new(*SemanticTokensLegend)
+	}
+	return s.Legend
+}
+
+func (s *SemanticTokensOptions) GetRange() *BooleanOrSemanticTokensOptionsRangeOr2 {
+	if s == nil {
+		return *new(*BooleanOrSemanticTokensOptionsRangeOr2)
+	}
+	return s.Range
+}
+
+func (s *SemanticTokensOptions) GetFull() *BooleanOrSemanticTokensOptionsFullOr2 {
+	if s == nil {
+		return *new(*BooleanOrSemanticTokensOptionsFullOr2)
+	}
+	return s.Full
 }
 
 // @since 3.16.0
@@ -4486,6 +6033,13 @@ type InlayHintOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+func (i *InlayHintOptions) GetResolveProvider() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.ResolveProvider
+}
+
 // Inlay hint options used during static or dynamic registration.
 //
 // @since 3.17.0
@@ -4566,6 +6120,27 @@ type DiagnosticOptions struct {
 	InterFileDependencies bool `json:"interFileDependencies"`
 	// The server provides support for workspace diagnostics as well.
 	WorkspaceDiagnostics bool `json:"workspaceDiagnostics"`
+}
+
+func (d *DiagnosticOptions) GetIdentifier() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.Identifier
+}
+
+func (d *DiagnosticOptions) GetInterFileDependencies() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.InterFileDependencies
+}
+
+func (d *DiagnosticOptions) GetWorkspaceDiagnostics() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.WorkspaceDiagnostics
 }
 
 // Diagnostic registration options.
@@ -4732,6 +6307,20 @@ type WorkspaceFoldersServerCapabilities struct {
 	ChangeNotifications *StringOrBoolean `json:"changeNotifications,omitempty"`
 }
 
+func (w *WorkspaceFoldersServerCapabilities) GetSupported() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.Supported
+}
+
+func (w *WorkspaceFoldersServerCapabilities) GetChangeNotifications() *StringOrBoolean {
+	if w == nil {
+		return *new(*StringOrBoolean)
+	}
+	return w.ChangeNotifications
+}
+
 // A pattern kind describing if a glob pattern matches a file a folder or
 // both.
 //
@@ -4787,6 +6376,13 @@ type FileOperationPatternOptions struct {
 	IgnoreCase bool `json:"ignoreCase,omitempty"`
 }
 
+func (f *FileOperationPatternOptions) GetIgnoreCase() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.IgnoreCase
+}
+
 // A pattern to describe in which file operation requests or notifications
 // the server is interested in receiving.
 //
@@ -4810,6 +6406,27 @@ type FileOperationPattern struct {
 	Options *FileOperationPatternOptions `json:"options,omitempty"`
 }
 
+func (f *FileOperationPattern) GetGlob() string {
+	if f == nil {
+		return *new(string)
+	}
+	return f.Glob
+}
+
+func (f *FileOperationPattern) GetMatches() FileOperationPatternKind {
+	if f == nil {
+		return *new(FileOperationPatternKind)
+	}
+	return f.Matches
+}
+
+func (f *FileOperationPattern) GetOptions() *FileOperationPatternOptions {
+	if f == nil {
+		return *new(*FileOperationPatternOptions)
+	}
+	return f.Options
+}
+
 // A filter to describe in which file operation requests or notifications
 // the server is interested in receiving.
 //
@@ -4823,6 +6440,20 @@ type FileOperationFilter struct {
 	Pattern *FileOperationPattern `json:"pattern"`
 }
 
+func (f *FileOperationFilter) GetScheme() string {
+	if f == nil {
+		return *new(string)
+	}
+	return f.Scheme
+}
+
+func (f *FileOperationFilter) GetPattern() *FileOperationPattern {
+	if f == nil {
+		return *new(*FileOperationPattern)
+	}
+	return f.Pattern
+}
+
 // The options to register for file operations.
 //
 // @since 3.16.0
@@ -4831,6 +6462,13 @@ type FileOperationFilter struct {
 type FileOperationRegistrationOptions struct {
 	// The actual filters.
 	Filters []*FileOperationFilter `json:"filters"`
+}
+
+func (f *FileOperationRegistrationOptions) GetFilters() []*FileOperationFilter {
+	if f == nil {
+		return *new([]*FileOperationFilter)
+	}
+	return f.Filters
 }
 
 // Options for notifications/requests for user operations on files.
@@ -4851,6 +6489,48 @@ type FileOperationOptions struct {
 	DidDelete *FileOperationRegistrationOptions `json:"didDelete,omitempty"`
 	// The server is interested in receiving willDeleteFiles file requests.
 	WillDelete *FileOperationRegistrationOptions `json:"willDelete,omitempty"`
+}
+
+func (f *FileOperationOptions) GetDidCreate() *FileOperationRegistrationOptions {
+	if f == nil {
+		return *new(*FileOperationRegistrationOptions)
+	}
+	return f.DidCreate
+}
+
+func (f *FileOperationOptions) GetWillCreate() *FileOperationRegistrationOptions {
+	if f == nil {
+		return *new(*FileOperationRegistrationOptions)
+	}
+	return f.WillCreate
+}
+
+func (f *FileOperationOptions) GetDidRename() *FileOperationRegistrationOptions {
+	if f == nil {
+		return *new(*FileOperationRegistrationOptions)
+	}
+	return f.DidRename
+}
+
+func (f *FileOperationOptions) GetWillRename() *FileOperationRegistrationOptions {
+	if f == nil {
+		return *new(*FileOperationRegistrationOptions)
+	}
+	return f.WillRename
+}
+
+func (f *FileOperationOptions) GetDidDelete() *FileOperationRegistrationOptions {
+	if f == nil {
+		return *new(*FileOperationRegistrationOptions)
+	}
+	return f.DidDelete
+}
+
+func (f *FileOperationOptions) GetWillDelete() *FileOperationRegistrationOptions {
+	if f == nil {
+		return *new(*FileOperationRegistrationOptions)
+	}
+	return f.WillDelete
 }
 
 type ServerCapabilitiesWorkspace struct {
@@ -4978,6 +6658,258 @@ type ServerCapabilities struct {
 	Experimental LSPAny `json:"experimental,omitempty"`
 }
 
+func (s *ServerCapabilities) GetPositionEncoding() PositionEncodingKind {
+	if s == nil {
+		return *new(PositionEncodingKind)
+	}
+	return s.PositionEncoding
+}
+
+func (s *ServerCapabilities) GetTextDocumentSync() *TextDocumentSyncOptionsOrTextDocumentSyncKind {
+	if s == nil {
+		return *new(*TextDocumentSyncOptionsOrTextDocumentSyncKind)
+	}
+	return s.TextDocumentSync
+}
+
+func (s *ServerCapabilities) GetNotebookDocumentSync() *NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions {
+	if s == nil {
+		return *new(*NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions)
+	}
+	return s.NotebookDocumentSync
+}
+
+func (s *ServerCapabilities) GetCompletionProvider() *CompletionOptions {
+	if s == nil {
+		return *new(*CompletionOptions)
+	}
+	return s.CompletionProvider
+}
+
+func (s *ServerCapabilities) GetHoverProvider() *BooleanOrHoverOptions {
+	if s == nil {
+		return *new(*BooleanOrHoverOptions)
+	}
+	return s.HoverProvider
+}
+
+func (s *ServerCapabilities) GetSignatureHelpProvider() *SignatureHelpOptions {
+	if s == nil {
+		return *new(*SignatureHelpOptions)
+	}
+	return s.SignatureHelpProvider
+}
+
+func (s *ServerCapabilities) GetDeclarationProvider() *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions)
+	}
+	return s.DeclarationProvider
+}
+
+func (s *ServerCapabilities) GetDefinitionProvider() *BooleanOrDefinitionOptions {
+	if s == nil {
+		return *new(*BooleanOrDefinitionOptions)
+	}
+	return s.DefinitionProvider
+}
+
+func (s *ServerCapabilities) GetTypeDefinitionProvider() *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions)
+	}
+	return s.TypeDefinitionProvider
+}
+
+func (s *ServerCapabilities) GetImplementationProvider() *BooleanOrImplementationOptionsOrImplementationRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrImplementationOptionsOrImplementationRegistrationOptions)
+	}
+	return s.ImplementationProvider
+}
+
+func (s *ServerCapabilities) GetReferencesProvider() *BooleanOrReferenceOptions {
+	if s == nil {
+		return *new(*BooleanOrReferenceOptions)
+	}
+	return s.ReferencesProvider
+}
+
+func (s *ServerCapabilities) GetDocumentHighlightProvider() *BooleanOrDocumentHighlightOptions {
+	if s == nil {
+		return *new(*BooleanOrDocumentHighlightOptions)
+	}
+	return s.DocumentHighlightProvider
+}
+
+func (s *ServerCapabilities) GetDocumentSymbolProvider() *BooleanOrDocumentSymbolOptions {
+	if s == nil {
+		return *new(*BooleanOrDocumentSymbolOptions)
+	}
+	return s.DocumentSymbolProvider
+}
+
+func (s *ServerCapabilities) GetCodeActionProvider() *BooleanOrCodeActionOptions {
+	if s == nil {
+		return *new(*BooleanOrCodeActionOptions)
+	}
+	return s.CodeActionProvider
+}
+
+func (s *ServerCapabilities) GetCodeLensProvider() *CodeLensOptions {
+	if s == nil {
+		return *new(*CodeLensOptions)
+	}
+	return s.CodeLensProvider
+}
+
+func (s *ServerCapabilities) GetDocumentLinkProvider() *DocumentLinkOptions {
+	if s == nil {
+		return *new(*DocumentLinkOptions)
+	}
+	return s.DocumentLinkProvider
+}
+
+func (s *ServerCapabilities) GetColorProvider() *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions)
+	}
+	return s.ColorProvider
+}
+
+func (s *ServerCapabilities) GetWorkspaceSymbolProvider() *BooleanOrWorkspaceSymbolOptions {
+	if s == nil {
+		return *new(*BooleanOrWorkspaceSymbolOptions)
+	}
+	return s.WorkspaceSymbolProvider
+}
+
+func (s *ServerCapabilities) GetDocumentFormattingProvider() *BooleanOrDocumentFormattingOptions {
+	if s == nil {
+		return *new(*BooleanOrDocumentFormattingOptions)
+	}
+	return s.DocumentFormattingProvider
+}
+
+func (s *ServerCapabilities) GetDocumentRangeFormattingProvider() *BooleanOrDocumentRangeFormattingOptions {
+	if s == nil {
+		return *new(*BooleanOrDocumentRangeFormattingOptions)
+	}
+	return s.DocumentRangeFormattingProvider
+}
+
+func (s *ServerCapabilities) GetDocumentOnTypeFormattingProvider() *DocumentOnTypeFormattingOptions {
+	if s == nil {
+		return *new(*DocumentOnTypeFormattingOptions)
+	}
+	return s.DocumentOnTypeFormattingProvider
+}
+
+func (s *ServerCapabilities) GetRenameProvider() *BooleanOrRenameOptions {
+	if s == nil {
+		return *new(*BooleanOrRenameOptions)
+	}
+	return s.RenameProvider
+}
+
+func (s *ServerCapabilities) GetFoldingRangeProvider() *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions)
+	}
+	return s.FoldingRangeProvider
+}
+
+func (s *ServerCapabilities) GetSelectionRangeProvider() *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions)
+	}
+	return s.SelectionRangeProvider
+}
+
+func (s *ServerCapabilities) GetExecuteCommandProvider() *ExecuteCommandOptions {
+	if s == nil {
+		return *new(*ExecuteCommandOptions)
+	}
+	return s.ExecuteCommandProvider
+}
+
+func (s *ServerCapabilities) GetCallHierarchyProvider() *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions)
+	}
+	return s.CallHierarchyProvider
+}
+
+func (s *ServerCapabilities) GetLinkedEditingRangeProvider() *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions)
+	}
+	return s.LinkedEditingRangeProvider
+}
+
+func (s *ServerCapabilities) GetSemanticTokensProvider() *SemanticTokensOptionsOrSemanticTokensRegistrationOptions {
+	if s == nil {
+		return *new(*SemanticTokensOptionsOrSemanticTokensRegistrationOptions)
+	}
+	return s.SemanticTokensProvider
+}
+
+func (s *ServerCapabilities) GetMonikerProvider() *BooleanOrMonikerOptionsOrMonikerRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrMonikerOptionsOrMonikerRegistrationOptions)
+	}
+	return s.MonikerProvider
+}
+
+func (s *ServerCapabilities) GetTypeHierarchyProvider() *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions)
+	}
+	return s.TypeHierarchyProvider
+}
+
+func (s *ServerCapabilities) GetInlineValueProvider() *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions)
+	}
+	return s.InlineValueProvider
+}
+
+func (s *ServerCapabilities) GetInlayHintProvider() *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions {
+	if s == nil {
+		return *new(*BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions)
+	}
+	return s.InlayHintProvider
+}
+
+func (s *ServerCapabilities) GetDiagnosticProvider() *DiagnosticOptionsOrDiagnosticRegistrationOptions {
+	if s == nil {
+		return *new(*DiagnosticOptionsOrDiagnosticRegistrationOptions)
+	}
+	return s.DiagnosticProvider
+}
+
+func (s *ServerCapabilities) GetInlineCompletionProvider() *BooleanOrInlineCompletionOptions {
+	if s == nil {
+		return *new(*BooleanOrInlineCompletionOptions)
+	}
+	return s.InlineCompletionProvider
+}
+
+func (s *ServerCapabilities) GetWorkspace() *ServerCapabilitiesWorkspace {
+	if s == nil {
+		return *new(*ServerCapabilitiesWorkspace)
+	}
+	return s.Workspace
+}
+
+func (s *ServerCapabilities) GetExperimental() LSPAny {
+	if s == nil {
+		return *new(LSPAny)
+	}
+	return s.Experimental
+}
+
 type InitializeResultServerInfo struct {
 	// The name of the server as defined by the server.
 	Name string `json:"name"`
@@ -4997,6 +6929,20 @@ type InitializeResult struct {
 	ServerInfo *InitializeResultServerInfo `json:"serverInfo,omitempty"`
 }
 
+func (i *InitializeResult) GetCapabilities() *ServerCapabilities {
+	if i == nil {
+		return *new(*ServerCapabilities)
+	}
+	return i.Capabilities
+}
+
+func (i *InitializeResult) GetServerInfo() *InitializeResultServerInfo {
+	if i == nil {
+		return *new(*InitializeResultServerInfo)
+	}
+	return i.ServerInfo
+}
+
 // The data type of the ResponseError if the
 // initialize request fails.
 //
@@ -5009,12 +6955,26 @@ type InitializeError struct {
 	Retry bool `json:"retry"`
 }
 
+func (i *InitializeError) GetRetry() bool {
+	if i == nil {
+		return *new(bool)
+	}
+	return i.Retry
+}
+
 // A literal to identify a text document in the client.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentIdentifier
 type TextDocumentIdentifier struct {
 	// The text document's uri.
 	Uri string `json:"uri"`
+}
+
+func (t *TextDocumentIdentifier) GetUri() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Uri
 }
 
 // Position in a text document expressed as zero-based line and character
@@ -5062,6 +7022,20 @@ type Position struct {
 	Character int `json:"character"`
 }
 
+func (p *Position) GetLine() int {
+	if p == nil {
+		return *new(int)
+	}
+	return p.Line
+}
+
+func (p *Position) GetCharacter() int {
+	if p == nil {
+		return *new(int)
+	}
+	return p.Character
+}
+
 // A parameter literal used in requests to pass a text document and a position inside that
 // document.
 //
@@ -5073,11 +7047,32 @@ type TextDocumentPositionParams struct {
 	Position *Position `json:"position"`
 }
 
+func (t *TextDocumentPositionParams) GetTextDocument() *TextDocumentIdentifier {
+	if t == nil {
+		return *new(*TextDocumentIdentifier)
+	}
+	return t.TextDocument
+}
+
+func (t *TextDocumentPositionParams) GetPosition() *Position {
+	if t == nil {
+		return *new(*Position)
+	}
+	return t.Position
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#partialResultParams
 type PartialResultParams struct {
 	// An optional token that a server can use to report partial results (e.g. streaming) to
 	// the client.
 	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
+}
+
+func (p *PartialResultParams) GetPartialResultToken() ProgressToken {
+	if p == nil {
+		return *new(ProgressToken)
+	}
+	return p.PartialResultToken
 }
 
 // How a completion was triggered
@@ -5138,6 +7133,20 @@ type CompletionContext struct {
 	TriggerCharacter string `json:"triggerCharacter,omitempty"`
 }
 
+func (c *CompletionContext) GetTriggerKind() CompletionTriggerKind {
+	if c == nil {
+		return *new(CompletionTriggerKind)
+	}
+	return c.TriggerKind
+}
+
+func (c *CompletionContext) GetTriggerCharacter() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.TriggerCharacter
+}
+
 // Completion parameters
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionParams
@@ -5148,6 +7157,13 @@ type CompletionParams struct {
 	// The completion context. This is only available if the client specifies
 	// to send this using the client capability `textDocument.completion.contextSupport === true`
 	Context *CompletionContext `json:"context,omitempty"`
+}
+
+func (c *CompletionParams) GetContext() *CompletionContext {
+	if c == nil {
+		return *new(*CompletionContext)
+	}
+	return c.Context
 }
 
 // Additional details for a completion item label.
@@ -5162,6 +7178,20 @@ type CompletionItemLabelDetails struct {
 	// An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
 	// for fully qualified names and file paths.
 	Description string `json:"description,omitempty"`
+}
+
+func (c *CompletionItemLabelDetails) GetDetail() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Detail
+}
+
+func (c *CompletionItemLabelDetails) GetDescription() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Description
 }
 
 // A `MarkupContent` literal represents a string value which content is interpreted base on its
@@ -5195,6 +7225,20 @@ type MarkupContent struct {
 	Kind MarkupKind `json:"kind"`
 	// The content itself
 	Value string `json:"value"`
+}
+
+func (m *MarkupContent) GetKind() MarkupKind {
+	if m == nil {
+		return *new(MarkupKind)
+	}
+	return m.Kind
+}
+
+func (m *MarkupContent) GetValue() string {
+	if m == nil {
+		return *new(string)
+	}
+	return m.Value
 }
 
 // StringOrMarkupContent contains either of the following types:
@@ -5312,6 +7356,20 @@ type Range struct {
 	End *Position `json:"end"`
 }
 
+func (r *Range) GetStart() *Position {
+	if r == nil {
+		return *new(*Position)
+	}
+	return r.Start
+}
+
+func (r *Range) GetEnd() *Position {
+	if r == nil {
+		return *new(*Position)
+	}
+	return r.End
+}
+
 // A text edit applicable to a text document.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit
@@ -5322,6 +7380,20 @@ type TextEdit struct {
 	// The string to be inserted. For delete operations use an
 	// empty string.
 	NewText string `json:"newText"`
+}
+
+func (t *TextEdit) GetRange() *Range {
+	if t == nil {
+		return *new(*Range)
+	}
+	return t.Range
+}
+
+func (t *TextEdit) GetNewText() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.NewText
 }
 
 // A special text edit to provide an insert and a replace operation.
@@ -5336,6 +7408,27 @@ type InsertReplaceEdit struct {
 	Insert *Range `json:"insert"`
 	// The range if the replace is requested.
 	Replace *Range `json:"replace"`
+}
+
+func (i *InsertReplaceEdit) GetNewText() string {
+	if i == nil {
+		return *new(string)
+	}
+	return i.NewText
+}
+
+func (i *InsertReplaceEdit) GetInsert() *Range {
+	if i == nil {
+		return *new(*Range)
+	}
+	return i.Insert
+}
+
+func (i *InsertReplaceEdit) GetReplace() *Range {
+	if i == nil {
+		return *new(*Range)
+	}
+	return i.Replace
 }
 
 // TextEditOrInsertReplaceEdit contains either of the following types:
@@ -5395,6 +7488,27 @@ type Command struct {
 	// Arguments that the command handler should be
 	// invoked with.
 	Arguments []LSPAny `json:"arguments,omitempty"`
+}
+
+func (c *Command) GetTitle() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Title
+}
+
+func (c *Command) GetCommand() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Command
+}
+
+func (c *Command) GetArguments() []LSPAny {
+	if c == nil {
+		return *new([]LSPAny)
+	}
+	return c.Arguments
 }
 
 // A completion item represents a text snippet that is
@@ -5521,6 +7635,139 @@ type CompletionItem struct {
 	Data LSPAny `json:"data,omitempty"`
 }
 
+func (c *CompletionItem) GetLabel() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Label
+}
+
+func (c *CompletionItem) GetLabelDetails() *CompletionItemLabelDetails {
+	if c == nil {
+		return *new(*CompletionItemLabelDetails)
+	}
+	return c.LabelDetails
+}
+
+func (c *CompletionItem) GetKind() CompletionItemKind {
+	if c == nil {
+		return *new(CompletionItemKind)
+	}
+	return c.Kind
+}
+
+func (c *CompletionItem) GetTags() []CompletionItemTag {
+	if c == nil {
+		return *new([]CompletionItemTag)
+	}
+	return c.Tags
+}
+
+func (c *CompletionItem) GetDetail() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Detail
+}
+
+func (c *CompletionItem) GetDocumentation() *StringOrMarkupContent {
+	if c == nil {
+		return *new(*StringOrMarkupContent)
+	}
+	return c.Documentation
+}
+
+func (c *CompletionItem) GetDeprecated() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.Deprecated
+}
+
+func (c *CompletionItem) GetPreselect() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.Preselect
+}
+
+func (c *CompletionItem) GetSortText() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.SortText
+}
+
+func (c *CompletionItem) GetFilterText() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.FilterText
+}
+
+func (c *CompletionItem) GetInsertText() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.InsertText
+}
+
+func (c *CompletionItem) GetInsertTextFormat() InsertTextFormat {
+	if c == nil {
+		return *new(InsertTextFormat)
+	}
+	return c.InsertTextFormat
+}
+
+func (c *CompletionItem) GetInsertTextMode() InsertTextMode {
+	if c == nil {
+		return *new(InsertTextMode)
+	}
+	return c.InsertTextMode
+}
+
+func (c *CompletionItem) GetTextEdit() *TextEditOrInsertReplaceEdit {
+	if c == nil {
+		return *new(*TextEditOrInsertReplaceEdit)
+	}
+	return c.TextEdit
+}
+
+func (c *CompletionItem) GetTextEditText() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.TextEditText
+}
+
+func (c *CompletionItem) GetAdditionalTextEdits() []*TextEdit {
+	if c == nil {
+		return *new([]*TextEdit)
+	}
+	return c.AdditionalTextEdits
+}
+
+func (c *CompletionItem) GetCommitCharacters() []string {
+	if c == nil {
+		return *new([]string)
+	}
+	return c.CommitCharacters
+}
+
+func (c *CompletionItem) GetCommand() *Command {
+	if c == nil {
+		return *new(*Command)
+	}
+	return c.Command
+}
+
+func (c *CompletionItem) GetData() LSPAny {
+	if c == nil {
+		return *new(LSPAny)
+	}
+	return c.Data
+}
+
 type CompletionItemSlice []*CompletionItem
 
 type CompletionListItemDefaultsEditRangeOr2 struct {
@@ -5622,6 +7869,27 @@ type CompletionList struct {
 	ItemDefaults *CompletionListItemDefaults `json:"itemDefaults,omitempty"`
 	// The completion items.
 	Items []*CompletionItem `json:"items"`
+}
+
+func (c *CompletionList) GetIsIncomplete() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.IsIncomplete
+}
+
+func (c *CompletionList) GetItemDefaults() *CompletionListItemDefaults {
+	if c == nil {
+		return *new(*CompletionListItemDefaults)
+	}
+	return c.ItemDefaults
+}
+
+func (c *CompletionList) GetItems() []*CompletionItem {
+	if c == nil {
+		return *new([]*CompletionItem)
+	}
+	return c.Items
 }
 
 // CompletionItemSliceOrCompletionList contains either of the following types:
@@ -5804,6 +8072,20 @@ type Hover struct {
 	Range *Range `json:"range,omitempty"`
 }
 
+func (h *Hover) GetContents() *MarkupContentOrMarkedStringOrMarkedStringSlice {
+	if h == nil {
+		return *new(*MarkupContentOrMarkedStringOrMarkedStringSlice)
+	}
+	return h.Contents
+}
+
+func (h *Hover) GetRange() *Range {
+	if h == nil {
+		return *new(*Range)
+	}
+	return h.Range
+}
+
 // Parameters for a {@link DefinitionRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionParams
@@ -5821,6 +8103,20 @@ type Location struct {
 	Uri string `json:"uri"`
 
 	Range *Range `json:"range"`
+}
+
+func (l *Location) GetUri() string {
+	if l == nil {
+		return *new(string)
+	}
+	return l.Uri
+}
+
+func (l *Location) GetRange() *Range {
+	if l == nil {
+		return *new(*Range)
+	}
+	return l.Range
 }
 
 type LocationSlice []*Location
@@ -5899,6 +8195,34 @@ type LocationLink struct {
 	TargetSelectionRange *Range `json:"targetSelectionRange"`
 }
 
+func (l *LocationLink) GetOriginSelectionRange() *Range {
+	if l == nil {
+		return *new(*Range)
+	}
+	return l.OriginSelectionRange
+}
+
+func (l *LocationLink) GetTargetUri() string {
+	if l == nil {
+		return *new(string)
+	}
+	return l.TargetUri
+}
+
+func (l *LocationLink) GetTargetRange() *Range {
+	if l == nil {
+		return *new(*Range)
+	}
+	return l.TargetRange
+}
+
+func (l *LocationLink) GetTargetSelectionRange() *Range {
+	if l == nil {
+		return *new(*Range)
+	}
+	return l.TargetSelectionRange
+}
+
 // Information about where a symbol is defined.
 //
 // Provides additional metadata over normal {@link Location location} definitions, including the range of
@@ -5961,6 +8285,13 @@ type ReferenceContext struct {
 	IncludeDeclaration bool `json:"includeDeclaration"`
 }
 
+func (r *ReferenceContext) GetIncludeDeclaration() bool {
+	if r == nil {
+		return *new(bool)
+	}
+	return r.IncludeDeclaration
+}
+
 // Parameters for a {@link ReferencesRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#referenceParams
@@ -5972,6 +8303,13 @@ type ReferenceParams struct {
 	Context *ReferenceContext `json:"context"`
 }
 
+func (r *ReferenceParams) GetContext() *ReferenceContext {
+	if r == nil {
+		return *new(*ReferenceContext)
+	}
+	return r.Context
+}
+
 // Parameters for a {@link DocumentSymbolRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentSymbolParams
@@ -5980,6 +8318,13 @@ type DocumentSymbolParams struct {
 	*PartialResultParams
 	// The text document.
 	TextDocument *TextDocumentIdentifier `json:"textDocument"`
+}
+
+func (d *DocumentSymbolParams) GetTextDocument() *TextDocumentIdentifier {
+	if d == nil {
+		return *new(*TextDocumentIdentifier)
+	}
+	return d.TextDocument
 }
 
 // A base for all symbol information.
@@ -5999,6 +8344,34 @@ type BaseSymbolInformation struct {
 	// if necessary). It can't be used to re-infer a hierarchy for the document
 	// symbols.
 	ContainerName string `json:"containerName,omitempty"`
+}
+
+func (b *BaseSymbolInformation) GetName() string {
+	if b == nil {
+		return *new(string)
+	}
+	return b.Name
+}
+
+func (b *BaseSymbolInformation) GetKind() SymbolKind {
+	if b == nil {
+		return *new(SymbolKind)
+	}
+	return b.Kind
+}
+
+func (b *BaseSymbolInformation) GetTags() []SymbolTag {
+	if b == nil {
+		return *new([]SymbolTag)
+	}
+	return b.Tags
+}
+
+func (b *BaseSymbolInformation) GetContainerName() string {
+	if b == nil {
+		return *new(string)
+	}
+	return b.ContainerName
 }
 
 // Represents information about programming constructs like variables, classes,
@@ -6021,6 +8394,20 @@ type SymbolInformation struct {
 	// syntax tree. It can therefore not be used to re-construct a hierarchy of
 	// the symbols.
 	Location *Location `json:"location"`
+}
+
+func (s *SymbolInformation) GetDeprecated() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.Deprecated
+}
+
+func (s *SymbolInformation) GetLocation() *Location {
+	if s == nil {
+		return *new(*Location)
+	}
+	return s.Location
 }
 
 type SymbolInformationSlice []*SymbolInformation
@@ -6056,6 +8443,62 @@ type DocumentSymbol struct {
 	SelectionRange *Range `json:"selectionRange"`
 	// Children of this symbol, e.g. properties of a class.
 	Children []*DocumentSymbol `json:"children,omitempty"`
+}
+
+func (d *DocumentSymbol) GetName() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.Name
+}
+
+func (d *DocumentSymbol) GetDetail() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.Detail
+}
+
+func (d *DocumentSymbol) GetKind() SymbolKind {
+	if d == nil {
+		return *new(SymbolKind)
+	}
+	return d.Kind
+}
+
+func (d *DocumentSymbol) GetTags() []SymbolTag {
+	if d == nil {
+		return *new([]SymbolTag)
+	}
+	return d.Tags
+}
+
+func (d *DocumentSymbol) GetDeprecated() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.Deprecated
+}
+
+func (d *DocumentSymbol) GetRange() *Range {
+	if d == nil {
+		return *new(*Range)
+	}
+	return d.Range
+}
+
+func (d *DocumentSymbol) GetSelectionRange() *Range {
+	if d == nil {
+		return *new(*Range)
+	}
+	return d.SelectionRange
+}
+
+func (d *DocumentSymbol) GetChildren() []*DocumentSymbol {
+	if d == nil {
+		return *new([]*DocumentSymbol)
+	}
+	return d.Children
 }
 
 type DocumentSymbolSlice []*DocumentSymbol
@@ -6125,6 +8568,41 @@ type FormattingOptions struct {
 	TrimFinalNewlines bool `json:"trimFinalNewlines,omitempty"`
 }
 
+func (f *FormattingOptions) GetTabSize() int {
+	if f == nil {
+		return *new(int)
+	}
+	return f.TabSize
+}
+
+func (f *FormattingOptions) GetInsertSpaces() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.InsertSpaces
+}
+
+func (f *FormattingOptions) GetTrimTrailingWhitespace() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.TrimTrailingWhitespace
+}
+
+func (f *FormattingOptions) GetInsertFinalNewline() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.InsertFinalNewline
+}
+
+func (f *FormattingOptions) GetTrimFinalNewlines() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.TrimFinalNewlines
+}
+
 // The parameters of a {@link DocumentFormattingRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFormattingParams
@@ -6134,6 +8612,20 @@ type DocumentFormattingParams struct {
 	TextDocument *TextDocumentIdentifier `json:"textDocument"`
 	// The format options.
 	Options *FormattingOptions `json:"options"`
+}
+
+func (d *DocumentFormattingParams) GetTextDocument() *TextDocumentIdentifier {
+	if d == nil {
+		return *new(*TextDocumentIdentifier)
+	}
+	return d.TextDocument
+}
+
+func (d *DocumentFormattingParams) GetOptions() *FormattingOptions {
+	if d == nil {
+		return *new(*FormattingOptions)
+	}
+	return d.Options
 }
 
 // The parameters of a {@link RenameRequest}.
@@ -6151,6 +8643,27 @@ type RenameParams struct {
 	NewName string `json:"newName"`
 }
 
+func (r *RenameParams) GetTextDocument() *TextDocumentIdentifier {
+	if r == nil {
+		return *new(*TextDocumentIdentifier)
+	}
+	return r.TextDocument
+}
+
+func (r *RenameParams) GetPosition() *Position {
+	if r == nil {
+		return *new(*Position)
+	}
+	return r.Position
+}
+
+func (r *RenameParams) GetNewName() string {
+	if r == nil {
+		return *new(string)
+	}
+	return r.NewName
+}
+
 // A text document identifier to optionally denote a specific version of a text document.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#optionalVersionedTextDocumentIdentifier
@@ -6162,6 +8675,13 @@ type OptionalVersionedTextDocumentIdentifier struct {
 	// `null` to indicate that the version is unknown and the content on disk is the
 	// truth (as specified with document content ownership).
 	Version int `json:"version"`
+}
+
+func (o *OptionalVersionedTextDocumentIdentifier) GetVersion() int {
+	if o == nil {
+		return *new(int)
+	}
+	return o.Version
 }
 
 // An identifier to refer to a change annotation stored with a workspace edit.
@@ -6178,6 +8698,13 @@ type AnnotatedTextEdit struct {
 	*TextEdit
 	// The actual identifier of the change annotation
 	AnnotationId ChangeAnnotationIdentifier `json:"annotationId"`
+}
+
+func (a *AnnotatedTextEdit) GetAnnotationId() ChangeAnnotationIdentifier {
+	if a == nil {
+		return *new(ChangeAnnotationIdentifier)
+	}
+	return a.AnnotationId
 }
 
 // TextEditOrAnnotatedTextEdit contains either of the following types:
@@ -6239,6 +8766,20 @@ type TextDocumentEdit struct {
 	Edits []*TextEditOrAnnotatedTextEdit `json:"edits"`
 }
 
+func (t *TextDocumentEdit) GetTextDocument() *OptionalVersionedTextDocumentIdentifier {
+	if t == nil {
+		return *new(*OptionalVersionedTextDocumentIdentifier)
+	}
+	return t.TextDocument
+}
+
+func (t *TextDocumentEdit) GetEdits() []*TextEditOrAnnotatedTextEdit {
+	if t == nil {
+		return *new([]*TextEditOrAnnotatedTextEdit)
+	}
+	return t.Edits
+}
+
 // A generic resource operation.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#resourceOperation
@@ -6249,6 +8790,20 @@ type ResourceOperation struct {
 	//
 	// @since 3.16.0
 	AnnotationId ChangeAnnotationIdentifier `json:"annotationId,omitempty"`
+}
+
+func (r *ResourceOperation) GetKind() string {
+	if r == nil {
+		return *new(string)
+	}
+	return r.Kind
+}
+
+func (r *ResourceOperation) GetAnnotationId() ChangeAnnotationIdentifier {
+	if r == nil {
+		return *new(ChangeAnnotationIdentifier)
+	}
+	return r.AnnotationId
 }
 
 type CreateFileKind struct{}
@@ -6282,6 +8837,20 @@ type CreateFileOptions struct {
 	IgnoreIfExists bool `json:"ignoreIfExists,omitempty"`
 }
 
+func (c *CreateFileOptions) GetOverwrite() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.Overwrite
+}
+
+func (c *CreateFileOptions) GetIgnoreIfExists() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.IgnoreIfExists
+}
+
 // Create file operation.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#createFile
@@ -6293,6 +8862,27 @@ type CreateFile struct {
 	Uri string `json:"uri"`
 	// Additional options
 	Options *CreateFileOptions `json:"options,omitempty"`
+}
+
+func (c *CreateFile) GetKind() CreateFileKind {
+	if c == nil {
+		return *new(CreateFileKind)
+	}
+	return c.Kind
+}
+
+func (c *CreateFile) GetUri() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Uri
+}
+
+func (c *CreateFile) GetOptions() *CreateFileOptions {
+	if c == nil {
+		return *new(*CreateFileOptions)
+	}
+	return c.Options
 }
 
 type RenameFileKind struct{}
@@ -6326,6 +8916,20 @@ type RenameFileOptions struct {
 	IgnoreIfExists bool `json:"ignoreIfExists,omitempty"`
 }
 
+func (r *RenameFileOptions) GetOverwrite() bool {
+	if r == nil {
+		return *new(bool)
+	}
+	return r.Overwrite
+}
+
+func (r *RenameFileOptions) GetIgnoreIfExists() bool {
+	if r == nil {
+		return *new(bool)
+	}
+	return r.IgnoreIfExists
+}
+
 // Rename file operation
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#renameFile
@@ -6339,6 +8943,34 @@ type RenameFile struct {
 	NewUri string `json:"newUri"`
 	// Rename options.
 	Options *RenameFileOptions `json:"options,omitempty"`
+}
+
+func (r *RenameFile) GetKind() RenameFileKind {
+	if r == nil {
+		return *new(RenameFileKind)
+	}
+	return r.Kind
+}
+
+func (r *RenameFile) GetOldUri() string {
+	if r == nil {
+		return *new(string)
+	}
+	return r.OldUri
+}
+
+func (r *RenameFile) GetNewUri() string {
+	if r == nil {
+		return *new(string)
+	}
+	return r.NewUri
+}
+
+func (r *RenameFile) GetOptions() *RenameFileOptions {
+	if r == nil {
+		return *new(*RenameFileOptions)
+	}
+	return r.Options
 }
 
 type DeleteFileKind struct{}
@@ -6372,6 +9004,20 @@ type DeleteFileOptions struct {
 	IgnoreIfNotExists bool `json:"ignoreIfNotExists,omitempty"`
 }
 
+func (d *DeleteFileOptions) GetRecursive() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.Recursive
+}
+
+func (d *DeleteFileOptions) GetIgnoreIfNotExists() bool {
+	if d == nil {
+		return *new(bool)
+	}
+	return d.IgnoreIfNotExists
+}
+
 // Delete file operation
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#deleteFile
@@ -6383,6 +9029,27 @@ type DeleteFile struct {
 	Uri string `json:"uri"`
 	// Delete options.
 	Options *DeleteFileOptions `json:"options,omitempty"`
+}
+
+func (d *DeleteFile) GetKind() DeleteFileKind {
+	if d == nil {
+		return *new(DeleteFileKind)
+	}
+	return d.Kind
+}
+
+func (d *DeleteFile) GetUri() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.Uri
+}
+
+func (d *DeleteFile) GetOptions() *DeleteFileOptions {
+	if d == nil {
+		return *new(*DeleteFileOptions)
+	}
+	return d.Options
 }
 
 // TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile contains either of the following types:
@@ -6461,6 +9128,27 @@ type ChangeAnnotation struct {
 	Description string `json:"description,omitempty"`
 }
 
+func (c *ChangeAnnotation) GetLabel() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Label
+}
+
+func (c *ChangeAnnotation) GetNeedsConfirmation() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.NeedsConfirmation
+}
+
+func (c *ChangeAnnotation) GetDescription() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Description
+}
+
 // A workspace edit represents changes to many resources managed in the workspace. The edit
 // should either provide `changes` or `documentChanges`. If documentChanges are present
 // they are preferred over `changes` if the client can handle versioned document edits.
@@ -6496,6 +9184,27 @@ type WorkspaceEdit struct {
 	//
 	// @since 3.16.0
 	ChangeAnnotations map[ChangeAnnotationIdentifier]*ChangeAnnotation `json:"changeAnnotations,omitempty"`
+}
+
+func (w *WorkspaceEdit) GetChanges() map[string][]*TextEdit {
+	if w == nil {
+		return *new(map[string][]*TextEdit)
+	}
+	return w.Changes
+}
+
+func (w *WorkspaceEdit) GetDocumentChanges() []*TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile {
+	if w == nil {
+		return *new([]*TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile)
+	}
+	return w.DocumentChanges
+}
+
+func (w *WorkspaceEdit) GetChangeAnnotations() map[ChangeAnnotationIdentifier]*ChangeAnnotation {
+	if w == nil {
+		return *new(map[ChangeAnnotationIdentifier]*ChangeAnnotation)
+	}
+	return w.ChangeAnnotations
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializedParams
@@ -6565,6 +9274,20 @@ type LogMessageParams struct {
 	Message string `json:"message"`
 }
 
+func (l *LogMessageParams) GetType() MessageType {
+	if l == nil {
+		return *new(MessageType)
+	}
+	return l.Type
+}
+
+func (l *LogMessageParams) GetMessage() string {
+	if l == nil {
+		return *new(string)
+	}
+	return l.Message
+}
+
 // An item to transfer a text document from the client to the
 // server.
 //
@@ -6581,12 +9304,47 @@ type TextDocumentItem struct {
 	Text string `json:"text"`
 }
 
+func (t *TextDocumentItem) GetUri() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Uri
+}
+
+func (t *TextDocumentItem) GetLanguageId() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.LanguageId
+}
+
+func (t *TextDocumentItem) GetVersion() int {
+	if t == nil {
+		return *new(int)
+	}
+	return t.Version
+}
+
+func (t *TextDocumentItem) GetText() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Text
+}
+
 // The parameters sent in an open text document notification
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didOpenTextDocumentParams
 type DidOpenTextDocumentParams struct {
 	// The document that was opened.
 	TextDocument *TextDocumentItem `json:"textDocument"`
+}
+
+func (d *DidOpenTextDocumentParams) GetTextDocument() *TextDocumentItem {
+	if d == nil {
+		return *new(*TextDocumentItem)
+	}
+	return d.TextDocument
 }
 
 // A text document identifier to denote a specific version of a text document.
@@ -6596,6 +9354,13 @@ type VersionedTextDocumentIdentifier struct {
 	*TextDocumentIdentifier
 	// The version number of this document.
 	Version int `json:"version"`
+}
+
+func (v *VersionedTextDocumentIdentifier) GetVersion() int {
+	if v == nil {
+		return *new(int)
+	}
+	return v.Version
 }
 
 type IncrementalTextDocumentContentChangeEvent struct {
@@ -6695,12 +9460,33 @@ type DidChangeTextDocumentParams struct {
 	ContentChanges []TextDocumentContentChangeEvent `json:"contentChanges"`
 }
 
+func (d *DidChangeTextDocumentParams) GetTextDocument() *VersionedTextDocumentIdentifier {
+	if d == nil {
+		return *new(*VersionedTextDocumentIdentifier)
+	}
+	return d.TextDocument
+}
+
+func (d *DidChangeTextDocumentParams) GetContentChanges() []TextDocumentContentChangeEvent {
+	if d == nil {
+		return *new([]TextDocumentContentChangeEvent)
+	}
+	return d.ContentChanges
+}
+
 // The parameters sent in a close text document notification
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#didCloseTextDocumentParams
 type DidCloseTextDocumentParams struct {
 	// The document that was closed.
 	TextDocument *TextDocumentIdentifier `json:"textDocument"`
+}
+
+func (d *DidCloseTextDocumentParams) GetTextDocument() *TextDocumentIdentifier {
+	if d == nil {
+		return *new(*TextDocumentIdentifier)
+	}
+	return d.TextDocument
 }
 
 // The diagnostic's severity.
@@ -6761,6 +9547,13 @@ type CodeDescription struct {
 	Href string `json:"href"`
 }
 
+func (c *CodeDescription) GetHref() string {
+	if c == nil {
+		return *new(string)
+	}
+	return c.Href
+}
+
 // Represents a related message and source code location for a diagnostic. This should be
 // used to point to code locations that cause or related to a diagnostics, e.g when duplicating
 // a symbol in a scope.
@@ -6771,6 +9564,20 @@ type DiagnosticRelatedInformation struct {
 	Location *Location `json:"location"`
 	// The message of this related diagnostic information.
 	Message string `json:"message"`
+}
+
+func (d *DiagnosticRelatedInformation) GetLocation() *Location {
+	if d == nil {
+		return *new(*Location)
+	}
+	return d.Location
+}
+
+func (d *DiagnosticRelatedInformation) GetMessage() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.Message
 }
 
 // Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
@@ -6810,6 +9617,69 @@ type Diagnostic struct {
 	Data LSPAny `json:"data,omitempty"`
 }
 
+func (d *Diagnostic) GetRange() *Range {
+	if d == nil {
+		return *new(*Range)
+	}
+	return d.Range
+}
+
+func (d *Diagnostic) GetSeverity() DiagnosticSeverity {
+	if d == nil {
+		return *new(DiagnosticSeverity)
+	}
+	return d.Severity
+}
+
+func (d *Diagnostic) GetCode() *IntegerOrString {
+	if d == nil {
+		return *new(*IntegerOrString)
+	}
+	return d.Code
+}
+
+func (d *Diagnostic) GetCodeDescription() *CodeDescription {
+	if d == nil {
+		return *new(*CodeDescription)
+	}
+	return d.CodeDescription
+}
+
+func (d *Diagnostic) GetSource() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.Source
+}
+
+func (d *Diagnostic) GetMessage() string {
+	if d == nil {
+		return *new(string)
+	}
+	return d.Message
+}
+
+func (d *Diagnostic) GetTags() []DiagnosticTag {
+	if d == nil {
+		return *new([]DiagnosticTag)
+	}
+	return d.Tags
+}
+
+func (d *Diagnostic) GetRelatedInformation() []*DiagnosticRelatedInformation {
+	if d == nil {
+		return *new([]*DiagnosticRelatedInformation)
+	}
+	return d.RelatedInformation
+}
+
+func (d *Diagnostic) GetData() LSPAny {
+	if d == nil {
+		return *new(LSPAny)
+	}
+	return d.Data
+}
+
 // The publish diagnostic notification's parameters.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#publishDiagnosticsParams
@@ -6822,6 +9692,27 @@ type PublishDiagnosticsParams struct {
 	Version int `json:"version,omitempty"`
 	// An array of diagnostic information items.
 	Diagnostics []*Diagnostic `json:"diagnostics"`
+}
+
+func (p *PublishDiagnosticsParams) GetUri() string {
+	if p == nil {
+		return *new(string)
+	}
+	return p.Uri
+}
+
+func (p *PublishDiagnosticsParams) GetVersion() int {
+	if p == nil {
+		return *new(int)
+	}
+	return p.Version
+}
+
+func (p *PublishDiagnosticsParams) GetDiagnostics() []*Diagnostic {
+	if p == nil {
+		return *new([]*Diagnostic)
+	}
+	return p.Diagnostics
 }
 
 // Predefined error codes.
