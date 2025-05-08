@@ -80,6 +80,20 @@ type XInitializeParamsClientInfo struct {
 	Version string `json:"version,omitempty"`
 }
 
+func (x *XInitializeParamsClientInfo) GetName() string {
+	if x == nil {
+		return *new(string)
+	}
+	return x.Name
+}
+
+func (x *XInitializeParamsClientInfo) GetVersion() string {
+	if x == nil {
+		return *new(string)
+	}
+	return x.Version
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#resourceOperationKind
 type ResourceOperationKind string
 
@@ -179,6 +193,13 @@ type WorkspaceEditClientCapabilitiesChangeAnnotationSupport struct {
 	// for instance all edits labelled with "Changes in Strings" would
 	// be a tree node.
 	GroupsOnLabel bool `json:"groupsOnLabel,omitempty"`
+}
+
+func (w *WorkspaceEditClientCapabilitiesChangeAnnotationSupport) GetGroupsOnLabel() bool {
+	if w == nil {
+		return *new(bool)
+	}
+	return w.GroupsOnLabel
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspaceEditClientCapabilities
@@ -385,6 +406,13 @@ type WorkspaceSymbolClientCapabilitiesSymbolKind struct {
 	ValueSet []SymbolKind `json:"valueSet,omitempty"`
 }
 
+func (w *WorkspaceSymbolClientCapabilitiesSymbolKind) GetValueSet() []SymbolKind {
+	if w == nil {
+		return *new([]SymbolKind)
+	}
+	return w.ValueSet
+}
+
 // Symbol tags are extra annotations that tweak the rendering of a symbol.
 //
 // @since 3.16
@@ -431,10 +459,24 @@ type WorkspaceSymbolClientCapabilitiesTagSupport struct {
 	ValueSet []SymbolTag `json:"valueSet"`
 }
 
+func (w *WorkspaceSymbolClientCapabilitiesTagSupport) GetValueSet() []SymbolTag {
+	if w == nil {
+		return *new([]SymbolTag)
+	}
+	return w.ValueSet
+}
+
 type WorkspaceSymbolClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily. Usually
 	// `location.range`
 	Properties []string `json:"properties"`
+}
+
+func (w *WorkspaceSymbolClientCapabilitiesResolveSupport) GetProperties() []string {
+	if w == nil {
+		return *new([]string)
+	}
+	return w.Properties
 }
 
 // Client capabilities for a {@link WorkspaceSymbolRequest}.
@@ -1015,9 +1057,23 @@ type CompletionClientCapabilitiesCompletionItemTagSupport struct {
 	ValueSet []CompletionItemTag `json:"valueSet"`
 }
 
+func (c *CompletionClientCapabilitiesCompletionItemTagSupport) GetValueSet() []CompletionItemTag {
+	if c == nil {
+		return *new([]CompletionItemTag)
+	}
+	return c.ValueSet
+}
+
 type CompletionClientCapabilitiesCompletionItemResolveSupport struct {
 	// The properties that a client can resolve lazily.
 	Properties []string `json:"properties"`
+}
+
+func (c *CompletionClientCapabilitiesCompletionItemResolveSupport) GetProperties() []string {
+	if c == nil {
+		return *new([]string)
+	}
+	return c.Properties
 }
 
 // How whitespace and indentation is handled during completion
@@ -1079,6 +1135,13 @@ type CompletionClientCapabilitiesCompletionItemInsertTextModeSupport struct {
 	ValueSet []InsertTextMode `json:"valueSet"`
 }
 
+func (c *CompletionClientCapabilitiesCompletionItemInsertTextModeSupport) GetValueSet() []InsertTextMode {
+	if c == nil {
+		return *new([]InsertTextMode)
+	}
+	return c.ValueSet
+}
+
 type CompletionClientCapabilitiesCompletionItem struct {
 	// Client supports snippets as insert text.
 	//
@@ -1125,6 +1188,76 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	//
 	// @since 3.17.0
 	LabelDetailsSupport bool `json:"labelDetailsSupport,omitempty"`
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetSnippetSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.SnippetSupport
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetCommitCharactersSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.CommitCharactersSupport
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetDocumentationFormat() []MarkupKind {
+	if c == nil {
+		return *new([]MarkupKind)
+	}
+	return c.DocumentationFormat
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetDeprecatedSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.DeprecatedSupport
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetPreselectSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.PreselectSupport
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetTagSupport() *CompletionClientCapabilitiesCompletionItemTagSupport {
+	if c == nil {
+		return *new(*CompletionClientCapabilitiesCompletionItemTagSupport)
+	}
+	return c.TagSupport
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetInsertReplaceSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.InsertReplaceSupport
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetResolveSupport() *CompletionClientCapabilitiesCompletionItemResolveSupport {
+	if c == nil {
+		return *new(*CompletionClientCapabilitiesCompletionItemResolveSupport)
+	}
+	return c.ResolveSupport
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetInsertTextModeSupport() *CompletionClientCapabilitiesCompletionItemInsertTextModeSupport {
+	if c == nil {
+		return *new(*CompletionClientCapabilitiesCompletionItemInsertTextModeSupport)
+	}
+	return c.InsertTextModeSupport
+}
+
+func (c *CompletionClientCapabilitiesCompletionItem) GetLabelDetailsSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.LabelDetailsSupport
 }
 
 // The kind of a completion entry.
@@ -1225,6 +1358,13 @@ type CompletionClientCapabilitiesCompletionItemKind struct {
 	ValueSet []CompletionItemKind `json:"valueSet,omitempty"`
 }
 
+func (c *CompletionClientCapabilitiesCompletionItemKind) GetValueSet() []CompletionItemKind {
+	if c == nil {
+		return *new([]CompletionItemKind)
+	}
+	return c.ValueSet
+}
+
 type CompletionClientCapabilitiesCompletionList struct {
 	// The client supports the following itemDefaults on
 	// a completion list.
@@ -1235,6 +1375,13 @@ type CompletionClientCapabilitiesCompletionList struct {
 	//
 	// @since 3.17.0
 	ItemDefaults []string `json:"itemDefaults,omitempty"`
+}
+
+func (c *CompletionClientCapabilitiesCompletionList) GetItemDefaults() []string {
+	if c == nil {
+		return *new([]string)
+	}
+	return c.ItemDefaults
 }
 
 // Completion client capabilities
@@ -1337,6 +1484,13 @@ type SignatureHelpClientCapabilitiesSignatureInformationParameterInformation str
 	LabelOffsetSupport bool `json:"labelOffsetSupport,omitempty"`
 }
 
+func (s *SignatureHelpClientCapabilitiesSignatureInformationParameterInformation) GetLabelOffsetSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.LabelOffsetSupport
+}
+
 type SignatureHelpClientCapabilitiesSignatureInformation struct {
 	// Client supports the following content formats for the documentation
 	// property. The order describes the preferred format of the client.
@@ -1348,6 +1502,27 @@ type SignatureHelpClientCapabilitiesSignatureInformation struct {
 	//
 	// @since 3.16.0
 	ActiveParameterSupport bool `json:"activeParameterSupport,omitempty"`
+}
+
+func (s *SignatureHelpClientCapabilitiesSignatureInformation) GetDocumentationFormat() []MarkupKind {
+	if s == nil {
+		return *new([]MarkupKind)
+	}
+	return s.DocumentationFormat
+}
+
+func (s *SignatureHelpClientCapabilitiesSignatureInformation) GetParameterInformation() *SignatureHelpClientCapabilitiesSignatureInformationParameterInformation {
+	if s == nil {
+		return *new(*SignatureHelpClientCapabilitiesSignatureInformationParameterInformation)
+	}
+	return s.ParameterInformation
+}
+
+func (s *SignatureHelpClientCapabilitiesSignatureInformation) GetActiveParameterSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.ActiveParameterSupport
 }
 
 // Client Capabilities for a {@link SignatureHelpRequest}.
@@ -1539,9 +1714,23 @@ type DocumentSymbolClientCapabilitiesSymbolKind struct {
 	ValueSet []SymbolKind `json:"valueSet,omitempty"`
 }
 
+func (d *DocumentSymbolClientCapabilitiesSymbolKind) GetValueSet() []SymbolKind {
+	if d == nil {
+		return *new([]SymbolKind)
+	}
+	return d.ValueSet
+}
+
 type DocumentSymbolClientCapabilitiesTagSupport struct {
 	// The tags supported by the client.
 	ValueSet []SymbolTag `json:"valueSet"`
+}
+
+func (d *DocumentSymbolClientCapabilitiesTagSupport) GetValueSet() []SymbolTag {
+	if d == nil {
+		return *new([]SymbolTag)
+	}
+	return d.ValueSet
 }
 
 // Client Capabilities for a {@link DocumentSymbolRequest}.
@@ -1668,15 +1857,36 @@ type CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind struct {
 	ValueSet []CodeActionKind `json:"valueSet"`
 }
 
+func (c *CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind) GetValueSet() []CodeActionKind {
+	if c == nil {
+		return *new([]CodeActionKind)
+	}
+	return c.ValueSet
+}
+
 type CodeActionClientCapabilitiesCodeActionLiteralSupport struct {
 	// The code action kind is support with the following value
 	// set.
 	CodeActionKind *CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind `json:"codeActionKind"`
 }
 
+func (c *CodeActionClientCapabilitiesCodeActionLiteralSupport) GetCodeActionKind() *CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind {
+	if c == nil {
+		return *new(*CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind)
+	}
+	return c.CodeActionKind
+}
+
 type CodeActionClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily.
 	Properties []string `json:"properties"`
+}
+
+func (c *CodeActionClientCapabilitiesResolveSupport) GetProperties() []string {
+	if c == nil {
+		return *new([]string)
+	}
+	return c.Properties
 }
 
 // The Client Capabilities of a {@link CodeActionRequest}.
@@ -1996,12 +2206,26 @@ type FoldingRangeClientCapabilitiesFoldingRangeKind struct {
 	ValueSet []FoldingRangeKind `json:"valueSet,omitempty"`
 }
 
+func (f *FoldingRangeClientCapabilitiesFoldingRangeKind) GetValueSet() []FoldingRangeKind {
+	if f == nil {
+		return *new([]FoldingRangeKind)
+	}
+	return f.ValueSet
+}
+
 type FoldingRangeClientCapabilitiesFoldingRange struct {
 	// If set, the client signals that it supports setting collapsedText on
 	// folding ranges to display custom labels instead of the default text.
 	//
 	// @since 3.17.0
 	CollapsedText bool `json:"collapsedText,omitempty"`
+}
+
+func (f *FoldingRangeClientCapabilitiesFoldingRange) GetCollapsedText() bool {
+	if f == nil {
+		return *new(bool)
+	}
+	return f.CollapsedText
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#foldingRangeClientCapabilities
@@ -2131,6 +2355,13 @@ func (d DiagnosticTag) MarshalJSON() ([]byte, error) {
 type PublishDiagnosticsClientCapabilitiesTagSupport struct {
 	// The tags supported by the client.
 	ValueSet []DiagnosticTag `json:"valueSet"`
+}
+
+func (p *PublishDiagnosticsClientCapabilitiesTagSupport) GetValueSet() []DiagnosticTag {
+	if p == nil {
+		return *new([]DiagnosticTag)
+	}
+	return p.ValueSet
 }
 
 // The publish diagnostic client capabilities.
@@ -2268,6 +2499,13 @@ type SemanticTokensClientCapabilitiesRequestsFullOr2 struct {
 	Delta bool `json:"delta,omitempty"`
 }
 
+func (s *SemanticTokensClientCapabilitiesRequestsFullOr2) GetDelta() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.Delta
+}
+
 // BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 contains either of the following types:
 //   - [Boolean]
 //   - [*SemanticTokensClientCapabilitiesRequestsFullOr2]
@@ -2319,6 +2557,20 @@ type SemanticTokensClientCapabilitiesRequests struct {
 	// The client will send the `textDocument/semanticTokens/full` request if
 	// the server provides a corresponding handler.
 	Full *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 `json:"full,omitempty"`
+}
+
+func (s *SemanticTokensClientCapabilitiesRequests) GetRange() *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2 {
+	if s == nil {
+		return *new(*BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2)
+	}
+	return s.Range
+}
+
+func (s *SemanticTokensClientCapabilitiesRequests) GetFull() *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 {
+	if s == nil {
+		return *new(*BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2)
+	}
+	return s.Full
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#tokenFormat
@@ -2542,6 +2794,13 @@ func (i *InlineValueClientCapabilities) GetDynamicRegistration() bool {
 type InlayHintClientCapabilitiesResolveSupport struct {
 	// The properties that a client can resolve lazily.
 	Properties []string `json:"properties"`
+}
+
+func (i *InlayHintClientCapabilitiesResolveSupport) GetProperties() []string {
+	if i == nil {
+		return *new([]string)
+	}
+	return i.Properties
 }
 
 // Inlay hint client capabilities.
@@ -2989,6 +3248,13 @@ type ShowMessageRequestClientCapabilitiesMessageActionItem struct {
 	AdditionalPropertiesSupport bool `json:"additionalPropertiesSupport,omitempty"`
 }
 
+func (s *ShowMessageRequestClientCapabilitiesMessageActionItem) GetAdditionalPropertiesSupport() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.AdditionalPropertiesSupport
+}
+
 // Show message request client capabilities
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#showMessageRequestClientCapabilities
@@ -3072,6 +3338,20 @@ type GeneralClientCapabilitiesStaleRequestSupport struct {
 	// will retry the request if it receives a
 	// response with error code `ContentModified`
 	RetryOnContentModified []string `json:"retryOnContentModified"`
+}
+
+func (g *GeneralClientCapabilitiesStaleRequestSupport) GetCancel() bool {
+	if g == nil {
+		return *new(bool)
+	}
+	return g.Cancel
+}
+
+func (g *GeneralClientCapabilitiesStaleRequestSupport) GetRetryOnContentModified() []string {
+	if g == nil {
+		return *new([]string)
+	}
+	return g.RetryOnContentModified
 }
 
 // Client capabilities specific to regular expressions.
@@ -3813,6 +4093,27 @@ type NotebookDocumentFilterOr1 struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+func (n *NotebookDocumentFilterOr1) GetNotebookType() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.NotebookType
+}
+
+func (n *NotebookDocumentFilterOr1) GetScheme() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Scheme
+}
+
+func (n *NotebookDocumentFilterOr1) GetPattern() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Pattern
+}
+
 type NotebookDocumentFilterOr2 struct {
 	// The type of the enclosing notebook.
 	NotebookType string `json:"notebookType,omitempty"`
@@ -3822,6 +4123,27 @@ type NotebookDocumentFilterOr2 struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+func (n *NotebookDocumentFilterOr2) GetNotebookType() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.NotebookType
+}
+
+func (n *NotebookDocumentFilterOr2) GetScheme() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Scheme
+}
+
+func (n *NotebookDocumentFilterOr2) GetPattern() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Pattern
+}
+
 type NotebookDocumentFilterOr3 struct {
 	// The type of the enclosing notebook.
 	NotebookType string `json:"notebookType,omitempty"`
@@ -3829,6 +4151,27 @@ type NotebookDocumentFilterOr3 struct {
 	Scheme string `json:"scheme,omitempty"`
 	// A glob pattern.
 	Pattern string `json:"pattern"`
+}
+
+func (n *NotebookDocumentFilterOr3) GetNotebookType() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.NotebookType
+}
+
+func (n *NotebookDocumentFilterOr3) GetScheme() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Scheme
+}
+
+func (n *NotebookDocumentFilterOr3) GetPattern() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Pattern
 }
 
 // NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3 contains either of the following types:
@@ -3941,6 +4284,13 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1Cells struct {
 	Language string `json:"language"`
 }
 
+func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1Cells) GetLanguage() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Language
+}
+
 type NotebookDocumentSyncOptionsNotebookSelectorOr1 struct {
 	// The notebook to be synced If a string
 	// value is provided it matches against the
@@ -3950,8 +4300,29 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1 struct {
 	Cells []*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells `json:"cells,omitempty"`
 }
 
+func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1) GetNotebook() *StringOrNotebookDocumentFilter {
+	if n == nil {
+		return *new(*StringOrNotebookDocumentFilter)
+	}
+	return n.Notebook
+}
+
+func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1) GetCells() []*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells {
+	if n == nil {
+		return *new([]*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells)
+	}
+	return n.Cells
+}
+
 type NotebookDocumentSyncOptionsNotebookSelectorOr2Cells struct {
 	Language string `json:"language"`
+}
+
+func (n *NotebookDocumentSyncOptionsNotebookSelectorOr2Cells) GetLanguage() string {
+	if n == nil {
+		return *new(string)
+	}
+	return n.Language
 }
 
 type NotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
@@ -3961,6 +4332,20 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
 	Notebook *StringOrNotebookDocumentFilter `json:"notebook,omitempty"`
 	// The cells of the matching notebook to be synced.
 	Cells []*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells `json:"cells"`
+}
+
+func (n *NotebookDocumentSyncOptionsNotebookSelectorOr2) GetNotebook() *StringOrNotebookDocumentFilter {
+	if n == nil {
+		return *new(*StringOrNotebookDocumentFilter)
+	}
+	return n.Notebook
+}
+
+func (n *NotebookDocumentSyncOptionsNotebookSelectorOr2) GetCells() []*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells {
+	if n == nil {
+		return *new([]*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells)
+	}
+	return n.Cells
 }
 
 // NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 contains either of the following types:
@@ -4138,6 +4523,13 @@ type CompletionOptionsCompletionItem struct {
 	LabelDetailsSupport bool `json:"labelDetailsSupport,omitempty"`
 }
 
+func (c *CompletionOptionsCompletionItem) GetLabelDetailsSupport() bool {
+	if c == nil {
+		return *new(bool)
+	}
+	return c.LabelDetailsSupport
+}
+
 // Completion options.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionOptions
@@ -4293,6 +4685,27 @@ type TextDocumentFilterOr1 struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+func (t *TextDocumentFilterOr1) GetLanguage() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Language
+}
+
+func (t *TextDocumentFilterOr1) GetScheme() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Scheme
+}
+
+func (t *TextDocumentFilterOr1) GetPattern() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Pattern
+}
+
 type TextDocumentFilterOr2 struct {
 	// A language id, like `typescript`.
 	Language string `json:"language,omitempty"`
@@ -4302,6 +4715,27 @@ type TextDocumentFilterOr2 struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+func (t *TextDocumentFilterOr2) GetLanguage() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Language
+}
+
+func (t *TextDocumentFilterOr2) GetScheme() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Scheme
+}
+
+func (t *TextDocumentFilterOr2) GetPattern() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Pattern
+}
+
 type TextDocumentFilterOr3 struct {
 	// A language id, like `typescript`.
 	Language string `json:"language,omitempty"`
@@ -4309,6 +4743,27 @@ type TextDocumentFilterOr3 struct {
 	Scheme string `json:"scheme,omitempty"`
 	// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 	Pattern string `json:"pattern"`
+}
+
+func (t *TextDocumentFilterOr3) GetLanguage() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Language
+}
+
+func (t *TextDocumentFilterOr3) GetScheme() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Scheme
+}
+
+func (t *TextDocumentFilterOr3) GetPattern() string {
+	if t == nil {
+		return *new(string)
+	}
+	return t.Pattern
 }
 
 // TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3 contains either of the following types:
@@ -5683,6 +6138,13 @@ type SemanticTokensOptionsFullOr2 struct {
 	Delta bool `json:"delta,omitempty"`
 }
 
+func (s *SemanticTokensOptionsFullOr2) GetDelta() bool {
+	if s == nil {
+		return *new(bool)
+	}
+	return s.Delta
+}
+
 // BooleanOrSemanticTokensOptionsFullOr2 contains either of the following types:
 //   - [Boolean]
 //   - [*SemanticTokensOptionsFullOr2]
@@ -6544,6 +7006,20 @@ type ServerCapabilitiesWorkspace struct {
 	FileOperations *FileOperationOptions `json:"fileOperations,omitempty"`
 }
 
+func (s *ServerCapabilitiesWorkspace) GetWorkspaceFolders() *WorkspaceFoldersServerCapabilities {
+	if s == nil {
+		return *new(*WorkspaceFoldersServerCapabilities)
+	}
+	return s.WorkspaceFolders
+}
+
+func (s *ServerCapabilitiesWorkspace) GetFileOperations() *FileOperationOptions {
+	if s == nil {
+		return *new(*FileOperationOptions)
+	}
+	return s.FileOperations
+}
+
 // Defines the capabilities provided by a language
 // server.
 //
@@ -6915,6 +7391,20 @@ type InitializeResultServerInfo struct {
 	Name string `json:"name"`
 	// The server's version as defined by the server.
 	Version string `json:"version,omitempty"`
+}
+
+func (i *InitializeResultServerInfo) GetName() string {
+	if i == nil {
+		return *new(string)
+	}
+	return i.Name
+}
+
+func (i *InitializeResultServerInfo) GetVersion() string {
+	if i == nil {
+		return *new(string)
+	}
+	return i.Version
 }
 
 // The result returned from an initialize request.
@@ -7776,6 +8266,20 @@ type CompletionListItemDefaultsEditRangeOr2 struct {
 	Replace *Range `json:"replace"`
 }
 
+func (c *CompletionListItemDefaultsEditRangeOr2) GetInsert() *Range {
+	if c == nil {
+		return *new(*Range)
+	}
+	return c.Insert
+}
+
+func (c *CompletionListItemDefaultsEditRangeOr2) GetReplace() *Range {
+	if c == nil {
+		return *new(*Range)
+	}
+	return c.Replace
+}
+
 // RangeOrCompletionListItemDefaultsEditRangeOr2 contains either of the following types:
 //   - [*Range]
 //   - [*CompletionListItemDefaultsEditRangeOr2]
@@ -7841,6 +8345,41 @@ type CompletionListItemDefaults struct {
 	//
 	// @since 3.17.0
 	Data LSPAny `json:"data,omitempty"`
+}
+
+func (c *CompletionListItemDefaults) GetCommitCharacters() []string {
+	if c == nil {
+		return *new([]string)
+	}
+	return c.CommitCharacters
+}
+
+func (c *CompletionListItemDefaults) GetEditRange() *RangeOrCompletionListItemDefaultsEditRangeOr2 {
+	if c == nil {
+		return *new(*RangeOrCompletionListItemDefaultsEditRangeOr2)
+	}
+	return c.EditRange
+}
+
+func (c *CompletionListItemDefaults) GetInsertTextFormat() InsertTextFormat {
+	if c == nil {
+		return *new(InsertTextFormat)
+	}
+	return c.InsertTextFormat
+}
+
+func (c *CompletionListItemDefaults) GetInsertTextMode() InsertTextMode {
+	if c == nil {
+		return *new(InsertTextMode)
+	}
+	return c.InsertTextMode
+}
+
+func (c *CompletionListItemDefaults) GetData() LSPAny {
+	if c == nil {
+		return *new(LSPAny)
+	}
+	return c.Data
 }
 
 // Represents a collection of {@link CompletionItem completion items} to be presented
@@ -7947,6 +8486,20 @@ type MarkedStringOr2 struct {
 	Language string `json:"language"`
 
 	Value string `json:"value"`
+}
+
+func (m *MarkedStringOr2) GetLanguage() string {
+	if m == nil {
+		return *new(string)
+	}
+	return m.Language
+}
+
+func (m *MarkedStringOr2) GetValue() string {
+	if m == nil {
+		return *new(string)
+	}
+	return m.Value
 }
 
 // StringOrMarkedStringOr2 contains either of the following types:
@@ -9374,9 +9927,37 @@ type IncrementalTextDocumentContentChangeEvent struct {
 	Text string `json:"text"`
 }
 
+func (i *IncrementalTextDocumentContentChangeEvent) GetRange() *Range {
+	if i == nil {
+		return *new(*Range)
+	}
+	return i.Range
+}
+
+func (i *IncrementalTextDocumentContentChangeEvent) GetRangeLength() int {
+	if i == nil {
+		return *new(int)
+	}
+	return i.RangeLength
+}
+
+func (i *IncrementalTextDocumentContentChangeEvent) GetText() string {
+	if i == nil {
+		return *new(string)
+	}
+	return i.Text
+}
+
 type FullTextDocumentContentChangeEvent struct {
 	// The new text of the whole document.
 	Text string `json:"text"`
+}
+
+func (f *FullTextDocumentContentChangeEvent) GetText() string {
+	if f == nil {
+		return *new(string)
+	}
+	return f.Text
 }
 
 // IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent contains either of the following types:

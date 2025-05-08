@@ -499,9 +499,11 @@ func (g *generator) genStructDeclForLiteral(name string, structLiteral metamodel
 	g.gennedTypes[name] = true
 
 	comment := g.comment(structLiteral.Documentation, structLiteral.Deprecated)
-	var fields []string
-	for _, prop := range structLiteral.Properties {
-		fields = append(fields, structField(g.structFieldData(name, prop)))
+	fields := make([]string, len(structLiteral.Properties))
+	fieldData := make([]*structFieldData, len(structLiteral.Properties))
+	for i, prop := range structLiteral.Properties {
+		fieldData[i] = g.structFieldData(name, prop)
+		fields[i] = structField(fieldData[i])
 	}
 
 	const text = `
@@ -511,8 +513,19 @@ type {{.name}} struct {
 	{{.}}
 	{{- end}}
 }
+
+{{with $receiver := slice $.name 0 1 | lowerFirstLetter}}
+{{range $.fieldData}}
+func ({{$receiver}} *{{$.name}}) Get{{.Name}}() {{.Type}} {
+	if {{$receiver}} == nil {
+		return *new({{.Type}})
+	}
+	return {{$receiver}}.{{.Name}}
+}
+{{end}}
+{{end}}
 `
-	data := map[string]any{"comment": comment, "name": name, "fields": fields}
+	data := map[string]any{"comment": comment, "name": name, "fields": fields, "fieldData": fieldData}
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 
