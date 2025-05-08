@@ -46,6 +46,12 @@ func inRange(pos *protocol.Position, rang token.Range) bool {
 	}
 }
 
+// inRangeOrFollows reports whether a [protocol.Position] is at the end of or contained with a [token.Range].
+func inRangeOrFollows(pos *protocol.Position, rang token.Range) bool {
+	end := newPosition(rang.End())
+	return (pos.Line == end.Line && pos.Character == end.Character) || inRange(pos, rang)
+}
+
 func columnUTF16(p token.Position) int {
 	line := p.File.Line(p.Line)
 	return len(utf16.Encode([]rune(string(line[:p.Column]))))

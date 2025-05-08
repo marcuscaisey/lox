@@ -286,9 +286,40 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	if err != nil {
 		return nil, err
 	}
+
+	var containingIdent *ast.Ident
+	ast.Walk(doc.Program, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.Ident:
+			if inRangeOrFollows(params.Position, n) {
+				containingIdent = n
+			}
+			return false
+		default:
+			return true
+		}
+	})
+
+	items := doc.Completions.At(params.Position, h.log)
+	editRange := &protocol.Range{
+		Start: params.Position,
+		End:   params.Position,
+	}
+	if containingIdent != nil {
+		editRange = newRange(containingIdent)
+	}
+	for _, item := range items {
+		item.TextEdit = &protocol.TextEditOrInsertReplaceEdit{
+			Value: &protocol.TextEdit{
+				Range:   editRange,
+				NewText: item.Label,
+			},
+		}
+	}
+
 	return &protocol.CompletionItemSliceOrCompletionList{
 		Value: &protocol.CompletionList{
-			Items: doc.Completions.At(params.Position, h.log),
+			Items: items,
 		},
 	}, nil
 }
