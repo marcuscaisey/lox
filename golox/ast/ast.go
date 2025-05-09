@@ -78,7 +78,7 @@ type InlineComment struct {
 func (i *InlineComment) Start() token.Position { return i.Stmt.Start() }
 func (i *InlineComment) End() token.Position   { return i.Comment.End() }
 func (i *InlineComment) IsValid() bool {
-	return i != nil && isValid(i.Stmt) && !i.Comment.IsZero()
+	return i != nil && i.Stmt.IsValid() && !i.Comment.IsZero()
 }
 
 // Decl is the interface which all declaration nodes implement.
@@ -109,7 +109,7 @@ type VarDecl struct {
 func (v *VarDecl) Start() token.Position { return v.Var.Start() }
 func (v *VarDecl) End() token.Position   { return v.Semicolon.End() }
 func (v *VarDecl) IsValid() bool {
-	return v != nil && !v.Var.IsZero() && isValidOptional(v.Initialiser) && isValid(v.Name) && !v.Semicolon.IsZero()
+	return v != nil && !v.Var.IsZero() && isValidOptional(v.Initialiser) && v.Name.IsValid() && !v.Semicolon.IsZero()
 }
 func (v *VarDecl) Ident() *Ident { return v.Name }
 
@@ -125,7 +125,7 @@ type FunDecl struct {
 func (f *FunDecl) Start() token.Position { return f.Fun.Start() }
 func (f *FunDecl) End() token.Position   { return f.Function.Body.End() }
 func (f *FunDecl) IsValid() bool {
-	return f != nil && isValidSlice(f.Doc) && !f.Fun.IsZero() && isValid(f.Name) && isValid(f.Function)
+	return f != nil && isValidSlice(f.Doc) && !f.Fun.IsZero() && f.Name.IsValid() && f.Function.IsValid()
 }
 func (f *FunDecl) Ident() *Ident { return f.Name }
 
@@ -140,7 +140,7 @@ type Function struct {
 func (f *Function) Start() token.Position { return f.LeftParen.Start() }
 func (f *Function) End() token.Position   { return f.Body.End() }
 func (f *Function) IsValid() bool {
-	return f != nil && !f.LeftParen.IsZero() && isValidSlice(f.Params) && isValid(f.Body)
+	return f != nil && !f.LeftParen.IsZero() && isValidSlice(f.Params) && f.Body.IsValid()
 }
 
 // ParamDecl is a parameter declaration, such as x or y.
@@ -151,7 +151,7 @@ type ParamDecl struct {
 
 func (p *ParamDecl) Start() token.Position { return p.Name.Start() }
 func (p *ParamDecl) End() token.Position   { return p.Name.End() }
-func (p *ParamDecl) IsValid() bool         { return p != nil && isValid(p.Name) }
+func (p *ParamDecl) IsValid() bool         { return p != nil && p.Name.IsValid() }
 func (p *ParamDecl) Ident() *Ident         { return p.Name }
 
 // ClassDecl is a class declaration, such as
@@ -173,7 +173,7 @@ type ClassDecl struct {
 func (c *ClassDecl) Start() token.Position { return c.Class.Start() }
 func (c *ClassDecl) End() token.Position   { return c.RightBrace.End() }
 func (c *ClassDecl) IsValid() bool {
-	return c != nil && isValidSlice(c.Doc) && !c.Class.IsZero() && isValid(c.Name) && isValidSlice(c.Body) && !c.RightBrace.IsZero()
+	return c != nil && isValidSlice(c.Doc) && !c.Class.IsZero() && c.Name.IsValid() && isValidSlice(c.Body) && !c.RightBrace.IsZero()
 }
 func (c *ClassDecl) Ident() *Ident { return c.Name }
 
@@ -209,7 +209,7 @@ func (m *MethodDecl) Start() token.Position {
 }
 func (m *MethodDecl) End() token.Position { return m.Function.Body.End() }
 func (m *MethodDecl) IsValid() bool {
-	return m != nil && isValidSlice(m.Doc) && isValid(m.Name) && isValid(m.Function)
+	return m != nil && isValidSlice(m.Doc) && m.Name.IsValid() && m.Function.IsValid()
 }
 func (m *MethodDecl) Ident() *Ident { return m.Name }
 
@@ -237,7 +237,7 @@ type ExprStmt struct {
 
 func (e *ExprStmt) Start() token.Position { return e.Expr.Start() }
 func (e *ExprStmt) End() token.Position   { return e.Semicolon.End() }
-func (e *ExprStmt) IsValid() bool         { return e != nil && isValid(e.Expr) && !e.Semicolon.IsZero() }
+func (e *ExprStmt) IsValid() bool         { return e != nil && e.Expr.IsValid() && !e.Semicolon.IsZero() }
 
 // PrintStmt is a print statement, such as print "abc".
 type PrintStmt struct {
@@ -250,7 +250,7 @@ type PrintStmt struct {
 func (p *PrintStmt) Start() token.Position { return p.Print.Start() }
 func (p *PrintStmt) End() token.Position   { return p.Semicolon.End() }
 func (p *PrintStmt) IsValid() bool {
-	return p != nil && !p.Print.IsZero() && isValid(p.Expr) && !p.Semicolon.IsZero()
+	return p != nil && !p.Print.IsZero() && p.Expr.IsValid() && !p.Semicolon.IsZero()
 }
 
 // Block is a block, such as
@@ -297,7 +297,7 @@ func (i *IfStmt) End() token.Position {
 	}
 }
 func (i *IfStmt) IsValid() bool {
-	return i != nil && !i.If.IsZero() && isValid(i.Condition) && isValid(i.Then) && isValidOptional(i.Else)
+	return i != nil && !i.If.IsZero() && i.Condition.IsValid() && i.Then.IsValid() && isValidOptional(i.Else)
 }
 
 // WhileStmt is a while statement, such as
@@ -315,7 +315,7 @@ type WhileStmt struct {
 func (w *WhileStmt) Start() token.Position { return w.While.Start() }
 func (w *WhileStmt) End() token.Position   { return w.Body.End() }
 func (w *WhileStmt) IsValid() bool {
-	return w != nil && !w.While.IsZero() && isValid(w.Condition) && isValid(w.Body)
+	return w != nil && !w.While.IsZero() && w.Condition.IsValid() && w.Body.IsValid()
 }
 
 // ForStmt is a for statement, such as
@@ -335,7 +335,7 @@ type ForStmt struct {
 func (f *ForStmt) Start() token.Position { return f.For.Start() }
 func (f *ForStmt) End() token.Position   { return f.Body.End() }
 func (f *ForStmt) IsValid() bool {
-	return f != nil && isValidOptional(f.Initialise) && isValidOptional(f.Condition) && isValidOptional(f.Update) && isValid(f.Body)
+	return f != nil && isValidOptional(f.Initialise) && isValidOptional(f.Condition) && isValidOptional(f.Update) && f.Body.IsValid()
 }
 
 // BreakStmt is a break statement
@@ -399,7 +399,7 @@ type FunExpr struct {
 
 func (f *FunExpr) Start() token.Position { return f.Fun.Start() }
 func (f *FunExpr) End() token.Position   { return f.Function.Body.End() }
-func (f *FunExpr) IsValid() bool         { return f != nil && !f.Fun.IsZero() && isValid(f.Function) }
+func (f *FunExpr) IsValid() bool         { return f != nil && !f.Fun.IsZero() && f.Function.IsValid() }
 
 // GroupExpr is a group expression, such as (a + b).
 type GroupExpr struct {
@@ -412,7 +412,7 @@ type GroupExpr struct {
 func (g *GroupExpr) Start() token.Position { return g.LeftParen.Start() }
 func (g *GroupExpr) End() token.Position   { return g.RightParen.End() }
 func (g *GroupExpr) IsValid() bool {
-	return g != nil && !g.LeftParen.IsZero() && isValid(g.Expr) && !g.RightParen.IsZero()
+	return g != nil && !g.LeftParen.IsZero() && g.Expr.IsValid() && !g.RightParen.IsZero()
 }
 
 // LiteralExpr is a literal expression, such as 123 or "abc".
@@ -433,7 +433,7 @@ type IdentExpr struct {
 
 func (i *IdentExpr) Start() token.Position { return i.Ident.Start() }
 func (i *IdentExpr) End() token.Position   { return i.Ident.End() }
-func (i *IdentExpr) IsValid() bool         { return i != nil && isValid(i.Ident) }
+func (i *IdentExpr) IsValid() bool         { return i != nil && i.Ident.IsValid() }
 
 // ThisExpr represents usage of the 'this' keyword.
 type ThisExpr struct {
@@ -456,7 +456,7 @@ type CallExpr struct {
 func (c *CallExpr) Start() token.Position { return c.Callee.Start() }
 func (c *CallExpr) End() token.Position   { return c.RightParen.End() }
 func (c *CallExpr) IsValid() bool {
-	return c != nil && isValid(c.Callee) && isValidSlice(c.Args) && !c.RightParen.IsZero()
+	return c != nil && c.Callee.IsValid() && isValidSlice(c.Args) && !c.RightParen.IsZero()
 }
 
 // GetExpr is a property access expression, such as a.b.
@@ -468,7 +468,7 @@ type GetExpr struct {
 
 func (g *GetExpr) Start() token.Position { return g.Object.Start() }
 func (g *GetExpr) End() token.Position   { return g.Name.End() }
-func (g *GetExpr) IsValid() bool         { return g != nil && isValid(g.Object) && isValid(g.Name) }
+func (g *GetExpr) IsValid() bool         { return g != nil && g.Object.IsValid() && g.Name.IsValid() }
 
 // UnaryExpr is a unary operator expression, such as !a.
 type UnaryExpr struct {
@@ -479,7 +479,7 @@ type UnaryExpr struct {
 
 func (u *UnaryExpr) Start() token.Position { return u.Op.Start() }
 func (u *UnaryExpr) End() token.Position   { return u.Right.End() }
-func (u *UnaryExpr) IsValid() bool         { return u != nil && !u.Op.IsZero() && isValid(u.Right) }
+func (u *UnaryExpr) IsValid() bool         { return u != nil && !u.Op.IsZero() && u.Right.IsValid() }
 
 // BinaryExpr is a binary operator expression, such as a + b.
 type BinaryExpr struct {
@@ -492,7 +492,7 @@ type BinaryExpr struct {
 func (b *BinaryExpr) Start() token.Position { return b.Left.Start() }
 func (b *BinaryExpr) End() token.Position   { return b.Right.End() }
 func (b *BinaryExpr) IsValid() bool {
-	return b != nil && isValid(b.Left) && !b.Op.IsZero() && isValid(b.Right)
+	return b != nil && b.Left.IsValid() && !b.Op.IsZero() && b.Right.IsValid()
 }
 
 // TernaryExpr is a ternary operator expression, such as a ? b : c.
@@ -506,7 +506,7 @@ type TernaryExpr struct {
 func (t *TernaryExpr) Start() token.Position { return t.Condition.Start() }
 func (t *TernaryExpr) End() token.Position   { return t.Else.End() }
 func (t *TernaryExpr) IsValid() bool {
-	return t != nil && isValid(t.Condition) && isValid(t.Then) && isValid(t.Else)
+	return t != nil && t.Condition.IsValid() && t.Then.IsValid() && t.Else.IsValid()
 }
 
 // AssignmentExpr is an assignment expression, such as a = 2.
@@ -518,7 +518,7 @@ type AssignmentExpr struct {
 
 func (a *AssignmentExpr) Start() token.Position { return a.Left.Start() }
 func (a *AssignmentExpr) End() token.Position   { return a.Right.End() }
-func (a *AssignmentExpr) IsValid() bool         { return a != nil && isValid(a.Left) && isValid(a.Right) }
+func (a *AssignmentExpr) IsValid() bool         { return a != nil && a.Left.IsValid() && a.Right.IsValid() }
 
 // SetExpr is a property assignment expression, such as a.b = 2.
 type SetExpr struct {
@@ -531,11 +531,7 @@ type SetExpr struct {
 func (s *SetExpr) Start() token.Position { return s.Object.Start() }
 func (s *SetExpr) End() token.Position   { return s.Value.End() }
 func (s *SetExpr) IsValid() bool {
-	return s != nil && isValid(s.Object) && isValid(s.Name) && isValid(s.Value)
-}
-
-func isValid(n Node) bool {
-	return n != nil && n.IsValid()
+	return s != nil && s.Object.IsValid() && s.Name.IsValid() && s.Value.IsValid()
 }
 
 func isValidOptional(n Node) bool {

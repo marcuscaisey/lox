@@ -10,8 +10,6 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
-const version = "0.7.0"
-
 // Handler handles JSON-RPC requests and notifications.
 type Handler struct {
 	// Dependencies
@@ -121,5 +119,4 @@ func handleNotification[T any](method string, handler notificationHandler[T], js
 func (h *Handler) SetClient(client *jsonrpc.Client) {
 	h.client = newClient(client)
 	h.log = newLogger(h.client)
-	h.log.Infof("Lox language server %s starting", version)
 }

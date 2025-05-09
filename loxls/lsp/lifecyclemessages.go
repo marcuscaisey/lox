@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"runtime/debug"
+	"time"
 
 	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
@@ -14,12 +16,17 @@ import (
 func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.InitializeResult, error) {
 	h.capabilities = params.GetCapabilities()
 
-	stubBuiltinsFilename, err := h.writeStubBuiltins()
+	stubBuiltinsFilename, err := writeStubBuiltins()
 	if err != nil {
 		return nil, err
 	}
 	h.stubBuiltinsFilename = stubBuiltinsFilename
 	h.stubBuiltins = stubbuiltins.MustParse(stubBuiltinsFilename)
+
+	version, err := buildVersionStr()
+	if err != nil {
+		h.log.Errorf("initialize: %s", err)
+	}
 
 	// TODO: do we need to handle client completion capabilities?
 	h.initialized = true
@@ -59,7 +66,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 	}, nil
 }
 
-func (h *Handler) writeStubBuiltins() (string, error) {
+func writeStubBuiltins() (string, error) {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
 		return "", fmt.Errorf("writing stub builtins to cache directory: %s", err)
@@ -79,6 +86,31 @@ func (h *Handler) writeStubBuiltins() (string, error) {
 		return "", fmt.Errorf("writing stub builtins to cache directory: %s", err)
 	}
 	return filename, nil
+}
+
+func buildVersionStr() (string, error) {
+	buildInfo, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown", nil
+	}
+	var vcsRevision string
+	var vcsTime time.Time
+	for _, setting := range buildInfo.Settings {
+		switch setting.Key {
+		case "vcs.revision":
+			vcsRevision = setting.Value
+		case "vcs.time":
+			var err error
+			vcsTime, err = time.Parse(time.RFC3339, setting.Value)
+			if err != nil {
+				return "", fmt.Errorf("building version string: parsing vcs.time value from build info: %s", err)
+			}
+		}
+	}
+	if vcsRevision == "" || vcsTime.IsZero() {
+		return "dev", nil
+	}
+	return vcsTime.Format(time.DateOnly) + "-" + vcsRevision[:8], nil
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#shutdown
