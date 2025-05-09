@@ -747,7 +747,10 @@ func (p *parser) match(types ...token.Type) bool {
 // match2 is like match but also returns the matched token.
 func (p *parser) match2(types ...token.Type) (token.Token, bool) {
 	tok := p.tok
-	return tok, p.match(types...)
+	if p.match(types...) {
+		return tok, true
+	}
+	return token.Token{}, false
 }
 
 // matchFunc reports whether the current token satisfies the given predicate and advances the parser if so.
@@ -757,7 +760,7 @@ func (p *parser) matchFunc(f func(token.Token) bool) (token.Token, bool) {
 		p.next()
 		return tok, true
 	}
-	return tok, false
+	return token.Token{}, false
 }
 
 // expect reports whether the current token is of the given type. If it is, the parser is advanced. Otherwise, an
@@ -777,8 +780,9 @@ func (p *parser) expect2f(t token.Type, format string, a ...any) (token.Token, b
 	tok, ok := p.match2(t)
 	if !ok {
 		p.addErrorf(p.tok, format, a...)
+		return token.Token{}, false
 	}
-	return tok, ok
+	return tok, true
 }
 
 // expectSemicolon reports whether the current token is a semicolon. If it is, the parser is advanced. Otherwise, an
