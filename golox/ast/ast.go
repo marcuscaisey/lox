@@ -145,7 +145,7 @@ func (f *Function) IsValid() bool {
 
 // ParamDecl is a parameter declaration, such as x or y.
 type ParamDecl struct {
-	Name *Ident `print:"named"`
+	Name *Ident `print:"unnamed"`
 	decl
 }
 
@@ -393,7 +393,7 @@ func (expr) isExpr() {}
 // FunExpr is a function expression, such as fun(x, y) { return x + y; }.
 type FunExpr struct {
 	Fun      token.Token
-	Function *Function `print:"named"`
+	Function *Function `print:"unnamed"`
 	expr
 }
 
