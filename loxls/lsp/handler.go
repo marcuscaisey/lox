@@ -24,17 +24,13 @@ type Handler struct {
 	stubBuiltinsFilename string
 	stubBuiltins         []ast.Decl
 	docs                 map[string]*document
-
-	// Client capability info
-	hierarchicalDocumentSymbols bool
-	hoverContentFormat          protocol.MarkupKind
+	capabilities         *protocol.ClientCapabilities
 }
 
 // NewHandler returns a new Handler.
 func NewHandler() *Handler {
 	return &Handler{
-		docs:               map[string]*document{},
-		hoverContentFormat: protocol.MarkupKindPlainText,
+		docs: map[string]*document{},
 	}
 }
 

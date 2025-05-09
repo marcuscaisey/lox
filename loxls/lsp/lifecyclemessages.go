@@ -12,10 +12,7 @@ import (
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialize
 func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.InitializeResult, error) {
-	h.hierarchicalDocumentSymbols = params.GetCapabilities().GetTextDocument().GetDocumentSymbol().GetHierarchicalDocumentSymbolSupport()
-	if contentFormat := params.GetCapabilities().GetTextDocument().GetHover().GetContentFormat(); len(contentFormat) > 0 {
-		h.hoverContentFormat = contentFormat[0]
-	}
+	h.capabilities = params.GetCapabilities()
 
 	stubBuiltinsFilename, err := h.writeStubBuiltins()
 	if err != nil {

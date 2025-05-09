@@ -124,8 +124,13 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		body = hoverDeclDoc(decl.Doc)
 	}
 
+	contentFormat := protocol.MarkupKindPlainText
+	if len(h.capabilities.GetTextDocument().GetHover().GetContentFormat()) > 0 {
+		contentFormat = h.capabilities.GetTextDocument().GetHover().GetContentFormat()[0]
+	}
+
 	var contents string
-	if h.hoverContentFormat == protocol.MarkupKindMarkdown {
+	if contentFormat == protocol.MarkupKindMarkdown {
 		contents = fmt.Sprintf("```lox\n%s\n```", header)
 		if body != "" {
 			contents = fmt.Sprintf("%s\n---\n%s", contents, body)
@@ -140,7 +145,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 	return &protocol.Hover{
 		Contents: &protocol.MarkupContentOrMarkedStringOrMarkedStringSlice{
 			Value: &protocol.MarkupContent{
-				Kind:  h.hoverContentFormat,
+				Kind:  contentFormat,
 				Value: contents,
 			},
 		},
@@ -244,7 +249,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 	})
 
 	var symbols protocol.SymbolInformationSliceOrDocumentSymbolSliceValue = docSymbols
-	if !h.hierarchicalDocumentSymbols {
+	if !h.capabilities.GetTextDocument().GetDocumentSymbol().GetHierarchicalDocumentSymbolSupport() {
 		symbols = toSymbolInformations(docSymbols, doc.URI)
 	}
 	return &protocol.SymbolInformationSliceOrDocumentSymbolSlice{Value: symbols}, nil
