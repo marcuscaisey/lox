@@ -162,25 +162,24 @@ func (p *ParamDecl) Ident() *Ident         { return p.Name }
 //	  }
 //	}
 type ClassDecl struct {
-	Doc        []*Comment `print:"named"`
-	Class      token.Token
-	Name       *Ident `print:"named"`
-	Body       []Stmt `print:"named"`
-	RightBrace token.Token
+	Doc   []*Comment `print:"named"`
+	Class token.Token
+	Name  *Ident `print:"named"`
+	Body  *Block `print:"named"`
 	decl
 }
 
 func (c *ClassDecl) Start() token.Position { return c.Class.Start() }
-func (c *ClassDecl) End() token.Position   { return c.RightBrace.End() }
+func (c *ClassDecl) End() token.Position   { return c.Body.End() }
 func (c *ClassDecl) IsValid() bool {
-	return c != nil && isValidSlice(c.Doc) && !c.Class.IsZero() && c.Name.IsValid() && isValidSlice(c.Body) && !c.RightBrace.IsZero()
+	return c != nil && isValidSlice(c.Doc) && !c.Class.IsZero() && c.Name.IsValid() && c.Body.IsValid()
 }
 func (c *ClassDecl) Ident() *Ident { return c.Name }
 
 // Methods returns the methods of the class.
 func (c *ClassDecl) Methods() []*MethodDecl {
-	methods := make([]*MethodDecl, 0, len(c.Body))
-	for _, stmt := range c.Body {
+	methods := make([]*MethodDecl, 0, len(c.Body.Stmts))
+	for _, stmt := range c.Body.Stmts {
 		if method, ok := stmt.(*MethodDecl); ok {
 			methods = append(methods, method)
 		}

@@ -26,7 +26,7 @@ func Walk(node Node, f func(Node) bool) {
 		Walk(node.Name, f)
 	case *ClassDecl:
 		Walk(node.Name, f)
-		walkSlice(node.Body, f)
+		Walk(node.Body, f)
 	case *MethodDecl:
 		Walk(node.Name, f)
 		Walk(node.Function, f)

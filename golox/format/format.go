@@ -149,7 +149,7 @@ func formatClassDecl(decl *ast.ClassDecl) string {
 	if len(decl.Doc) > 0 {
 		fmt.Fprintf(&b, "%s\n", formatStmts(decl.Doc))
 	}
-	fmt.Fprintf(&b, "class %s %s", Node(decl.Name), formatBlock(decl.Body))
+	fmt.Fprintf(&b, "class %s %s", Node(decl.Name), Node(decl.Body))
 	return b.String()
 }
 

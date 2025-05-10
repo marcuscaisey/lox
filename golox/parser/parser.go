@@ -31,7 +31,7 @@ func Parse(r io.Reader, filename string, opts ...Option) (*ast.Program, error) {
 		return nil, fmt.Errorf("parsing lox source: %w", err)
 	}
 
-	p := &parser{lexer: lexer}
+	p := &parser{lexer: lexer, classBodyScopeDepth: -1}
 	lexer.SetErrorHandler(func(tok token.Token, format string, args ...any) {
 		p.addErrorf(tok, format, args...)
 	})
@@ -48,9 +48,11 @@ type parser struct {
 	tok     token.Token // token currently being considered
 	nextTok token.Token
 
-	parsingBlock bool
-	errs         loxerr.Errors
-	lastErrPos   token.Position
+	scopeDepth          int
+	classBodyScopeDepth int
+
+	errs       loxerr.Errors
+	lastErrPos token.Position
 
 	parseComments bool
 }
@@ -121,7 +123,7 @@ func (p *parser) sync() {
 			p.next()
 			return
 		case token.RightBrace:
-			if p.parsingBlock {
+			if p.scopeDepth > 0 {
 				return
 			}
 		case token.Print, token.Var, token.If, token.LeftBrace, token.While, token.For, token.Break, token.Continue, token.EOF:
@@ -138,6 +140,8 @@ func (p *parser) parseDecl() (ast.Stmt, bool) {
 	switch tok := p.tok; {
 	case p.match(token.Comment):
 		stmt = p.parseComment(tok)
+	case p.scopeDepth == p.classBodyScopeDepth && p.match(token.Ident, token.Static, token.Get, token.Set):
+		stmt, ok = p.parseMethodDecl(tok)
 	case p.match(token.Var):
 		stmt, ok = p.parseVarDecl(tok)
 	case p.tok.Type == token.Fun && p.nextTok.Type == token.Ident:
@@ -193,8 +197,9 @@ func (p *parser) parseFunDecl(funTok token.Token) (*ast.FunDecl, bool) {
 }
 
 func (p *parser) parseClassDecl(classTok token.Token) (*ast.ClassDecl, bool) {
-	p.parsingBlock = true
-	defer func() { p.parsingBlock = false }()
+	prevClassScopeDepth := p.classBodyScopeDepth
+	p.classBodyScopeDepth = p.scopeDepth + 1
+	defer func() { p.classBodyScopeDepth = prevClassScopeDepth }()
 
 	decl := &ast.ClassDecl{Class: classTok}
 	var ok bool
@@ -203,72 +208,45 @@ func (p *parser) parseClassDecl(classTok token.Token) (*ast.ClassDecl, bool) {
 		return decl, false
 	}
 
-	// TODO: parse as block and error on invalid statement types instead?
-	// This would centralise the doc comment parsing
-	if !p.expect(token.LeftBrace) {
+	leftBrace, ok := p.expect2(token.LeftBrace)
+	if !ok {
 		return decl, false
 	}
-	for {
-		var doc []*ast.Comment
-		for {
-			tok, ok := p.match2(token.Comment)
-			if !ok {
-				break
-			}
-			comment := p.parseComment(tok)
-			if p.parseComments {
-				if len(doc) > 0 && comment.Start().Line != doc[len(doc)-1].Start().Line+1 {
-					doc = doc[:0]
-				}
-				decl.Body = append(decl.Body, comment)
-				doc = append(doc, comment)
-			}
+	decl.Body, ok = p.parseBlock(leftBrace)
+	for i, stmt := range slices.Backward(decl.Body.Stmts) {
+		switch stmt.(type) {
+		case *ast.MethodDecl, *ast.Comment:
+		default:
+			decl.Body.Stmts = slices.Delete(decl.Body.Stmts, i, i+1)
+			p.addErrorf(classTok, "class body can only contain method declarations and comments")
 		}
-
-		methodDecl, ok := p.parseMethodDecl()
-		if !ok {
-			decl.Body = append(decl.Body, methodDecl)
-			// TODO: can we sync so that the next method can be parsed?
-			return decl, false
-		} else if methodDecl == nil {
-			break
-		}
-		methodDecl.Doc = doc
-		decl.Body = append(decl.Body[:len(decl.Body)-len(doc)], methodDecl)
-		doc = nil
 	}
-	if decl.RightBrace, ok = p.expect2(token.RightBrace); !ok {
+	if !ok {
 		return decl, false
 	}
 
 	return decl, true
 }
 
-func (p *parser) parseMethodDecl() (*ast.MethodDecl, bool) {
+func (p *parser) parseMethodDecl(firstTok token.Token) (*ast.MethodDecl, bool) {
 	decl := &ast.MethodDecl{}
 	var ok bool
-
-	if tok, ok := p.match2(token.Static); ok {
-		decl.Modifiers = append(decl.Modifiers, tok)
-	}
-	if tok, ok := p.match2(token.Get, token.Set); ok {
-		decl.Modifiers = append(decl.Modifiers, tok)
-	}
-
-	if len(decl.Modifiers) > 0 {
+	if firstTok.Type == token.Ident {
+		decl.Name = &ast.Ident{Token: firstTok}
+	} else {
+		decl.Modifiers = append(decl.Modifiers, firstTok)
+		if firstTok.Type == token.Static {
+			if tok, ok := p.match2(token.Get, token.Set); ok {
+				decl.Modifiers = append(decl.Modifiers, tok)
+			}
+		}
 		if decl.Name, ok = p.parseIdent("expected method name"); !ok {
 			return decl, false
 		}
-	} else if tok, ok := p.match2(token.Ident); ok {
-		decl.Name = &ast.Ident{Token: tok}
-	} else {
-		return nil, true
 	}
-
 	if decl.Function, ok = p.parseFun(); !ok {
 		return decl, false
 	}
-
 	return decl, true
 }
 
@@ -381,8 +359,8 @@ func (p *parser) parsePrintStmt(printTok token.Token) (*ast.PrintStmt, bool) {
 }
 
 func (p *parser) parseBlock(leftBrace token.Token) (*ast.Block, bool) {
-	p.parsingBlock = true
-	defer func() { p.parsingBlock = false }()
+	p.scopeDepth++
+	defer func() { p.scopeDepth-- }()
 	decl := &ast.Block{LeftBrace: leftBrace}
 	var ok bool
 	decl.Stmts = p.safelyParseDeclsUntil(token.RightBrace, token.EOF)
