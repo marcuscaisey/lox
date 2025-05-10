@@ -69,11 +69,11 @@ func (p *parser) Parse() (*ast.Program, error) {
 
 func (p *parser) parseProgram() *ast.Program {
 	return &ast.Program{
-		Stmts: p.safelyParseDeclsUntil(token.EOF),
+		Stmts: p.parseDeclsUntil(token.EOF),
 	}
 }
 
-func (p *parser) safelyParseDeclsUntil(types ...token.Type) []ast.Stmt {
+func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
 	var doc []*ast.Comment
 	for !slices.Contains(types, p.tok.Type) {
@@ -358,7 +358,7 @@ func (p *parser) parseBlock(leftBrace token.Token) (*ast.Block, bool) {
 	defer func() { p.scopeDepth-- }()
 	decl := &ast.Block{LeftBrace: leftBrace}
 	var ok bool
-	decl.Stmts = p.safelyParseDeclsUntil(token.RightBrace, token.EOF)
+	decl.Stmts = p.parseDeclsUntil(token.RightBrace, token.EOF)
 	if decl.RightBrace, ok = p.expect2(token.RightBrace); !ok {
 		return decl, false
 	}
