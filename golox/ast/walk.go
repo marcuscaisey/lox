@@ -3,7 +3,7 @@ package ast
 // Walk traverses an AST in depth-first order: It starts by calling f(node); node must not be nil. If f returns true,
 // Walk invokes f recursively for each of the non-nil children of node.
 func Walk(node Node, f func(Node) bool) {
-	if !f(node) {
+	if isNil(node) || !f(node) {
 		return
 	}
 	switch node := node.(type) {
@@ -15,15 +15,13 @@ func Walk(node Node, f func(Node) bool) {
 		Walk(node.Stmt, f)
 	case *VarDecl:
 		Walk(node.Name, f)
-		if node.Initialiser != nil {
-			Walk(node.Initialiser, f)
-		}
+		Walk(node.Initialiser, f)
 	case *FunDecl:
 		Walk(node.Name, f)
 		Walk(node.Function, f)
 	case *Function:
 		walkSlice(node.Params, f)
-		Walk(node.Body, f)
+		Walk(Node(node.Body), f)
 	case *ParamDecl:
 		Walk(node.Name, f)
 	case *ClassDecl:
@@ -41,29 +39,19 @@ func Walk(node Node, f func(Node) bool) {
 	case *IfStmt:
 		Walk(node.Condition, f)
 		Walk(node.Then, f)
-		if node.Else != nil {
-			Walk(node.Else, f)
-		}
+		Walk(node.Else, f)
 	case *WhileStmt:
 		Walk(node.Condition, f)
 		Walk(node.Body, f)
 	case *ForStmt:
-		if node.Initialise != nil {
-			Walk(node.Initialise, f)
-		}
-		if node.Condition != nil {
-			Walk(node.Condition, f)
-		}
-		if node.Update != nil {
-			Walk(node.Update, f)
-		}
+		Walk(node.Initialise, f)
+		Walk(node.Condition, f)
+		Walk(node.Update, f)
 		Walk(node.Body, f)
 	case *BreakStmt:
 	case *ContinueStmt:
 	case *ReturnStmt:
-		if node.Value != nil {
-			Walk(node.Value, f)
-		}
+		Walk(node.Value, f)
 	case *FunExpr:
 		Walk(node.Function, f)
 	case *GroupExpr:
@@ -95,6 +83,76 @@ func Walk(node Node, f func(Node) bool) {
 		Walk(node.Name, f)
 		Walk(node.Value, f)
 	}
+}
+
+func isNil(node Node) bool {
+	switch node := node.(type) {
+	case *Program:
+		return node == nil
+	case *Ident:
+		return node == nil
+	case *Comment:
+		return node == nil
+	case *InlineComment:
+		return node == nil
+	case *VarDecl:
+		return node == nil
+	case *FunDecl:
+		return node == nil
+	case *Function:
+		return node == nil
+	case *ParamDecl:
+		return node == nil
+	case *ClassDecl:
+		return node == nil
+	case *MethodDecl:
+		return node == nil
+	case *ExprStmt:
+		return node == nil
+	case *PrintStmt:
+		return node == nil
+	case *Block:
+		return node == nil
+	case *IfStmt:
+		return node == nil
+	case *WhileStmt:
+		return node == nil
+	case *ForStmt:
+		return node == nil
+	case *BreakStmt:
+		return node == nil
+	case *ContinueStmt:
+		return node == nil
+	case *ReturnStmt:
+		return node == nil
+	case *FunExpr:
+		return node == nil
+	case *GroupExpr:
+		return node == nil
+	case *LiteralExpr:
+		return node == nil
+	case *IdentExpr:
+		return node == nil
+	case *ThisExpr:
+		return node == nil
+	case *CallExpr:
+		return node == nil
+	case *GetExpr:
+		return node == nil
+	case *UnaryExpr:
+		return node == nil
+	case *BinaryExpr:
+		return node == nil
+	case *TernaryExpr:
+		return node == nil
+	case *AssignmentExpr:
+		return node == nil
+	case *SetExpr:
+		return node == nil
+	case nil:
+		return true
+	}
+	return false
 }
 
 func walkSlice[T Node](nodes []T, f func(Node) bool) {
