@@ -87,18 +87,19 @@ func (p *parser) safelyParseDeclsUntil(types ...token.Type) []ast.Stmt {
 			doc = append(doc, comment)
 		}
 
+		resetDoc := true
 		switch decl := stmt.(type) {
 		case *ast.FunDecl:
 			decl.Doc = doc
 		case *ast.ClassDecl:
 			decl.Doc = doc
 		default:
-			goto appendStmt
+			resetDoc = false
 		}
-		stmts = stmts[:len(stmts)-len(doc)]
-		doc = nil
-
-	appendStmt:
+		if resetDoc {
+			stmts = stmts[:len(stmts)-len(doc)]
+			doc = nil
+		}
 		stmts = append(stmts, stmt)
 	}
 	return stmts
