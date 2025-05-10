@@ -538,7 +538,7 @@ func (p *parser) parseAssignmentExpr() (ast.Expr, bool) {
 				return expr, false
 			}
 		default:
-			p.addError(expr, "invalid assignment target")
+			p.addErrorf(expr, "invalid assignment target")
 		}
 	}
 	return expr, true
@@ -711,9 +711,9 @@ func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 		return expr, true
 	default:
 		if tok.Type == token.Comment {
-			p.addError(tok, "comments can only appear where declarations can appear or at the end of statements")
+			p.addErrorf(tok, "comments can only appear where declarations can appear or at the end of statements")
 		} else {
-			p.addError(tok, "expected expression")
+			p.addErrorf(tok, "expected expression")
 		}
 		return nil, false
 	}
@@ -803,10 +803,6 @@ func (p *parser) next() {
 	p.prevTok = p.tok
 	p.tok = p.nextTok
 	p.nextTok = p.lexer.Next()
-}
-
-func (p *parser) addError(rang token.Range, message string) {
-	p.addErrorf(rang, "%s", message)
 }
 
 func (p *parser) addErrorf(rang token.Range, format string, args ...any) {
