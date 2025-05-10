@@ -73,6 +73,8 @@ type completionGenerator struct {
 func (c *completionGenerator) walk(node ast.Node) bool {
 	switch node := node.(type) {
 	case *ast.VarDecl:
+		ast.Walk(node.Initialiser, c.walk)
+
 		c.completions = append(c.completions, &completion{
 			Position:   node.End(),
 			ScopeDepth: c.scopeDepth,
@@ -83,7 +85,7 @@ func (c *completionGenerator) walk(node ast.Node) bool {
 				},
 			},
 		})
-		return true
+		return false
 
 	case *ast.FunDecl:
 		nameItem := &protocol.CompletionItem{
