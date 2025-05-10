@@ -77,7 +77,10 @@ func (p *parser) safelyParseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
 	var doc []*ast.Comment
 	for !slices.Contains(types, p.tok.Type) {
-		stmt := p.safelyParseDecl()
+		stmt, ok := p.parseDecl()
+		if !ok {
+			p.sync()
+		}
 
 		if len(doc) > 0 && stmt.Start().Line != doc[len(doc)-1].Start().Line+1 {
 			doc = doc[:0]
@@ -105,14 +108,6 @@ func (p *parser) safelyParseDeclsUntil(types ...token.Type) []ast.Stmt {
 		stmts = append(stmts, stmt)
 	}
 	return stmts
-}
-
-func (p *parser) safelyParseDecl() (stmt ast.Stmt) {
-	stmt, ok := p.parseDecl()
-	if !ok {
-		p.sync()
-	}
-	return stmt
 }
 
 // sync synchronises the parser with the next statement. This is used to recover from a parsing error.
