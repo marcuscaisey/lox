@@ -28,6 +28,11 @@ func sprint(node Node, depth int) string {
 	default:
 	}
 
+	namePrefix := ""
+	if !node.IsValid() {
+		namePrefix = "Invalid"
+	}
+
 	nodeType := reflect.TypeOf(node)
 	nodeValue := reflect.ValueOf(node)
 	if nodeType.Kind() == reflect.Pointer {
@@ -77,16 +82,12 @@ func sprint(node Node, depth int) string {
 		}
 
 		if tag == "unnamed" {
-			return fmt.Sprintf("(%s %s)", nodeType.Name(), formattedValue)
+			return fmt.Sprintf("(%s %s)", namePrefix+nodeType.Name(), formattedValue)
 		}
 
 		children = append(children, fmt.Sprintf("(%s %s)", field.Name, formattedValue))
 	}
 
-	namePrefix := ""
-	if !node.IsValid() {
-		namePrefix = "Invalid"
-	}
 	return sexpr(namePrefix+nodeType.Name(), depth, children...)
 }
 
