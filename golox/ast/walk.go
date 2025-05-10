@@ -11,7 +11,7 @@ func Walk(node Node, f func(Node) bool) {
 		walkSlice(node.Stmts, f)
 	case *Ident:
 	case *Comment:
-	case *InlineComment:
+	case *CommentedStmt:
 		Walk(node.Stmt, f)
 	case *VarDecl:
 		Walk(node.Name, f)
@@ -93,7 +93,7 @@ func isNil(node Node) bool {
 		return node == nil
 	case *Comment:
 		return node == nil
-	case *InlineComment:
+	case *CommentedStmt:
 		return node == nil
 	case *VarDecl:
 		return node == nil

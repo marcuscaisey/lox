@@ -151,8 +151,8 @@ func (p *parser) parseDecl() (ast.Stmt, bool) {
 		return stmt, false
 	}
 
-	if inlineComment, ok := p.parseInlineComment(stmt); ok {
-		return inlineComment, ok
+	if commentedStmt, ok := p.parseCommentedStmt(stmt); ok {
+		return commentedStmt, ok
 	}
 
 	return stmt, true
@@ -312,19 +312,19 @@ func (p *parser) parseStmt() (ast.Stmt, bool) {
 		return stmt, false
 	}
 
-	if inlineComment, ok := p.parseInlineComment(stmt); ok {
-		return inlineComment, ok
+	if commentedStmt, ok := p.parseCommentedStmt(stmt); ok {
+		return commentedStmt, ok
 	}
 
 	return stmt, true
 }
 
-func (p *parser) parseInlineComment(stmt ast.Stmt) (*ast.InlineComment, bool) {
+func (p *parser) parseCommentedStmt(stmt ast.Stmt) (*ast.CommentedStmt, bool) {
 	comment, ok := p.matchFunc(func(tok token.Token) bool {
 		return tok.Type == token.Comment && tok.Start().Line == stmt.End().Line
 	})
 	if ok && p.parseComments {
-		return &ast.InlineComment{Stmt: stmt, Comment: comment}, true
+		return &ast.CommentedStmt{Stmt: stmt, Comment: comment}, true
 	}
 	return nil, false
 }

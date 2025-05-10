@@ -66,18 +66,18 @@ func (c *Comment) Start() token.Position { return c.Comment.Start() }
 func (c *Comment) End() token.Position   { return c.Comment.End() }
 func (c *Comment) IsValid() bool         { return c != nil && !c.Comment.IsZero() }
 
-// InlineComment is a statement with a comment on the same line, such as
+// CommentedStmt is a statement with a comment on the same line, such as
 //
 //	print 1; // *comment
-type InlineComment struct {
+type CommentedStmt struct {
 	Stmt    Stmt        `print:"named"`
 	Comment token.Token `print:"named"`
 	stmt
 }
 
-func (i *InlineComment) Start() token.Position { return i.Stmt.Start() }
-func (i *InlineComment) End() token.Position   { return i.Comment.End() }
-func (i *InlineComment) IsValid() bool {
+func (i *CommentedStmt) Start() token.Position { return i.Stmt.Start() }
+func (i *CommentedStmt) End() token.Position   { return i.Comment.End() }
+func (i *CommentedStmt) IsValid() bool {
 	return i != nil && i.Stmt.IsValid() && !i.Comment.IsZero()
 }
 
