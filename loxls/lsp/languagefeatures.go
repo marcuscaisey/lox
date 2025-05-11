@@ -305,28 +305,31 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		}
 	})
 
-	items := doc.Completions.At(params.Position, h.log)
-	editRange := &protocol.Range{
-		Start: params.Position,
-		End:   params.Position,
-	}
+	editRange := &protocol.Range{Start: params.Position, End: params.Position}
 	if containingIdent != nil {
 		editRange = newRange(containingIdent)
 	}
-	for _, item := range items {
-		item.TextEdit = &protocol.TextEditOrInsertReplaceEdit{
-			Value: &protocol.TextEdit{
-				Range:   editRange,
-				NewText: item.Label,
+
+	items := doc.IdentCompletions.At(params.Position)
+	items = append(items, keywordCompletions...)
+
+	padding := len(fmt.Sprint(len(items)))
+	protocolItems := make(protocol.CompletionItemSlice, len(items))
+	for i, item := range items {
+		protocolItems[i] = &protocol.CompletionItem{
+			Label: item.Label,
+			Kind:  item.Kind,
+			TextEdit: &protocol.TextEditOrInsertReplaceEdit{
+				Value: &protocol.TextEdit{
+					Range:   editRange,
+					NewText: item.Label,
+				},
 			},
+			SortText: fmt.Sprintf("%0*d", padding, i),
 		}
 	}
 
-	return &protocol.CompletionItemSliceOrCompletionList{
-		Value: &protocol.CompletionList{
-			Items: items,
-		},
-	}, nil
+	return &protocol.CompletionItemSliceOrCompletionList{Value: protocolItems}, nil
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting

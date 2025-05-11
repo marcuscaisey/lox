@@ -2,7 +2,6 @@ package lsp
 
 import (
 	"cmp"
-	"fmt"
 	"math"
 	"slices"
 
@@ -11,18 +10,38 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
-type completion struct {
-	Position   token.Position
-	ScopeDepth int
-	Items      []*protocol.CompletionItem
+type completionItem struct {
+	Label string
+	Kind  protocol.CompletionItemKind
 }
 
-type completions []*completion
+var keywordCompletions = genKeywordCompletions()
 
-func (c completions) At(pos *protocol.Position, log *logger) []*protocol.CompletionItem {
-	var items []*protocol.CompletionItem
+func genKeywordCompletions() []*completionItem {
+	keywords := []string{"print", "var", "true", "false", "nil", "if", "while", "for", "fun", "class"}
+	items := make([]*completionItem, len(keywords))
+	for i, keyword := range keywords {
+		items[i] = &completionItem{
+			Label: keyword,
+			Kind:  protocol.CompletionItemKindKeyword,
+		}
+	}
+	return items
+}
 
-	startIdx, found := slices.BinarySearchFunc(c, pos, func(item *completion, target *protocol.Position) int {
+type identCompletions []*identCompletion
+
+type identCompletion struct {
+	Position   token.Position
+	ScopeDepth int
+	Items      []*completionItem
+}
+
+// TODO: document
+func (c identCompletions) At(pos *protocol.Position) []*completionItem {
+	var items []*completionItem
+
+	startIdx, found := slices.BinarySearchFunc(c, pos, func(item *identCompletion, target *protocol.Position) int {
 		protocolPos := newPosition(item.Position)
 		if protocolPos.Line == target.Line {
 			return cmp.Compare(protocolPos.Character, target.Character)
@@ -32,45 +51,32 @@ func (c completions) At(pos *protocol.Position, log *logger) []*protocol.Complet
 	if !found {
 		startIdx--
 	}
+
 	curScopeDepth := math.MaxInt
-	for i := startIdx; i >= 0; i-- {
-		if c[i].ScopeDepth < curScopeDepth {
-			curScopeDepth = c[i].ScopeDepth
+	for _, completion := range slices.Backward(c[:startIdx+1]) {
+		if completion.ScopeDepth < curScopeDepth {
+			curScopeDepth = completion.ScopeDepth
 		}
-		if c[i].ScopeDepth == curScopeDepth {
-			items = append(items, c[i].Items...)
+		if completion.ScopeDepth == curScopeDepth {
+			items = append(items, completion.Items...)
 		}
-	}
-
-	keywords := []string{"print", "var", "true", "false", "nil", "if", "while", "for", "fun", "class"}
-	for _, keyword := range keywords {
-		items = append(items, &protocol.CompletionItem{
-			Label: keyword,
-			Kind:  protocol.CompletionItemKindKeyword,
-		})
-	}
-
-	padding := len(fmt.Sprint(len(items)))
-	for i, item := range items {
-		item.SortText = fmt.Sprintf("%0*d", padding, i)
 	}
 
 	return items
 }
 
-func genCompletions(program *ast.Program) completions {
-	completions := &completionGenerator{}
-	ast.Walk(program, completions.walk)
-	return completions.completions
+func genIdentCompletions(program *ast.Program) identCompletions {
+	icg := &identCompletionGenerator{}
+	ast.Walk(program, icg.walk)
+	return icg.completions
 }
 
-type completionGenerator struct {
-	scopeDepth int
-
-	completions completions
+type identCompletionGenerator struct {
+	scopeDepth  int
+	completions identCompletions
 }
 
-func (c *completionGenerator) walk(node ast.Node) bool {
+func (c *identCompletionGenerator) walk(node ast.Node) bool {
 	switch node := node.(type) {
 	case *ast.VarDecl:
 		ast.Walk(node.Initialiser, c.walk)
@@ -78,10 +84,10 @@ func (c *completionGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Semicolon.IsZero() {
 			return false
 		}
-		c.completions = append(c.completions, &completion{
+		c.completions = append(c.completions, &identCompletion{
 			Position:   node.Semicolon.End(),
 			ScopeDepth: c.scopeDepth,
-			Items: []*protocol.CompletionItem{
+			Items: []*completionItem{
 				{
 					Label: node.Name.Token.Lexeme,
 					Kind:  protocol.CompletionItemKindVariable,
@@ -94,24 +100,24 @@ func (c *completionGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
 			return false
 		}
-		nameItem := &protocol.CompletionItem{
+		nameItem := &completionItem{
 			Label: node.Name.Token.Lexeme,
 			Kind:  protocol.CompletionItemKindFunction,
 		}
 
-		localItems := make([]*protocol.CompletionItem, 1+len(node.Function.Params))
+		localItems := make([]*completionItem, 1+len(node.Function.Params))
 		localItems[len(localItems)-1] = nameItem
 		for i, paramDecl := range node.Function.Params {
 			if !paramDecl.IsValid() {
 				continue
 			}
-			localItems[i] = &protocol.CompletionItem{
+			localItems[i] = &completionItem{
 				Label: paramDecl.Name.Token.Lexeme,
 				Kind:  protocol.CompletionItemKindVariable,
 			}
 		}
 		c.scopeDepth++
-		c.completions = append(c.completions, &completion{
+		c.completions = append(c.completions, &identCompletion{
 			Position:   node.Function.Body.LeftBrace.End(),
 			ScopeDepth: c.scopeDepth,
 			Items:      localItems,
@@ -123,10 +129,10 @@ func (c *completionGenerator) walk(node ast.Node) bool {
 		if node.Function.Body.RightBrace.IsZero() {
 			return false
 		}
-		c.completions = append(c.completions, &completion{
+		c.completions = append(c.completions, &identCompletion{
 			Position:   node.Function.Body.RightBrace.End(),
 			ScopeDepth: c.scopeDepth,
-			Items:      []*protocol.CompletionItem{nameItem},
+			Items:      []*completionItem{nameItem},
 		})
 		return false
 
@@ -134,18 +140,18 @@ func (c *completionGenerator) walk(node ast.Node) bool {
 		if node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
 			return false
 		}
-		items := make([]*protocol.CompletionItem, len(node.Function.Params))
+		items := make([]*completionItem, len(node.Function.Params))
 		for i, paramDecl := range node.Function.Params {
 			if !paramDecl.IsValid() {
 				continue
 			}
-			items[i] = &protocol.CompletionItem{
+			items[i] = &completionItem{
 				Label: paramDecl.Name.Token.Lexeme,
 				Kind:  protocol.CompletionItemKindVariable,
 			}
 		}
 		c.scopeDepth++
-		c.completions = append(c.completions, &completion{
+		c.completions = append(c.completions, &identCompletion{
 			Position:   node.Function.Body.LeftBrace.End(),
 			ScopeDepth: c.scopeDepth,
 			Items:      items,
@@ -159,18 +165,18 @@ func (c *completionGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
 			return false
 		}
-		items := make([]*protocol.CompletionItem, len(node.Function.Params))
+		items := make([]*completionItem, len(node.Function.Params))
 		for i, paramDecl := range node.Function.Params {
 			if !paramDecl.IsValid() {
 				continue
 			}
-			items[i] = &protocol.CompletionItem{
+			items[i] = &completionItem{
 				Label: paramDecl.Name.Token.Lexeme,
 				Kind:  protocol.CompletionItemKindVariable,
 			}
 		}
 		c.scopeDepth++
-		c.completions = append(c.completions, &completion{
+		c.completions = append(c.completions, &identCompletion{
 			Position:   node.Function.Body.LeftBrace.End(),
 			ScopeDepth: c.scopeDepth,
 			Items:      items,
@@ -184,10 +190,10 @@ func (c *completionGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Body == nil || node.Body.LeftBrace.IsZero() {
 			return false
 		}
-		c.completions = append(c.completions, &completion{
+		c.completions = append(c.completions, &identCompletion{
 			Position:   node.Body.LeftBrace.End(),
 			ScopeDepth: c.scopeDepth,
-			Items: []*protocol.CompletionItem{
+			Items: []*completionItem{
 				{
 					Label: node.Name.Token.Lexeme,
 					Kind:  protocol.CompletionItemKindClass,
