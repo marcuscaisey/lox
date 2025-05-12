@@ -292,23 +292,19 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		return nil, err
 	}
 
-	var containingIdent *ast.Ident
+	replaceRange := &protocol.Range{Start: params.Position, End: params.Position}
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case *ast.Ident:
 			if inRangeOrFollows(params.Position, n) {
-				containingIdent = n
+				replaceRange = newRange(n)
 			}
 			return false
 		default:
 			return true
 		}
 	})
-
-	editRange := &protocol.Range{Start: params.Position, End: params.Position}
-	if containingIdent != nil {
-		editRange = newRange(containingIdent)
-	}
+	insertRange := &protocol.Range{Start: replaceRange.Start, End: params.Position}
 
 	items := doc.IdentCompletions.At(params.Position)
 	items = append(items, keywordCompletions...)
@@ -316,15 +312,16 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	padding := len(fmt.Sprint(len(items)))
 	protocolItems := make(protocol.CompletionItemSlice, len(items))
 	for i, item := range items {
+		var textEdit protocol.TextEditOrInsertReplaceEditValue
+		if h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().InsertReplaceSupport {
+			textEdit = &protocol.InsertReplaceEdit{NewText: item.Label, Insert: insertRange, Replace: replaceRange}
+		} else {
+			textEdit = &protocol.TextEdit{Range: replaceRange, NewText: item.Label}
+		}
 		protocolItems[i] = &protocol.CompletionItem{
-			Label: item.Label,
-			Kind:  item.Kind,
-			TextEdit: &protocol.TextEditOrInsertReplaceEdit{
-				Value: &protocol.TextEdit{
-					Range:   editRange,
-					NewText: item.Label,
-				},
-			},
+			Label:    item.Label,
+			Kind:     item.Kind,
+			TextEdit: &protocol.TextEditOrInsertReplaceEdit{Value: textEdit},
 			SortText: fmt.Sprintf("%0*d", padding, i),
 		}
 	}
