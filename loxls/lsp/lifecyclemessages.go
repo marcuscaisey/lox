@@ -28,7 +28,6 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 		h.log.Errorf("initialize: %s", err)
 	}
 
-	// TODO: do we need to handle client completion capabilities?
 	h.initialized = true
 	return &protocol.InitializeResult{
 		Capabilities: &protocol.ServerCapabilities{
