@@ -8260,47 +8260,46 @@ func (c *CompletionItem) GetData() LSPAny {
 
 type CompletionItemSlice []*CompletionItem
 
-type CompletionListItemDefaultsEditRangeOr2 struct {
+type InsertReplaceRange struct {
 	Insert *Range `json:"insert"`
 
 	Replace *Range `json:"replace"`
 }
 
-func (c *CompletionListItemDefaultsEditRangeOr2) GetInsert() *Range {
-	if c == nil {
+func (i *InsertReplaceRange) GetInsert() *Range {
+	if i == nil {
 		return *new(*Range)
 	}
-	return c.Insert
+	return i.Insert
 }
 
-func (c *CompletionListItemDefaultsEditRangeOr2) GetReplace() *Range {
-	if c == nil {
+func (i *InsertReplaceRange) GetReplace() *Range {
+	if i == nil {
 		return *new(*Range)
 	}
-	return c.Replace
+	return i.Replace
 }
 
-// RangeOrCompletionListItemDefaultsEditRangeOr2 contains either of the following types:
+// RangeOrInsertReplaceRange contains either of the following types:
 //   - [*Range]
-//   - [*CompletionListItemDefaultsEditRangeOr2]
-type RangeOrCompletionListItemDefaultsEditRangeOr2 struct {
-	Value RangeOrCompletionListItemDefaultsEditRangeOr2Value
+//   - [*InsertReplaceRange]
+type RangeOrInsertReplaceRange struct {
+	Value RangeOrInsertReplaceRangeValue
 }
 
-// RangeOrCompletionListItemDefaultsEditRangeOr2Value is either of the following types:
+// RangeOrInsertReplaceRangeValue is either of the following types:
 //   - [*Range]
-//   - [*CompletionListItemDefaultsEditRangeOr2]
+//   - [*InsertReplaceRange]
 //
-//gosumtype:decl RangeOrCompletionListItemDefaultsEditRangeOr2Value
-type RangeOrCompletionListItemDefaultsEditRangeOr2Value interface {
-	isRangeOrCompletionListItemDefaultsEditRangeOr2Value()
+//gosumtype:decl RangeOrInsertReplaceRangeValue
+type RangeOrInsertReplaceRangeValue interface {
+	isRangeOrInsertReplaceRangeValue()
 }
 
-func (*Range) isRangeOrCompletionListItemDefaultsEditRangeOr2Value() {}
-func (*CompletionListItemDefaultsEditRangeOr2) isRangeOrCompletionListItemDefaultsEditRangeOr2Value() {
-}
+func (*Range) isRangeOrInsertReplaceRangeValue()              {}
+func (*InsertReplaceRange) isRangeOrInsertReplaceRangeValue() {}
 
-func (r *RangeOrCompletionListItemDefaultsEditRangeOr2) UnmarshalJSON(data []byte) error {
+func (r *RangeOrInsertReplaceRange) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, []byte("null")) {
 		return nil
 	}
@@ -8309,18 +8308,18 @@ func (r *RangeOrCompletionListItemDefaultsEditRangeOr2) UnmarshalJSON(data []byt
 		r.Value = rangeValue
 		return nil
 	}
-	var completionListItemDefaultsEditRangeOr2Value *CompletionListItemDefaultsEditRangeOr2
-	if err := json.Unmarshal(data, &completionListItemDefaultsEditRangeOr2Value); err == nil {
-		r.Value = completionListItemDefaultsEditRangeOr2Value
+	var insertReplaceRangeValue *InsertReplaceRange
+	if err := json.Unmarshal(data, &insertReplaceRangeValue); err == nil {
+		r.Value = insertReplaceRangeValue
 		return nil
 	}
 	return &json.UnmarshalTypeError{
 		Value: string(data),
-		Type:  reflect.TypeFor[*RangeOrCompletionListItemDefaultsEditRangeOr2](),
+		Type:  reflect.TypeFor[*RangeOrInsertReplaceRange](),
 	}
 }
 
-func (r *RangeOrCompletionListItemDefaultsEditRangeOr2) MarshalJSON() ([]byte, error) {
+func (r *RangeOrInsertReplaceRange) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.Value)
 }
 
@@ -8332,7 +8331,7 @@ type CompletionListItemDefaults struct {
 	// A default edit range.
 	//
 	// @since 3.17.0
-	EditRange *RangeOrCompletionListItemDefaultsEditRangeOr2 `json:"editRange,omitempty"`
+	EditRange *RangeOrInsertReplaceRange `json:"editRange,omitempty"`
 	// A default insert text format.
 	//
 	// @since 3.17.0
@@ -8354,9 +8353,9 @@ func (c *CompletionListItemDefaults) GetCommitCharacters() []string {
 	return c.CommitCharacters
 }
 
-func (c *CompletionListItemDefaults) GetEditRange() *RangeOrCompletionListItemDefaultsEditRangeOr2 {
+func (c *CompletionListItemDefaults) GetEditRange() *RangeOrInsertReplaceRange {
 	if c == nil {
-		return *new(*RangeOrCompletionListItemDefaultsEditRangeOr2)
+		return *new(*RangeOrInsertReplaceRange)
 	}
 	return c.EditRange
 }

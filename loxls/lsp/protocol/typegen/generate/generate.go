@@ -13,6 +13,18 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol/typegen/metamodel"
 )
 
+var sumTypeVariantNameOverrides = map[string]string{
+	"TextDocumentContentChangeEventOr1":      "IncrementalTextDocumentContentChangeEvent",
+	"TextDocumentContentChangeEventOr2":      "FullTextDocumentContentChangeEvent",
+	"CompletionListItemDefaultsEditRangeOr2": "InsertReplaceRange",
+}
+
+var sumTypeVariantDiscriminators = map[string]map[string]string{
+	"IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent": {
+		"*IncrementalTextDocumentContentChangeEvent": "range",
+	},
+}
+
 // Source returns an unformatted Go source file containing declarations of the given types.
 // Types are resolved using the given meta model.
 // The file will belong to the given package.
@@ -324,17 +336,6 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 	g.typeDecls = append(g.typeDecls, decl)
 
 	return name
-}
-
-var sumTypeVariantNameOverrides = map[string]string{
-	"TextDocumentContentChangeEventOr1": "IncrementalTextDocumentContentChangeEvent",
-	"TextDocumentContentChangeEventOr2": "FullTextDocumentContentChangeEvent",
-}
-
-var sumTypeVariantDiscriminators = map[string]map[string]string{
-	"IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent": {
-		"*IncrementalTextDocumentContentChangeEvent": "range",
-	},
 }
 
 func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type) (name string) {

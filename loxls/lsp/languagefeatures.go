@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -306,27 +307,46 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	})
 	insertRange := &protocol.Range{Start: replaceRange.Start, End: params.Position}
 
-	items := doc.IdentCompletions.At(params.Position)
-	items = append(items, keywordCompletions...)
-
-	padding := len(fmt.Sprint(len(items)))
-	protocolItems := make(protocol.CompletionItemSlice, len(items))
-	for i, item := range items {
-		var textEdit protocol.TextEditOrInsertReplaceEditValue
-		if h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().InsertReplaceSupport {
-			textEdit = &protocol.InsertReplaceEdit{NewText: item.Label, Insert: insertRange, Replace: replaceRange}
+	var itemDefaults *protocol.CompletionListItemDefaults
+	if slices.Contains(h.capabilities.GetTextDocument().GetCompletion().GetCompletionList().GetItemDefaults(), "editRange") {
+		itemDefaults = &protocol.CompletionListItemDefaults{EditRange: &protocol.RangeOrInsertReplaceRange{}}
+		if h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetInsertReplaceSupport() {
+			itemDefaults.EditRange.Value = &protocol.InsertReplaceRange{Insert: insertRange, Replace: replaceRange}
 		} else {
-			textEdit = &protocol.TextEdit{Range: insertRange, NewText: item.Label}
+			itemDefaults.EditRange.Value = insertRange
 		}
-		protocolItems[i] = &protocol.CompletionItem{
-			Label:    item.Label,
-			Kind:     item.Kind,
-			TextEdit: &protocol.TextEditOrInsertReplaceEdit{Value: textEdit},
+	}
+
+	completions := doc.IdentCompletions.At(params.Position)
+	completions = append(completions, keywordCompletions...)
+
+	padding := len(fmt.Sprint(len(completions)))
+	items := make([]*protocol.CompletionItem, len(completions))
+	for i, completion := range completions {
+		var textEdit *protocol.TextEditOrInsertReplaceEdit
+		if itemDefaults == nil {
+			textEdit = &protocol.TextEditOrInsertReplaceEdit{}
+			if h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetInsertReplaceSupport() {
+				textEdit.Value = &protocol.InsertReplaceEdit{NewText: completion.Label, Insert: insertRange, Replace: replaceRange}
+			} else {
+				textEdit.Value = &protocol.TextEdit{Range: insertRange, NewText: completion.Label}
+			}
+		}
+
+		items[i] = &protocol.CompletionItem{
+			Label:    completion.Label,
+			Kind:     completion.Kind,
+			TextEdit: textEdit,
 			SortText: fmt.Sprintf("%0*d", padding, i),
 		}
 	}
 
-	return &protocol.CompletionItemSliceOrCompletionList{Value: protocolItems}, nil
+	return &protocol.CompletionItemSliceOrCompletionList{
+		Value: &protocol.CompletionList{
+			ItemDefaults: itemDefaults,
+			Items:        items,
+		},
+	}, nil
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting
