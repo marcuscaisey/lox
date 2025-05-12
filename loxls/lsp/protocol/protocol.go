@@ -1392,8 +1392,7 @@ type CompletionClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 	// The client supports the following `CompletionItem` specific
 	// capabilities.
-	CompletionItem *CompletionClientCapabilitiesCompletionItem `json:"completionItem,omitempty"`
-
+	CompletionItem     *CompletionClientCapabilitiesCompletionItem     `json:"completionItem,omitempty"`
 	CompletionItemKind *CompletionClientCapabilitiesCompletionItemKind `json:"completionItemKind,omitempty"`
 	// Defines how the client handles whitespace and indentation
 	// when accepting a completion item that uses multi line
@@ -8261,8 +8260,7 @@ func (c *CompletionItem) GetData() LSPAny {
 type CompletionItemSlice []*CompletionItem
 
 type InsertReplaceRange struct {
-	Insert *Range `json:"insert"`
-
+	Insert  *Range `json:"insert"`
 	Replace *Range `json:"replace"`
 }
 
@@ -8483,8 +8481,7 @@ type HoverParams struct {
 
 type MarkedStringOr2 struct {
 	Language string `json:"language"`
-
-	Value string `json:"value"`
+	Value    string `json:"value"`
 }
 
 func (m *MarkedStringOr2) GetLanguage() string {
@@ -8652,8 +8649,7 @@ type DefinitionParams struct {
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#location
 type Location struct {
-	Uri string `json:"uri"`
-
+	Uri   string `json:"uri"`
 	Range *Range `json:"range"`
 }
 
@@ -8851,7 +8847,6 @@ type ReferenceParams struct {
 	*TextDocumentPositionParams
 	*WorkDoneProgressParams
 	*PartialResultParams
-
 	Context *ReferenceContext `json:"context"`
 }
 

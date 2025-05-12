@@ -205,11 +205,13 @@ func (g *generator) structFieldData(structName string, prop *metamodel.Property)
 
 func structField(data *structFieldData) string {
 	const text = `
+{{- if .data.Comment}}
 {{- .data.Comment}}
+{{end}}
 {{- if .data.Optional}}
-{{.data.Name}} {{.data.Type}} {{jsonTag .data.JSONName "omitempty"}}
+{{- .data.Name}} {{.data.Type}} {{jsonTag .data.JSONName "omitempty"}}
 {{- else}}
-{{.data.Name}} {{.data.Type}} {{jsonTag .data.JSONName}}
+{{- .data.Name}} {{.data.Type}} {{jsonTag .data.JSONName}}
 {{- end -}}
 `
 	return mustExecuteTemplate(text, map[string]any{"data": data})
