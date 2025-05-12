@@ -170,7 +170,8 @@ type {{.name}} struct {
 {{range $.fieldData}}
 func ({{$receiver}} *{{$.name}}) Get{{.Name}}() {{.Type}} {
 	if {{$receiver}} == nil {
-		return *new({{.Type}})
+		var zero {{.Type}}
+		return zero
 	}
 	return {{$receiver}}.{{.Name}}
 }

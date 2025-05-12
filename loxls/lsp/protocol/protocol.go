@@ -68,7 +68,8 @@ type WorkDoneProgressParams struct {
 
 func (w *WorkDoneProgressParams) GetWorkDoneToken() ProgressToken {
 	if w == nil {
-		return *new(ProgressToken)
+		var zero ProgressToken
+		return zero
 	}
 	return w.WorkDoneToken
 }
@@ -233,35 +234,40 @@ type WorkspaceEditClientCapabilities struct {
 
 func (w *WorkspaceEditClientCapabilities) GetDocumentChanges() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.DocumentChanges
 }
 
 func (w *WorkspaceEditClientCapabilities) GetResourceOperations() []ResourceOperationKind {
 	if w == nil {
-		return *new([]ResourceOperationKind)
+		var zero []ResourceOperationKind
+		return zero
 	}
 	return w.ResourceOperations
 }
 
 func (w *WorkspaceEditClientCapabilities) GetFailureHandling() FailureHandlingKind {
 	if w == nil {
-		return *new(FailureHandlingKind)
+		var zero FailureHandlingKind
+		return zero
 	}
 	return w.FailureHandling
 }
 
 func (w *WorkspaceEditClientCapabilities) GetNormalizesLineEndings() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.NormalizesLineEndings
 }
 
 func (w *WorkspaceEditClientCapabilities) GetChangeAnnotationSupport() *WorkspaceEditClientCapabilitiesChangeAnnotationSupport {
 	if w == nil {
-		return *new(*WorkspaceEditClientCapabilitiesChangeAnnotationSupport)
+		var zero *WorkspaceEditClientCapabilitiesChangeAnnotationSupport
+		return zero
 	}
 	return w.ChangeAnnotationSupport
 }
@@ -274,7 +280,8 @@ type DidChangeConfigurationClientCapabilities struct {
 
 func (d *DidChangeConfigurationClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
@@ -294,14 +301,16 @@ type DidChangeWatchedFilesClientCapabilities struct {
 
 func (d *DidChangeWatchedFilesClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
 
 func (d *DidChangeWatchedFilesClientCapabilities) GetRelativePatternSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.RelativePatternSupport
 }
@@ -502,28 +511,32 @@ type WorkspaceSymbolClientCapabilities struct {
 
 func (w *WorkspaceSymbolClientCapabilities) GetDynamicRegistration() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.DynamicRegistration
 }
 
 func (w *WorkspaceSymbolClientCapabilities) GetSymbolKind() *WorkspaceSymbolClientCapabilitiesSymbolKind {
 	if w == nil {
-		return *new(*WorkspaceSymbolClientCapabilitiesSymbolKind)
+		var zero *WorkspaceSymbolClientCapabilitiesSymbolKind
+		return zero
 	}
 	return w.SymbolKind
 }
 
 func (w *WorkspaceSymbolClientCapabilities) GetTagSupport() *WorkspaceSymbolClientCapabilitiesTagSupport {
 	if w == nil {
-		return *new(*WorkspaceSymbolClientCapabilitiesTagSupport)
+		var zero *WorkspaceSymbolClientCapabilitiesTagSupport
+		return zero
 	}
 	return w.TagSupport
 }
 
 func (w *WorkspaceSymbolClientCapabilities) GetResolveSupport() *WorkspaceSymbolClientCapabilitiesResolveSupport {
 	if w == nil {
-		return *new(*WorkspaceSymbolClientCapabilitiesResolveSupport)
+		var zero *WorkspaceSymbolClientCapabilitiesResolveSupport
+		return zero
 	}
 	return w.ResolveSupport
 }
@@ -538,7 +551,8 @@ type ExecuteCommandClientCapabilities struct {
 
 func (e *ExecuteCommandClientCapabilities) GetDynamicRegistration() bool {
 	if e == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return e.DynamicRegistration
 }
@@ -559,7 +573,8 @@ type SemanticTokensWorkspaceClientCapabilities struct {
 
 func (s *SemanticTokensWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.RefreshSupport
 }
@@ -580,7 +595,8 @@ type CodeLensWorkspaceClientCapabilities struct {
 
 func (c *CodeLensWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.RefreshSupport
 }
@@ -612,49 +628,56 @@ type FileOperationClientCapabilities struct {
 
 func (f *FileOperationClientCapabilities) GetDynamicRegistration() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.DynamicRegistration
 }
 
 func (f *FileOperationClientCapabilities) GetDidCreate() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.DidCreate
 }
 
 func (f *FileOperationClientCapabilities) GetWillCreate() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.WillCreate
 }
 
 func (f *FileOperationClientCapabilities) GetDidRename() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.DidRename
 }
 
 func (f *FileOperationClientCapabilities) GetWillRename() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.WillRename
 }
 
 func (f *FileOperationClientCapabilities) GetDidDelete() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.DidDelete
 }
 
 func (f *FileOperationClientCapabilities) GetWillDelete() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.WillDelete
 }
@@ -677,7 +700,8 @@ type InlineValueWorkspaceClientCapabilities struct {
 
 func (i *InlineValueWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.RefreshSupport
 }
@@ -700,7 +724,8 @@ type InlayHintWorkspaceClientCapabilities struct {
 
 func (i *InlayHintWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.RefreshSupport
 }
@@ -723,7 +748,8 @@ type DiagnosticWorkspaceClientCapabilities struct {
 
 func (d *DiagnosticWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.RefreshSupport
 }
@@ -750,7 +776,8 @@ type FoldingRangeWorkspaceClientCapabilities struct {
 
 func (f *FoldingRangeWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.RefreshSupport
 }
@@ -819,105 +846,120 @@ type WorkspaceClientCapabilities struct {
 
 func (w *WorkspaceClientCapabilities) GetApplyEdit() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.ApplyEdit
 }
 
 func (w *WorkspaceClientCapabilities) GetWorkspaceEdit() *WorkspaceEditClientCapabilities {
 	if w == nil {
-		return *new(*WorkspaceEditClientCapabilities)
+		var zero *WorkspaceEditClientCapabilities
+		return zero
 	}
 	return w.WorkspaceEdit
 }
 
 func (w *WorkspaceClientCapabilities) GetDidChangeConfiguration() *DidChangeConfigurationClientCapabilities {
 	if w == nil {
-		return *new(*DidChangeConfigurationClientCapabilities)
+		var zero *DidChangeConfigurationClientCapabilities
+		return zero
 	}
 	return w.DidChangeConfiguration
 }
 
 func (w *WorkspaceClientCapabilities) GetDidChangeWatchedFiles() *DidChangeWatchedFilesClientCapabilities {
 	if w == nil {
-		return *new(*DidChangeWatchedFilesClientCapabilities)
+		var zero *DidChangeWatchedFilesClientCapabilities
+		return zero
 	}
 	return w.DidChangeWatchedFiles
 }
 
 func (w *WorkspaceClientCapabilities) GetSymbol() *WorkspaceSymbolClientCapabilities {
 	if w == nil {
-		return *new(*WorkspaceSymbolClientCapabilities)
+		var zero *WorkspaceSymbolClientCapabilities
+		return zero
 	}
 	return w.Symbol
 }
 
 func (w *WorkspaceClientCapabilities) GetExecuteCommand() *ExecuteCommandClientCapabilities {
 	if w == nil {
-		return *new(*ExecuteCommandClientCapabilities)
+		var zero *ExecuteCommandClientCapabilities
+		return zero
 	}
 	return w.ExecuteCommand
 }
 
 func (w *WorkspaceClientCapabilities) GetWorkspaceFolders() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.WorkspaceFolders
 }
 
 func (w *WorkspaceClientCapabilities) GetConfiguration() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.Configuration
 }
 
 func (w *WorkspaceClientCapabilities) GetSemanticTokens() *SemanticTokensWorkspaceClientCapabilities {
 	if w == nil {
-		return *new(*SemanticTokensWorkspaceClientCapabilities)
+		var zero *SemanticTokensWorkspaceClientCapabilities
+		return zero
 	}
 	return w.SemanticTokens
 }
 
 func (w *WorkspaceClientCapabilities) GetCodeLens() *CodeLensWorkspaceClientCapabilities {
 	if w == nil {
-		return *new(*CodeLensWorkspaceClientCapabilities)
+		var zero *CodeLensWorkspaceClientCapabilities
+		return zero
 	}
 	return w.CodeLens
 }
 
 func (w *WorkspaceClientCapabilities) GetFileOperations() *FileOperationClientCapabilities {
 	if w == nil {
-		return *new(*FileOperationClientCapabilities)
+		var zero *FileOperationClientCapabilities
+		return zero
 	}
 	return w.FileOperations
 }
 
 func (w *WorkspaceClientCapabilities) GetInlineValue() *InlineValueWorkspaceClientCapabilities {
 	if w == nil {
-		return *new(*InlineValueWorkspaceClientCapabilities)
+		var zero *InlineValueWorkspaceClientCapabilities
+		return zero
 	}
 	return w.InlineValue
 }
 
 func (w *WorkspaceClientCapabilities) GetInlayHint() *InlayHintWorkspaceClientCapabilities {
 	if w == nil {
-		return *new(*InlayHintWorkspaceClientCapabilities)
+		var zero *InlayHintWorkspaceClientCapabilities
+		return zero
 	}
 	return w.InlayHint
 }
 
 func (w *WorkspaceClientCapabilities) GetDiagnostics() *DiagnosticWorkspaceClientCapabilities {
 	if w == nil {
-		return *new(*DiagnosticWorkspaceClientCapabilities)
+		var zero *DiagnosticWorkspaceClientCapabilities
+		return zero
 	}
 	return w.Diagnostics
 }
 
 func (w *WorkspaceClientCapabilities) GetFoldingRange() *FoldingRangeWorkspaceClientCapabilities {
 	if w == nil {
-		return *new(*FoldingRangeWorkspaceClientCapabilities)
+		var zero *FoldingRangeWorkspaceClientCapabilities
+		return zero
 	}
 	return w.FoldingRange
 }
@@ -938,28 +980,32 @@ type TextDocumentSyncClientCapabilities struct {
 
 func (t *TextDocumentSyncClientCapabilities) GetDynamicRegistration() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.DynamicRegistration
 }
 
 func (t *TextDocumentSyncClientCapabilities) GetWillSave() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.WillSave
 }
 
 func (t *TextDocumentSyncClientCapabilities) GetWillSaveWaitUntil() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.WillSaveWaitUntil
 }
 
 func (t *TextDocumentSyncClientCapabilities) GetDidSave() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.DidSave
 }
@@ -1412,42 +1458,48 @@ type CompletionClientCapabilities struct {
 
 func (c *CompletionClientCapabilities) GetDynamicRegistration() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.DynamicRegistration
 }
 
 func (c *CompletionClientCapabilities) GetCompletionItem() *CompletionClientCapabilitiesCompletionItem {
 	if c == nil {
-		return *new(*CompletionClientCapabilitiesCompletionItem)
+		var zero *CompletionClientCapabilitiesCompletionItem
+		return zero
 	}
 	return c.CompletionItem
 }
 
 func (c *CompletionClientCapabilities) GetCompletionItemKind() *CompletionClientCapabilitiesCompletionItemKind {
 	if c == nil {
-		return *new(*CompletionClientCapabilitiesCompletionItemKind)
+		var zero *CompletionClientCapabilitiesCompletionItemKind
+		return zero
 	}
 	return c.CompletionItemKind
 }
 
 func (c *CompletionClientCapabilities) GetInsertTextMode() InsertTextMode {
 	if c == nil {
-		return *new(InsertTextMode)
+		var zero InsertTextMode
+		return zero
 	}
 	return c.InsertTextMode
 }
 
 func (c *CompletionClientCapabilities) GetContextSupport() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.ContextSupport
 }
 
 func (c *CompletionClientCapabilities) GetCompletionList() *CompletionClientCapabilitiesCompletionList {
 	if c == nil {
-		return *new(*CompletionClientCapabilitiesCompletionList)
+		var zero *CompletionClientCapabilitiesCompletionList
+		return zero
 	}
 	return c.CompletionList
 }
@@ -1463,14 +1515,16 @@ type HoverClientCapabilities struct {
 
 func (h *HoverClientCapabilities) GetDynamicRegistration() bool {
 	if h == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return h.DynamicRegistration
 }
 
 func (h *HoverClientCapabilities) GetContentFormat() []MarkupKind {
 	if h == nil {
-		return *new([]MarkupKind)
+		var zero []MarkupKind
+		return zero
 	}
 	return h.ContentFormat
 }
@@ -1544,21 +1598,24 @@ type SignatureHelpClientCapabilities struct {
 
 func (s *SignatureHelpClientCapabilities) GetDynamicRegistration() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.DynamicRegistration
 }
 
 func (s *SignatureHelpClientCapabilities) GetSignatureInformation() *SignatureHelpClientCapabilitiesSignatureInformation {
 	if s == nil {
-		return *new(*SignatureHelpClientCapabilitiesSignatureInformation)
+		var zero *SignatureHelpClientCapabilitiesSignatureInformation
+		return zero
 	}
 	return s.SignatureInformation
 }
 
 func (s *SignatureHelpClientCapabilities) GetContextSupport() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.ContextSupport
 }
@@ -1577,14 +1634,16 @@ type DeclarationClientCapabilities struct {
 
 func (d *DeclarationClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
 
 func (d *DeclarationClientCapabilities) GetLinkSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.LinkSupport
 }
@@ -1603,14 +1662,16 @@ type DefinitionClientCapabilities struct {
 
 func (d *DefinitionClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
 
 func (d *DefinitionClientCapabilities) GetLinkSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.LinkSupport
 }
@@ -1631,14 +1692,16 @@ type TypeDefinitionClientCapabilities struct {
 
 func (t *TypeDefinitionClientCapabilities) GetDynamicRegistration() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.DynamicRegistration
 }
 
 func (t *TypeDefinitionClientCapabilities) GetLinkSupport() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.LinkSupport
 }
@@ -1659,14 +1722,16 @@ type ImplementationClientCapabilities struct {
 
 func (i *ImplementationClientCapabilities) GetDynamicRegistration() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.DynamicRegistration
 }
 
 func (i *ImplementationClientCapabilities) GetLinkSupport() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.LinkSupport
 }
@@ -1681,7 +1746,8 @@ type ReferenceClientCapabilities struct {
 
 func (r *ReferenceClientCapabilities) GetDynamicRegistration() bool {
 	if r == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return r.DynamicRegistration
 }
@@ -1696,7 +1762,8 @@ type DocumentHighlightClientCapabilities struct {
 
 func (d *DocumentHighlightClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
@@ -1758,35 +1825,40 @@ type DocumentSymbolClientCapabilities struct {
 
 func (d *DocumentSymbolClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
 
 func (d *DocumentSymbolClientCapabilities) GetSymbolKind() *DocumentSymbolClientCapabilitiesSymbolKind {
 	if d == nil {
-		return *new(*DocumentSymbolClientCapabilitiesSymbolKind)
+		var zero *DocumentSymbolClientCapabilitiesSymbolKind
+		return zero
 	}
 	return d.SymbolKind
 }
 
 func (d *DocumentSymbolClientCapabilities) GetHierarchicalDocumentSymbolSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.HierarchicalDocumentSymbolSupport
 }
 
 func (d *DocumentSymbolClientCapabilities) GetTagSupport() *DocumentSymbolClientCapabilitiesTagSupport {
 	if d == nil {
-		return *new(*DocumentSymbolClientCapabilitiesTagSupport)
+		var zero *DocumentSymbolClientCapabilitiesTagSupport
+		return zero
 	}
 	return d.TagSupport
 }
 
 func (d *DocumentSymbolClientCapabilities) GetLabelSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.LabelSupport
 }
@@ -1931,49 +2003,56 @@ type CodeActionClientCapabilities struct {
 
 func (c *CodeActionClientCapabilities) GetDynamicRegistration() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.DynamicRegistration
 }
 
 func (c *CodeActionClientCapabilities) GetCodeActionLiteralSupport() *CodeActionClientCapabilitiesCodeActionLiteralSupport {
 	if c == nil {
-		return *new(*CodeActionClientCapabilitiesCodeActionLiteralSupport)
+		var zero *CodeActionClientCapabilitiesCodeActionLiteralSupport
+		return zero
 	}
 	return c.CodeActionLiteralSupport
 }
 
 func (c *CodeActionClientCapabilities) GetIsPreferredSupport() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.IsPreferredSupport
 }
 
 func (c *CodeActionClientCapabilities) GetDisabledSupport() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.DisabledSupport
 }
 
 func (c *CodeActionClientCapabilities) GetDataSupport() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.DataSupport
 }
 
 func (c *CodeActionClientCapabilities) GetResolveSupport() *CodeActionClientCapabilitiesResolveSupport {
 	if c == nil {
-		return *new(*CodeActionClientCapabilitiesResolveSupport)
+		var zero *CodeActionClientCapabilitiesResolveSupport
+		return zero
 	}
 	return c.ResolveSupport
 }
 
 func (c *CodeActionClientCapabilities) GetHonorsChangeAnnotations() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.HonorsChangeAnnotations
 }
@@ -1988,7 +2067,8 @@ type CodeLensClientCapabilities struct {
 
 func (c *CodeLensClientCapabilities) GetDynamicRegistration() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.DynamicRegistration
 }
@@ -2007,14 +2087,16 @@ type DocumentLinkClientCapabilities struct {
 
 func (d *DocumentLinkClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
 
 func (d *DocumentLinkClientCapabilities) GetTooltipSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.TooltipSupport
 }
@@ -2029,7 +2111,8 @@ type DocumentColorClientCapabilities struct {
 
 func (d *DocumentColorClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
@@ -2044,7 +2127,8 @@ type DocumentFormattingClientCapabilities struct {
 
 func (d *DocumentFormattingClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
@@ -2064,14 +2148,16 @@ type DocumentRangeFormattingClientCapabilities struct {
 
 func (d *DocumentRangeFormattingClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
 
 func (d *DocumentRangeFormattingClientCapabilities) GetRangesSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.RangesSupport
 }
@@ -2086,7 +2172,8 @@ type DocumentOnTypeFormattingClientCapabilities struct {
 
 func (d *DocumentOnTypeFormattingClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
@@ -2157,28 +2244,32 @@ type RenameClientCapabilities struct {
 
 func (r *RenameClientCapabilities) GetDynamicRegistration() bool {
 	if r == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return r.DynamicRegistration
 }
 
 func (r *RenameClientCapabilities) GetPrepareSupport() bool {
 	if r == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return r.PrepareSupport
 }
 
 func (r *RenameClientCapabilities) GetPrepareSupportDefaultBehavior() PrepareSupportDefaultBehavior {
 	if r == nil {
-		return *new(PrepareSupportDefaultBehavior)
+		var zero PrepareSupportDefaultBehavior
+		return zero
 	}
 	return r.PrepareSupportDefaultBehavior
 }
 
 func (r *RenameClientCapabilities) GetHonorsChangeAnnotations() bool {
 	if r == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return r.HonorsChangeAnnotations
 }
@@ -2254,35 +2345,40 @@ type FoldingRangeClientCapabilities struct {
 
 func (f *FoldingRangeClientCapabilities) GetDynamicRegistration() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.DynamicRegistration
 }
 
 func (f *FoldingRangeClientCapabilities) GetRangeLimit() int {
 	if f == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return f.RangeLimit
 }
 
 func (f *FoldingRangeClientCapabilities) GetLineFoldingOnly() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.LineFoldingOnly
 }
 
 func (f *FoldingRangeClientCapabilities) GetFoldingRangeKind() *FoldingRangeClientCapabilitiesFoldingRangeKind {
 	if f == nil {
-		return *new(*FoldingRangeClientCapabilitiesFoldingRangeKind)
+		var zero *FoldingRangeClientCapabilitiesFoldingRangeKind
+		return zero
 	}
 	return f.FoldingRangeKind
 }
 
 func (f *FoldingRangeClientCapabilities) GetFoldingRange() *FoldingRangeClientCapabilitiesFoldingRange {
 	if f == nil {
-		return *new(*FoldingRangeClientCapabilitiesFoldingRange)
+		var zero *FoldingRangeClientCapabilitiesFoldingRange
+		return zero
 	}
 	return f.FoldingRange
 }
@@ -2297,7 +2393,8 @@ type SelectionRangeClientCapabilities struct {
 
 func (s *SelectionRangeClientCapabilities) GetDynamicRegistration() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.DynamicRegistration
 }
@@ -2393,35 +2490,40 @@ type PublishDiagnosticsClientCapabilities struct {
 
 func (p *PublishDiagnosticsClientCapabilities) GetRelatedInformation() bool {
 	if p == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return p.RelatedInformation
 }
 
 func (p *PublishDiagnosticsClientCapabilities) GetTagSupport() *PublishDiagnosticsClientCapabilitiesTagSupport {
 	if p == nil {
-		return *new(*PublishDiagnosticsClientCapabilitiesTagSupport)
+		var zero *PublishDiagnosticsClientCapabilitiesTagSupport
+		return zero
 	}
 	return p.TagSupport
 }
 
 func (p *PublishDiagnosticsClientCapabilities) GetVersionSupport() bool {
 	if p == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return p.VersionSupport
 }
 
 func (p *PublishDiagnosticsClientCapabilities) GetCodeDescriptionSupport() bool {
 	if p == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return p.CodeDescriptionSupport
 }
 
 func (p *PublishDiagnosticsClientCapabilities) GetDataSupport() bool {
 	if p == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return p.DataSupport
 }
@@ -2438,7 +2540,8 @@ type CallHierarchyClientCapabilities struct {
 
 func (c *CallHierarchyClientCapabilities) GetDynamicRegistration() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.DynamicRegistration
 }
@@ -2657,63 +2760,72 @@ type SemanticTokensClientCapabilities struct {
 
 func (s *SemanticTokensClientCapabilities) GetDynamicRegistration() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.DynamicRegistration
 }
 
 func (s *SemanticTokensClientCapabilities) GetRequests() *SemanticTokensClientCapabilitiesRequests {
 	if s == nil {
-		return *new(*SemanticTokensClientCapabilitiesRequests)
+		var zero *SemanticTokensClientCapabilitiesRequests
+		return zero
 	}
 	return s.Requests
 }
 
 func (s *SemanticTokensClientCapabilities) GetTokenTypes() []string {
 	if s == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return s.TokenTypes
 }
 
 func (s *SemanticTokensClientCapabilities) GetTokenModifiers() []string {
 	if s == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return s.TokenModifiers
 }
 
 func (s *SemanticTokensClientCapabilities) GetFormats() []TokenFormat {
 	if s == nil {
-		return *new([]TokenFormat)
+		var zero []TokenFormat
+		return zero
 	}
 	return s.Formats
 }
 
 func (s *SemanticTokensClientCapabilities) GetOverlappingTokenSupport() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.OverlappingTokenSupport
 }
 
 func (s *SemanticTokensClientCapabilities) GetMultilineTokenSupport() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.MultilineTokenSupport
 }
 
 func (s *SemanticTokensClientCapabilities) GetServerCancelSupport() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.ServerCancelSupport
 }
 
 func (s *SemanticTokensClientCapabilities) GetAugmentsSyntaxTokens() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.AugmentsSyntaxTokens
 }
@@ -2732,7 +2844,8 @@ type LinkedEditingRangeClientCapabilities struct {
 
 func (l *LinkedEditingRangeClientCapabilities) GetDynamicRegistration() bool {
 	if l == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return l.DynamicRegistration
 }
@@ -2751,7 +2864,8 @@ type MonikerClientCapabilities struct {
 
 func (m *MonikerClientCapabilities) GetDynamicRegistration() bool {
 	if m == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return m.DynamicRegistration
 }
@@ -2768,7 +2882,8 @@ type TypeHierarchyClientCapabilities struct {
 
 func (t *TypeHierarchyClientCapabilities) GetDynamicRegistration() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.DynamicRegistration
 }
@@ -2785,7 +2900,8 @@ type InlineValueClientCapabilities struct {
 
 func (i *InlineValueClientCapabilities) GetDynamicRegistration() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.DynamicRegistration
 }
@@ -2817,14 +2933,16 @@ type InlayHintClientCapabilities struct {
 
 func (i *InlayHintClientCapabilities) GetDynamicRegistration() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.DynamicRegistration
 }
 
 func (i *InlayHintClientCapabilities) GetResolveSupport() *InlayHintClientCapabilitiesResolveSupport {
 	if i == nil {
-		return *new(*InlayHintClientCapabilitiesResolveSupport)
+		var zero *InlayHintClientCapabilitiesResolveSupport
+		return zero
 	}
 	return i.ResolveSupport
 }
@@ -2845,14 +2963,16 @@ type DiagnosticClientCapabilities struct {
 
 func (d *DiagnosticClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.DynamicRegistration
 }
 
 func (d *DiagnosticClientCapabilities) GetRelatedDocumentSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.RelatedDocumentSupport
 }
@@ -2870,7 +2990,8 @@ type InlineCompletionClientCapabilities struct {
 
 func (i *InlineCompletionClientCapabilities) GetDynamicRegistration() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.DynamicRegistration
 }
@@ -2977,217 +3098,248 @@ type TextDocumentClientCapabilities struct {
 
 func (t *TextDocumentClientCapabilities) GetSynchronization() *TextDocumentSyncClientCapabilities {
 	if t == nil {
-		return *new(*TextDocumentSyncClientCapabilities)
+		var zero *TextDocumentSyncClientCapabilities
+		return zero
 	}
 	return t.Synchronization
 }
 
 func (t *TextDocumentClientCapabilities) GetCompletion() *CompletionClientCapabilities {
 	if t == nil {
-		return *new(*CompletionClientCapabilities)
+		var zero *CompletionClientCapabilities
+		return zero
 	}
 	return t.Completion
 }
 
 func (t *TextDocumentClientCapabilities) GetHover() *HoverClientCapabilities {
 	if t == nil {
-		return *new(*HoverClientCapabilities)
+		var zero *HoverClientCapabilities
+		return zero
 	}
 	return t.Hover
 }
 
 func (t *TextDocumentClientCapabilities) GetSignatureHelp() *SignatureHelpClientCapabilities {
 	if t == nil {
-		return *new(*SignatureHelpClientCapabilities)
+		var zero *SignatureHelpClientCapabilities
+		return zero
 	}
 	return t.SignatureHelp
 }
 
 func (t *TextDocumentClientCapabilities) GetDeclaration() *DeclarationClientCapabilities {
 	if t == nil {
-		return *new(*DeclarationClientCapabilities)
+		var zero *DeclarationClientCapabilities
+		return zero
 	}
 	return t.Declaration
 }
 
 func (t *TextDocumentClientCapabilities) GetDefinition() *DefinitionClientCapabilities {
 	if t == nil {
-		return *new(*DefinitionClientCapabilities)
+		var zero *DefinitionClientCapabilities
+		return zero
 	}
 	return t.Definition
 }
 
 func (t *TextDocumentClientCapabilities) GetTypeDefinition() *TypeDefinitionClientCapabilities {
 	if t == nil {
-		return *new(*TypeDefinitionClientCapabilities)
+		var zero *TypeDefinitionClientCapabilities
+		return zero
 	}
 	return t.TypeDefinition
 }
 
 func (t *TextDocumentClientCapabilities) GetImplementation() *ImplementationClientCapabilities {
 	if t == nil {
-		return *new(*ImplementationClientCapabilities)
+		var zero *ImplementationClientCapabilities
+		return zero
 	}
 	return t.Implementation
 }
 
 func (t *TextDocumentClientCapabilities) GetReferences() *ReferenceClientCapabilities {
 	if t == nil {
-		return *new(*ReferenceClientCapabilities)
+		var zero *ReferenceClientCapabilities
+		return zero
 	}
 	return t.References
 }
 
 func (t *TextDocumentClientCapabilities) GetDocumentHighlight() *DocumentHighlightClientCapabilities {
 	if t == nil {
-		return *new(*DocumentHighlightClientCapabilities)
+		var zero *DocumentHighlightClientCapabilities
+		return zero
 	}
 	return t.DocumentHighlight
 }
 
 func (t *TextDocumentClientCapabilities) GetDocumentSymbol() *DocumentSymbolClientCapabilities {
 	if t == nil {
-		return *new(*DocumentSymbolClientCapabilities)
+		var zero *DocumentSymbolClientCapabilities
+		return zero
 	}
 	return t.DocumentSymbol
 }
 
 func (t *TextDocumentClientCapabilities) GetCodeAction() *CodeActionClientCapabilities {
 	if t == nil {
-		return *new(*CodeActionClientCapabilities)
+		var zero *CodeActionClientCapabilities
+		return zero
 	}
 	return t.CodeAction
 }
 
 func (t *TextDocumentClientCapabilities) GetCodeLens() *CodeLensClientCapabilities {
 	if t == nil {
-		return *new(*CodeLensClientCapabilities)
+		var zero *CodeLensClientCapabilities
+		return zero
 	}
 	return t.CodeLens
 }
 
 func (t *TextDocumentClientCapabilities) GetDocumentLink() *DocumentLinkClientCapabilities {
 	if t == nil {
-		return *new(*DocumentLinkClientCapabilities)
+		var zero *DocumentLinkClientCapabilities
+		return zero
 	}
 	return t.DocumentLink
 }
 
 func (t *TextDocumentClientCapabilities) GetColorProvider() *DocumentColorClientCapabilities {
 	if t == nil {
-		return *new(*DocumentColorClientCapabilities)
+		var zero *DocumentColorClientCapabilities
+		return zero
 	}
 	return t.ColorProvider
 }
 
 func (t *TextDocumentClientCapabilities) GetFormatting() *DocumentFormattingClientCapabilities {
 	if t == nil {
-		return *new(*DocumentFormattingClientCapabilities)
+		var zero *DocumentFormattingClientCapabilities
+		return zero
 	}
 	return t.Formatting
 }
 
 func (t *TextDocumentClientCapabilities) GetRangeFormatting() *DocumentRangeFormattingClientCapabilities {
 	if t == nil {
-		return *new(*DocumentRangeFormattingClientCapabilities)
+		var zero *DocumentRangeFormattingClientCapabilities
+		return zero
 	}
 	return t.RangeFormatting
 }
 
 func (t *TextDocumentClientCapabilities) GetOnTypeFormatting() *DocumentOnTypeFormattingClientCapabilities {
 	if t == nil {
-		return *new(*DocumentOnTypeFormattingClientCapabilities)
+		var zero *DocumentOnTypeFormattingClientCapabilities
+		return zero
 	}
 	return t.OnTypeFormatting
 }
 
 func (t *TextDocumentClientCapabilities) GetRename() *RenameClientCapabilities {
 	if t == nil {
-		return *new(*RenameClientCapabilities)
+		var zero *RenameClientCapabilities
+		return zero
 	}
 	return t.Rename
 }
 
 func (t *TextDocumentClientCapabilities) GetFoldingRange() *FoldingRangeClientCapabilities {
 	if t == nil {
-		return *new(*FoldingRangeClientCapabilities)
+		var zero *FoldingRangeClientCapabilities
+		return zero
 	}
 	return t.FoldingRange
 }
 
 func (t *TextDocumentClientCapabilities) GetSelectionRange() *SelectionRangeClientCapabilities {
 	if t == nil {
-		return *new(*SelectionRangeClientCapabilities)
+		var zero *SelectionRangeClientCapabilities
+		return zero
 	}
 	return t.SelectionRange
 }
 
 func (t *TextDocumentClientCapabilities) GetPublishDiagnostics() *PublishDiagnosticsClientCapabilities {
 	if t == nil {
-		return *new(*PublishDiagnosticsClientCapabilities)
+		var zero *PublishDiagnosticsClientCapabilities
+		return zero
 	}
 	return t.PublishDiagnostics
 }
 
 func (t *TextDocumentClientCapabilities) GetCallHierarchy() *CallHierarchyClientCapabilities {
 	if t == nil {
-		return *new(*CallHierarchyClientCapabilities)
+		var zero *CallHierarchyClientCapabilities
+		return zero
 	}
 	return t.CallHierarchy
 }
 
 func (t *TextDocumentClientCapabilities) GetSemanticTokens() *SemanticTokensClientCapabilities {
 	if t == nil {
-		return *new(*SemanticTokensClientCapabilities)
+		var zero *SemanticTokensClientCapabilities
+		return zero
 	}
 	return t.SemanticTokens
 }
 
 func (t *TextDocumentClientCapabilities) GetLinkedEditingRange() *LinkedEditingRangeClientCapabilities {
 	if t == nil {
-		return *new(*LinkedEditingRangeClientCapabilities)
+		var zero *LinkedEditingRangeClientCapabilities
+		return zero
 	}
 	return t.LinkedEditingRange
 }
 
 func (t *TextDocumentClientCapabilities) GetMoniker() *MonikerClientCapabilities {
 	if t == nil {
-		return *new(*MonikerClientCapabilities)
+		var zero *MonikerClientCapabilities
+		return zero
 	}
 	return t.Moniker
 }
 
 func (t *TextDocumentClientCapabilities) GetTypeHierarchy() *TypeHierarchyClientCapabilities {
 	if t == nil {
-		return *new(*TypeHierarchyClientCapabilities)
+		var zero *TypeHierarchyClientCapabilities
+		return zero
 	}
 	return t.TypeHierarchy
 }
 
 func (t *TextDocumentClientCapabilities) GetInlineValue() *InlineValueClientCapabilities {
 	if t == nil {
-		return *new(*InlineValueClientCapabilities)
+		var zero *InlineValueClientCapabilities
+		return zero
 	}
 	return t.InlineValue
 }
 
 func (t *TextDocumentClientCapabilities) GetInlayHint() *InlayHintClientCapabilities {
 	if t == nil {
-		return *new(*InlayHintClientCapabilities)
+		var zero *InlayHintClientCapabilities
+		return zero
 	}
 	return t.InlayHint
 }
 
 func (t *TextDocumentClientCapabilities) GetDiagnostic() *DiagnosticClientCapabilities {
 	if t == nil {
-		return *new(*DiagnosticClientCapabilities)
+		var zero *DiagnosticClientCapabilities
+		return zero
 	}
 	return t.Diagnostic
 }
 
 func (t *TextDocumentClientCapabilities) GetInlineCompletion() *InlineCompletionClientCapabilities {
 	if t == nil {
-		return *new(*InlineCompletionClientCapabilities)
+		var zero *InlineCompletionClientCapabilities
+		return zero
 	}
 	return t.InlineCompletion
 }
@@ -3209,14 +3361,16 @@ type NotebookDocumentSyncClientCapabilities struct {
 
 func (n *NotebookDocumentSyncClientCapabilities) GetDynamicRegistration() bool {
 	if n == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return n.DynamicRegistration
 }
 
 func (n *NotebookDocumentSyncClientCapabilities) GetExecutionSummarySupport() bool {
 	if n == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return n.ExecutionSummarySupport
 }
@@ -3235,7 +3389,8 @@ type NotebookDocumentClientCapabilities struct {
 
 func (n *NotebookDocumentClientCapabilities) GetSynchronization() *NotebookDocumentSyncClientCapabilities {
 	if n == nil {
-		return *new(*NotebookDocumentSyncClientCapabilities)
+		var zero *NotebookDocumentSyncClientCapabilities
+		return zero
 	}
 	return n.Synchronization
 }
@@ -3264,7 +3419,8 @@ type ShowMessageRequestClientCapabilities struct {
 
 func (s *ShowMessageRequestClientCapabilities) GetMessageActionItem() *ShowMessageRequestClientCapabilitiesMessageActionItem {
 	if s == nil {
-		return *new(*ShowMessageRequestClientCapabilitiesMessageActionItem)
+		var zero *ShowMessageRequestClientCapabilitiesMessageActionItem
+		return zero
 	}
 	return s.MessageActionItem
 }
@@ -3282,7 +3438,8 @@ type ShowDocumentClientCapabilities struct {
 
 func (s *ShowDocumentClientCapabilities) GetSupport() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.Support
 }
@@ -3311,21 +3468,24 @@ type WindowClientCapabilities struct {
 
 func (w *WindowClientCapabilities) GetWorkDoneProgress() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.WorkDoneProgress
 }
 
 func (w *WindowClientCapabilities) GetShowMessage() *ShowMessageRequestClientCapabilities {
 	if w == nil {
-		return *new(*ShowMessageRequestClientCapabilities)
+		var zero *ShowMessageRequestClientCapabilities
+		return zero
 	}
 	return w.ShowMessage
 }
 
 func (w *WindowClientCapabilities) GetShowDocument() *ShowDocumentClientCapabilities {
 	if w == nil {
-		return *new(*ShowDocumentClientCapabilities)
+		var zero *ShowDocumentClientCapabilities
+		return zero
 	}
 	return w.ShowDocument
 }
@@ -3367,14 +3527,16 @@ type RegularExpressionsClientCapabilities struct {
 
 func (r *RegularExpressionsClientCapabilities) GetEngine() string {
 	if r == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return r.Engine
 }
 
 func (r *RegularExpressionsClientCapabilities) GetVersion() string {
 	if r == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return r.Version
 }
@@ -3398,21 +3560,24 @@ type MarkdownClientCapabilities struct {
 
 func (m *MarkdownClientCapabilities) GetParser() string {
 	if m == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return m.Parser
 }
 
 func (m *MarkdownClientCapabilities) GetVersion() string {
 	if m == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return m.Version
 }
 
 func (m *MarkdownClientCapabilities) GetAllowedTags() []string {
 	if m == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return m.AllowedTags
 }
@@ -3484,28 +3649,32 @@ type GeneralClientCapabilities struct {
 
 func (g *GeneralClientCapabilities) GetStaleRequestSupport() *GeneralClientCapabilitiesStaleRequestSupport {
 	if g == nil {
-		return *new(*GeneralClientCapabilitiesStaleRequestSupport)
+		var zero *GeneralClientCapabilitiesStaleRequestSupport
+		return zero
 	}
 	return g.StaleRequestSupport
 }
 
 func (g *GeneralClientCapabilities) GetRegularExpressions() *RegularExpressionsClientCapabilities {
 	if g == nil {
-		return *new(*RegularExpressionsClientCapabilities)
+		var zero *RegularExpressionsClientCapabilities
+		return zero
 	}
 	return g.RegularExpressions
 }
 
 func (g *GeneralClientCapabilities) GetMarkdown() *MarkdownClientCapabilities {
 	if g == nil {
-		return *new(*MarkdownClientCapabilities)
+		var zero *MarkdownClientCapabilities
+		return zero
 	}
 	return g.Markdown
 }
 
 func (g *GeneralClientCapabilities) GetPositionEncodings() []PositionEncodingKind {
 	if g == nil {
-		return *new([]PositionEncodingKind)
+		var zero []PositionEncodingKind
+		return zero
 	}
 	return g.PositionEncodings
 }
@@ -3647,42 +3816,48 @@ type ClientCapabilities struct {
 
 func (c *ClientCapabilities) GetWorkspace() *WorkspaceClientCapabilities {
 	if c == nil {
-		return *new(*WorkspaceClientCapabilities)
+		var zero *WorkspaceClientCapabilities
+		return zero
 	}
 	return c.Workspace
 }
 
 func (c *ClientCapabilities) GetTextDocument() *TextDocumentClientCapabilities {
 	if c == nil {
-		return *new(*TextDocumentClientCapabilities)
+		var zero *TextDocumentClientCapabilities
+		return zero
 	}
 	return c.TextDocument
 }
 
 func (c *ClientCapabilities) GetNotebookDocument() *NotebookDocumentClientCapabilities {
 	if c == nil {
-		return *new(*NotebookDocumentClientCapabilities)
+		var zero *NotebookDocumentClientCapabilities
+		return zero
 	}
 	return c.NotebookDocument
 }
 
 func (c *ClientCapabilities) GetWindow() *WindowClientCapabilities {
 	if c == nil {
-		return *new(*WindowClientCapabilities)
+		var zero *WindowClientCapabilities
+		return zero
 	}
 	return c.Window
 }
 
 func (c *ClientCapabilities) GetGeneral() *GeneralClientCapabilities {
 	if c == nil {
-		return *new(*GeneralClientCapabilities)
+		var zero *GeneralClientCapabilities
+		return zero
 	}
 	return c.General
 }
 
 func (c *ClientCapabilities) GetExperimental() LSPAny {
 	if c == nil {
-		return *new(LSPAny)
+		var zero LSPAny
+		return zero
 	}
 	return c.Experimental
 }
@@ -3775,56 +3950,64 @@ type XInitializeParams struct {
 
 func (x *XInitializeParams) GetProcessId() int {
 	if x == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return x.ProcessId
 }
 
 func (x *XInitializeParams) GetClientInfo() *XInitializeParamsClientInfo {
 	if x == nil {
-		return *new(*XInitializeParamsClientInfo)
+		var zero *XInitializeParamsClientInfo
+		return zero
 	}
 	return x.ClientInfo
 }
 
 func (x *XInitializeParams) GetLocale() string {
 	if x == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return x.Locale
 }
 
 func (x *XInitializeParams) GetRootPath() string {
 	if x == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return x.RootPath
 }
 
 func (x *XInitializeParams) GetRootUri() string {
 	if x == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return x.RootUri
 }
 
 func (x *XInitializeParams) GetCapabilities() *ClientCapabilities {
 	if x == nil {
-		return *new(*ClientCapabilities)
+		var zero *ClientCapabilities
+		return zero
 	}
 	return x.Capabilities
 }
 
 func (x *XInitializeParams) GetInitializationOptions() LSPAny {
 	if x == nil {
-		return *new(LSPAny)
+		var zero LSPAny
+		return zero
 	}
 	return x.InitializationOptions
 }
 
 func (x *XInitializeParams) GetTrace() TraceValues {
 	if x == nil {
-		return *new(TraceValues)
+		var zero TraceValues
+		return zero
 	}
 	return x.Trace
 }
@@ -3842,14 +4025,16 @@ type WorkspaceFolder struct {
 
 func (w *WorkspaceFolder) GetUri() string {
 	if w == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return w.Uri
 }
 
 func (w *WorkspaceFolder) GetName() string {
 	if w == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return w.Name
 }
@@ -3868,7 +4053,8 @@ type WorkspaceFoldersInitializeParams struct {
 
 func (w *WorkspaceFoldersInitializeParams) GetWorkspaceFolders() []*WorkspaceFolder {
 	if w == nil {
-		return *new([]*WorkspaceFolder)
+		var zero []*WorkspaceFolder
+		return zero
 	}
 	return w.WorkspaceFolders
 }
@@ -3938,7 +4124,8 @@ type SaveOptions struct {
 
 func (s *SaveOptions) GetIncludeText() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.IncludeText
 }
@@ -4007,35 +4194,40 @@ type TextDocumentSyncOptions struct {
 
 func (t *TextDocumentSyncOptions) GetOpenClose() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.OpenClose
 }
 
 func (t *TextDocumentSyncOptions) GetChange() TextDocumentSyncKind {
 	if t == nil {
-		return *new(TextDocumentSyncKind)
+		var zero TextDocumentSyncKind
+		return zero
 	}
 	return t.Change
 }
 
 func (t *TextDocumentSyncOptions) GetWillSave() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.WillSave
 }
 
 func (t *TextDocumentSyncOptions) GetWillSaveWaitUntil() bool {
 	if t == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return t.WillSaveWaitUntil
 }
 
 func (t *TextDocumentSyncOptions) GetSave() *BooleanOrSaveOptions {
 	if t == nil {
-		return *new(*BooleanOrSaveOptions)
+		var zero *BooleanOrSaveOptions
+		return zero
 	}
 	return t.Save
 }
@@ -4417,14 +4609,16 @@ type NotebookDocumentSyncOptions struct {
 
 func (n *NotebookDocumentSyncOptions) GetNotebookSelector() []*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 {
 	if n == nil {
-		return *new([]*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2)
+		var zero []*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2
+		return zero
 	}
 	return n.NotebookSelector
 }
 
 func (n *NotebookDocumentSyncOptions) GetSave() bool {
 	if n == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return n.Save
 }
@@ -4441,7 +4635,8 @@ type StaticRegistrationOptions struct {
 
 func (s *StaticRegistrationOptions) GetId() string {
 	if s == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return s.Id
 }
@@ -4508,7 +4703,8 @@ type WorkDoneProgressOptions struct {
 
 func (w *WorkDoneProgressOptions) GetWorkDoneProgress() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.WorkDoneProgress
 }
@@ -4564,28 +4760,32 @@ type CompletionOptions struct {
 
 func (c *CompletionOptions) GetTriggerCharacters() []string {
 	if c == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return c.TriggerCharacters
 }
 
 func (c *CompletionOptions) GetAllCommitCharacters() []string {
 	if c == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return c.AllCommitCharacters
 }
 
 func (c *CompletionOptions) GetResolveProvider() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.ResolveProvider
 }
 
 func (c *CompletionOptions) GetCompletionItem() *CompletionOptionsCompletionItem {
 	if c == nil {
-		return *new(*CompletionOptionsCompletionItem)
+		var zero *CompletionOptionsCompletionItem
+		return zero
 	}
 	return c.CompletionItem
 }
@@ -4658,14 +4858,16 @@ type SignatureHelpOptions struct {
 
 func (s *SignatureHelpOptions) GetTriggerCharacters() []string {
 	if s == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return s.TriggerCharacters
 }
 
 func (s *SignatureHelpOptions) GetRetriggerCharacters() []string {
 	if s == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return s.RetriggerCharacters
 }
@@ -4860,14 +5062,16 @@ type NotebookCellTextDocumentFilter struct {
 
 func (n *NotebookCellTextDocumentFilter) GetNotebook() *StringOrNotebookDocumentFilter {
 	if n == nil {
-		return *new(*StringOrNotebookDocumentFilter)
+		var zero *StringOrNotebookDocumentFilter
+		return zero
 	}
 	return n.Notebook
 }
 
 func (n *NotebookCellTextDocumentFilter) GetLanguage() string {
 	if n == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return n.Language
 }
@@ -4943,7 +5147,8 @@ type TextDocumentRegistrationOptions struct {
 
 func (t *TextDocumentRegistrationOptions) GetDocumentSelector() DocumentSelector {
 	if t == nil {
-		return *new(DocumentSelector)
+		var zero DocumentSelector
+		return zero
 	}
 	return t.DocumentSelector
 }
@@ -5301,7 +5506,8 @@ type DocumentSymbolOptions struct {
 
 func (d *DocumentSymbolOptions) GetLabel() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.Label
 }
@@ -5368,14 +5574,16 @@ type CodeActionOptions struct {
 
 func (c *CodeActionOptions) GetCodeActionKinds() []CodeActionKind {
 	if c == nil {
-		return *new([]CodeActionKind)
+		var zero []CodeActionKind
+		return zero
 	}
 	return c.CodeActionKinds
 }
 
 func (c *CodeActionOptions) GetResolveProvider() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.ResolveProvider
 }
@@ -5434,7 +5642,8 @@ type CodeLensOptions struct {
 
 func (c *CodeLensOptions) GetResolveProvider() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.ResolveProvider
 }
@@ -5450,7 +5659,8 @@ type DocumentLinkOptions struct {
 
 func (d *DocumentLinkOptions) GetResolveProvider() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.ResolveProvider
 }
@@ -5534,7 +5744,8 @@ type WorkspaceSymbolOptions struct {
 
 func (w *WorkspaceSymbolOptions) GetResolveProvider() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.ResolveProvider
 }
@@ -5646,7 +5857,8 @@ type DocumentRangeFormattingOptions struct {
 
 func (d *DocumentRangeFormattingOptions) GetRangesSupport() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.RangesSupport
 }
@@ -5706,14 +5918,16 @@ type DocumentOnTypeFormattingOptions struct {
 
 func (d *DocumentOnTypeFormattingOptions) GetFirstTriggerCharacter() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.FirstTriggerCharacter
 }
 
 func (d *DocumentOnTypeFormattingOptions) GetMoreTriggerCharacter() []string {
 	if d == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return d.MoreTriggerCharacter
 }
@@ -5731,7 +5945,8 @@ type RenameOptions struct {
 
 func (r *RenameOptions) GetPrepareProvider() bool {
 	if r == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return r.PrepareProvider
 }
@@ -5919,7 +6134,8 @@ type ExecuteCommandOptions struct {
 
 func (e *ExecuteCommandOptions) GetCommands() []string {
 	if e == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return e.Commands
 }
@@ -6074,14 +6290,16 @@ type SemanticTokensLegend struct {
 
 func (s *SemanticTokensLegend) GetTokenTypes() []string {
 	if s == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return s.TokenTypes
 }
 
 func (s *SemanticTokensLegend) GetTokenModifiers() []string {
 	if s == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return s.TokenModifiers
 }
@@ -6203,21 +6421,24 @@ type SemanticTokensOptions struct {
 
 func (s *SemanticTokensOptions) GetLegend() *SemanticTokensLegend {
 	if s == nil {
-		return *new(*SemanticTokensLegend)
+		var zero *SemanticTokensLegend
+		return zero
 	}
 	return s.Legend
 }
 
 func (s *SemanticTokensOptions) GetRange() *BooleanOrSemanticTokensOptionsRangeOr2 {
 	if s == nil {
-		return *new(*BooleanOrSemanticTokensOptionsRangeOr2)
+		var zero *BooleanOrSemanticTokensOptionsRangeOr2
+		return zero
 	}
 	return s.Range
 }
 
 func (s *SemanticTokensOptions) GetFull() *BooleanOrSemanticTokensOptionsFullOr2 {
 	if s == nil {
-		return *new(*BooleanOrSemanticTokensOptionsFullOr2)
+		var zero *BooleanOrSemanticTokensOptionsFullOr2
+		return zero
 	}
 	return s.Full
 }
@@ -6496,7 +6717,8 @@ type InlayHintOptions struct {
 
 func (i *InlayHintOptions) GetResolveProvider() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.ResolveProvider
 }
@@ -6585,21 +6807,24 @@ type DiagnosticOptions struct {
 
 func (d *DiagnosticOptions) GetIdentifier() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.Identifier
 }
 
 func (d *DiagnosticOptions) GetInterFileDependencies() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.InterFileDependencies
 }
 
 func (d *DiagnosticOptions) GetWorkspaceDiagnostics() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.WorkspaceDiagnostics
 }
@@ -6770,14 +6995,16 @@ type WorkspaceFoldersServerCapabilities struct {
 
 func (w *WorkspaceFoldersServerCapabilities) GetSupported() bool {
 	if w == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return w.Supported
 }
 
 func (w *WorkspaceFoldersServerCapabilities) GetChangeNotifications() *StringOrBoolean {
 	if w == nil {
-		return *new(*StringOrBoolean)
+		var zero *StringOrBoolean
+		return zero
 	}
 	return w.ChangeNotifications
 }
@@ -6839,7 +7066,8 @@ type FileOperationPatternOptions struct {
 
 func (f *FileOperationPatternOptions) GetIgnoreCase() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.IgnoreCase
 }
@@ -6869,21 +7097,24 @@ type FileOperationPattern struct {
 
 func (f *FileOperationPattern) GetGlob() string {
 	if f == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return f.Glob
 }
 
 func (f *FileOperationPattern) GetMatches() FileOperationPatternKind {
 	if f == nil {
-		return *new(FileOperationPatternKind)
+		var zero FileOperationPatternKind
+		return zero
 	}
 	return f.Matches
 }
 
 func (f *FileOperationPattern) GetOptions() *FileOperationPatternOptions {
 	if f == nil {
-		return *new(*FileOperationPatternOptions)
+		var zero *FileOperationPatternOptions
+		return zero
 	}
 	return f.Options
 }
@@ -6903,14 +7134,16 @@ type FileOperationFilter struct {
 
 func (f *FileOperationFilter) GetScheme() string {
 	if f == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return f.Scheme
 }
 
 func (f *FileOperationFilter) GetPattern() *FileOperationPattern {
 	if f == nil {
-		return *new(*FileOperationPattern)
+		var zero *FileOperationPattern
+		return zero
 	}
 	return f.Pattern
 }
@@ -6927,7 +7160,8 @@ type FileOperationRegistrationOptions struct {
 
 func (f *FileOperationRegistrationOptions) GetFilters() []*FileOperationFilter {
 	if f == nil {
-		return *new([]*FileOperationFilter)
+		var zero []*FileOperationFilter
+		return zero
 	}
 	return f.Filters
 }
@@ -6954,42 +7188,48 @@ type FileOperationOptions struct {
 
 func (f *FileOperationOptions) GetDidCreate() *FileOperationRegistrationOptions {
 	if f == nil {
-		return *new(*FileOperationRegistrationOptions)
+		var zero *FileOperationRegistrationOptions
+		return zero
 	}
 	return f.DidCreate
 }
 
 func (f *FileOperationOptions) GetWillCreate() *FileOperationRegistrationOptions {
 	if f == nil {
-		return *new(*FileOperationRegistrationOptions)
+		var zero *FileOperationRegistrationOptions
+		return zero
 	}
 	return f.WillCreate
 }
 
 func (f *FileOperationOptions) GetDidRename() *FileOperationRegistrationOptions {
 	if f == nil {
-		return *new(*FileOperationRegistrationOptions)
+		var zero *FileOperationRegistrationOptions
+		return zero
 	}
 	return f.DidRename
 }
 
 func (f *FileOperationOptions) GetWillRename() *FileOperationRegistrationOptions {
 	if f == nil {
-		return *new(*FileOperationRegistrationOptions)
+		var zero *FileOperationRegistrationOptions
+		return zero
 	}
 	return f.WillRename
 }
 
 func (f *FileOperationOptions) GetDidDelete() *FileOperationRegistrationOptions {
 	if f == nil {
-		return *new(*FileOperationRegistrationOptions)
+		var zero *FileOperationRegistrationOptions
+		return zero
 	}
 	return f.DidDelete
 }
 
 func (f *FileOperationOptions) GetWillDelete() *FileOperationRegistrationOptions {
 	if f == nil {
-		return *new(*FileOperationRegistrationOptions)
+		var zero *FileOperationRegistrationOptions
+		return zero
 	}
 	return f.WillDelete
 }
@@ -7135,252 +7375,288 @@ type ServerCapabilities struct {
 
 func (s *ServerCapabilities) GetPositionEncoding() PositionEncodingKind {
 	if s == nil {
-		return *new(PositionEncodingKind)
+		var zero PositionEncodingKind
+		return zero
 	}
 	return s.PositionEncoding
 }
 
 func (s *ServerCapabilities) GetTextDocumentSync() *TextDocumentSyncOptionsOrTextDocumentSyncKind {
 	if s == nil {
-		return *new(*TextDocumentSyncOptionsOrTextDocumentSyncKind)
+		var zero *TextDocumentSyncOptionsOrTextDocumentSyncKind
+		return zero
 	}
 	return s.TextDocumentSync
 }
 
 func (s *ServerCapabilities) GetNotebookDocumentSync() *NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions {
 	if s == nil {
-		return *new(*NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions)
+		var zero *NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions
+		return zero
 	}
 	return s.NotebookDocumentSync
 }
 
 func (s *ServerCapabilities) GetCompletionProvider() *CompletionOptions {
 	if s == nil {
-		return *new(*CompletionOptions)
+		var zero *CompletionOptions
+		return zero
 	}
 	return s.CompletionProvider
 }
 
 func (s *ServerCapabilities) GetHoverProvider() *BooleanOrHoverOptions {
 	if s == nil {
-		return *new(*BooleanOrHoverOptions)
+		var zero *BooleanOrHoverOptions
+		return zero
 	}
 	return s.HoverProvider
 }
 
 func (s *ServerCapabilities) GetSignatureHelpProvider() *SignatureHelpOptions {
 	if s == nil {
-		return *new(*SignatureHelpOptions)
+		var zero *SignatureHelpOptions
+		return zero
 	}
 	return s.SignatureHelpProvider
 }
 
 func (s *ServerCapabilities) GetDeclarationProvider() *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions)
+		var zero *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions
+		return zero
 	}
 	return s.DeclarationProvider
 }
 
 func (s *ServerCapabilities) GetDefinitionProvider() *BooleanOrDefinitionOptions {
 	if s == nil {
-		return *new(*BooleanOrDefinitionOptions)
+		var zero *BooleanOrDefinitionOptions
+		return zero
 	}
 	return s.DefinitionProvider
 }
 
 func (s *ServerCapabilities) GetTypeDefinitionProvider() *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions)
+		var zero *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions
+		return zero
 	}
 	return s.TypeDefinitionProvider
 }
 
 func (s *ServerCapabilities) GetImplementationProvider() *BooleanOrImplementationOptionsOrImplementationRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrImplementationOptionsOrImplementationRegistrationOptions)
+		var zero *BooleanOrImplementationOptionsOrImplementationRegistrationOptions
+		return zero
 	}
 	return s.ImplementationProvider
 }
 
 func (s *ServerCapabilities) GetReferencesProvider() *BooleanOrReferenceOptions {
 	if s == nil {
-		return *new(*BooleanOrReferenceOptions)
+		var zero *BooleanOrReferenceOptions
+		return zero
 	}
 	return s.ReferencesProvider
 }
 
 func (s *ServerCapabilities) GetDocumentHighlightProvider() *BooleanOrDocumentHighlightOptions {
 	if s == nil {
-		return *new(*BooleanOrDocumentHighlightOptions)
+		var zero *BooleanOrDocumentHighlightOptions
+		return zero
 	}
 	return s.DocumentHighlightProvider
 }
 
 func (s *ServerCapabilities) GetDocumentSymbolProvider() *BooleanOrDocumentSymbolOptions {
 	if s == nil {
-		return *new(*BooleanOrDocumentSymbolOptions)
+		var zero *BooleanOrDocumentSymbolOptions
+		return zero
 	}
 	return s.DocumentSymbolProvider
 }
 
 func (s *ServerCapabilities) GetCodeActionProvider() *BooleanOrCodeActionOptions {
 	if s == nil {
-		return *new(*BooleanOrCodeActionOptions)
+		var zero *BooleanOrCodeActionOptions
+		return zero
 	}
 	return s.CodeActionProvider
 }
 
 func (s *ServerCapabilities) GetCodeLensProvider() *CodeLensOptions {
 	if s == nil {
-		return *new(*CodeLensOptions)
+		var zero *CodeLensOptions
+		return zero
 	}
 	return s.CodeLensProvider
 }
 
 func (s *ServerCapabilities) GetDocumentLinkProvider() *DocumentLinkOptions {
 	if s == nil {
-		return *new(*DocumentLinkOptions)
+		var zero *DocumentLinkOptions
+		return zero
 	}
 	return s.DocumentLinkProvider
 }
 
 func (s *ServerCapabilities) GetColorProvider() *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions)
+		var zero *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions
+		return zero
 	}
 	return s.ColorProvider
 }
 
 func (s *ServerCapabilities) GetWorkspaceSymbolProvider() *BooleanOrWorkspaceSymbolOptions {
 	if s == nil {
-		return *new(*BooleanOrWorkspaceSymbolOptions)
+		var zero *BooleanOrWorkspaceSymbolOptions
+		return zero
 	}
 	return s.WorkspaceSymbolProvider
 }
 
 func (s *ServerCapabilities) GetDocumentFormattingProvider() *BooleanOrDocumentFormattingOptions {
 	if s == nil {
-		return *new(*BooleanOrDocumentFormattingOptions)
+		var zero *BooleanOrDocumentFormattingOptions
+		return zero
 	}
 	return s.DocumentFormattingProvider
 }
 
 func (s *ServerCapabilities) GetDocumentRangeFormattingProvider() *BooleanOrDocumentRangeFormattingOptions {
 	if s == nil {
-		return *new(*BooleanOrDocumentRangeFormattingOptions)
+		var zero *BooleanOrDocumentRangeFormattingOptions
+		return zero
 	}
 	return s.DocumentRangeFormattingProvider
 }
 
 func (s *ServerCapabilities) GetDocumentOnTypeFormattingProvider() *DocumentOnTypeFormattingOptions {
 	if s == nil {
-		return *new(*DocumentOnTypeFormattingOptions)
+		var zero *DocumentOnTypeFormattingOptions
+		return zero
 	}
 	return s.DocumentOnTypeFormattingProvider
 }
 
 func (s *ServerCapabilities) GetRenameProvider() *BooleanOrRenameOptions {
 	if s == nil {
-		return *new(*BooleanOrRenameOptions)
+		var zero *BooleanOrRenameOptions
+		return zero
 	}
 	return s.RenameProvider
 }
 
 func (s *ServerCapabilities) GetFoldingRangeProvider() *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions)
+		var zero *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions
+		return zero
 	}
 	return s.FoldingRangeProvider
 }
 
 func (s *ServerCapabilities) GetSelectionRangeProvider() *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions)
+		var zero *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions
+		return zero
 	}
 	return s.SelectionRangeProvider
 }
 
 func (s *ServerCapabilities) GetExecuteCommandProvider() *ExecuteCommandOptions {
 	if s == nil {
-		return *new(*ExecuteCommandOptions)
+		var zero *ExecuteCommandOptions
+		return zero
 	}
 	return s.ExecuteCommandProvider
 }
 
 func (s *ServerCapabilities) GetCallHierarchyProvider() *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions)
+		var zero *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions
+		return zero
 	}
 	return s.CallHierarchyProvider
 }
 
 func (s *ServerCapabilities) GetLinkedEditingRangeProvider() *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions)
+		var zero *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions
+		return zero
 	}
 	return s.LinkedEditingRangeProvider
 }
 
 func (s *ServerCapabilities) GetSemanticTokensProvider() *SemanticTokensOptionsOrSemanticTokensRegistrationOptions {
 	if s == nil {
-		return *new(*SemanticTokensOptionsOrSemanticTokensRegistrationOptions)
+		var zero *SemanticTokensOptionsOrSemanticTokensRegistrationOptions
+		return zero
 	}
 	return s.SemanticTokensProvider
 }
 
 func (s *ServerCapabilities) GetMonikerProvider() *BooleanOrMonikerOptionsOrMonikerRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrMonikerOptionsOrMonikerRegistrationOptions)
+		var zero *BooleanOrMonikerOptionsOrMonikerRegistrationOptions
+		return zero
 	}
 	return s.MonikerProvider
 }
 
 func (s *ServerCapabilities) GetTypeHierarchyProvider() *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions)
+		var zero *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions
+		return zero
 	}
 	return s.TypeHierarchyProvider
 }
 
 func (s *ServerCapabilities) GetInlineValueProvider() *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions)
+		var zero *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions
+		return zero
 	}
 	return s.InlineValueProvider
 }
 
 func (s *ServerCapabilities) GetInlayHintProvider() *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions {
 	if s == nil {
-		return *new(*BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions)
+		var zero *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions
+		return zero
 	}
 	return s.InlayHintProvider
 }
 
 func (s *ServerCapabilities) GetDiagnosticProvider() *DiagnosticOptionsOrDiagnosticRegistrationOptions {
 	if s == nil {
-		return *new(*DiagnosticOptionsOrDiagnosticRegistrationOptions)
+		var zero *DiagnosticOptionsOrDiagnosticRegistrationOptions
+		return zero
 	}
 	return s.DiagnosticProvider
 }
 
 func (s *ServerCapabilities) GetInlineCompletionProvider() *BooleanOrInlineCompletionOptions {
 	if s == nil {
-		return *new(*BooleanOrInlineCompletionOptions)
+		var zero *BooleanOrInlineCompletionOptions
+		return zero
 	}
 	return s.InlineCompletionProvider
 }
 
 func (s *ServerCapabilities) GetWorkspace() *ServerCapabilitiesWorkspace {
 	if s == nil {
-		return *new(*ServerCapabilitiesWorkspace)
+		var zero *ServerCapabilitiesWorkspace
+		return zero
 	}
 	return s.Workspace
 }
 
 func (s *ServerCapabilities) GetExperimental() LSPAny {
 	if s == nil {
-		return *new(LSPAny)
+		var zero LSPAny
+		return zero
 	}
 	return s.Experimental
 }
@@ -7420,14 +7696,16 @@ type InitializeResult struct {
 
 func (i *InitializeResult) GetCapabilities() *ServerCapabilities {
 	if i == nil {
-		return *new(*ServerCapabilities)
+		var zero *ServerCapabilities
+		return zero
 	}
 	return i.Capabilities
 }
 
 func (i *InitializeResult) GetServerInfo() *InitializeResultServerInfo {
 	if i == nil {
-		return *new(*InitializeResultServerInfo)
+		var zero *InitializeResultServerInfo
+		return zero
 	}
 	return i.ServerInfo
 }
@@ -7446,7 +7724,8 @@ type InitializeError struct {
 
 func (i *InitializeError) GetRetry() bool {
 	if i == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return i.Retry
 }
@@ -7461,7 +7740,8 @@ type TextDocumentIdentifier struct {
 
 func (t *TextDocumentIdentifier) GetUri() string {
 	if t == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return t.Uri
 }
@@ -7513,14 +7793,16 @@ type Position struct {
 
 func (p *Position) GetLine() int {
 	if p == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return p.Line
 }
 
 func (p *Position) GetCharacter() int {
 	if p == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return p.Character
 }
@@ -7538,14 +7820,16 @@ type TextDocumentPositionParams struct {
 
 func (t *TextDocumentPositionParams) GetTextDocument() *TextDocumentIdentifier {
 	if t == nil {
-		return *new(*TextDocumentIdentifier)
+		var zero *TextDocumentIdentifier
+		return zero
 	}
 	return t.TextDocument
 }
 
 func (t *TextDocumentPositionParams) GetPosition() *Position {
 	if t == nil {
-		return *new(*Position)
+		var zero *Position
+		return zero
 	}
 	return t.Position
 }
@@ -7559,7 +7843,8 @@ type PartialResultParams struct {
 
 func (p *PartialResultParams) GetPartialResultToken() ProgressToken {
 	if p == nil {
-		return *new(ProgressToken)
+		var zero ProgressToken
+		return zero
 	}
 	return p.PartialResultToken
 }
@@ -7624,14 +7909,16 @@ type CompletionContext struct {
 
 func (c *CompletionContext) GetTriggerKind() CompletionTriggerKind {
 	if c == nil {
-		return *new(CompletionTriggerKind)
+		var zero CompletionTriggerKind
+		return zero
 	}
 	return c.TriggerKind
 }
 
 func (c *CompletionContext) GetTriggerCharacter() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.TriggerCharacter
 }
@@ -7650,7 +7937,8 @@ type CompletionParams struct {
 
 func (c *CompletionParams) GetContext() *CompletionContext {
 	if c == nil {
-		return *new(*CompletionContext)
+		var zero *CompletionContext
+		return zero
 	}
 	return c.Context
 }
@@ -7671,14 +7959,16 @@ type CompletionItemLabelDetails struct {
 
 func (c *CompletionItemLabelDetails) GetDetail() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Detail
 }
 
 func (c *CompletionItemLabelDetails) GetDescription() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Description
 }
@@ -7718,14 +8008,16 @@ type MarkupContent struct {
 
 func (m *MarkupContent) GetKind() MarkupKind {
 	if m == nil {
-		return *new(MarkupKind)
+		var zero MarkupKind
+		return zero
 	}
 	return m.Kind
 }
 
 func (m *MarkupContent) GetValue() string {
 	if m == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return m.Value
 }
@@ -7847,14 +8139,16 @@ type Range struct {
 
 func (r *Range) GetStart() *Position {
 	if r == nil {
-		return *new(*Position)
+		var zero *Position
+		return zero
 	}
 	return r.Start
 }
 
 func (r *Range) GetEnd() *Position {
 	if r == nil {
-		return *new(*Position)
+		var zero *Position
+		return zero
 	}
 	return r.End
 }
@@ -7873,14 +8167,16 @@ type TextEdit struct {
 
 func (t *TextEdit) GetRange() *Range {
 	if t == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return t.Range
 }
 
 func (t *TextEdit) GetNewText() string {
 	if t == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return t.NewText
 }
@@ -7901,21 +8197,24 @@ type InsertReplaceEdit struct {
 
 func (i *InsertReplaceEdit) GetNewText() string {
 	if i == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return i.NewText
 }
 
 func (i *InsertReplaceEdit) GetInsert() *Range {
 	if i == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return i.Insert
 }
 
 func (i *InsertReplaceEdit) GetReplace() *Range {
 	if i == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return i.Replace
 }
@@ -7981,21 +8280,24 @@ type Command struct {
 
 func (c *Command) GetTitle() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Title
 }
 
 func (c *Command) GetCommand() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Command
 }
 
 func (c *Command) GetArguments() []LSPAny {
 	if c == nil {
-		return *new([]LSPAny)
+		var zero []LSPAny
+		return zero
 	}
 	return c.Arguments
 }
@@ -8126,133 +8428,152 @@ type CompletionItem struct {
 
 func (c *CompletionItem) GetLabel() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Label
 }
 
 func (c *CompletionItem) GetLabelDetails() *CompletionItemLabelDetails {
 	if c == nil {
-		return *new(*CompletionItemLabelDetails)
+		var zero *CompletionItemLabelDetails
+		return zero
 	}
 	return c.LabelDetails
 }
 
 func (c *CompletionItem) GetKind() CompletionItemKind {
 	if c == nil {
-		return *new(CompletionItemKind)
+		var zero CompletionItemKind
+		return zero
 	}
 	return c.Kind
 }
 
 func (c *CompletionItem) GetTags() []CompletionItemTag {
 	if c == nil {
-		return *new([]CompletionItemTag)
+		var zero []CompletionItemTag
+		return zero
 	}
 	return c.Tags
 }
 
 func (c *CompletionItem) GetDetail() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Detail
 }
 
 func (c *CompletionItem) GetDocumentation() *StringOrMarkupContent {
 	if c == nil {
-		return *new(*StringOrMarkupContent)
+		var zero *StringOrMarkupContent
+		return zero
 	}
 	return c.Documentation
 }
 
 func (c *CompletionItem) GetDeprecated() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.Deprecated
 }
 
 func (c *CompletionItem) GetPreselect() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.Preselect
 }
 
 func (c *CompletionItem) GetSortText() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.SortText
 }
 
 func (c *CompletionItem) GetFilterText() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.FilterText
 }
 
 func (c *CompletionItem) GetInsertText() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.InsertText
 }
 
 func (c *CompletionItem) GetInsertTextFormat() InsertTextFormat {
 	if c == nil {
-		return *new(InsertTextFormat)
+		var zero InsertTextFormat
+		return zero
 	}
 	return c.InsertTextFormat
 }
 
 func (c *CompletionItem) GetInsertTextMode() InsertTextMode {
 	if c == nil {
-		return *new(InsertTextMode)
+		var zero InsertTextMode
+		return zero
 	}
 	return c.InsertTextMode
 }
 
 func (c *CompletionItem) GetTextEdit() *TextEditOrInsertReplaceEdit {
 	if c == nil {
-		return *new(*TextEditOrInsertReplaceEdit)
+		var zero *TextEditOrInsertReplaceEdit
+		return zero
 	}
 	return c.TextEdit
 }
 
 func (c *CompletionItem) GetTextEditText() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.TextEditText
 }
 
 func (c *CompletionItem) GetAdditionalTextEdits() []*TextEdit {
 	if c == nil {
-		return *new([]*TextEdit)
+		var zero []*TextEdit
+		return zero
 	}
 	return c.AdditionalTextEdits
 }
 
 func (c *CompletionItem) GetCommitCharacters() []string {
 	if c == nil {
-		return *new([]string)
+		var zero []string
+		return zero
 	}
 	return c.CommitCharacters
 }
 
 func (c *CompletionItem) GetCommand() *Command {
 	if c == nil {
-		return *new(*Command)
+		var zero *Command
+		return zero
 	}
 	return c.Command
 }
 
 func (c *CompletionItem) GetData() LSPAny {
 	if c == nil {
-		return *new(LSPAny)
+		var zero LSPAny
+		return zero
 	}
 	return c.Data
 }
@@ -8409,21 +8730,24 @@ type CompletionList struct {
 
 func (c *CompletionList) GetIsIncomplete() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.IsIncomplete
 }
 
 func (c *CompletionList) GetItemDefaults() *CompletionListItemDefaults {
 	if c == nil {
-		return *new(*CompletionListItemDefaults)
+		var zero *CompletionListItemDefaults
+		return zero
 	}
 	return c.ItemDefaults
 }
 
 func (c *CompletionList) GetItems() []*CompletionItem {
 	if c == nil {
-		return *new([]*CompletionItem)
+		var zero []*CompletionItem
+		return zero
 	}
 	return c.Items
 }
@@ -8623,14 +8947,16 @@ type Hover struct {
 
 func (h *Hover) GetContents() *MarkupContentOrMarkedStringOrMarkedStringSlice {
 	if h == nil {
-		return *new(*MarkupContentOrMarkedStringOrMarkedStringSlice)
+		var zero *MarkupContentOrMarkedStringOrMarkedStringSlice
+		return zero
 	}
 	return h.Contents
 }
 
 func (h *Hover) GetRange() *Range {
 	if h == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return h.Range
 }
@@ -8655,14 +8981,16 @@ type Location struct {
 
 func (l *Location) GetUri() string {
 	if l == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return l.Uri
 }
 
 func (l *Location) GetRange() *Range {
 	if l == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return l.Range
 }
@@ -8745,28 +9073,32 @@ type LocationLink struct {
 
 func (l *LocationLink) GetOriginSelectionRange() *Range {
 	if l == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return l.OriginSelectionRange
 }
 
 func (l *LocationLink) GetTargetUri() string {
 	if l == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return l.TargetUri
 }
 
 func (l *LocationLink) GetTargetRange() *Range {
 	if l == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return l.TargetRange
 }
 
 func (l *LocationLink) GetTargetSelectionRange() *Range {
 	if l == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return l.TargetSelectionRange
 }
@@ -8835,7 +9167,8 @@ type ReferenceContext struct {
 
 func (r *ReferenceContext) GetIncludeDeclaration() bool {
 	if r == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return r.IncludeDeclaration
 }
@@ -8852,7 +9185,8 @@ type ReferenceParams struct {
 
 func (r *ReferenceParams) GetContext() *ReferenceContext {
 	if r == nil {
-		return *new(*ReferenceContext)
+		var zero *ReferenceContext
+		return zero
 	}
 	return r.Context
 }
@@ -8869,7 +9203,8 @@ type DocumentSymbolParams struct {
 
 func (d *DocumentSymbolParams) GetTextDocument() *TextDocumentIdentifier {
 	if d == nil {
-		return *new(*TextDocumentIdentifier)
+		var zero *TextDocumentIdentifier
+		return zero
 	}
 	return d.TextDocument
 }
@@ -8895,28 +9230,32 @@ type BaseSymbolInformation struct {
 
 func (b *BaseSymbolInformation) GetName() string {
 	if b == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return b.Name
 }
 
 func (b *BaseSymbolInformation) GetKind() SymbolKind {
 	if b == nil {
-		return *new(SymbolKind)
+		var zero SymbolKind
+		return zero
 	}
 	return b.Kind
 }
 
 func (b *BaseSymbolInformation) GetTags() []SymbolTag {
 	if b == nil {
-		return *new([]SymbolTag)
+		var zero []SymbolTag
+		return zero
 	}
 	return b.Tags
 }
 
 func (b *BaseSymbolInformation) GetContainerName() string {
 	if b == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return b.ContainerName
 }
@@ -8945,14 +9284,16 @@ type SymbolInformation struct {
 
 func (s *SymbolInformation) GetDeprecated() bool {
 	if s == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return s.Deprecated
 }
 
 func (s *SymbolInformation) GetLocation() *Location {
 	if s == nil {
-		return *new(*Location)
+		var zero *Location
+		return zero
 	}
 	return s.Location
 }
@@ -8994,56 +9335,64 @@ type DocumentSymbol struct {
 
 func (d *DocumentSymbol) GetName() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.Name
 }
 
 func (d *DocumentSymbol) GetDetail() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.Detail
 }
 
 func (d *DocumentSymbol) GetKind() SymbolKind {
 	if d == nil {
-		return *new(SymbolKind)
+		var zero SymbolKind
+		return zero
 	}
 	return d.Kind
 }
 
 func (d *DocumentSymbol) GetTags() []SymbolTag {
 	if d == nil {
-		return *new([]SymbolTag)
+		var zero []SymbolTag
+		return zero
 	}
 	return d.Tags
 }
 
 func (d *DocumentSymbol) GetDeprecated() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.Deprecated
 }
 
 func (d *DocumentSymbol) GetRange() *Range {
 	if d == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return d.Range
 }
 
 func (d *DocumentSymbol) GetSelectionRange() *Range {
 	if d == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return d.SelectionRange
 }
 
 func (d *DocumentSymbol) GetChildren() []*DocumentSymbol {
 	if d == nil {
-		return *new([]*DocumentSymbol)
+		var zero []*DocumentSymbol
+		return zero
 	}
 	return d.Children
 }
@@ -9117,35 +9466,40 @@ type FormattingOptions struct {
 
 func (f *FormattingOptions) GetTabSize() int {
 	if f == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return f.TabSize
 }
 
 func (f *FormattingOptions) GetInsertSpaces() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.InsertSpaces
 }
 
 func (f *FormattingOptions) GetTrimTrailingWhitespace() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.TrimTrailingWhitespace
 }
 
 func (f *FormattingOptions) GetInsertFinalNewline() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.InsertFinalNewline
 }
 
 func (f *FormattingOptions) GetTrimFinalNewlines() bool {
 	if f == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return f.TrimFinalNewlines
 }
@@ -9163,14 +9517,16 @@ type DocumentFormattingParams struct {
 
 func (d *DocumentFormattingParams) GetTextDocument() *TextDocumentIdentifier {
 	if d == nil {
-		return *new(*TextDocumentIdentifier)
+		var zero *TextDocumentIdentifier
+		return zero
 	}
 	return d.TextDocument
 }
 
 func (d *DocumentFormattingParams) GetOptions() *FormattingOptions {
 	if d == nil {
-		return *new(*FormattingOptions)
+		var zero *FormattingOptions
+		return zero
 	}
 	return d.Options
 }
@@ -9192,21 +9548,24 @@ type RenameParams struct {
 
 func (r *RenameParams) GetTextDocument() *TextDocumentIdentifier {
 	if r == nil {
-		return *new(*TextDocumentIdentifier)
+		var zero *TextDocumentIdentifier
+		return zero
 	}
 	return r.TextDocument
 }
 
 func (r *RenameParams) GetPosition() *Position {
 	if r == nil {
-		return *new(*Position)
+		var zero *Position
+		return zero
 	}
 	return r.Position
 }
 
 func (r *RenameParams) GetNewName() string {
 	if r == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return r.NewName
 }
@@ -9226,7 +9585,8 @@ type OptionalVersionedTextDocumentIdentifier struct {
 
 func (o *OptionalVersionedTextDocumentIdentifier) GetVersion() int {
 	if o == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return o.Version
 }
@@ -9249,7 +9609,8 @@ type AnnotatedTextEdit struct {
 
 func (a *AnnotatedTextEdit) GetAnnotationId() ChangeAnnotationIdentifier {
 	if a == nil {
-		return *new(ChangeAnnotationIdentifier)
+		var zero ChangeAnnotationIdentifier
+		return zero
 	}
 	return a.AnnotationId
 }
@@ -9315,14 +9676,16 @@ type TextDocumentEdit struct {
 
 func (t *TextDocumentEdit) GetTextDocument() *OptionalVersionedTextDocumentIdentifier {
 	if t == nil {
-		return *new(*OptionalVersionedTextDocumentIdentifier)
+		var zero *OptionalVersionedTextDocumentIdentifier
+		return zero
 	}
 	return t.TextDocument
 }
 
 func (t *TextDocumentEdit) GetEdits() []*TextEditOrAnnotatedTextEdit {
 	if t == nil {
-		return *new([]*TextEditOrAnnotatedTextEdit)
+		var zero []*TextEditOrAnnotatedTextEdit
+		return zero
 	}
 	return t.Edits
 }
@@ -9341,14 +9704,16 @@ type ResourceOperation struct {
 
 func (r *ResourceOperation) GetKind() string {
 	if r == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return r.Kind
 }
 
 func (r *ResourceOperation) GetAnnotationId() ChangeAnnotationIdentifier {
 	if r == nil {
-		return *new(ChangeAnnotationIdentifier)
+		var zero ChangeAnnotationIdentifier
+		return zero
 	}
 	return r.AnnotationId
 }
@@ -9386,14 +9751,16 @@ type CreateFileOptions struct {
 
 func (c *CreateFileOptions) GetOverwrite() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.Overwrite
 }
 
 func (c *CreateFileOptions) GetIgnoreIfExists() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.IgnoreIfExists
 }
@@ -9413,21 +9780,24 @@ type CreateFile struct {
 
 func (c *CreateFile) GetKind() CreateFileKind {
 	if c == nil {
-		return *new(CreateFileKind)
+		var zero CreateFileKind
+		return zero
 	}
 	return c.Kind
 }
 
 func (c *CreateFile) GetUri() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Uri
 }
 
 func (c *CreateFile) GetOptions() *CreateFileOptions {
 	if c == nil {
-		return *new(*CreateFileOptions)
+		var zero *CreateFileOptions
+		return zero
 	}
 	return c.Options
 }
@@ -9465,14 +9835,16 @@ type RenameFileOptions struct {
 
 func (r *RenameFileOptions) GetOverwrite() bool {
 	if r == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return r.Overwrite
 }
 
 func (r *RenameFileOptions) GetIgnoreIfExists() bool {
 	if r == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return r.IgnoreIfExists
 }
@@ -9494,28 +9866,32 @@ type RenameFile struct {
 
 func (r *RenameFile) GetKind() RenameFileKind {
 	if r == nil {
-		return *new(RenameFileKind)
+		var zero RenameFileKind
+		return zero
 	}
 	return r.Kind
 }
 
 func (r *RenameFile) GetOldUri() string {
 	if r == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return r.OldUri
 }
 
 func (r *RenameFile) GetNewUri() string {
 	if r == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return r.NewUri
 }
 
 func (r *RenameFile) GetOptions() *RenameFileOptions {
 	if r == nil {
-		return *new(*RenameFileOptions)
+		var zero *RenameFileOptions
+		return zero
 	}
 	return r.Options
 }
@@ -9553,14 +9929,16 @@ type DeleteFileOptions struct {
 
 func (d *DeleteFileOptions) GetRecursive() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.Recursive
 }
 
 func (d *DeleteFileOptions) GetIgnoreIfNotExists() bool {
 	if d == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return d.IgnoreIfNotExists
 }
@@ -9580,21 +9958,24 @@ type DeleteFile struct {
 
 func (d *DeleteFile) GetKind() DeleteFileKind {
 	if d == nil {
-		return *new(DeleteFileKind)
+		var zero DeleteFileKind
+		return zero
 	}
 	return d.Kind
 }
 
 func (d *DeleteFile) GetUri() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.Uri
 }
 
 func (d *DeleteFile) GetOptions() *DeleteFileOptions {
 	if d == nil {
-		return *new(*DeleteFileOptions)
+		var zero *DeleteFileOptions
+		return zero
 	}
 	return d.Options
 }
@@ -9677,21 +10058,24 @@ type ChangeAnnotation struct {
 
 func (c *ChangeAnnotation) GetLabel() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Label
 }
 
 func (c *ChangeAnnotation) GetNeedsConfirmation() bool {
 	if c == nil {
-		return *new(bool)
+		var zero bool
+		return zero
 	}
 	return c.NeedsConfirmation
 }
 
 func (c *ChangeAnnotation) GetDescription() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Description
 }
@@ -9735,21 +10119,24 @@ type WorkspaceEdit struct {
 
 func (w *WorkspaceEdit) GetChanges() map[string][]*TextEdit {
 	if w == nil {
-		return *new(map[string][]*TextEdit)
+		var zero map[string][]*TextEdit
+		return zero
 	}
 	return w.Changes
 }
 
 func (w *WorkspaceEdit) GetDocumentChanges() []*TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile {
 	if w == nil {
-		return *new([]*TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile)
+		var zero []*TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile
+		return zero
 	}
 	return w.DocumentChanges
 }
 
 func (w *WorkspaceEdit) GetChangeAnnotations() map[ChangeAnnotationIdentifier]*ChangeAnnotation {
 	if w == nil {
-		return *new(map[ChangeAnnotationIdentifier]*ChangeAnnotation)
+		var zero map[ChangeAnnotationIdentifier]*ChangeAnnotation
+		return zero
 	}
 	return w.ChangeAnnotations
 }
@@ -9823,14 +10210,16 @@ type LogMessageParams struct {
 
 func (l *LogMessageParams) GetType() MessageType {
 	if l == nil {
-		return *new(MessageType)
+		var zero MessageType
+		return zero
 	}
 	return l.Type
 }
 
 func (l *LogMessageParams) GetMessage() string {
 	if l == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return l.Message
 }
@@ -9853,28 +10242,32 @@ type TextDocumentItem struct {
 
 func (t *TextDocumentItem) GetUri() string {
 	if t == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return t.Uri
 }
 
 func (t *TextDocumentItem) GetLanguageId() string {
 	if t == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return t.LanguageId
 }
 
 func (t *TextDocumentItem) GetVersion() int {
 	if t == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return t.Version
 }
 
 func (t *TextDocumentItem) GetText() string {
 	if t == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return t.Text
 }
@@ -9889,7 +10282,8 @@ type DidOpenTextDocumentParams struct {
 
 func (d *DidOpenTextDocumentParams) GetTextDocument() *TextDocumentItem {
 	if d == nil {
-		return *new(*TextDocumentItem)
+		var zero *TextDocumentItem
+		return zero
 	}
 	return d.TextDocument
 }
@@ -9905,7 +10299,8 @@ type VersionedTextDocumentIdentifier struct {
 
 func (v *VersionedTextDocumentIdentifier) GetVersion() int {
 	if v == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return v.Version
 }
@@ -10037,14 +10432,16 @@ type DidChangeTextDocumentParams struct {
 
 func (d *DidChangeTextDocumentParams) GetTextDocument() *VersionedTextDocumentIdentifier {
 	if d == nil {
-		return *new(*VersionedTextDocumentIdentifier)
+		var zero *VersionedTextDocumentIdentifier
+		return zero
 	}
 	return d.TextDocument
 }
 
 func (d *DidChangeTextDocumentParams) GetContentChanges() []TextDocumentContentChangeEvent {
 	if d == nil {
-		return *new([]TextDocumentContentChangeEvent)
+		var zero []TextDocumentContentChangeEvent
+		return zero
 	}
 	return d.ContentChanges
 }
@@ -10059,7 +10456,8 @@ type DidCloseTextDocumentParams struct {
 
 func (d *DidCloseTextDocumentParams) GetTextDocument() *TextDocumentIdentifier {
 	if d == nil {
-		return *new(*TextDocumentIdentifier)
+		var zero *TextDocumentIdentifier
+		return zero
 	}
 	return d.TextDocument
 }
@@ -10124,7 +10522,8 @@ type CodeDescription struct {
 
 func (c *CodeDescription) GetHref() string {
 	if c == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return c.Href
 }
@@ -10143,14 +10542,16 @@ type DiagnosticRelatedInformation struct {
 
 func (d *DiagnosticRelatedInformation) GetLocation() *Location {
 	if d == nil {
-		return *new(*Location)
+		var zero *Location
+		return zero
 	}
 	return d.Location
 }
 
 func (d *DiagnosticRelatedInformation) GetMessage() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.Message
 }
@@ -10194,63 +10595,72 @@ type Diagnostic struct {
 
 func (d *Diagnostic) GetRange() *Range {
 	if d == nil {
-		return *new(*Range)
+		var zero *Range
+		return zero
 	}
 	return d.Range
 }
 
 func (d *Diagnostic) GetSeverity() DiagnosticSeverity {
 	if d == nil {
-		return *new(DiagnosticSeverity)
+		var zero DiagnosticSeverity
+		return zero
 	}
 	return d.Severity
 }
 
 func (d *Diagnostic) GetCode() *IntegerOrString {
 	if d == nil {
-		return *new(*IntegerOrString)
+		var zero *IntegerOrString
+		return zero
 	}
 	return d.Code
 }
 
 func (d *Diagnostic) GetCodeDescription() *CodeDescription {
 	if d == nil {
-		return *new(*CodeDescription)
+		var zero *CodeDescription
+		return zero
 	}
 	return d.CodeDescription
 }
 
 func (d *Diagnostic) GetSource() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.Source
 }
 
 func (d *Diagnostic) GetMessage() string {
 	if d == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return d.Message
 }
 
 func (d *Diagnostic) GetTags() []DiagnosticTag {
 	if d == nil {
-		return *new([]DiagnosticTag)
+		var zero []DiagnosticTag
+		return zero
 	}
 	return d.Tags
 }
 
 func (d *Diagnostic) GetRelatedInformation() []*DiagnosticRelatedInformation {
 	if d == nil {
-		return *new([]*DiagnosticRelatedInformation)
+		var zero []*DiagnosticRelatedInformation
+		return zero
 	}
 	return d.RelatedInformation
 }
 
 func (d *Diagnostic) GetData() LSPAny {
 	if d == nil {
-		return *new(LSPAny)
+		var zero LSPAny
+		return zero
 	}
 	return d.Data
 }
@@ -10271,21 +10681,24 @@ type PublishDiagnosticsParams struct {
 
 func (p *PublishDiagnosticsParams) GetUri() string {
 	if p == nil {
-		return *new(string)
+		var zero string
+		return zero
 	}
 	return p.Uri
 }
 
 func (p *PublishDiagnosticsParams) GetVersion() int {
 	if p == nil {
-		return *new(int)
+		var zero int
+		return zero
 	}
 	return p.Version
 }
 
 func (p *PublishDiagnosticsParams) GetDiagnostics() []*Diagnostic {
 	if p == nil {
-		return *new([]*Diagnostic)
+		var zero []*Diagnostic
+		return zero
 	}
 	return p.Diagnostics
 }
