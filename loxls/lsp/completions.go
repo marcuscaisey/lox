@@ -10,38 +10,38 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
-type completionItem struct {
+type completion struct {
 	Label string
 	Kind  protocol.CompletionItemKind
 }
 
 var keywordCompletions = genKeywordCompletions()
 
-func genKeywordCompletions() []*completionItem {
+func genKeywordCompletions() []*completion {
 	keywords := []string{"print", "var", "true", "false", "nil", "if", "while", "for", "fun", "class"}
-	items := make([]*completionItem, len(keywords))
+	completions := make([]*completion, len(keywords))
 	for i, keyword := range keywords {
-		items[i] = &completionItem{
+		completions[i] = &completion{
 			Label: keyword,
 			Kind:  protocol.CompletionItemKindKeyword,
 		}
 	}
-	return items
+	return completions
 }
 
-type identCompletions []*identCompletion
+type identCompletions []*completionLocation
 
-type identCompletion struct {
-	Position   token.Position
-	ScopeDepth int
-	Items      []*completionItem
+type completionLocation struct {
+	Position    token.Position
+	ScopeDepth  int
+	Completions []*completion
 }
 
 // TODO: document
-func (c identCompletions) At(pos *protocol.Position) []*completionItem {
-	var items []*completionItem
+func (c identCompletions) At(pos *protocol.Position) []*completion {
+	var completions []*completion
 
-	startIdx, found := slices.BinarySearchFunc(c, pos, func(item *identCompletion, target *protocol.Position) int {
+	startIdx, found := slices.BinarySearchFunc(c, pos, func(item *completionLocation, target *protocol.Position) int {
 		protocolPos := newPosition(item.Position)
 		if protocolPos.Line == target.Line {
 			return cmp.Compare(protocolPos.Character, target.Character)
@@ -58,22 +58,22 @@ func (c identCompletions) At(pos *protocol.Position) []*completionItem {
 			curScopeDepth = completion.ScopeDepth
 		}
 		if completion.ScopeDepth == curScopeDepth {
-			items = append(items, completion.Items...)
+			completions = append(completions, completion.Completions...)
 		}
 	}
 
-	return items
+	return completions
 }
 
 func genIdentCompletions(program *ast.Program) identCompletions {
 	icg := &identCompletionGenerator{}
 	ast.Walk(program, icg.walk)
-	return icg.completions
+	return icg.completionLocations
 }
 
 type identCompletionGenerator struct {
-	scopeDepth  int
-	completions identCompletions
+	scopeDepth          int
+	completionLocations []*completionLocation
 }
 
 func (c *identCompletionGenerator) walk(node ast.Node) bool {
@@ -84,10 +84,10 @@ func (c *identCompletionGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Semicolon.IsZero() {
 			return false
 		}
-		c.completions = append(c.completions, &identCompletion{
+		c.completionLocations = append(c.completionLocations, &completionLocation{
 			Position:   node.Semicolon.End(),
 			ScopeDepth: c.scopeDepth,
-			Items: []*completionItem{
+			Completions: []*completion{
 				{
 					Label: node.Name.Token.Lexeme,
 					Kind:  protocol.CompletionItemKindVariable,
@@ -100,27 +100,27 @@ func (c *identCompletionGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
 			return false
 		}
-		nameItem := &completionItem{
+		nameCompletion := &completion{
 			Label: node.Name.Token.Lexeme,
 			Kind:  protocol.CompletionItemKindFunction,
 		}
 
-		localItems := make([]*completionItem, 1+len(node.Function.Params))
-		localItems[len(localItems)-1] = nameItem
+		localCompletions := make([]*completion, 1+len(node.Function.Params))
+		localCompletions[len(localCompletions)-1] = nameCompletion
 		for i, paramDecl := range node.Function.Params {
 			if !paramDecl.IsValid() {
 				continue
 			}
-			localItems[i] = &completionItem{
+			localCompletions[i] = &completion{
 				Label: paramDecl.Name.Token.Lexeme,
 				Kind:  protocol.CompletionItemKindVariable,
 			}
 		}
 		c.scopeDepth++
-		c.completions = append(c.completions, &identCompletion{
-			Position:   node.Function.Body.LeftBrace.End(),
-			ScopeDepth: c.scopeDepth,
-			Items:      localItems,
+		c.completionLocations = append(c.completionLocations, &completionLocation{
+			Position:    node.Function.Body.LeftBrace.End(),
+			ScopeDepth:  c.scopeDepth,
+			Completions: localCompletions,
 		})
 		c.scopeDepth--
 
@@ -129,10 +129,10 @@ func (c *identCompletionGenerator) walk(node ast.Node) bool {
 		if node.Function.Body.RightBrace.IsZero() {
 			return false
 		}
-		c.completions = append(c.completions, &identCompletion{
-			Position:   node.Function.Body.RightBrace.End(),
-			ScopeDepth: c.scopeDepth,
-			Items:      []*completionItem{nameItem},
+		c.completionLocations = append(c.completionLocations, &completionLocation{
+			Position:    node.Function.Body.RightBrace.End(),
+			ScopeDepth:  c.scopeDepth,
+			Completions: []*completion{nameCompletion},
 		})
 		return false
 
@@ -140,21 +140,21 @@ func (c *identCompletionGenerator) walk(node ast.Node) bool {
 		if node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
 			return false
 		}
-		items := make([]*completionItem, len(node.Function.Params))
+		completions := make([]*completion, len(node.Function.Params))
 		for i, paramDecl := range node.Function.Params {
 			if !paramDecl.IsValid() {
 				continue
 			}
-			items[i] = &completionItem{
+			completions[i] = &completion{
 				Label: paramDecl.Name.Token.Lexeme,
 				Kind:  protocol.CompletionItemKindVariable,
 			}
 		}
 		c.scopeDepth++
-		c.completions = append(c.completions, &identCompletion{
-			Position:   node.Function.Body.LeftBrace.End(),
-			ScopeDepth: c.scopeDepth,
-			Items:      items,
+		c.completionLocations = append(c.completionLocations, &completionLocation{
+			Position:    node.Function.Body.LeftBrace.End(),
+			ScopeDepth:  c.scopeDepth,
+			Completions: completions,
 		})
 		c.scopeDepth--
 
@@ -165,21 +165,21 @@ func (c *identCompletionGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
 			return false
 		}
-		items := make([]*completionItem, len(node.Function.Params))
+		completions := make([]*completion, len(node.Function.Params))
 		for i, paramDecl := range node.Function.Params {
 			if !paramDecl.IsValid() {
 				continue
 			}
-			items[i] = &completionItem{
+			completions[i] = &completion{
 				Label: paramDecl.Name.Token.Lexeme,
 				Kind:  protocol.CompletionItemKindVariable,
 			}
 		}
 		c.scopeDepth++
-		c.completions = append(c.completions, &identCompletion{
-			Position:   node.Function.Body.LeftBrace.End(),
-			ScopeDepth: c.scopeDepth,
-			Items:      items,
+		c.completionLocations = append(c.completionLocations, &completionLocation{
+			Position:    node.Function.Body.LeftBrace.End(),
+			ScopeDepth:  c.scopeDepth,
+			Completions: completions,
 		})
 		c.scopeDepth--
 
@@ -190,10 +190,10 @@ func (c *identCompletionGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Body == nil || node.Body.LeftBrace.IsZero() {
 			return false
 		}
-		c.completions = append(c.completions, &identCompletion{
+		c.completionLocations = append(c.completionLocations, &completionLocation{
 			Position:   node.Body.LeftBrace.End(),
 			ScopeDepth: c.scopeDepth,
-			Items: []*completionItem{
+			Completions: []*completion{
 				{
 					Label: node.Name.Token.Lexeme,
 					Kind:  protocol.CompletionItemKindClass,
