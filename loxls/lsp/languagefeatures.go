@@ -316,7 +316,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		if h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().InsertReplaceSupport {
 			textEdit = &protocol.InsertReplaceEdit{NewText: item.Label, Insert: insertRange, Replace: replaceRange}
 		} else {
-			textEdit = &protocol.TextEdit{Range: replaceRange, NewText: item.Label}
+			textEdit = &protocol.TextEdit{Range: insertRange, NewText: item.Label}
 		}
 		protocolItems[i] = &protocol.CompletionItem{
 			Label:    item.Label,
