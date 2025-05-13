@@ -19,7 +19,7 @@ type document struct {
 	Text             string
 	Program          *ast.Program
 	IdentDecls       map[*ast.Ident]ast.Decl
-	IdentCompletions identCompletions
+	IdentCompletions *identCompletions
 	HasErrors        bool
 }
 
