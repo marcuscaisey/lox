@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -10,8 +11,9 @@ import (
 )
 
 type completion struct {
-	Label string
-	Kind  protocol.CompletionItemKind
+	Label   string
+	Kind    protocol.CompletionItemKind
+	Snippet string
 }
 
 var keywordCompletions = genKeywordCompletions()
@@ -122,8 +124,9 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 			return false
 		}
 		nameCompletion := &completion{
-			Label: node.Name.Token.Lexeme,
-			Kind:  protocol.CompletionItemKindFunction,
+			Label:   node.Name.Token.Lexeme,
+			Kind:    protocol.CompletionItemKindFunction,
+			Snippet: fmt.Sprintf("%s($1)$0", node.Name.Token.Lexeme),
 		}
 
 		localCompletions := make([]*completion, 1+len(node.Function.Params))
@@ -216,8 +219,9 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 			ScopeDepth: g.scopeDepth,
 			Completions: []*completion{
 				{
-					Label: node.Name.Token.Lexeme,
-					Kind:  protocol.CompletionItemKindClass,
+					Label:   node.Name.Token.Lexeme,
+					Kind:    protocol.CompletionItemKindClass,
+					Snippet: fmt.Sprintf("%s($1)$0", node.Name.Token.Lexeme),
 				},
 			},
 		})

@@ -323,21 +323,38 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	padding := len(fmt.Sprint(len(completions)))
 	items := make([]*protocol.CompletionItem, len(completions))
 	for i, completion := range completions {
+		var insertTextFormat protocol.InsertTextFormat
+		var snippet string
+		var textEditText string
+		if completion.Snippet != "" && h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetSnippetSupport() {
+			insertTextFormat = protocol.InsertTextFormatSnippet
+			snippet = completion.Snippet
+			if itemDefaults != nil {
+				textEditText = snippet
+			}
+		}
+
 		var textEdit *protocol.TextEditOrInsertReplaceEdit
 		if itemDefaults == nil {
+			newText := completion.Label
+			if snippet != "" {
+				newText = snippet
+			}
 			textEdit = &protocol.TextEditOrInsertReplaceEdit{}
 			if h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetInsertReplaceSupport() {
-				textEdit.Value = &protocol.InsertReplaceEdit{NewText: completion.Label, Insert: insertRange, Replace: replaceRange}
+				textEdit.Value = &protocol.InsertReplaceEdit{NewText: newText, Insert: insertRange, Replace: replaceRange}
 			} else {
-				textEdit.Value = &protocol.TextEdit{Range: insertRange, NewText: completion.Label}
+				textEdit.Value = &protocol.TextEdit{Range: insertRange, NewText: newText}
 			}
 		}
 
 		items[i] = &protocol.CompletionItem{
-			Label:    completion.Label,
-			Kind:     completion.Kind,
-			TextEdit: textEdit,
-			SortText: fmt.Sprintf("%0*d", padding, i),
+			Label:            completion.Label,
+			Kind:             completion.Kind,
+			InsertTextFormat: insertTextFormat,
+			TextEdit:         textEdit,
+			TextEditText:     textEditText,
+			SortText:         fmt.Sprintf("%0*d", padding, i),
 		}
 	}
 
