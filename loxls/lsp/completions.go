@@ -78,6 +78,7 @@ func (c *identCompletions) At(pos *protocol.Position) []*completion {
 	}
 
 	var completions []*completion
+	seenLabels := map[string]bool{}
 	for _, completionLoc := range slices.Backward(c.completionLocations[:completionStartIdx+1]) {
 		for curScopeIdx >= 0 && c.scopeLocations[curScopeIdx].Position.Compare(completionLoc.Position) >= 1 {
 			curScopeIdx--
@@ -88,7 +89,12 @@ func (c *identCompletions) At(pos *protocol.Position) []*completion {
 			}
 		}
 		if completionLoc.ScopeDepth == curScopeDepth {
-			completions = append(completions, completionLoc.Completions...)
+			for _, completion := range completionLoc.Completions {
+				if !seenLabels[completion.Label] {
+					completions = append(completions, completion)
+					seenLabels[completion.Label] = true
+				}
+			}
 		}
 	}
 	return completions
