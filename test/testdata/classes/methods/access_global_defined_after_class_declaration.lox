@@ -1,8 +1,19 @@
+var a;
 class Foo {
     bar() {
         print a;
     }
 }
-
-var a = "global";
+a = "global";
 Foo().bar(); // prints: global
+
+var b;
+{
+    class Foo {
+        bar() {
+            print b;
+        }
+    }
+    b = "local";
+    Foo().bar(); // prints: local
+}

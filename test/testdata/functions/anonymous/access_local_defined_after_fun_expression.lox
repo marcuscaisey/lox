@@ -1,0 +1,17 @@
+{
+    var a;
+    var f = fun() {
+        print a;
+    };
+    a = "outer";
+    f(); // prints: outer
+
+    var b;
+    {
+        var f = fun() {
+            print b;
+        };
+        b = "inner";
+        f(); // prints: inner
+    }
+}

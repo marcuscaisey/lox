@@ -382,6 +382,9 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	r.defineIdent(decl.Name)
 	endScope := r.beginScope()
 	defer endScope()
+	prevFunScopeLevel := r.funScopeLevel
+	r.funScopeLevel = r.scopes.Len() - 1
+	defer func() { r.funScopeLevel = prevFunScopeLevel }()
 	scope := r.scopes.Peek()
 	scope.DeclareName(token.CurrentInstanceIdent)
 	scope.Define(token.CurrentInstanceIdent)
@@ -416,6 +419,9 @@ func (r *identResolver) walkForStmt(stmt *ast.ForStmt) {
 }
 
 func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
+	prevFunScopeLevel := r.funScopeLevel
+	r.funScopeLevel = r.scopes.Len() - 1
+	defer func() { r.funScopeLevel = prevFunScopeLevel }()
 	r.walkFun(expr.Function)
 }
 
