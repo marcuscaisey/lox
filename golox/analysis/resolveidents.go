@@ -70,6 +70,7 @@ type identResolver struct {
 	globalDecls            map[string]ast.Decl
 	forwardDeclaredGlobals map[string]bool
 	inFun                  bool
+	inGlobalFun            bool
 	funScopeLevel          int
 
 	identDecls map[*ast.Ident]ast.Decl
@@ -306,7 +307,7 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 			return
 		}
 	}
-	if decl, ok := r.globalDecls[ident.Token.Lexeme]; ok && r.inFun {
+	if decl, ok := r.globalDecls[ident.Token.Lexeme]; ok && r.inGlobalFun {
 		r.globalScope.Declare(decl)
 		r.identDecls[decl.Ident()] = decl
 		r.globalScope.Use(ident.Token.Lexeme)
@@ -367,6 +368,10 @@ func (r *identResolver) walkFun(fun *ast.Function) {
 	prevInFun := r.inFun
 	r.inFun = true
 	defer func() { r.inFun = prevInFun }()
+	if r.scopes.Len() == 2 {
+		r.inGlobalFun = true
+		defer func() { r.inGlobalFun = false }()
+	}
 
 	for _, param := range fun.Params {
 		r.declareIdent(param)
@@ -380,11 +385,19 @@ func (r *identResolver) walkFun(fun *ast.Function) {
 func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	r.declareIdent(decl)
 	r.defineIdent(decl.Name)
+
 	endScope := r.beginScope()
 	defer endScope()
+
 	prevFunScopeLevel := r.funScopeLevel
 	r.funScopeLevel = r.scopes.Len() - 1
 	defer func() { r.funScopeLevel = prevFunScopeLevel }()
+
+	if r.scopes.Len() == 2 {
+		r.inGlobalFun = true
+		defer func() { r.inGlobalFun = false }()
+	}
+
 	scope := r.scopes.Peek()
 	scope.DeclareName(token.CurrentInstanceIdent)
 	scope.Define(token.CurrentInstanceIdent)
