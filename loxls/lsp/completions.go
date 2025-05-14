@@ -62,26 +62,33 @@ func (c *identCompletions) At(pos *protocol.Position) []*completion {
 		completionStartIdx--
 	}
 
-	scopeIdx, found := slices.BinarySearchFunc(c.scopeLocations, pos, func(loc *scopeLocation, target *protocol.Position) int {
+	curScopeIdx, found := slices.BinarySearchFunc(c.scopeLocations, pos, func(loc *scopeLocation, target *protocol.Position) int {
 		pos := newPosition(loc.Position)
 		return positionCmp(pos, target)
 	})
 	if !found {
-		scopeIdx--
+		curScopeIdx--
 	}
 
 	curScopeDepth := 0
-	if scopeIdx >= 0 {
-		curScopeDepth = c.scopeLocations[scopeIdx].Depth
+	if curScopeIdx >= 0 {
+		// TODO: Inject a scope location with depth 0 at 0:0 so that we don't have to deal with the curScopeIdx being
+		// negative anymore. This would simplify the curScopeIdx logic below as well.
+		curScopeDepth = c.scopeLocations[curScopeIdx].Depth
 	}
 
 	var completions []*completion
-	for _, completion := range slices.Backward(c.completionLocations[:completionStartIdx+1]) {
-		if completion.ScopeDepth < curScopeDepth {
-			curScopeDepth = completion.ScopeDepth
+	for _, completionLoc := range slices.Backward(c.completionLocations[:completionStartIdx+1]) {
+		for curScopeIdx >= 0 && c.scopeLocations[curScopeIdx].Position.Compare(completionLoc.Position) >= 1 {
+			curScopeIdx--
+			if curScopeIdx >= 0 {
+				curScopeDepth = min(curScopeDepth, c.scopeLocations[curScopeIdx].Depth)
+			} else {
+				curScopeDepth = 0
+			}
 		}
-		if completion.ScopeDepth == curScopeDepth {
-			completions = append(completions, completion.Completions...)
+		if completionLoc.ScopeDepth == curScopeDepth {
+			completions = append(completions, completionLoc.Completions...)
 		}
 	}
 	return completions
