@@ -70,23 +70,12 @@ func (c *identCompletions) At(pos *protocol.Position) []*completion {
 		scopeLocsIdx--
 	}
 
-	curScopeDepth := 0
-	if scopeLocsIdx >= 0 {
-		// TODO: Inject a scope location with depth 0 at 0:0 so that we don't have to deal with the curScopeIdx being
-		// negative anymore. This would simplify the curScopeIdx logic below as well.
-		curScopeDepth = c.scopeLocs[scopeLocsIdx].Depth
-	}
-
 	var compls []*completion
+	curScopeDepth := c.scopeLocs[scopeLocsIdx].Depth
 	seenLabels := map[string]bool{}
 	for _, complLoc := range slices.Backward(c.complLocs[:complLocsStartIdx+1]) {
-		for scopeLocsIdx >= 0 && c.scopeLocs[scopeLocsIdx].Position.Compare(complLoc.Position) >= 1 {
-			scopeLocsIdx--
-			if scopeLocsIdx >= 0 {
-				curScopeDepth = min(curScopeDepth, c.scopeLocs[scopeLocsIdx].Depth)
-			} else {
-				curScopeDepth = 0
-			}
+		for ; curScopeDepth > 0 && c.scopeLocs[scopeLocsIdx].Position.Compare(complLoc.Position) >= 1; scopeLocsIdx-- {
+			curScopeDepth = min(curScopeDepth, c.scopeLocs[scopeLocsIdx-1].Depth)
 		}
 		if complLoc.ScopeDepth <= curScopeDepth {
 			for _, compl := range complLoc.Completions {
@@ -101,7 +90,7 @@ func (c *identCompletions) At(pos *protocol.Position) []*completion {
 }
 
 func genIdentCompletions(program *ast.Program) *identCompletions {
-	g := &identCompletionsGenerator{}
+	g := newIdentCompletionsGenerator(program.Start())
 	return g.Generate(program)
 }
 
@@ -113,6 +102,15 @@ type identCompletionsGenerator struct {
 
 	complLocs []*completionLocation
 	scopeLocs []*scopeLocation
+}
+
+func newIdentCompletionsGenerator(programStart token.Position) *identCompletionsGenerator {
+	return &identCompletionsGenerator{
+		scopeLocs: []*scopeLocation{{
+			Position: programStart,
+			Depth:    0,
+		}},
+	}
 }
 
 func (g *identCompletionsGenerator) Generate(program *ast.Program) *identCompletions {
