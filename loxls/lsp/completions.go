@@ -20,19 +20,19 @@ var keywordCompletions = genKeywordCompletions()
 
 func genKeywordCompletions() []*completion {
 	keywords := []string{"print", "var", "true", "false", "nil", "if", "while", "for", "fun", "class"}
-	completions := make([]*completion, len(keywords))
+	compls := make([]*completion, len(keywords))
 	for i, keyword := range keywords {
-		completions[i] = &completion{
+		compls[i] = &completion{
 			Label: keyword,
 			Kind:  protocol.CompletionItemKindKeyword,
 		}
 	}
-	return completions
+	return compls
 }
 
 type identCompletions struct {
-	completionLocations []*completionLocation
-	scopeLocations      []*scopeLocation
+	complLocs []*completionLocation
+	scopeLocs []*scopeLocation
 }
 
 type completionLocation struct {
@@ -55,49 +55,49 @@ func (c *identCompletions) At(pos *protocol.Position) []*completion {
 		return cmp.Compare(x.Line, y.Line)
 	}
 
-	completionStartIdx, found := slices.BinarySearchFunc(c.completionLocations, pos, func(loc *completionLocation, target *protocol.Position) int {
+	complLocsStartIdx, found := slices.BinarySearchFunc(c.complLocs, pos, func(loc *completionLocation, target *protocol.Position) int {
 		return positionCmp(newPosition(loc.Position), target)
 	})
 	if !found {
-		completionStartIdx--
+		complLocsStartIdx--
 	}
 
-	curScopeIdx, found := slices.BinarySearchFunc(c.scopeLocations, pos, func(loc *scopeLocation, target *protocol.Position) int {
+	scopeLocsIdx, found := slices.BinarySearchFunc(c.scopeLocs, pos, func(loc *scopeLocation, target *protocol.Position) int {
 		pos := newPosition(loc.Position)
 		return positionCmp(pos, target)
 	})
 	if !found {
-		curScopeIdx--
+		scopeLocsIdx--
 	}
 
 	curScopeDepth := 0
-	if curScopeIdx >= 0 {
+	if scopeLocsIdx >= 0 {
 		// TODO: Inject a scope location with depth 0 at 0:0 so that we don't have to deal with the curScopeIdx being
 		// negative anymore. This would simplify the curScopeIdx logic below as well.
-		curScopeDepth = c.scopeLocations[curScopeIdx].Depth
+		curScopeDepth = c.scopeLocs[scopeLocsIdx].Depth
 	}
 
-	var completions []*completion
+	var compls []*completion
 	seenLabels := map[string]bool{}
-	for _, completionLoc := range slices.Backward(c.completionLocations[:completionStartIdx+1]) {
-		for curScopeIdx >= 0 && c.scopeLocations[curScopeIdx].Position.Compare(completionLoc.Position) >= 1 {
-			curScopeIdx--
-			if curScopeIdx >= 0 {
-				curScopeDepth = min(curScopeDepth, c.scopeLocations[curScopeIdx].Depth)
+	for _, complLoc := range slices.Backward(c.complLocs[:complLocsStartIdx+1]) {
+		for scopeLocsIdx >= 0 && c.scopeLocs[scopeLocsIdx].Position.Compare(complLoc.Position) >= 1 {
+			scopeLocsIdx--
+			if scopeLocsIdx >= 0 {
+				curScopeDepth = min(curScopeDepth, c.scopeLocs[scopeLocsIdx].Depth)
 			} else {
 				curScopeDepth = 0
 			}
 		}
-		if completionLoc.ScopeDepth <= curScopeDepth {
-			for _, completion := range completionLoc.Completions {
-				if !seenLabels[completion.Label] {
-					completions = append(completions, completion)
-					seenLabels[completion.Label] = true
+		if complLoc.ScopeDepth <= curScopeDepth {
+			for _, compl := range complLoc.Completions {
+				if !seenLabels[compl.Label] {
+					compls = append(compls, compl)
+					seenLabels[compl.Label] = true
 				}
 			}
 		}
 	}
-	return completions
+	return compls
 }
 
 func genIdentCompletions(program *ast.Program) *identCompletions {
@@ -109,14 +109,14 @@ type identCompletionsGenerator struct {
 	scopeDepth      int
 	globalComplLocs []*completionLocation
 
-	completionLocations []*completionLocation
-	scopeLocations      []*scopeLocation
+	complLocs []*completionLocation
+	scopeLocs []*scopeLocation
 }
 
 func (g *identCompletionsGenerator) Generate(program *ast.Program) *identCompletions {
 	g.globalComplLocs = g.readGlobalCompletionLocations(program)
 	ast.Walk(program, g.walk)
-	return &identCompletions{scopeLocations: g.scopeLocations, completionLocations: g.completionLocations}
+	return &identCompletions{complLocs: g.complLocs, scopeLocs: g.scopeLocs}
 }
 
 func (g *identCompletionsGenerator) readGlobalCompletionLocations(program *ast.Program) []*completionLocation {
@@ -161,7 +161,7 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Semicolon.IsZero() {
 			return false
 		}
-		g.completionLocations = append(g.completionLocations, &completionLocation{
+		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Semicolon.End(),
 			ScopeDepth:  g.scopeDepth,
 			Completions: []*completion{varCompl(node.Name.Token.Lexeme)},
@@ -193,7 +193,7 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 		bodyCompls[len(node.Function.Params)] = funCompl
 		copy(bodyCompls[len(node.Function.Params)+1:], forwardDeclaredCompls)
 		g.scopeDepth++
-		g.completionLocations = append(g.completionLocations, &completionLocation{
+		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Function.Body.LeftBrace.End(),
 			ScopeDepth:  g.scopeDepth,
 			Completions: bodyCompls,
@@ -205,7 +205,7 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 		if node.Function.Body.RightBrace.IsZero() {
 			return false
 		}
-		g.completionLocations = append(g.completionLocations, &completionLocation{
+		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Function.Body.RightBrace.End(),
 			ScopeDepth:  g.scopeDepth,
 			Completions: []*completion{funCompl},
@@ -227,7 +227,7 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 			}
 		}
 		g.scopeDepth++
-		g.completionLocations = append(g.completionLocations, &completionLocation{
+		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Function.Body.LeftBrace.End(),
 			ScopeDepth:  g.scopeDepth,
 			Completions: completions,
@@ -257,7 +257,7 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 		}
 		copy(compls[len(node.Function.Params):], forwardDeclaredCompls)
 		g.scopeDepth++
-		g.completionLocations = append(g.completionLocations, &completionLocation{
+		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Function.Body.LeftBrace.End(),
 			ScopeDepth:  g.scopeDepth,
 			Completions: compls,
@@ -271,7 +271,7 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 		if !node.Name.IsValid() || node.Body == nil || node.Body.LeftBrace.IsZero() {
 			return false
 		}
-		g.completionLocations = append(g.completionLocations, &completionLocation{
+		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Body.LeftBrace.End(),
 			ScopeDepth:  g.scopeDepth,
 			Completions: []*completion{classCompl(node.Name.Token.Lexeme)},
@@ -281,7 +281,7 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 	case *ast.Block:
 		g.scopeDepth++
 		if !node.LeftBrace.IsZero() {
-			g.scopeLocations = append(g.scopeLocations, &scopeLocation{
+			g.scopeLocs = append(g.scopeLocs, &scopeLocation{
 				Position: node.LeftBrace.End(),
 				Depth:    g.scopeDepth,
 			})
@@ -293,7 +293,7 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 
 		g.scopeDepth--
 		if !node.RightBrace.IsZero() {
-			g.scopeLocations = append(g.scopeLocations, &scopeLocation{
+			g.scopeLocs = append(g.scopeLocs, &scopeLocation{
 				Position: node.RightBrace.End(),
 				Depth:    g.scopeDepth,
 			})
