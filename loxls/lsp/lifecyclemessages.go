@@ -124,7 +124,6 @@ func (h *Handler) exit() error {
 	if !h.shuttingDown {
 		code = 1
 	}
-	h.log.Infof("Lox language server exiting with code %d", code)
 	os.Exit(code)
 	return nil
 }
