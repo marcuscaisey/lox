@@ -68,9 +68,12 @@ func (p *parser) Parse() (*ast.Program, error) {
 }
 
 func (p *parser) parseProgram() *ast.Program {
-	return &ast.Program{
-		Stmts: p.parseDeclsUntil(token.EOF),
-	}
+	stmts := p.parseDeclsUntil(token.EOF)
+	endPos := p.tok.End() // p.tok will be EOF.
+	startPos := endPos
+	startPos.Line = 1
+	startPos.Column = 0
+	return &ast.Program{StartPos: startPos, Stmts: stmts, EndPos: endPos}
 }
 
 func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {

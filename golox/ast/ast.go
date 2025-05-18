@@ -22,12 +22,14 @@ func (node) isNode() {}
 
 // Program is the root node of the AST.
 type Program struct {
-	Stmts []Stmt `print:"unnamed"`
+	StartPos token.Position
+	Stmts    []Stmt `print:"unnamed"`
+	EndPos   token.Position
 	node
 }
 
-func (p *Program) Start() token.Position { return p.Stmts[0].Start() }
-func (p *Program) End() token.Position   { return p.Stmts[len(p.Stmts)-1].End() }
+func (p *Program) Start() token.Position { return p.StartPos }
+func (p *Program) End() token.Position   { return p.EndPos }
 func (p *Program) IsValid() bool         { return p != nil && isValidSlice(p.Stmts) }
 
 // Ident is an identifier, such as a variable name.
