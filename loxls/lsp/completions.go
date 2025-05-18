@@ -88,7 +88,7 @@ func (c *identCompletions) At(pos *protocol.Position) []*completion {
 				curScopeDepth = 0
 			}
 		}
-		if completionLoc.ScopeDepth == curScopeDepth {
+		if completionLoc.ScopeDepth <= curScopeDepth {
 			for _, completion := range completionLoc.Completions {
 				if !seenLabels[completion.Label] {
 					completions = append(completions, completion)
