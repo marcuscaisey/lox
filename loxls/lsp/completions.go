@@ -192,13 +192,11 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 		}
 		bodyCompls[len(node.Function.Params)] = funCompl
 		copy(bodyCompls[len(node.Function.Params)+1:], forwardDeclaredCompls)
-		g.scopeDepth++
 		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Function.Body.LeftBrace.End(),
-			ScopeDepth:  g.scopeDepth,
+			ScopeDepth:  g.scopeDepth + 1,
 			Completions: bodyCompls,
 		})
-		g.scopeDepth--
 
 		ast.Walk(node.Function, g.walk)
 
@@ -226,13 +224,11 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 				Kind:  protocol.CompletionItemKindVariable,
 			}
 		}
-		g.scopeDepth++
 		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Function.Body.LeftBrace.End(),
-			ScopeDepth:  g.scopeDepth,
+			ScopeDepth:  g.scopeDepth + 1,
 			Completions: completions,
 		})
-		g.scopeDepth--
 
 		ast.Walk(node.Function, g.walk)
 		return false
@@ -256,13 +252,11 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 			}
 		}
 		copy(compls[len(node.Function.Params):], forwardDeclaredCompls)
-		g.scopeDepth++
 		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Function.Body.LeftBrace.End(),
-			ScopeDepth:  g.scopeDepth,
+			ScopeDepth:  g.scopeDepth + 1,
 			Completions: compls,
 		})
-		g.scopeDepth--
 
 		ast.Walk(node.Function, g.walk)
 		return false
