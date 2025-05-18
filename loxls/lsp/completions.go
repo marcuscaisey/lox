@@ -106,8 +106,10 @@ func genIdentCompletions(program *ast.Program) *identCompletions {
 }
 
 type identCompletionsGenerator struct {
-	scopeDepth      int
-	globalComplLocs []*completionLocation
+	scopeDepth                    int
+	globalComplLocs               []*completionLocation
+	curClassCompl                 *completion
+	curClassForwardDeclaredCompls []*completion
 
 	complLocs []*completionLocation
 	scopeLocs []*scopeLocation
@@ -233,15 +235,36 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 		ast.Walk(node.Function, g.walk)
 		return false
 
+	case *ast.ClassDecl:
+		if !node.Name.IsValid() || node.Body == nil {
+			return false
+		}
+
+		classCompl := classCompl(node.Name.Token.Lexeme)
+
+		g.curClassCompl = classCompl
+		if g.scopeDepth == 0 {
+			g.curClassForwardDeclaredCompls = g.globalCompletionsAfter(node.Start())
+		}
+
+		ast.Walk(node.Body, g.walk)
+
+		if node.Body.RightBrace.IsZero() {
+			return false
+		}
+		g.complLocs = append(g.complLocs, &completionLocation{
+			Position:    node.Body.RightBrace.End(),
+			ScopeDepth:  g.scopeDepth,
+			Completions: []*completion{classCompl},
+		})
+
+		return false
+
 	case *ast.MethodDecl:
 		if !node.Name.IsValid() || node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
 			return false
 		}
-		var forwardDeclaredCompls []*completion
-		if g.scopeDepth == 1 {
-			forwardDeclaredCompls = g.globalCompletionsAfter(node.Start())
-		}
-		compls := make([]*completion, len(node.Function.Params)+len(forwardDeclaredCompls))
+		compls := make([]*completion, len(node.Function.Params)+1+len(g.curClassForwardDeclaredCompls))
 		for i, paramDecl := range node.Function.Params {
 			if !paramDecl.IsValid() {
 				continue
@@ -251,7 +274,8 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 				Kind:  protocol.CompletionItemKindVariable,
 			}
 		}
-		copy(compls[len(node.Function.Params):], forwardDeclaredCompls)
+		compls[len(node.Function.Params)] = g.curClassCompl
+		copy(compls[len(node.Function.Params)+1:], g.curClassForwardDeclaredCompls)
 		g.complLocs = append(g.complLocs, &completionLocation{
 			Position:    node.Function.Body.LeftBrace.End(),
 			ScopeDepth:  g.scopeDepth + 1,
@@ -260,17 +284,6 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 
 		ast.Walk(node.Function, g.walk)
 		return false
-
-	case *ast.ClassDecl:
-		if !node.Name.IsValid() || node.Body == nil || node.Body.LeftBrace.IsZero() {
-			return false
-		}
-		g.complLocs = append(g.complLocs, &completionLocation{
-			Position:    node.Body.LeftBrace.End(),
-			ScopeDepth:  g.scopeDepth,
-			Completions: []*completion{classCompl(node.Name.Token.Lexeme)},
-		})
-		return true
 
 	case *ast.Block:
 		g.scopeDepth++
