@@ -240,9 +240,13 @@ func (g *identCompletionsGenerator) walk(node ast.Node) bool {
 
 		classCompl := classCompl(node.Name.Token.Lexeme)
 
+		prevCurClassCompl := g.curClassCompl
 		g.curClassCompl = classCompl
+		defer func() { g.curClassCompl = prevCurClassCompl }()
 		if g.scopeDepth == 0 {
+			prevCurClassForwardDeclaredCompls := g.curClassForwardDeclaredCompls
 			g.curClassForwardDeclaredCompls = g.globalCompletionsAfter(node.Start())
+			defer func() { g.curClassForwardDeclaredCompls = prevCurClassForwardDeclaredCompls }()
 		}
 
 		ast.Walk(node.Body, g.walk)
