@@ -14,13 +14,13 @@ import (
 )
 
 type document struct {
-	URI              string
-	Version          int
-	Text             string
-	Program          *ast.Program
-	IdentDecls       map[*ast.Ident]ast.Decl
-	IdentCompletions *identCompletions
-	HasErrors        bool
+	URI            string
+	Version        int
+	Text           string
+	Program        *ast.Program
+	IdentDecls     map[*ast.Ident]ast.Decl
+	IdentCompletor *identCompletor
+	HasErrors      bool
 }
 
 // document returns the document with the given URI, or an error if it doesn't exist.
@@ -93,13 +93,13 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	}
 
 	h.docs[uri] = &document{
-		URI:              uri,
-		Version:          version,
-		Text:             src,
-		Program:          program,
-		IdentDecls:       identDecls,
-		IdentCompletions: genIdentCompletions(program),
-		HasErrors:        err != nil,
+		URI:            uri,
+		Version:        version,
+		Text:           src,
+		Program:        program,
+		IdentDecls:     identDecls,
+		IdentCompletor: newIdentCompletor(program),
+		HasErrors:      err != nil,
 	}
 
 	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{

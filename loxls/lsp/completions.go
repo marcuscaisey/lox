@@ -1,7 +1,6 @@
 package lsp
 
 import (
-	"cmp"
 	"fmt"
 	"slices"
 
@@ -10,9 +9,14 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
+// completion represents a candidate piece of text that can be suggested to complete text that is being typed.
 type completion struct {
-	Label   string
-	Kind    protocol.CompletionItemKind
+	// Text is the text that is being suggested. It will be shown in the completion menu and is the text that will be
+	// inserted if Snippet is empty or the client doesn't support snippets.
+	Text string
+	// Kind is the "kind" value that should be used for the resulting CompletionItem.
+	Kind protocol.CompletionItemKind
+	// Snippet is the snippet that should be inserted instead of Text if the client supports snippets.
 	Snippet string
 }
 
@@ -23,103 +27,84 @@ func genKeywordCompletions() []*completion {
 	compls := make([]*completion, len(keywords))
 	for i, keyword := range keywords {
 		compls[i] = &completion{
-			Label: keyword,
-			Kind:  protocol.CompletionItemKindKeyword,
+			Text: keyword,
+			Kind: protocol.CompletionItemKindKeyword,
 		}
 	}
 	return compls
 }
 
-type identCompletions struct {
-	complLocs []*completionLocation
-	scopeLocs []*scopeLocation
+// identCompletor provides completions of identifiers based on their lexical scope.
+type identCompletor struct {
+	globalScope *completionScope
 }
 
+// newIdentCompletor returns an [identCompletor] which completes identifiers inside the given program.
+func newIdentCompletor(program *ast.Program) *identCompletor {
+	g := newIdentCompletionGenerator(program.Start(), program.End())
+	globalScope := g.Generate(program)
+	return &identCompletor{globalScope: globalScope}
+}
+
+// Complete returns completions for all identifiers in scope at the given position.
+func (c *identCompletor) Complete(pos *protocol.Position) []*completion {
+	return c.globalScope.Complete(pos)
+}
+
+// completionScope represents a lexical scope.
+type completionScope struct {
+	start     token.Position        // Position of the first character of the scope.
+	end       token.Position        // Position of the character immediately after the scope.
+	complLocs []*completionLocation // Locations where completions can be suggested.
+	children  []*completionScope    // Child scopes nested inside this one.
+}
+
+// completionLocation represents a position after which some completions can be suggested in a scope.
 type completionLocation struct {
-	Position    token.Position
-	ScopeDepth  int
-	Completions []*completion
+	Position    token.Position // The earliest position in the scope that these completions can be suggested.
+	Completions []*completion  // Completions which can be suggested.
 }
 
-type scopeLocation struct {
-	Position token.Position
-	Depth    int
-}
-
-// TODO: document
-func (c *identCompletions) At(pos *protocol.Position) []*completion {
-	positionCmp := func(x, y *protocol.Position) int {
-		if x.Line == y.Line {
-			return cmp.Compare(x.Character, y.Character)
-		}
-		return cmp.Compare(x.Line, y.Line)
-	}
-
-	complLocsStartIdx, found := slices.BinarySearchFunc(c.complLocs, pos, func(loc *completionLocation, target *protocol.Position) int {
-		return positionCmp(newPosition(loc.Position), target)
-	})
-	if !found {
-		complLocsStartIdx--
-	}
-
-	scopeLocsIdx, found := slices.BinarySearchFunc(c.scopeLocs, pos, func(loc *scopeLocation, target *protocol.Position) int {
-		pos := newPosition(loc.Position)
-		return positionCmp(pos, target)
-	})
-	if !found {
-		scopeLocsIdx--
-	}
-
+// Complete returns completions for all identifiers in scope at the given position.
+func (s *completionScope) Complete(pos *protocol.Position) []*completion {
 	var compls []*completion
-	curScopeDepth := c.scopeLocs[scopeLocsIdx].Depth
-	seenLabels := map[string]bool{}
-	for _, complLoc := range slices.Backward(c.complLocs[:complLocsStartIdx+1]) {
-		for ; curScopeDepth > 0 && c.scopeLocs[scopeLocsIdx].Position.Compare(complLoc.Position) >= 1; scopeLocsIdx-- {
-			curScopeDepth = min(curScopeDepth, c.scopeLocs[scopeLocsIdx-1].Depth)
-		}
-		if complLoc.ScopeDepth <= curScopeDepth {
-			for _, compl := range complLoc.Completions {
-				if !seenLabels[compl.Label] {
-					compls = append(compls, compl)
-					seenLabels[compl.Label] = true
-				}
-			}
+
+	for _, child := range s.children {
+		if inRangePositions(pos, child.start, child.end) {
+			compls = append(compls, child.Complete(pos)...)
+			break
 		}
 	}
+
+	for _, loc := range slices.Backward(s.complLocs) {
+		locPos := newPosition(loc.Position)
+		if pos.Line > locPos.Line || (pos.Line == locPos.Line && pos.Character >= locPos.Character) {
+			compls = append(compls, loc.Completions...)
+		}
+	}
+
 	return compls
 }
 
-func genIdentCompletions(program *ast.Program) *identCompletions {
-	g := newIdentCompletionsGenerator(program.Start())
-	return g.Generate(program)
+type identCompletionGenerator struct {
+	globalComplLocs []*completionLocation
+	curScope        *completionScope
+
+	globalScope *completionScope
 }
 
-type identCompletionsGenerator struct {
-	scopeDepth                    int
-	globalComplLocs               []*completionLocation
-	curClassCompl                 *completion
-	curClassForwardDeclaredCompls []*completion
-
-	complLocs []*completionLocation
-	scopeLocs []*scopeLocation
+func newIdentCompletionGenerator(programStart token.Position, programEnd token.Position) *identCompletionGenerator {
+	globalScope := &completionScope{start: programStart, end: programEnd}
+	return &identCompletionGenerator{globalScope: globalScope, curScope: globalScope}
 }
 
-func newIdentCompletionsGenerator(programStart token.Position) *identCompletionsGenerator {
-	return &identCompletionsGenerator{
-		scopeLocs: []*scopeLocation{{
-			Position: programStart,
-			Depth:    0,
-		}},
-	}
-}
-
-func (g *identCompletionsGenerator) Generate(program *ast.Program) *identCompletions {
+func (g *identCompletionGenerator) Generate(program *ast.Program) *completionScope {
 	g.globalComplLocs = g.readGlobalCompletionLocations(program)
 	ast.Walk(program, g.walk)
-	return &identCompletions{complLocs: g.complLocs, scopeLocs: g.scopeLocs}
+	return g.globalScope
 }
 
-func (g *identCompletionsGenerator) readGlobalCompletionLocations(program *ast.Program) []*completionLocation {
+func (g *identCompletionGenerator) readGlobalCompletionLocations(program *ast.Program) []*completionLocation {
 	var locs []*completionLocation
 	for _, stmt := range program.Stmts {
 		if commentedStmt, ok := stmt.(*ast.CommentedStmt); ok {
@@ -153,196 +138,137 @@ func (g *identCompletionsGenerator) readGlobalCompletionLocations(program *ast.P
 	return locs
 }
 
-func (g *identCompletionsGenerator) walk(node ast.Node) bool {
+func (g *identCompletionGenerator) walk(node ast.Node) bool {
 	switch node := node.(type) {
 	case *ast.VarDecl:
-		ast.Walk(node.Initialiser, g.walk)
-
-		if !node.Name.IsValid() || node.Semicolon.IsZero() {
-			return false
-		}
-		g.complLocs = append(g.complLocs, &completionLocation{
-			Position:    node.Semicolon.End(),
-			ScopeDepth:  g.scopeDepth,
-			Completions: []*completion{varCompl(node.Name.Token.Lexeme)},
-		})
-		return false
-
+		g.walkVarDecl(node)
 	case *ast.FunDecl:
-		if !node.Name.IsValid() || node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
-			return false
-		}
-
-		funCompl := funCompl(node.Name.Token.Lexeme)
-
-		var forwardDeclaredCompls []*completion
-		if g.scopeDepth == 0 {
-			forwardDeclaredCompls = g.globalCompletionsAfter(node.Start())
-		}
-		bodyCompls := make([]*completion, len(node.Function.Params)+1+len(forwardDeclaredCompls))
-		for i, paramDecl := range node.Function.Params {
-			// FIXME: if the param declaration is not valid, then a nil completion will be returned
-			if !paramDecl.IsValid() {
-				continue
-			}
-			bodyCompls[i] = &completion{
-				Label: paramDecl.Name.Token.Lexeme,
-				Kind:  protocol.CompletionItemKindVariable,
-			}
-		}
-		bodyCompls[len(node.Function.Params)] = funCompl
-		copy(bodyCompls[len(node.Function.Params)+1:], forwardDeclaredCompls)
-		g.complLocs = append(g.complLocs, &completionLocation{
-			Position:    node.Function.Body.LeftBrace.End(),
-			ScopeDepth:  g.scopeDepth + 1,
-			Completions: bodyCompls,
-		})
-
-		ast.Walk(node.Function, g.walk)
-
-		if node.Function.Body.RightBrace.IsZero() {
-			return false
-		}
-		g.complLocs = append(g.complLocs, &completionLocation{
-			Position:    node.Function.Body.RightBrace.End(),
-			ScopeDepth:  g.scopeDepth,
-			Completions: []*completion{funCompl},
-		})
-		return false
-
+		g.walkFunDecl(node)
 	case *ast.FunExpr:
-		if node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
-			return false
-		}
-		completions := make([]*completion, len(node.Function.Params))
-		for i, paramDecl := range node.Function.Params {
-			if !paramDecl.IsValid() {
-				continue
-			}
-			completions[i] = &completion{
-				Label: paramDecl.Name.Token.Lexeme,
-				Kind:  protocol.CompletionItemKindVariable,
-			}
-		}
-		g.complLocs = append(g.complLocs, &completionLocation{
-			Position:    node.Function.Body.LeftBrace.End(),
-			ScopeDepth:  g.scopeDepth + 1,
-			Completions: completions,
-		})
-
-		ast.Walk(node.Function, g.walk)
-		return false
-
+		g.walkFunExpr(node)
 	case *ast.ClassDecl:
-		if !node.Name.IsValid() || node.Body == nil {
-			return false
-		}
-
-		classCompl := classCompl(node.Name.Token.Lexeme)
-
-		prevCurClassCompl := g.curClassCompl
-		g.curClassCompl = classCompl
-		defer func() { g.curClassCompl = prevCurClassCompl }()
-		if g.scopeDepth == 0 {
-			prevCurClassForwardDeclaredCompls := g.curClassForwardDeclaredCompls
-			g.curClassForwardDeclaredCompls = g.globalCompletionsAfter(node.Start())
-			defer func() { g.curClassForwardDeclaredCompls = prevCurClassForwardDeclaredCompls }()
-		}
-
-		ast.Walk(node.Body, g.walk)
-
-		if node.Body.RightBrace.IsZero() {
-			return false
-		}
-		g.complLocs = append(g.complLocs, &completionLocation{
-			Position:    node.Body.RightBrace.End(),
-			ScopeDepth:  g.scopeDepth,
-			Completions: []*completion{classCompl},
-		})
-
-		return false
-
-	case *ast.MethodDecl:
-		if !node.Name.IsValid() || node.Function == nil || node.Function.Body == nil || node.Function.Body.LeftBrace.IsZero() {
-			return false
-		}
-		compls := make([]*completion, len(node.Function.Params)+1+len(g.curClassForwardDeclaredCompls))
-		for i, paramDecl := range node.Function.Params {
-			if !paramDecl.IsValid() {
-				continue
-			}
-			compls[i] = &completion{
-				Label: paramDecl.Name.Token.Lexeme,
-				Kind:  protocol.CompletionItemKindVariable,
-			}
-		}
-		compls[len(node.Function.Params)] = g.curClassCompl
-		copy(compls[len(node.Function.Params)+1:], g.curClassForwardDeclaredCompls)
-		g.complLocs = append(g.complLocs, &completionLocation{
-			Position:    node.Function.Body.LeftBrace.End(),
-			ScopeDepth:  g.scopeDepth + 1,
-			Completions: compls,
-		})
-
-		ast.Walk(node.Function, g.walk)
-		return false
-
+		g.walkClassDecl(node)
 	case *ast.Block:
-		g.scopeDepth++
-		if !node.LeftBrace.IsZero() {
-			g.scopeLocs = append(g.scopeLocs, &scopeLocation{
-				Position: node.LeftBrace.End(),
-				Depth:    g.scopeDepth,
-			})
-		}
-
-		for _, stmt := range node.Stmts {
-			ast.Walk(stmt, g.walk)
-		}
-
-		g.scopeDepth--
-		if !node.RightBrace.IsZero() {
-			g.scopeLocs = append(g.scopeLocs, &scopeLocation{
-				Position: node.RightBrace.End(),
-				Depth:    g.scopeDepth,
-			})
-		}
-
-		return false
-
+		g.walkBlock(node)
 	default:
 		return true
 	}
+	return false
 }
 
-func varCompl(name string) *completion {
-	return &completion{
-		Label: name,
-		Kind:  protocol.CompletionItemKindVariable,
+func (g *identCompletionGenerator) walkVarDecl(decl *ast.VarDecl) {
+	ast.Walk(decl.Initialiser, g.walk)
+	if decl.Name.IsValid() && !decl.Semicolon.IsZero() {
+		g.curScope.complLocs = append(g.curScope.complLocs, &completionLocation{
+			Position:    decl.Semicolon.End(),
+			Completions: []*completion{varCompl(decl.Name.Token.Lexeme)},
+		})
 	}
 }
 
-func funCompl(name string) *completion {
-	return &completion{
-		Label:   name,
-		Kind:    protocol.CompletionItemKindFunction,
-		Snippet: callSnippet(name),
+func (g *identCompletionGenerator) walkFunDecl(decl *ast.FunDecl) {
+	if !decl.Name.IsValid() || decl.Function == nil || decl.Function.Body == nil {
+		return
+	}
+
+	funCompl := funCompl(decl.Name.Token.Lexeme)
+
+	extraCompls := []*completion{funCompl}
+	if g.curScope == g.globalScope {
+		forwardDeclaredCompls := g.globalCompletionsAfter(decl.Start())
+		extraCompls = append(extraCompls, forwardDeclaredCompls...)
+	}
+	g.walkFun(decl.Function, extraCompls...)
+
+	if !decl.Function.Body.RightBrace.IsZero() {
+		g.curScope.complLocs = append(g.curScope.complLocs, &completionLocation{
+			Position:    decl.Function.Body.RightBrace.End(),
+			Completions: []*completion{funCompl},
+		})
 	}
 }
 
-func classCompl(name string) *completion {
-	return &completion{
-		Label:   name,
-		Kind:    protocol.CompletionItemKindClass,
-		Snippet: callSnippet(name),
+func (g *identCompletionGenerator) walkFunExpr(expr *ast.FunExpr) {
+	g.walkFun(expr.Function)
+}
+
+func (g *identCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
+	if !decl.Name.IsValid() || decl.Body == nil {
+		return
+	}
+
+	classCompl := classCompl(decl.Name.Token.Lexeme)
+
+	extraMethodCompls := []*completion{classCompl}
+	if g.curScope == g.globalScope {
+		forwardDeclaredCompls := g.globalCompletionsAfter(decl.Start())
+		extraMethodCompls = append(extraMethodCompls, forwardDeclaredCompls...)
+	}
+	for _, methodDecl := range decl.Methods() {
+		g.walkFun(methodDecl.Function, extraMethodCompls...)
+	}
+
+	if !decl.Body.RightBrace.IsZero() {
+		g.curScope.complLocs = append(g.curScope.complLocs, &completionLocation{
+			Position:    decl.Body.RightBrace.End(),
+			Completions: []*completion{classCompl},
+		})
 	}
 }
 
-func callSnippet(name string) string {
-	return fmt.Sprintf("%s($1)$0", name)
+func (g *identCompletionGenerator) walkBlock(block *ast.Block) {
+	_, endScope := g.beginScope(block)
+	for _, stmt := range block.Stmts {
+		ast.Walk(stmt, g.walk)
+	}
+	endScope()
 }
 
-func (g *identCompletionsGenerator) globalCompletionsAfter(pos token.Position) []*completion {
+func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*completion) {
+	if fun == nil || fun.Body == nil {
+		return
+	}
+
+	paramCompls := make([]*completion, 0, len(fun.Params))
+	for _, paramDecl := range fun.Params {
+		if paramDecl.IsValid() {
+			paramCompls = append(paramCompls, &completion{Text: paramDecl.Name.Token.Lexeme, Kind: protocol.CompletionItemKindVariable})
+		}
+	}
+
+	bodyScope, endBodyScope := g.beginScope(fun.Body)
+	bodyScope.complLocs = append(bodyScope.complLocs, &completionLocation{
+		Position:    bodyScope.start,
+		Completions: slices.Concat(paramCompls, extraCompls),
+	})
+	for _, stmt := range fun.Body.Stmts {
+		ast.Walk(stmt, g.walk)
+	}
+	endBodyScope()
+}
+
+func (g *identCompletionGenerator) beginScope(block *ast.Block) (*completionScope, func()) {
+	childScope := &completionScope{
+		start: g.curScope.start,
+		end:   g.curScope.end,
+	}
+	if !block.LeftBrace.IsZero() {
+		childScope.start = block.LeftBrace.End()
+	}
+	if !block.RightBrace.IsZero() {
+		childScope.end = block.RightBrace.End()
+	}
+	g.curScope.children = append(g.curScope.children, childScope)
+
+	prevCurScope := g.curScope
+	g.curScope = childScope
+
+	return childScope, func() {
+		g.curScope = prevCurScope
+	}
+}
+
+func (g *identCompletionGenerator) globalCompletionsAfter(pos token.Position) []*completion {
 	startIdx, found := slices.BinarySearchFunc(g.globalComplLocs, pos, func(loc *completionLocation, target token.Position) int {
 		return loc.Position.Compare(target)
 	})
@@ -356,4 +282,31 @@ func (g *identCompletionsGenerator) globalCompletionsAfter(pos token.Position) [
 		}
 	}
 	return compls
+}
+
+func varCompl(name string) *completion {
+	return &completion{
+		Text: name,
+		Kind: protocol.CompletionItemKindVariable,
+	}
+}
+
+func funCompl(name string) *completion {
+	return &completion{
+		Text:    name,
+		Kind:    protocol.CompletionItemKindFunction,
+		Snippet: callSnippet(name),
+	}
+}
+
+func classCompl(name string) *completion {
+	return &completion{
+		Text:    name,
+		Kind:    protocol.CompletionItemKindClass,
+		Snippet: callSnippet(name),
+	}
+}
+
+func callSnippet(name string) string {
+	return fmt.Sprintf("%s($1)$0", name)
 }

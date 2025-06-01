@@ -317,7 +317,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		}
 	}
 
-	completions := doc.IdentCompletions.At(params.Position)
+	completions := doc.IdentCompletor.Complete(params.Position)
 	completions = append(completions, keywordCompletions...)
 
 	padding := len(fmt.Sprint(len(completions)))
@@ -336,7 +336,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 
 		var textEdit *protocol.TextEditOrInsertReplaceEdit
 		if itemDefaults == nil {
-			newText := completion.Label
+			newText := completion.Text
 			if snippet != "" {
 				newText = snippet
 			}
@@ -349,7 +349,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		}
 
 		items[i] = &protocol.CompletionItem{
-			Label:            completion.Label,
+			Label:            completion.Text,
 			Kind:             completion.Kind,
 			InsertTextFormat: insertTextFormat,
 			TextEdit:         textEdit,
