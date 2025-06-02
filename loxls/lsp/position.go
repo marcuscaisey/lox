@@ -14,18 +14,16 @@ func newPosition(p token.Position) *protocol.Position {
 	}
 }
 
+// newRange creates a [*protocol.Range] from a [token.Range].
 func newRange(rang token.Range) *protocol.Range {
-	start := rang.Start()
-	end := rang.End()
+	return newRangeSpanningRanges(rang, rang)
+}
+
+// newRangeSpanningRanges creates a [*protocol.Range] which spans the given [token.Range]s.
+func newRangeSpanningRanges(start token.Range, end token.Range) *protocol.Range {
 	return &protocol.Range{
-		Start: &protocol.Position{
-			Line:      start.Line - 1,
-			Character: columnUTF16(start),
-		},
-		End: &protocol.Position{
-			Line:      end.Line - 1,
-			Character: columnUTF16(end),
-		},
+		Start: newPosition(start.Start()),
+		End:   newPosition(end.End()),
 	}
 }
 
