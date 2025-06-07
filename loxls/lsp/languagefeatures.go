@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/format"
@@ -330,17 +331,9 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	}
 
 	replaceRange := &protocol.Range{Start: params.Position, End: params.Position}
-	ast.Walk(doc.Program, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.Ident:
-			if n.IsValid() && inRangeOrFollows(params.Position, n) {
-				replaceRange = newRange(n)
-			}
-			return false
-		default:
-			return true
-		}
-	})
+	if containingIdentRange, ok := containingIdentRange(doc.Program, params.Position); ok {
+		replaceRange = containingIdentRange
+	}
 	insertRange := &protocol.Range{Start: replaceRange.Start, End: params.Position}
 
 	var itemDefaults *protocol.CompletionListItemDefaults
@@ -400,6 +393,63 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 			Items:        items,
 		},
 	}, nil
+}
+
+// containingIdentRange returns the range of the identifier containing the given position and true if one exists.
+// Otherwise, nil and false are returned.
+func containingIdentRange(program *ast.Program, pos *protocol.Position) (*protocol.Range, bool) {
+	file := program.Start().File
+	line := []rune(string(file.Line(pos.Line + 1)))
+	posIdx := len(utf16.Decode(utf16.Encode(line)[:pos.Character]))
+
+	startIdx := posIdx
+startIdxLoop:
+	for startIdx > 0 {
+		switch {
+		case isAlpha(line[startIdx-1]):
+			startIdx--
+		// Identifiers can't start with a digit so if the previous character is a digit, we need to find an alphabetic
+		// character which proceeds it before we can accept the digit.
+		case isDigit(line[startIdx-1]):
+			for i := startIdx - 2; i >= 0 && isAlphaNumeric(line[i]); i-- {
+				if isAlpha(line[i]) {
+					startIdx = i
+					continue startIdxLoop
+				}
+			}
+			break startIdxLoop
+		default:
+			break startIdxLoop
+		}
+	}
+	startChar := len(utf16.Encode(line[:startIdx]))
+
+	if startChar == pos.Character {
+		return nil, false
+	}
+
+	endIdx := posIdx
+	for endIdx < len(line) && isAlphaNumeric(line[endIdx]) {
+		endIdx++
+	}
+	endChar := len(utf16.Encode(line[:endIdx]))
+
+	return &protocol.Range{
+		Start: &protocol.Position{Line: pos.Line, Character: startChar},
+		End:   &protocol.Position{Line: pos.Line, Character: endChar},
+	}, true
+}
+
+func isDigit(r rune) bool {
+	return '0' <= r && r <= '9'
+}
+
+func isAlpha(r rune) bool {
+	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z') || r == '_'
+}
+
+func isAlphaNumeric(r rune) bool {
+	return isAlpha(r) || isDigit(r)
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting
