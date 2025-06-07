@@ -21,6 +21,7 @@ type Handler struct {
 	shuttingDown         bool
 	stubBuiltinsFilename string
 	stubBuiltins         []ast.Decl
+	builtinCompletions   []*completion
 	docs                 map[string]*document
 	capabilities         *protocol.ClientCapabilities
 }

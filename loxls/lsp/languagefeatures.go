@@ -349,6 +349,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	completions := slices.Concat(
 		doc.IdentCompletor.Complete(params.Position),
 		doc.KeywordCompletor.Complete(params.Position),
+		h.builtinCompletions,
 	)
 
 	padding := len(fmt.Sprint(len(completions)))

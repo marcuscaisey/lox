@@ -227,21 +227,9 @@ func (g *identCompletionGenerator) readGlobalCompletionLocations(program *ast.Pr
 		if !ident.IsValid() {
 			continue
 		}
-
-		var compl *completion
-		switch decl.(type) {
-		case *ast.VarDecl:
-			compl = varCompl(ident.Token.Lexeme)
-		case *ast.FunDecl:
-			compl = funCompl(ident.Token.Lexeme)
-		case *ast.ClassDecl:
-			compl = classCompl(ident.Token.Lexeme)
-		case *ast.MethodDecl, *ast.ParamDecl:
-			panic(fmt.Sprintf("unexpected declaration type: %T", stmt))
-		}
 		locs = append(locs, &completionLocation{
 			Position:    decl.Start(),
-			Completions: []*completion{compl},
+			Completions: []*completion{genCompletion(decl)},
 		})
 	}
 	return locs
@@ -270,7 +258,7 @@ func (g *identCompletionGenerator) walkVarDecl(decl *ast.VarDecl) {
 	if decl.Name.IsValid() && !decl.Semicolon.IsZero() {
 		g.curScope.complLocs = append(g.curScope.complLocs, &completionLocation{
 			Position:    decl.Semicolon.End(),
-			Completions: []*completion{varCompl(decl.Name.Token.Lexeme)},
+			Completions: []*completion{varCompletion(decl.Name.Token.Lexeme)},
 		})
 	}
 }
@@ -280,7 +268,7 @@ func (g *identCompletionGenerator) walkFunDecl(decl *ast.FunDecl) {
 		return
 	}
 
-	funCompl := funCompl(decl.Name.Token.Lexeme)
+	funCompl := funCompletion(decl.Name.Token.Lexeme)
 
 	extraCompls := []*completion{funCompl}
 	if g.curScope == g.globalScope {
@@ -306,7 +294,7 @@ func (g *identCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 		return
 	}
 
-	classCompl := classCompl(decl.Name.Token.Lexeme)
+	classCompl := classCompletion(decl.Name.Token.Lexeme)
 
 	extraMethodCompls := []*completion{classCompl}
 	if g.curScope == g.globalScope {
@@ -393,14 +381,14 @@ func (g *identCompletionGenerator) globalCompletionsAfter(pos token.Position) []
 	return compls
 }
 
-func varCompl(name string) *completion {
+func varCompletion(name string) *completion {
 	return &completion{
 		Text: name,
 		Kind: protocol.CompletionItemKindVariable,
 	}
 }
 
-func funCompl(name string) *completion {
+func funCompletion(name string) *completion {
 	return &completion{
 		Text:    name,
 		Kind:    protocol.CompletionItemKindFunction,
@@ -408,7 +396,7 @@ func funCompl(name string) *completion {
 	}
 }
 
-func classCompl(name string) *completion {
+func classCompletion(name string) *completion {
 	return &completion{
 		Text:    name,
 		Kind:    protocol.CompletionItemKindClass,
@@ -418,4 +406,26 @@ func classCompl(name string) *completion {
 
 func callSnippet(name string) string {
 	return fmt.Sprintf("%s($1)$0", name)
+}
+
+func genCompletion(decl ast.Decl) *completion {
+	switch decl.(type) {
+	case *ast.VarDecl:
+		return varCompletion(decl.Ident().Token.Lexeme)
+	case *ast.FunDecl:
+		return funCompletion(decl.Ident().Token.Lexeme)
+	case *ast.ClassDecl:
+		return classCompletion(decl.Ident().Token.Lexeme)
+	case *ast.MethodDecl, *ast.ParamDecl:
+		panic(fmt.Sprintf("unexpected declaration type: %T", decl))
+	}
+	panic("unreachable")
+}
+
+func genCompletions(decls []ast.Decl) []*completion {
+	compls := make([]*completion, len(decls))
+	for i, decl := range decls {
+		compls[i] = genCompletion(decl)
+	}
+	return compls
 }

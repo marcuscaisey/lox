@@ -22,6 +22,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 	}
 	h.stubBuiltinsFilename = stubBuiltinsFilename
 	h.stubBuiltins = stubbuiltins.MustParse(stubBuiltinsFilename)
+	h.builtinCompletions = genCompletions(h.stubBuiltins)
 
 	version, err := buildVersionStr()
 	if err != nil {
