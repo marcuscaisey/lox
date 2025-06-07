@@ -3,10 +3,25 @@ package lsp
 import (
 	"fmt"
 	"slices"
+	"unicode"
+	"unicode/utf16"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
+)
+
+var (
+	expressionKeywords       = []string{"true", "false", "nil"}
+	statementKeywordSnippets = []keywordSnippet{
+		{"print", "print $0;"},
+		{"var", "var $0;"},
+		{"if", "if ($1) {\n    $0\n}"},
+		{"while", "while ($1) {\n    $0\n}"},
+		{"for", "for ($1;$2;$3) {\n    $0\n}"},
+		{"fun", "fun $1($2) {\n    $0\n}"},
+		{"class", "class $1 {\n    $0\n}"},
+	}
 )
 
 // completion represents a candidate piece of text that can be suggested to complete text that is being typed.
@@ -20,18 +35,112 @@ type completion struct {
 	Snippet string
 }
 
-var keywordCompletions = genKeywordCompletions()
+// keywordCompletor provides completions of keywords.
+type keywordCompletor struct {
+	program *ast.Program
+}
 
-func genKeywordCompletions() []*completion {
-	keywords := []string{"print", "var", "true", "false", "nil", "if", "while", "for", "fun", "class"}
-	compls := make([]*completion, len(keywords))
-	for i, keyword := range keywords {
+// newKeywordCompletor returns a [keywordCompletor] which completes keywords inside the given program.
+func newKeywordCompletor(program *ast.Program) *keywordCompletor {
+	return &keywordCompletor{program: program}
+}
+
+type keywordSnippet struct {
+	Keyword string
+	Snippet string
+}
+
+// Complete returns completions for keywords which are valid at the given position.
+func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
+	compls := make([]*completion, len(expressionKeywords))
+	for i, keyword := range expressionKeywords {
 		compls[i] = &completion{
 			Text: keyword,
 			Kind: protocol.CompletionItemKindKeyword,
 		}
 	}
+
+	if c.validStatementPosition(pos) {
+		for _, keywordSnippet := range statementKeywordSnippets {
+			compls = append(compls, &completion{
+				Text:    keywordSnippet.Keyword,
+				Kind:    protocol.CompletionItemKindKeyword,
+				Snippet: keywordSnippet.Snippet,
+			})
+		}
+	}
+
 	return compls
+}
+
+// validStatementPosition reports whether it's valid to suggest a statement at the given position. This is when either:
+//  1. Only whitespace precedes it.
+//  2. It's immediately preceded by a valid statement.
+//  3. It's immediately preceded by the opening of a block.
+//
+// If the position is contained by an identifier, then the above conditions are applied to the start position of the
+// identifier.
+func (c *keywordCompletor) validStatementPosition(pos *protocol.Position) bool {
+	startPos := pos
+	if containingIdentRange, ok := containingIdentRange(c.program, pos); ok {
+		startPos = containingIdentRange.Start
+	}
+
+	prevCharEnd, ok := c.previousCharacterEnd(startPos)
+	if !ok {
+		return true
+	}
+
+	result := false
+	ast.Walk(c.program, func(n ast.Node) bool {
+		switch n.(type) {
+		case ast.Stmt:
+			if block, ok := n.(*ast.Block); ok && !block.LeftBrace.IsZero() && equalPositions(prevCharEnd, block.LeftBrace.End()) {
+				result = true
+				return false
+			}
+			if n.IsValid() && equalPositions(prevCharEnd, n.End()) {
+				result = true
+				return false
+			}
+			return true
+		default:
+			return true
+		}
+	})
+
+	return result
+}
+
+// previousCharacterEnd returns the end position of the previous non-whitespace character and whether one exists.
+func (c *keywordCompletor) previousCharacterEnd(pos *protocol.Position) (*protocol.Position, bool) {
+	lastCharEnd := func(line []rune) (int, bool) {
+		for i, rune := range slices.Backward(line) {
+			if !unicode.IsSpace(rune) {
+				return len(utf16.Encode(line[:i+1])), true
+			}
+		}
+		return 0, false
+	}
+
+	file := c.program.Start().File
+
+	curLineRunes := []rune(string(file.Line(pos.Line + 1)))
+	curLineUTF16 := utf16.Encode(curLineRunes)
+	runesBeforeCurChar := utf16.Decode(curLineUTF16[:pos.Character])
+	if character, ok := lastCharEnd(runesBeforeCurChar); ok {
+		return &protocol.Position{Line: pos.Line, Character: character}, true
+	}
+
+	line := pos.Line - 1
+	for ; line >= 0; line-- {
+		lineRunes := []rune(string(file.Line(line + 1)))
+		if character, ok := lastCharEnd(lineRunes); ok {
+			return &protocol.Position{Line: line, Character: character}, true
+		}
+	}
+
+	return nil, false
 }
 
 // identCompletor provides completions of identifiers based on their lexical scope.

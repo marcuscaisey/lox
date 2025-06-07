@@ -346,8 +346,10 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		}
 	}
 
-	completions := doc.IdentCompletor.Complete(params.Position)
-	completions = append(completions, keywordCompletions...)
+	completions := slices.Concat(
+		doc.IdentCompletor.Complete(params.Position),
+		doc.KeywordCompletor.Complete(params.Position),
+	)
 
 	padding := len(fmt.Sprint(len(completions)))
 	items := make([]*protocol.CompletionItem, len(completions))
@@ -395,8 +397,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	}, nil
 }
 
-// containingIdentRange returns the range of the identifier containing the given position and true if one exists.
-// Otherwise, nil and false are returned.
+// containingIdentRange returns the range of the identifier containing the given position and whether one exists.
 func containingIdentRange(program *ast.Program, pos *protocol.Position) (*protocol.Range, bool) {
 	file := program.Start().File
 	line := []rune(string(file.Line(pos.Line + 1)))
