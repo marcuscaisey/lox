@@ -85,6 +85,7 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 			p.sync()
 		}
 
+		// FIXME: Calling Start() here can cause a NPD.
 		if len(doc) > 0 && stmt.Start().Line != doc[len(doc)-1].Start().Line+1 {
 			doc = doc[:0]
 		}

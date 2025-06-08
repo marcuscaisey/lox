@@ -24,14 +24,17 @@ var (
 	}
 )
 
-// completion represents a candidate piece of text that can be suggested to complete text that is being typed.
+// completion contains a subset of [protocol.CompletionItem] fields plus some others which can be used to populate a
+// [protocol.CompletionItem] fully depending on the capabilities of the client.
 type completion struct {
-	// Text is the text that is being suggested. It will be shown in the completion menu and is the text that will be
-	// inserted if Snippet is empty or the client doesn't support snippets.
-	Text string
-	// Kind is the "kind" value that should be used for the resulting CompletionItem.
+	// Label is the same as [protocol.CompletionItem] Label.
+	Label string
+	// Kind is the same as [protocol.CompletionItem] Kind.
 	Kind protocol.CompletionItemKind
-	// Snippet is the snippet that should be inserted instead of Text if the client supports snippets.
+	// Detail is the same as [protocol.CompletionItem] Detail.
+	Detail string
+
+	// Snippet is the text that should be inserted if the client supports snippets.
 	Snippet string
 }
 
@@ -55,15 +58,15 @@ func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
 	compls := make([]*completion, len(expressionKeywords))
 	for i, keyword := range expressionKeywords {
 		compls[i] = &completion{
-			Text: keyword,
-			Kind: protocol.CompletionItemKindKeyword,
+			Label: keyword,
+			Kind:  protocol.CompletionItemKindKeyword,
 		}
 	}
 
 	if c.validStatementPosition(pos) {
 		for _, keywordSnippet := range statementKeywordSnippets {
 			compls = append(compls, &completion{
-				Text:    keywordSnippet.Keyword,
+				Label:   keywordSnippet.Keyword,
 				Kind:    protocol.CompletionItemKindKeyword,
 				Snippet: keywordSnippet.Snippet,
 			})
@@ -268,7 +271,7 @@ func (g *identCompletionGenerator) walkFunDecl(decl *ast.FunDecl) {
 		return
 	}
 
-	funCompl := funCompletion(decl.Name.Token.Lexeme)
+	funCompl := funCompletion(decl)
 
 	extraCompls := []*completion{funCompl}
 	if g.curScope == g.globalScope {
@@ -294,7 +297,7 @@ func (g *identCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 		return
 	}
 
-	classCompl := classCompletion(decl.Name.Token.Lexeme)
+	classCompl := classCompletion(decl)
 
 	extraMethodCompls := []*completion{classCompl}
 	if g.curScope == g.globalScope {
@@ -329,7 +332,7 @@ func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*co
 	paramCompls := make([]*completion, 0, len(fun.Params))
 	for _, paramDecl := range fun.Params {
 		if paramDecl.IsValid() {
-			paramCompls = append(paramCompls, &completion{Text: paramDecl.Name.Token.Lexeme, Kind: protocol.CompletionItemKindVariable})
+			paramCompls = append(paramCompls, &completion{Label: paramDecl.Name.Token.Lexeme, Kind: protocol.CompletionItemKindVariable})
 		}
 	}
 
@@ -383,24 +386,26 @@ func (g *identCompletionGenerator) globalCompletionsAfter(pos token.Position) []
 
 func varCompletion(name string) *completion {
 	return &completion{
-		Text: name,
-		Kind: protocol.CompletionItemKindVariable,
+		Label: name,
+		Kind:  protocol.CompletionItemKindVariable,
 	}
 }
 
-func funCompletion(name string) *completion {
+func funCompletion(decl *ast.FunDecl) *completion {
 	return &completion{
-		Text:    name,
+		Label:   decl.Name.Token.Lexeme,
 		Kind:    protocol.CompletionItemKindFunction,
-		Snippet: callSnippet(name),
+		Detail:  funDetail(decl.Function),
+		Snippet: callSnippet(decl.Name.Token.Lexeme),
 	}
 }
 
-func classCompletion(name string) *completion {
+func classCompletion(decl *ast.ClassDecl) *completion {
 	return &completion{
-		Text:    name,
+		Label:   decl.Name.Token.Lexeme,
 		Kind:    protocol.CompletionItemKindClass,
-		Snippet: callSnippet(name),
+		Detail:  classDetail(decl),
+		Snippet: callSnippet(decl.Name.Token.Lexeme),
 	}
 }
 
@@ -409,13 +414,13 @@ func callSnippet(name string) string {
 }
 
 func genCompletion(decl ast.Decl) *completion {
-	switch decl.(type) {
+	switch decl := decl.(type) {
 	case *ast.VarDecl:
 		return varCompletion(decl.Ident().Token.Lexeme)
 	case *ast.FunDecl:
-		return funCompletion(decl.Ident().Token.Lexeme)
+		return funCompletion(decl)
 	case *ast.ClassDecl:
-		return classCompletion(decl.Ident().Token.Lexeme)
+		return classCompletion(decl)
 	case *ast.MethodDecl, *ast.ParamDecl:
 		panic(fmt.Sprintf("unexpected declaration type: %T", decl))
 	}

@@ -221,7 +221,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
 				Name:           n.Name.Token.Lexeme,
-				Detail:         signature(n.Function),
+				Detail:         funDetail(n.Function),
 				Kind:           protocol.SymbolKindFunction,
 				Range:          newRangeSpanningRanges(n, rangeEnd),
 				SelectionRange: newRange(n.Name),
@@ -237,6 +237,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			}
 			class := &protocol.DocumentSymbol{
 				Name:           n.Name.Token.Lexeme,
+				Detail:         classDetail(n),
 				Kind:           protocol.SymbolKindClass,
 				Range:          newRangeSpanningRanges(n, rangeEnd),
 				SelectionRange: newRange(n.Name),
@@ -272,7 +273,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				}
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
 					Name:           fmt.Sprintf("%s.%s%s", class.Name, method.Name.Token.Lexeme, modifiers),
-					Detail:         signature(method.Function),
+					Detail:         funDetail(method.Function),
 					Kind:           kind,
 					Range:          newRangeSpanningRanges(method, rangeEnd),
 					SelectionRange: newRange(method.Name),
@@ -291,14 +292,31 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 	return &protocol.SymbolInformationSliceOrDocumentSymbolSlice{Value: symbols}, nil
 }
 
-func signature(fun *ast.Function) string {
+func funDetail(fun *ast.Function) string {
+	if fun == nil {
+		return ""
+	}
 	params := make([]string, 0, len(fun.Params))
-	for _, param := range fun.Params {
-		if param.IsValid() {
-			params = append(params, format.Node(param))
+	for _, decl := range fun.Params {
+		if decl.IsValid() {
+			params = append(params, format.Node(decl))
 		}
 	}
 	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
+}
+
+func classDetail(decl *ast.ClassDecl) string {
+	if decl == nil || decl.Body == nil {
+		return ""
+	}
+	var constructorFun *ast.Function
+	for _, methodDecl := range decl.Methods() {
+		if methodDecl.IsConstructor() {
+			constructorFun = methodDecl.Function
+			break
+		}
+	}
+	return funDetail(constructorFun)
 }
 
 func toSymbolInformations(docSymbols protocol.DocumentSymbolSlice, uri string) protocol.SymbolInformationSlice {
@@ -368,7 +386,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 
 		var textEdit *protocol.TextEditOrInsertReplaceEdit
 		if itemDefaults == nil {
-			newText := completion.Text
+			newText := completion.Label
 			if snippet != "" {
 				newText = snippet
 			}
@@ -381,8 +399,9 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		}
 
 		items[i] = &protocol.CompletionItem{
-			Label:            completion.Text,
+			Label:            completion.Label,
 			Kind:             completion.Kind,
+			Detail:           completion.Detail,
 			InsertTextFormat: insertTextFormat,
 			TextEdit:         textEdit,
 			TextEditText:     textEditText,
