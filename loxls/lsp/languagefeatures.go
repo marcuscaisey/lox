@@ -267,7 +267,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				}
 
 				var rangeEnd token.Range = method.Name
-				if !method.Function.Body.RightBrace.IsZero() {
+				if method.Function.Body != nil && !method.Function.Body.RightBrace.IsZero() {
 					rangeEnd = method.Function.Body.RightBrace
 				}
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
