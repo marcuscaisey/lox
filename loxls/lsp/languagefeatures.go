@@ -8,7 +8,6 @@ import (
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/format"
-	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
@@ -37,7 +36,7 @@ func (h *Handler) declaration(doc *document, pos *protocol.Position) (ast.Decl, 
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case *ast.Ident:
-			if n.IsValid() && inRange(pos, n) {
+			if inRange(pos, n) {
 				ident = n
 			}
 			return false
@@ -200,30 +199,22 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			if !n.Name.IsValid() {
 				return false
 			}
-			var rangeEnd token.Range = n.Name
-			if !n.Semicolon.IsZero() {
-				rangeEnd = n.Semicolon
-			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
 				Name:           n.Name.Token.Lexeme,
 				Kind:           protocol.SymbolKindVariable,
-				Range:          newRangeSpanningRanges(n, rangeEnd),
+				Range:          newRange(n),
 				SelectionRange: newRange(n.Name),
 			})
 			return false
 		case *ast.FunDecl:
-			if !n.Name.IsValid() || n.Function == nil {
+			if !n.Name.IsValid() {
 				return false
-			}
-			var rangeEnd token.Range = n.Name
-			if n.Function.Body != nil && !n.Function.Body.RightBrace.IsZero() {
-				rangeEnd = n.Function.Body.RightBrace
 			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
 				Name:           n.Name.Token.Lexeme,
 				Detail:         funDetail(n.Function),
 				Kind:           protocol.SymbolKindFunction,
-				Range:          newRangeSpanningRanges(n, rangeEnd),
+				Range:          newRange(n),
 				SelectionRange: newRange(n.Name),
 			})
 			return false
@@ -231,24 +222,17 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			if !n.Name.IsValid() {
 				return false
 			}
-			var rangeEnd token.Range = n.Name
-			if n.Body != nil && !n.Body.RightBrace.IsZero() {
-				rangeEnd = n.Body.RightBrace
-			}
 			class := &protocol.DocumentSymbol{
 				Name:           n.Name.Token.Lexeme,
 				Detail:         classDetail(n),
 				Kind:           protocol.SymbolKindClass,
-				Range:          newRangeSpanningRanges(n, rangeEnd),
+				Range:          newRange(n),
 				SelectionRange: newRange(n.Name),
 			}
 			docSymbols = append(docSymbols, class)
 
-			if n.Body == nil {
-				return false
-			}
 			for _, method := range n.Methods() {
-				if !method.Name.IsValid() || method.Function == nil {
+				if !method.Name.IsValid() {
 					continue
 				}
 				modifiers := ""
@@ -267,15 +251,11 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 					kind = protocol.SymbolKindMethod
 				}
 
-				var rangeEnd token.Range = method.Name
-				if method.Function.Body != nil && !method.Function.Body.RightBrace.IsZero() {
-					rangeEnd = method.Function.Body.RightBrace
-				}
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
 					Name:           fmt.Sprintf("%s.%s%s", class.Name, method.Name.Token.Lexeme, modifiers),
 					Detail:         funDetail(method.Function),
 					Kind:           kind,
-					Range:          newRangeSpanningRanges(method, rangeEnd),
+					Range:          newRange(method),
 					SelectionRange: newRange(method.Name),
 				})
 			}
@@ -294,21 +274,18 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 
 func funDetail(fun *ast.Function) string {
 	if fun == nil {
-		return ""
+		return "fun()"
 	}
 	params := make([]string, 0, len(fun.Params))
-	for _, decl := range fun.Params {
-		if decl.IsValid() {
-			params = append(params, format.Node(decl))
+	for _, paramDecl := range fun.Params {
+		if paramDecl.Name.IsValid() {
+			params = append(params, paramDecl.Name.Token.Lexeme)
 		}
 	}
 	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
 }
 
 func classDetail(decl *ast.ClassDecl) string {
-	if decl == nil || decl.Body == nil {
-		return ""
-	}
 	var constructorFun *ast.Function
 	for _, methodDecl := range decl.Methods() {
 		if methodDecl.IsConstructor() {

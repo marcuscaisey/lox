@@ -226,13 +226,13 @@ func (g *identCompletionGenerator) readGlobalCompletionLocations(program *ast.Pr
 		if !ok {
 			continue
 		}
-		ident := decl.Ident()
-		if !ident.IsValid() {
+		compl, ok := declCompletion(decl)
+		if !ok {
 			continue
 		}
 		locs = append(locs, &completionLocation{
 			Position:    decl.Start(),
-			Completions: []*completion{genCompletion(decl)},
+			Completions: []*completion{compl},
 		})
 	}
 	return locs
@@ -258,20 +258,24 @@ func (g *identCompletionGenerator) walk(node ast.Node) bool {
 
 func (g *identCompletionGenerator) walkVarDecl(decl *ast.VarDecl) {
 	ast.Walk(decl.Initialiser, g.walk)
-	if decl.Name.IsValid() && !decl.Semicolon.IsZero() {
-		g.curScope.complLocs = append(g.curScope.complLocs, &completionLocation{
-			Position:    decl.Semicolon.End(),
-			Completions: []*completion{varCompletion(decl.Name.Token.Lexeme)},
-		})
+	compl, ok := varCompletion(decl)
+	if !ok {
+		return
 	}
+	if decl.Semicolon.IsZero() {
+		return
+	}
+	g.curScope.complLocs = append(g.curScope.complLocs, &completionLocation{
+		Position:    decl.Semicolon.End(),
+		Completions: []*completion{compl},
+	})
 }
 
 func (g *identCompletionGenerator) walkFunDecl(decl *ast.FunDecl) {
-	if !decl.Name.IsValid() || decl.Function == nil || decl.Function.Body == nil {
+	funCompl, ok := funCompletion(decl)
+	if !ok {
 		return
 	}
-
-	funCompl := funCompletion(decl)
 
 	extraCompls := []*completion{funCompl}
 	if g.curScope == g.globalScope {
@@ -280,7 +284,7 @@ func (g *identCompletionGenerator) walkFunDecl(decl *ast.FunDecl) {
 	}
 	g.walkFun(decl.Function, extraCompls...)
 
-	if !decl.Function.Body.RightBrace.IsZero() {
+	if decl.Function != nil && decl.Function.Body != nil && !decl.Function.Body.RightBrace.IsZero() {
 		g.curScope.complLocs = append(g.curScope.complLocs, &completionLocation{
 			Position:    decl.Function.Body.RightBrace.End(),
 			Completions: []*completion{funCompl},
@@ -293,11 +297,10 @@ func (g *identCompletionGenerator) walkFunExpr(expr *ast.FunExpr) {
 }
 
 func (g *identCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
-	if !decl.Name.IsValid() || decl.Body == nil {
+	classCompl, ok := classCompletion(decl)
+	if !ok {
 		return
 	}
-
-	classCompl := classCompletion(decl)
 
 	extraMethodCompls := []*completion{classCompl}
 	if g.curScope == g.globalScope {
@@ -308,7 +311,7 @@ func (g *identCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 		g.walkFun(methodDecl.Function, extraMethodCompls...)
 	}
 
-	if !decl.Body.RightBrace.IsZero() {
+	if decl.Body != nil && !decl.Body.RightBrace.IsZero() {
 		g.curScope.complLocs = append(g.curScope.complLocs, &completionLocation{
 			Position:    decl.Body.RightBrace.End(),
 			Completions: []*completion{classCompl},
@@ -331,7 +334,7 @@ func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*co
 
 	paramCompls := make([]*completion, 0, len(fun.Params))
 	for _, paramDecl := range fun.Params {
-		if paramDecl.IsValid() {
+		if paramDecl.Name.IsValid() {
 			paramCompls = append(paramCompls, &completion{Label: paramDecl.Name.Token.Lexeme, Kind: protocol.CompletionItemKindVariable})
 		}
 	}
@@ -384,39 +387,48 @@ func (g *identCompletionGenerator) globalCompletionsAfter(pos token.Position) []
 	return compls
 }
 
-func varCompletion(name string) *completion {
-	return &completion{
-		Label: name,
-		Kind:  protocol.CompletionItemKindVariable,
+func varCompletion(decl *ast.VarDecl) (*completion, bool) {
+	if !decl.Name.IsValid() {
+		return nil, false
 	}
+	return &completion{
+		Label: decl.Name.Token.Lexeme,
+		Kind:  protocol.CompletionItemKindVariable,
+	}, true
 }
 
-func funCompletion(decl *ast.FunDecl) *completion {
+func funCompletion(decl *ast.FunDecl) (*completion, bool) {
+	if !decl.Name.IsValid() {
+		return nil, false
+	}
 	return &completion{
 		Label:   decl.Name.Token.Lexeme,
 		Kind:    protocol.CompletionItemKindFunction,
 		Detail:  funDetail(decl.Function),
 		Snippet: callSnippet(decl.Name.Token.Lexeme),
-	}
+	}, true
 }
 
-func classCompletion(decl *ast.ClassDecl) *completion {
+func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
+	if !decl.Name.IsValid() {
+		return nil, false
+	}
 	return &completion{
 		Label:   decl.Name.Token.Lexeme,
 		Kind:    protocol.CompletionItemKindClass,
 		Detail:  classDetail(decl),
 		Snippet: callSnippet(decl.Name.Token.Lexeme),
-	}
+	}, true
 }
 
 func callSnippet(name string) string {
 	return fmt.Sprintf("%s($1)$0", name)
 }
 
-func genCompletion(decl ast.Decl) *completion {
+func declCompletion(decl ast.Decl) (*completion, bool) {
 	switch decl := decl.(type) {
 	case *ast.VarDecl:
-		return varCompletion(decl.Ident().Token.Lexeme)
+		return varCompletion(decl)
 	case *ast.FunDecl:
 		return funCompletion(decl)
 	case *ast.ClassDecl:
@@ -427,10 +439,12 @@ func genCompletion(decl ast.Decl) *completion {
 	panic("unreachable")
 }
 
-func genCompletions(decls []ast.Decl) []*completion {
+func declCompletions(decls []ast.Decl) []*completion {
 	compls := make([]*completion, len(decls))
 	for i, decl := range decls {
-		compls[i] = genCompletion(decl)
+		if compl, ok := declCompletion(decl); ok {
+			compls[i] = compl
+		}
 	}
 	return compls
 }

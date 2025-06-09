@@ -194,6 +194,9 @@ func (c *ClassDecl) Ident() *Ident { return c.Name }
 
 // Methods returns the methods of the class.
 func (c *ClassDecl) Methods() []*MethodDecl {
+	if c.Body == nil {
+		return nil
+	}
 	methods := make([]*MethodDecl, 0, len(c.Body.Stmts))
 	for _, stmt := range c.Body.Stmts {
 		if method, ok := stmt.(*MethodDecl); ok {

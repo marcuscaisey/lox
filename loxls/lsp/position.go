@@ -21,14 +21,9 @@ func equalPositions(x *protocol.Position, y token.Position) bool {
 
 // newRange creates a [*protocol.Range] from a [token.Range].
 func newRange(rang token.Range) *protocol.Range {
-	return newRangeSpanningRanges(rang, rang)
-}
-
-// newRangeSpanningRanges creates a [*protocol.Range] which spans the given [token.Range]s.
-func newRangeSpanningRanges(start token.Range, end token.Range) *protocol.Range {
 	return &protocol.Range{
-		Start: newPosition(start.Start()),
-		End:   newPosition(end.End()),
+		Start: newPosition(rang.Start()),
+		End:   newPosition(rang.End()),
 	}
 }
 
