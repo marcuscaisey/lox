@@ -10,6 +10,7 @@ func Walk(node Node, f func(Node) bool) {
 	case *Program:
 		walkSlice(node.Stmts, f)
 	case *Ident:
+	case *IllegalStmt:
 	case *Comment:
 	case *CommentedStmt:
 		Walk(node.Stmt, f)

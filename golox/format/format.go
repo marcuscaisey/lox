@@ -18,6 +18,8 @@ func Node(node ast.Node) string {
 		return formatProgram(node)
 	case *ast.Ident:
 		return formatIdent(node)
+	case *ast.IllegalStmt:
+		panic("IllegalStmt cannot be formatted")
 	case *ast.Comment:
 		return formatComment(node)
 	case *ast.CommentedStmt:

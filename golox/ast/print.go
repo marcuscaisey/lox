@@ -29,7 +29,7 @@ func sprint(node Node, depth int) string {
 	}
 
 	namePrefix := ""
-	if !node.IsValid() {
+	if _, isIllegalStmt := node.(*IllegalStmt); !isIllegalStmt && !node.IsValid() {
 		namePrefix = "Invalid"
 	}
 

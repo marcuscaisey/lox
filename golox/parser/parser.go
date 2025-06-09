@@ -80,9 +80,13 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
 	var doc []*ast.Comment
 	for !slices.Contains(types, p.tok.Type) {
+		from := p.tok
 		stmt, ok := p.parseDecl()
 		if !ok {
-			p.sync()
+			to := p.sync()
+			if stmt == nil {
+				stmt = &ast.IllegalStmt{From: from, To: to}
+			}
 		}
 
 		// FIXME: Calling Start() here can cause a NPD.
@@ -114,21 +118,25 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 	return stmts
 }
 
-// sync synchronises the parser with the next statement. This is used to recover from a parsing error.
-func (p *parser) sync() {
+// sync synchronises the parser so that p.tok is positioned at the start of the next statement.
+// The final token before the next statement is returned.
+func (p *parser) sync() token.Token {
+	finalTok := p.tok
 	for {
 		switch p.tok.Type {
 		case token.Semicolon:
+			finalTok := p.tok
 			p.next()
-			return
+			return finalTok
 		case token.RightBrace:
 			if p.scopeDepth > 0 {
-				return
+				return p.prevTok
 			}
 		case token.Print, token.Var, token.If, token.LeftBrace, token.While, token.For, token.Break, token.Continue, token.EOF:
-			return
+			return finalTok
 		default:
 		}
+		finalTok = p.tok
 		p.next()
 	}
 }
@@ -253,7 +261,7 @@ func (p *parser) parseFun() (*ast.Function, bool) {
 	fun := &ast.Function{}
 	var ok bool
 	if fun.LeftParen, ok = p.expect2(token.LeftParen); !ok {
-		return fun, false
+		return nil, false
 	}
 	if !p.match(token.RightParen) {
 		if fun.Params, ok = p.parseParams(); !ok {
@@ -310,7 +318,12 @@ func (p *parser) parseStmt() (ast.Stmt, bool) {
 	case p.match(token.Return):
 		stmt, ok = p.parseReturnStmt(tok)
 	default:
-		stmt, ok = p.parseExprStmt()
+		var exprStmt *ast.ExprStmt
+		exprStmt, ok = p.parseExprStmt()
+		// Avoid returning typed nil.
+		if exprStmt != nil {
+			stmt = exprStmt
+		}
 	}
 	if !ok {
 		return stmt, false
@@ -337,7 +350,7 @@ func (p *parser) parseExprStmt() (*ast.ExprStmt, bool) {
 	stmt := &ast.ExprStmt{}
 	var ok bool
 	if stmt.Expr, ok = p.parseExpr(); !ok {
-		return stmt, false
+		return nil, false
 	}
 	if stmt.Semicolon, ok = p.expectSemicolon2(); !ok {
 		return stmt, false
