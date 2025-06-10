@@ -72,6 +72,7 @@ type identResolver struct {
 	inFun                  bool
 	inGlobalFun            bool
 	funScopeLevel          int
+	curClassDecl           *ast.ClassDecl
 
 	identDecls map[*ast.Ident]ast.Decl
 	errs       loxerr.Errors
@@ -334,6 +335,8 @@ func (r *identResolver) walk(node ast.Node) bool {
 		r.walkFunExpr(node)
 	case *ast.IdentExpr:
 		r.resolveIdentExpr(node)
+	case *ast.ThisExpr:
+		r.resolveThisExpr(node)
 	case *ast.AssignmentExpr:
 		r.walkAssignmentExpr(node)
 	default:
@@ -393,6 +396,10 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	r.funScopeLevel = r.scopes.Len() - 1
 	defer func() { r.funScopeLevel = prevFunScopeLevel }()
 
+	prevCurClassDecl := r.curClassDecl
+	defer func() { r.curClassDecl = prevCurClassDecl }()
+	r.curClassDecl = decl
+
 	if r.scopes.Len() == 2 {
 		r.inGlobalFun = true
 		defer func() { r.inGlobalFun = false }()
@@ -403,9 +410,13 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	scope.Define(token.CurrentInstanceIdent)
 	scope.Use(token.CurrentInstanceIdent)
 	for _, methodDecl := range decl.Methods() {
-		r.identDecls[methodDecl.Name] = methodDecl
-		r.walkFun(methodDecl.Function)
+		r.walkMethodDecl(methodDecl)
 	}
+}
+
+func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
+	r.identDecls[decl.Name] = decl
+	r.walkFun(decl.Function)
 }
 
 func (r *identResolver) walkBlock(block *ast.Block) {
@@ -440,6 +451,13 @@ func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
 
 func (r *identResolver) resolveIdentExpr(expr *ast.IdentExpr) {
 	r.resolveIdent(expr.Ident, identOpRead)
+}
+
+func (r *identResolver) resolveThisExpr(expr *ast.ThisExpr) {
+	if r.curClassDecl == nil {
+		return
+	}
+	r.identDecls[expr.This] = r.curClassDecl
 }
 
 func (r *identResolver) walkAssignmentExpr(expr *ast.AssignmentExpr) {

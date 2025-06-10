@@ -316,7 +316,7 @@ func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxObj
 }
 
 func (i *Interpreter) evalThisExpr(env environment, expr *ast.ThisExpr) loxObject {
-	return env.Get(&ast.Ident{Token: expr.This})
+	return env.Get(expr.This)
 }
 
 func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObject {

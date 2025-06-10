@@ -452,13 +452,13 @@ func (i *IdentExpr) IsValid() bool         { return i != nil && isValid(i.Ident)
 
 // ThisExpr represents usage of the 'this' keyword.
 type ThisExpr struct {
-	This token.Token
+	This *Ident
 	expr
 }
 
 func (t *ThisExpr) Start() token.Position { return t.This.Start() }
 func (t *ThisExpr) End() token.Position   { return t.This.End() }
-func (t *ThisExpr) IsValid() bool         { return t != nil && !t.This.IsZero() }
+func (t *ThisExpr) IsValid() bool         { return t != nil && isValid(t.This) }
 
 // CallExpr is a call expression, such as add(x, 1).
 type CallExpr struct {

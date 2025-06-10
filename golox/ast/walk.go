@@ -61,6 +61,7 @@ func Walk(node Node, f func(Node) bool) {
 	case *IdentExpr:
 		Walk(node.Ident, f)
 	case *ThisExpr:
+		Walk(node.This, f)
 	case *CallExpr:
 		Walk(node.Callee, f)
 		walkSlice(node.Args, f)

@@ -664,7 +664,7 @@ func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 	case p.match(token.Ident):
 		return &ast.IdentExpr{Ident: &ast.Ident{Token: tok}}, true
 	case p.match(token.This):
-		return &ast.ThisExpr{This: tok}, true
+		return &ast.ThisExpr{This: &ast.Ident{Token: tok}}, true
 	case p.match(token.Fun):
 		return p.parseFunExpr(tok)
 	case p.match(token.LeftParen):
