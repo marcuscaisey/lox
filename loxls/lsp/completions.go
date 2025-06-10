@@ -305,7 +305,8 @@ func (g *identCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 		return
 	}
 
-	extraMethodCompls := []*completion{classCompl}
+	thisCompl := &completion{Label: "this", Kind: protocol.CompletionItemKindKeyword}
+	extraMethodCompls := []*completion{thisCompl, classCompl}
 	if g.curScope == g.globalScope {
 		forwardDeclaredCompls := g.globalCompletionsAfter(decl.Start())
 		extraMethodCompls = append(extraMethodCompls, forwardDeclaredCompls...)
