@@ -467,14 +467,10 @@ func funDetail(fun *ast.Function) string {
 }
 
 func classDetail(decl *ast.ClassDecl) string {
-	var constructorFun *ast.Function
-	for _, methodDecl := range decl.Methods() {
-		if methodDecl.IsConstructor() {
-			constructorFun = methodDecl.Function
-			break
-		}
+	if !decl.Name.IsValid() {
+		return ""
 	}
-	return funDetail(constructorFun)
+	return fmt.Sprintf("class %s", decl.Name.Token.Lexeme)
 }
 
 // containingIdentRange returns the range of the identifier containing the given position and whether one exists.
