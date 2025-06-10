@@ -36,6 +36,9 @@ type completion struct {
 
 	// Snippet is the text that should be inserted if the client supports snippets.
 	Snippet string
+	// Documentation is the documentation that will be shown. If the client supports it, this will be displayed as
+	// markdown.
+	Documentation string
 }
 
 // keywordCompletor provides completions of keywords.
@@ -402,10 +405,11 @@ func funCompletion(decl *ast.FunDecl) (*completion, bool) {
 		return nil, false
 	}
 	return &completion{
-		Label:   decl.Name.Token.Lexeme,
-		Kind:    protocol.CompletionItemKindFunction,
-		Detail:  funDetail(decl.Function),
-		Snippet: callSnippet(decl.Name.Token.Lexeme),
+		Label:         decl.Name.Token.Lexeme,
+		Kind:          protocol.CompletionItemKindFunction,
+		Detail:        funDetail(decl.Function),
+		Snippet:       callSnippet(decl.Name.Token.Lexeme),
+		Documentation: commentsText(decl.Doc),
 	}, true
 }
 
@@ -414,10 +418,11 @@ func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
 		return nil, false
 	}
 	return &completion{
-		Label:   decl.Name.Token.Lexeme,
-		Kind:    protocol.CompletionItemKindClass,
-		Detail:  classDetail(decl),
-		Snippet: callSnippet(decl.Name.Token.Lexeme),
+		Label:         decl.Name.Token.Lexeme,
+		Kind:          protocol.CompletionItemKindClass,
+		Detail:        classDetail(decl),
+		Snippet:       callSnippet(decl.Name.Token.Lexeme),
+		Documentation: commentsText(decl.Doc),
 	}, true
 }
 

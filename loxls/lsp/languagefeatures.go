@@ -77,7 +77,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		header = fmt.Sprintf("var %s", decl.Ident().Token.Lexeme)
 	case *ast.FunDecl:
 		header = fmt.Sprintf("fun %s(%s)", decl.Name.Token.Lexeme, formatParams(decl.Function.Params))
-		body = hoverDeclDoc(decl.Doc)
+		body = commentsText(decl.Doc)
 	case *ast.ClassDecl:
 		var b strings.Builder
 		fmt.Fprintf(&b, "class %s", decl.Name.Token.Lexeme)
@@ -89,10 +89,10 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			fmt.Fprint(&b, "}")
 		}
 		header = b.String()
-		body = hoverDeclDoc(decl.Doc)
+		body = commentsText(decl.Doc)
 	case *ast.MethodDecl:
 		header = hoverMethodDeclHeader(decl)
-		body = hoverDeclDoc(decl.Doc)
+		body = commentsText(decl.Doc)
 	}
 
 	contentFormat := protocol.MarkupKindPlainText
@@ -121,14 +121,6 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			},
 		},
 	}, nil
-}
-
-func hoverDeclDoc(doc []*ast.Comment) string {
-	lines := make([]string, len(doc))
-	for i, comment := range doc {
-		lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
-	}
-	return strings.Join(lines, "\n")
 }
 
 func hoverMethodDeclHeader(decl *ast.MethodDecl) string {
@@ -295,6 +287,20 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	padding := len(fmt.Sprint(len(completions)))
 	items := make([]*protocol.CompletionItem, len(completions))
 	for i, completion := range completions {
+		var documentation *protocol.StringOrMarkupContent
+		if completion.Documentation != "" {
+			kind := protocol.MarkupKindPlainText
+			if len(h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetDocumentationFormat()) > 0 {
+				kind = h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetDocumentationFormat()[0]
+			}
+			documentation = &protocol.StringOrMarkupContent{
+				Value: &protocol.MarkupContent{
+					Kind:  kind,
+					Value: completion.Documentation,
+				},
+			}
+		}
+
 		var insertTextFormat protocol.InsertTextFormat
 		var snippet string
 		var textEditText string
@@ -324,6 +330,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 			Label:            completion.Label,
 			Kind:             completion.Kind,
 			Detail:           completion.Detail,
+			Documentation:    documentation,
 			InsertTextFormat: insertTextFormat,
 			TextEdit:         textEdit,
 			TextEditText:     textEditText,
@@ -436,6 +443,14 @@ func references(doc *document, decl ast.Decl) []*ast.Ident {
 		}
 	}
 	return references
+}
+
+func commentsText(doc []*ast.Comment) string {
+	lines := make([]string, len(doc))
+	for i, comment := range doc {
+		lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
+	}
+	return strings.Join(lines, "\n")
 }
 
 func funDetail(fun *ast.Function) string {
