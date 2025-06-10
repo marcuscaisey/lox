@@ -18,7 +18,7 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		return nil, err
 	}
 
-	decl, ok := h.declaration(doc, params.Position)
+	decl, ok := declaration(doc, params.Position)
 	if !ok {
 		return nil, nil
 	}
@@ -31,27 +31,6 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 	}, nil
 }
 
-func (h *Handler) declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
-	var ident *ast.Ident
-	ast.Walk(doc.Program, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.Ident:
-			if inRange(pos, n) {
-				ident = n
-			}
-			return false
-		default:
-			return true
-		}
-	})
-	if ident == nil {
-		return nil, false
-	}
-
-	decl, ok := doc.IdentDecls[ident]
-	return decl, ok
-}
-
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
 func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (protocol.LocationSlice, error) {
 	doc, err := h.document(params.TextDocument.Uri)
@@ -59,12 +38,12 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 		return nil, err
 	}
 
-	decl, ok := h.declaration(doc, params.Position)
+	decl, ok := declaration(doc, params.Position)
 	if !ok {
 		return nil, nil
 	}
 
-	references := h.references(doc, decl)
+	references := references(doc, decl)
 	var locations protocol.LocationSlice
 	for _, reference := range references {
 		if reference == decl.Ident() && !params.Context.IncludeDeclaration {
@@ -79,16 +58,6 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 	return locations, nil
 }
 
-func (h *Handler) references(doc *document, decl ast.Decl) []*ast.Ident {
-	var references []*ast.Ident
-	for ident, identDecl := range doc.IdentDecls {
-		if identDecl.Start() == decl.Start() {
-			references = append(references, ident)
-		}
-	}
-	return references
-}
-
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
 func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hover, error) {
 	doc, err := h.document(params.TextDocument.Uri)
@@ -96,7 +65,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		return nil, err
 	}
 
-	decl, ok := h.declaration(doc, params.Position)
+	decl, ok := declaration(doc, params.Position)
 	if !ok {
 		return nil, nil
 	}
@@ -272,30 +241,6 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 	return &protocol.SymbolInformationSliceOrDocumentSymbolSlice{Value: symbols}, nil
 }
 
-func funDetail(fun *ast.Function) string {
-	if fun == nil {
-		return "fun()"
-	}
-	params := make([]string, 0, len(fun.Params))
-	for _, paramDecl := range fun.Params {
-		if paramDecl.Name.IsValid() {
-			params = append(params, paramDecl.Name.Token.Lexeme)
-		}
-	}
-	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
-}
-
-func classDetail(decl *ast.ClassDecl) string {
-	var constructorFun *ast.Function
-	for _, methodDecl := range decl.Methods() {
-		if methodDecl.IsConstructor() {
-			constructorFun = methodDecl.Function
-			break
-		}
-	}
-	return funDetail(constructorFun)
-}
-
 func toSymbolInformations(docSymbols protocol.DocumentSymbolSlice, uri string) protocol.SymbolInformationSlice {
 	symbolInfos := make(protocol.SymbolInformationSlice, 0, len(docSymbols))
 	for _, docSymbol := range docSymbols {
@@ -394,6 +339,129 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	}, nil
 }
 
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting
+func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingParams) ([]*protocol.TextEdit, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	if doc.HasErrors {
+		// TODO: return error here instead?
+		h.log.Infof("textDocument/formatting: %s has errors. Skipping formatting.", params.TextDocument.Uri)
+		return nil, nil
+	}
+
+	formatted := format.Node(doc.Program)
+	if formatted == doc.Text {
+		return nil, nil
+	}
+
+	textLines := strings.Split(strings.TrimSuffix(doc.Text, "\n"), "\n")
+	return []*protocol.TextEdit{
+		{
+			Range: &protocol.Range{
+				Start: &protocol.Position{Line: 0},
+				End:   &protocol.Position{Line: len(textLines)},
+			},
+			NewText: formatted,
+		},
+	}, nil
+}
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rename
+func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.WorkspaceEdit, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	decl, ok := declaration(doc, params.Position)
+	if !ok {
+		return nil, nil
+	}
+
+	references := references(doc, decl)
+	edits := make([]*protocol.TextEditOrAnnotatedTextEdit, len(references))
+	for i, reference := range references {
+		edits[i] = &protocol.TextEditOrAnnotatedTextEdit{
+			Value: &protocol.TextEdit{
+				Range:   newRange(reference),
+				NewText: params.NewName,
+			},
+		}
+	}
+
+	return &protocol.WorkspaceEdit{
+		DocumentChanges: []*protocol.TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile{
+			{
+				Value: &protocol.TextDocumentEdit{
+					TextDocument: &protocol.OptionalVersionedTextDocumentIdentifier{
+						TextDocumentIdentifier: &protocol.TextDocumentIdentifier{Uri: doc.URI},
+						Version:                doc.Version,
+					},
+					Edits: edits,
+				},
+			},
+		},
+	}, nil
+}
+
+func declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
+	var ident *ast.Ident
+	ast.Walk(doc.Program, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.Ident:
+			if inRange(pos, n) {
+				ident = n
+			}
+			return false
+		default:
+			return true
+		}
+	})
+	if ident == nil {
+		return nil, false
+	}
+
+	decl, ok := doc.IdentDecls[ident]
+	return decl, ok
+}
+
+func references(doc *document, decl ast.Decl) []*ast.Ident {
+	var references []*ast.Ident
+	for ident, identDecl := range doc.IdentDecls {
+		if identDecl.Start() == decl.Start() {
+			references = append(references, ident)
+		}
+	}
+	return references
+}
+
+func funDetail(fun *ast.Function) string {
+	if fun == nil {
+		return "fun()"
+	}
+	params := make([]string, 0, len(fun.Params))
+	for _, paramDecl := range fun.Params {
+		if paramDecl.Name.IsValid() {
+			params = append(params, paramDecl.Name.Token.Lexeme)
+		}
+	}
+	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
+}
+
+func classDetail(decl *ast.ClassDecl) string {
+	var constructorFun *ast.Function
+	for _, methodDecl := range decl.Methods() {
+		if methodDecl.IsConstructor() {
+			constructorFun = methodDecl.Function
+			break
+		}
+	}
+	return funDetail(constructorFun)
+}
+
 // containingIdentRange returns the range of the identifier containing the given position and whether one exists.
 func containingIdentRange(program *ast.Program, pos *protocol.Position) (*protocol.Range, bool) {
 	file := program.Start().File
@@ -448,74 +516,6 @@ func isAlpha(r rune) bool {
 
 func isAlphaNumeric(r rune) bool {
 	return isAlpha(r) || isDigit(r)
-}
-
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting
-func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingParams) ([]*protocol.TextEdit, error) {
-	doc, err := h.document(params.TextDocument.Uri)
-	if err != nil {
-		return nil, err
-	}
-
-	if doc.HasErrors {
-		// TODO: return error here instead?
-		h.log.Infof("textDocument/formatting: %s has errors. Skipping formatting.", params.TextDocument.Uri)
-		return nil, nil
-	}
-
-	formatted := format.Node(doc.Program)
-	if formatted == doc.Text {
-		return nil, nil
-	}
-
-	textLines := strings.Split(strings.TrimSuffix(doc.Text, "\n"), "\n")
-	return []*protocol.TextEdit{
-		{
-			Range: &protocol.Range{
-				Start: &protocol.Position{Line: 0},
-				End:   &protocol.Position{Line: len(textLines)},
-			},
-			NewText: formatted,
-		},
-	}, nil
-}
-
-// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rename
-func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.WorkspaceEdit, error) {
-	doc, err := h.document(params.TextDocument.Uri)
-	if err != nil {
-		return nil, err
-	}
-
-	decl, ok := h.declaration(doc, params.Position)
-	if !ok {
-		return nil, nil
-	}
-
-	references := h.references(doc, decl)
-	edits := make([]*protocol.TextEditOrAnnotatedTextEdit, len(references))
-	for i, reference := range references {
-		edits[i] = &protocol.TextEditOrAnnotatedTextEdit{
-			Value: &protocol.TextEdit{
-				Range:   newRange(reference),
-				NewText: params.NewName,
-			},
-		}
-	}
-
-	return &protocol.WorkspaceEdit{
-		DocumentChanges: []*protocol.TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile{
-			{
-				Value: &protocol.TextDocumentEdit{
-					TextDocument: &protocol.OptionalVersionedTextDocumentIdentifier{
-						TextDocumentIdentifier: &protocol.TextDocumentIdentifier{Uri: doc.URI},
-						Version:                doc.Version,
-					},
-					Edits: edits,
-				},
-			},
-		},
-	}, nil
 }
 
 func filenameToURI(filename string) string {
