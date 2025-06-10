@@ -571,6 +571,7 @@ func first(ranges ...token.Range) token.Range {
 }
 
 func last(ranges ...token.Range) token.Range {
+	ranges = slices.Clone(ranges)
 	slices.Reverse(ranges)
 	return first(ranges...)
 }
@@ -584,6 +585,7 @@ func firstSlice[T token.Range](s []T) token.Range {
 }
 
 func lastSlice[T token.Range](s []T) token.Range {
+	s = slices.Clone(s)
 	slices.Reverse(s)
 	return firstSlice(s)
 }
