@@ -349,7 +349,10 @@ func (p *parser) parseExprStmt() (*ast.ExprStmt, bool) {
 	stmt := &ast.ExprStmt{}
 	var ok bool
 	if stmt.Expr, ok = p.parseExpr(); !ok {
-		return nil, false
+		if stmt.Expr == nil {
+			return nil, false
+		}
+		return stmt, false
 	}
 	if stmt.Semicolon, ok = p.expectSemicolon2(); !ok {
 		return stmt, false
