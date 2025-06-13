@@ -131,7 +131,7 @@ func (p *parser) sync() token.Token {
 			if p.scopeDepth > 0 {
 				return p.prevTok
 			}
-		case token.Print, token.Var, token.If, token.LeftBrace, token.While, token.For, token.Break, token.Continue, token.EOF:
+		case token.EOF, token.Print, token.Var, token.If, token.While, token.For, token.Break, token.Continue, token.Return, token.Class, token.LeftBrace:
 			return finalTok
 		default:
 		}
