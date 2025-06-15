@@ -504,7 +504,7 @@ type BinaryExpr struct {
 	expr
 }
 
-func (b *BinaryExpr) Start() token.Position { return b.Left.Start() }
+func (b *BinaryExpr) Start() token.Position { return first(b.Left, b.Op, b.Right).Start() }
 func (b *BinaryExpr) End() token.Position   { return last(b.Left, b.Op, b.Right).End() }
 func (b *BinaryExpr) IsValid() bool {
 	return b != nil && isValid(b.Left) && !b.Op.IsZero() && isValid(b.Right)
