@@ -105,6 +105,8 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 			decl.Doc = doc
 		case *ast.ClassDecl:
 			decl.Doc = doc
+		case *ast.MethodDecl:
+			decl.Doc = doc
 		default:
 			resetDoc = false
 		}
@@ -621,7 +623,7 @@ func (p *parser) parseCallExpr() (ast.Expr, bool) {
 		return expr, false
 	}
 	for {
-		switch {
+		switch tok := p.tok; {
 		case p.match(token.LeftParen):
 			callExpr := &ast.CallExpr{Callee: expr}
 			expr = callExpr
@@ -634,7 +636,7 @@ func (p *parser) parseCallExpr() (ast.Expr, bool) {
 				}
 			}
 		case p.match(token.Dot):
-			getExpr := &ast.GetExpr{Object: expr}
+			getExpr := &ast.GetExpr{Object: expr, Dot: tok}
 			expr = getExpr
 			if getExpr.Name, ok = p.parseIdent("expected property name"); !ok {
 				return expr, false

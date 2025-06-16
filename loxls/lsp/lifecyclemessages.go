@@ -39,7 +39,9 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 					Change:    protocol.TextDocumentSyncKindFull,
 				},
 			},
-			CompletionProvider: &protocol.CompletionOptions{},
+			CompletionProvider: &protocol.CompletionOptions{
+				TriggerCharacters: []string{"."},
+			},
 			HoverProvider: &protocol.BooleanOrHoverOptions{
 				Value: protocol.Boolean(true),
 			},

@@ -1,7 +1,7 @@
 package ast
 
-// Walk traverses an AST in depth-first order: It starts by calling f(node); node must not be nil. If f returns true,
-// Walk invokes f recursively for each of the non-nil children of node.
+// Walk traverses an AST in depth-first order: It starts by calling f(node). If node is non-nil and f returns true, Walk
+// invokes f recursively for each of the non-nil children of node.
 func Walk(node Node, f func(Node) bool) {
 	if isNil(node) || !f(node) {
 		return
@@ -91,4 +91,19 @@ func walkSlice[T Node](nodes []T, f func(Node) bool) {
 	for _, node := range nodes {
 		Walk(node, f)
 	}
+}
+
+// Find traverses an AST in depth-first order, searching for a non-nil node for which f returns true. If one is found,
+// then that node is returned along with true. Otherwise, false and nil are returned.
+func Find[T Node](node Node, f func(T) bool) (T, bool) {
+	var result T
+	var found bool
+	Walk(node, func(n Node) bool {
+		if nT, ok := n.(T); ok && f(nT) {
+			result = nT
+			found = true
+		}
+		return !found
+	})
+	return result, found
 }

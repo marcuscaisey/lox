@@ -228,10 +228,10 @@ func (m *MethodDecl) IsValid() bool {
 }
 func (m *MethodDecl) Ident() *Ident { return m.Name }
 
-// HasModifier reports whether the declaration has a modifier of the target type.
-func (m *MethodDecl) HasModifier(target token.Type) bool {
+// HasModifier reports whether the declaration has a modifier with one of the target types.
+func (m *MethodDecl) HasModifier(types ...token.Type) bool {
 	for _, modifier := range m.Modifiers {
-		if modifier.Type == target {
+		if slices.Contains(types, modifier.Type) {
 			return true
 		}
 	}
@@ -476,14 +476,17 @@ func (c *CallExpr) IsValid() bool {
 
 // GetExpr is a property access expression, such as a.b.
 type GetExpr struct {
-	Object Expr   `print:"named"`
+	Object Expr `print:"named"`
+	Dot    token.Token
 	Name   *Ident `print:"named"`
 	expr
 }
 
 func (g *GetExpr) Start() token.Position { return g.Object.Start() }
-func (g *GetExpr) End() token.Position   { return last(g.Object, g.Name).End() }
-func (g *GetExpr) IsValid() bool         { return g != nil && isValid(g.Object) && isValid(g.Name) }
+func (g *GetExpr) End() token.Position   { return last(g.Object, g.Dot, g.Name).End() }
+func (g *GetExpr) IsValid() bool {
+	return g != nil && isValid(g.Object) && !g.Dot.IsZero() && isValid(g.Name)
+}
 
 // UnaryExpr is a unary operator expression, such as !a.
 type UnaryExpr struct {

@@ -322,22 +322,10 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 }
 
 func declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
-	var ident *ast.Ident
-	ast.Walk(doc.Program, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.Ident:
-			if inRange(pos, n) {
-				ident = n
-			}
-			return false
-		default:
-			return true
-		}
-	})
-	if ident == nil {
+	ident, ok := ast.Find(doc.Program, func(ident *ast.Ident) bool { return inRange(pos, ident) })
+	if !ok {
 		return nil, false
 	}
-
 	decl, ok := doc.IdentDecls[ident]
 	return decl, ok
 }

@@ -1,7 +1,9 @@
 package lsp
 
 import (
+	"cmp"
 	"fmt"
+	"maps"
 	"slices"
 	"unicode"
 	"unicode/utf16"
@@ -47,11 +49,20 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		}
 	}
 
-	completions := slices.Concat(
-		doc.IdentCompletor.Complete(params.Position),
-		doc.KeywordCompletor.Complete(params.Position),
-		h.builtinCompletions,
-	)
+	var completions []*completion
+	if getExpr, ok := ast.Find(doc.Program, func(getExpr *ast.GetExpr) bool { return inRangeOrFollows(params.Position, getExpr) }); ok {
+		if _, ok := getExpr.Object.(*ast.ThisExpr); ok {
+			completions = doc.ThisPropertyCompletor.Complete(params.Position)
+		} else {
+			completions = doc.PropertyCompletor.Complete(params.Position)
+		}
+	} else {
+		completions = slices.Concat(
+			doc.IdentCompletor.Complete(params.Position),
+			doc.KeywordCompletor.Complete(params.Position),
+			h.builtinCompletions,
+		)
+	}
 
 	padding := len(fmt.Sprint(len(completions)))
 	items := make([]*protocol.CompletionItem, len(completions))
@@ -538,6 +549,131 @@ func (g *identCompletionGenerator) globalCompletionsAfter(pos token.Position) []
 	return compls
 }
 
+type propertyCompletor struct{}
+
+func newPropertyCompletor(program *ast.Program) *propertyCompletor {
+	return &propertyCompletor{}
+}
+
+func (c *propertyCompletor) Complete(pos *protocol.Position) []*completion {
+	return nil
+}
+
+type thisPropertyCompletor struct {
+	program                *ast.Program
+	completionsByClassDecl map[*ast.ClassDecl][]*completion
+}
+
+func newThisPropertyCompletor(program *ast.Program) *thisPropertyCompletor {
+	g := newThisPropertyCompletionGenerator()
+	completionsByClassDecl := g.Generate(program)
+	return &thisPropertyCompletor{program: program, completionsByClassDecl: completionsByClassDecl}
+}
+
+func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
+	classDecl, ok := ast.Find(c.program, func(classDecl *ast.ClassDecl) bool {
+		if !inRange(pos, classDecl) {
+			return false
+		}
+		_, ok := ast.Find(classDecl.Body, func(classDecl *ast.ClassDecl) bool { return inRange(pos, classDecl) })
+		return !ok
+	})
+	if !ok {
+		return nil
+	}
+	return c.completionsByClassDecl[classDecl]
+}
+
+type thisPropertyCompletionGenerator struct {
+	curClassDecl *ast.ClassDecl
+
+	complsByLabelByKindByClassDecl map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion
+}
+
+func newThisPropertyCompletionGenerator() *thisPropertyCompletionGenerator {
+	return &thisPropertyCompletionGenerator{complsByLabelByKindByClassDecl: map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion{}}
+}
+
+func (g *thisPropertyCompletionGenerator) Generate(program *ast.Program) map[*ast.ClassDecl][]*completion {
+	ast.Walk(program, g.walk)
+
+	kindOrder := []protocol.CompletionItemKind{
+		protocol.CompletionItemKindField,
+		protocol.CompletionItemKindProperty,
+		protocol.CompletionItemKindMethod,
+	}
+	complsByClassDecl := map[*ast.ClassDecl][]*completion{}
+	for classDecl, complsByLabelByKind := range g.complsByLabelByKindByClassDecl {
+		for label := range complsByLabelByKind[protocol.CompletionItemKindProperty] {
+			delete(complsByLabelByKind[protocol.CompletionItemKindField], label)
+		}
+		for _, kind := range kindOrder {
+			sortedCompls := slices.SortedFunc(maps.Values(complsByLabelByKind[kind]), func(x, y *completion) int {
+				return cmp.Compare(x.Label, y.Label)
+			})
+			complsByClassDecl[classDecl] = append(complsByClassDecl[classDecl], sortedCompls...)
+		}
+	}
+
+	return complsByClassDecl
+}
+
+func (g *thisPropertyCompletionGenerator) walk(node ast.Node) bool {
+	switch node := node.(type) {
+	case *ast.ClassDecl:
+		g.walkClassDecl(node)
+		return false
+	case *ast.MethodDecl:
+		g.walkMethodDecl(node)
+	case *ast.SetExpr:
+		g.walkSetExpr(node)
+	}
+	return true
+}
+
+func (g *thisPropertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
+	prevCurClassDecl := g.curClassDecl
+	defer func() { g.curClassDecl = prevCurClassDecl }()
+	g.curClassDecl = decl
+	ast.Walk(decl.Body, g.walk)
+}
+
+func (g *thisPropertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
+	compl, ok := methodCompletion(decl)
+	if !ok {
+		return
+	}
+	g.add(g.curClassDecl, compl)
+}
+
+func (g *thisPropertyCompletionGenerator) walkSetExpr(expr *ast.SetExpr) {
+	if g.curClassDecl == nil || expr.Object == nil {
+		return
+	}
+	if _, ok := expr.Object.(*ast.ThisExpr); !ok {
+		return
+	}
+	compl, ok := fieldCompletion(expr.Name)
+	if !ok {
+		return
+	}
+	g.add(g.curClassDecl, compl)
+}
+
+func (g *thisPropertyCompletionGenerator) add(classDecl *ast.ClassDecl, compl *completion) {
+	complsByLabelByKind, ok := g.complsByLabelByKindByClassDecl[classDecl]
+	if !ok {
+		complsByLabelByKind = map[protocol.CompletionItemKind]map[string]*completion{}
+		g.complsByLabelByKindByClassDecl[classDecl] = complsByLabelByKind
+	}
+	complsByLabel, ok := complsByLabelByKind[compl.Kind]
+	if !ok {
+		complsByLabel = map[string]*completion{}
+		complsByLabelByKind[compl.Kind] = complsByLabel
+	}
+	complsByLabel[compl.Label] = compl
+}
+
 func varCompletion(decl *ast.VarDecl) (*completion, bool) {
 	if !decl.Name.IsValid() {
 		return nil, false
@@ -571,6 +707,41 @@ func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
 		Detail:        classDetail(decl),
 		Snippet:       callSnippet(decl.Name.Token.Lexeme),
 		Documentation: commentsText(decl.Doc),
+	}, true
+}
+
+func fieldCompletion(ident *ast.Ident) (*completion, bool) {
+	if !ident.IsValid() {
+		return nil, false
+	}
+	return &completion{
+		Label: ident.Token.Lexeme,
+		Kind:  protocol.CompletionItemKindField,
+	}, true
+}
+
+func methodCompletion(decl *ast.MethodDecl) (*completion, bool) {
+	if !decl.Name.IsValid() {
+		return nil, false
+	}
+	var kind protocol.CompletionItemKind
+	var detail string
+	var snippet string
+	var documentation string
+	if decl.HasModifier(token.Get, token.Set) {
+		kind = protocol.CompletionItemKindProperty
+	} else {
+		kind = protocol.CompletionItemKindMethod
+		detail = funDetail(decl.Function)
+		snippet = callSnippet(decl.Name.Token.Lexeme)
+		documentation = commentsText(decl.Doc)
+	}
+	return &completion{
+		Label:         decl.Name.Token.Lexeme,
+		Kind:          kind,
+		Detail:        detail,
+		Snippet:       snippet,
+		Documentation: documentation,
 	}, true
 }
 
