@@ -649,7 +649,9 @@ func (p *parser) parseArgs() ([]ast.Expr, bool) {
 	var args []ast.Expr
 	for {
 		arg, ok := p.parseAssignmentExpr()
-		args = append(args, arg)
+		if arg != nil {
+			args = append(args, arg)
+		}
 		if !ok {
 			return args, false
 		}
