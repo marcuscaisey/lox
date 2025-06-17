@@ -626,7 +626,15 @@ func (g *propertyCompletionGenerator) Generate(program *ast.Program) map[*ast.Cl
 		}
 		for _, kind := range kindOrder {
 			sortedCompls := slices.SortedFunc(maps.Values(complsByLabelByKind[kind]), func(x, y *completion) int {
-				return cmp.Compare(x.Label, y.Label)
+				xUnderscore := strings.HasPrefix(x.Label, "_")
+				yUnderscore := strings.HasPrefix(y.Label, "_")
+				if xUnderscore && !yUnderscore {
+					return 1
+				} else if !xUnderscore && yUnderscore {
+					return -1
+				} else {
+					return cmp.Compare(x.Label, y.Label)
+				}
 			})
 			complsByClassDecl[classDecl] = append(complsByClassDecl[classDecl], sortedCompls...)
 		}
