@@ -51,8 +51,14 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	}
 
 	var completions []*completion
+	var getSetExprObject ast.Expr
 	if getExpr, ok := ast.Find(doc.Program, func(getExpr *ast.GetExpr) bool { return inRangeOrFollows(params.Position, getExpr) }); ok {
-		if _, ok := getExpr.Object.(*ast.ThisExpr); ok {
+		getSetExprObject = getExpr.Object
+	} else if setExpr, ok := ast.Find(doc.Program, func(setExpr *ast.SetExpr) bool { return inRangeOrFollows(params.Position, setExpr) }); ok {
+		getSetExprObject = setExpr.Object
+	}
+	if getSetExprObject != nil {
+		if _, ok := getSetExprObject.(*ast.ThisExpr); ok {
 			completions = doc.ThisPropertyCompletor.Complete(params.Position)
 		} else {
 			completions = doc.PropertyCompletions
