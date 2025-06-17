@@ -21,7 +21,7 @@ type document struct {
 	IdentDecls            map[*ast.Ident]ast.Decl
 	KeywordCompletor      *keywordCompletor
 	IdentCompletor        *identCompletor
-	PropertyCompletor     *propertyCompletor
+	PropertyCompletions   []*completion
 	ThisPropertyCompletor *thisPropertyCompletor
 	HasErrors             bool
 }
@@ -103,7 +103,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		IdentDecls:            identDecls,
 		KeywordCompletor:      newKeywordCompletor(program),
 		IdentCompletor:        newIdentCompletor(program),
-		PropertyCompletor:     newPropertyCompletor(program),
+		PropertyCompletions:   genPropertyCompletions(program),
 		ThisPropertyCompletor: newThisPropertyCompletor(program),
 		HasErrors:             err != nil,
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"unicode"
 	"unicode/utf16"
 
@@ -54,7 +55,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		if _, ok := getExpr.Object.(*ast.ThisExpr); ok {
 			completions = doc.ThisPropertyCompletor.Complete(params.Position)
 		} else {
-			completions = doc.PropertyCompletor.Complete(params.Position)
+			completions = doc.PropertyCompletions
 		}
 	} else {
 		completions = slices.Concat(
@@ -314,8 +315,7 @@ type identCompletor struct {
 
 // newIdentCompletor returns an [identCompletor] which completes identifiers inside the given program.
 func newIdentCompletor(program *ast.Program) *identCompletor {
-	g := newIdentCompletionGenerator(program.Start(), program.End())
-	globalScope := g.Generate(program)
+	globalScope := genIdentCompletions(program)
 	return &identCompletor{globalScope: globalScope}
 }
 
@@ -359,6 +359,11 @@ func (s *completionScope) Complete(pos *protocol.Position) []*completion {
 	return compls
 }
 
+func genIdentCompletions(program *ast.Program) *completionScope {
+	g := &identCompletionGenerator{}
+	return g.Generate(program)
+}
+
 type identCompletionGenerator struct {
 	globalComplLocs []*completionLocation
 	curScope        *completionScope
@@ -366,12 +371,10 @@ type identCompletionGenerator struct {
 	globalScope *completionScope
 }
 
-func newIdentCompletionGenerator(programStart token.Position, programEnd token.Position) *identCompletionGenerator {
-	globalScope := &completionScope{start: programStart, end: programEnd}
-	return &identCompletionGenerator{globalScope: globalScope, curScope: globalScope}
-}
-
 func (g *identCompletionGenerator) Generate(program *ast.Program) *completionScope {
+	globalScope := &completionScope{start: program.Start(), end: program.End()}
+	g.globalScope = globalScope
+	g.curScope = globalScope
 	g.globalComplLocs = g.readGlobalCompletionLocations(program)
 	ast.Walk(program, g.walk)
 	return g.globalScope
@@ -549,25 +552,32 @@ func (g *identCompletionGenerator) globalCompletionsAfter(pos token.Position) []
 	return compls
 }
 
-type propertyCompletor struct{}
-
-func newPropertyCompletor(program *ast.Program) *propertyCompletor {
-	return &propertyCompletor{}
-}
-
-func (c *propertyCompletor) Complete(pos *protocol.Position) []*completion {
-	return nil
+func genPropertyCompletions(program *ast.Program) []*completion {
+	complsByClassDecl := genClassPropertyCompletions(program)
+	var compls []*completion
+	for classDecl, classCompls := range complsByClassDecl {
+		for _, compl := range classCompls {
+			b := &strings.Builder{}
+			fmt.Fprintf(b, "_From class: %s_", classDecl.Name.Token.Lexeme)
+			if compl.Documentation != "" {
+				fmt.Fprintf(b, "\n\n%s", compl.Documentation)
+			}
+			compl.Documentation = b.String()
+			compls = append(compls, compl)
+		}
+		_ = classDecl
+	}
+	return compls
 }
 
 type thisPropertyCompletor struct {
-	program                *ast.Program
-	completionsByClassDecl map[*ast.ClassDecl][]*completion
+	program           *ast.Program
+	complsByClassDecl map[*ast.ClassDecl][]*completion
 }
 
 func newThisPropertyCompletor(program *ast.Program) *thisPropertyCompletor {
-	g := newThisPropertyCompletionGenerator()
-	completionsByClassDecl := g.Generate(program)
-	return &thisPropertyCompletor{program: program, completionsByClassDecl: completionsByClassDecl}
+	complsByClassDecl := genClassPropertyCompletions(program)
+	return &thisPropertyCompletor{program: program, complsByClassDecl: complsByClassDecl}
 }
 
 func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
@@ -581,20 +591,21 @@ func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
 	if !ok {
 		return nil
 	}
-	return c.completionsByClassDecl[classDecl]
+	return c.complsByClassDecl[classDecl]
 }
 
-type thisPropertyCompletionGenerator struct {
+func genClassPropertyCompletions(program *ast.Program) map[*ast.ClassDecl][]*completion {
+	g := &propertyCompletionGenerator{complsByLabelByKindByClassDecl: map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion{}}
+	return g.Generate(program)
+}
+
+type propertyCompletionGenerator struct {
 	curClassDecl *ast.ClassDecl
 
 	complsByLabelByKindByClassDecl map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion
 }
 
-func newThisPropertyCompletionGenerator() *thisPropertyCompletionGenerator {
-	return &thisPropertyCompletionGenerator{complsByLabelByKindByClassDecl: map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion{}}
-}
-
-func (g *thisPropertyCompletionGenerator) Generate(program *ast.Program) map[*ast.ClassDecl][]*completion {
+func (g *propertyCompletionGenerator) Generate(program *ast.Program) map[*ast.ClassDecl][]*completion {
 	ast.Walk(program, g.walk)
 
 	kindOrder := []protocol.CompletionItemKind{
@@ -618,7 +629,7 @@ func (g *thisPropertyCompletionGenerator) Generate(program *ast.Program) map[*as
 	return complsByClassDecl
 }
 
-func (g *thisPropertyCompletionGenerator) walk(node ast.Node) bool {
+func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
 	switch node := node.(type) {
 	case *ast.ClassDecl:
 		g.walkClassDecl(node)
@@ -631,14 +642,14 @@ func (g *thisPropertyCompletionGenerator) walk(node ast.Node) bool {
 	return true
 }
 
-func (g *thisPropertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
+func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 	prevCurClassDecl := g.curClassDecl
 	defer func() { g.curClassDecl = prevCurClassDecl }()
 	g.curClassDecl = decl
 	ast.Walk(decl.Body, g.walk)
 }
 
-func (g *thisPropertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
+func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
 	compl, ok := methodCompletion(decl)
 	if !ok {
 		return
@@ -646,7 +657,7 @@ func (g *thisPropertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
 	g.add(g.curClassDecl, compl)
 }
 
-func (g *thisPropertyCompletionGenerator) walkSetExpr(expr *ast.SetExpr) {
+func (g *propertyCompletionGenerator) walkSetExpr(expr *ast.SetExpr) {
 	if g.curClassDecl == nil || expr.Object == nil {
 		return
 	}
@@ -660,7 +671,7 @@ func (g *thisPropertyCompletionGenerator) walkSetExpr(expr *ast.SetExpr) {
 	g.add(g.curClassDecl, compl)
 }
 
-func (g *thisPropertyCompletionGenerator) add(classDecl *ast.ClassDecl, compl *completion) {
+func (g *propertyCompletionGenerator) add(classDecl *ast.ClassDecl, compl *completion) {
 	complsByLabelByKind, ok := g.complsByLabelByKindByClassDecl[classDecl]
 	if !ok {
 		complsByLabelByKind = map[protocol.CompletionItemKind]map[string]*completion{}
