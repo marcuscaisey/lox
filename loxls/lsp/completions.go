@@ -54,7 +54,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	var getSetExprObject ast.Expr
 	if getExpr, ok := ast.Find(doc.Program, func(getExpr *ast.GetExpr) bool { return inRangeOrFollows(params.Position, getExpr) }); ok {
 		getSetExprObject = getExpr.Object
-	} else if setExpr, ok := ast.Find(doc.Program, func(setExpr *ast.SetExpr) bool { return inRangeOrFollows(params.Position, setExpr) }); ok {
+	} else if setExpr, ok := ast.Find(doc.Program, func(setExpr *ast.SetExpr) bool { return inRangeOrFollows(params.Position, setExpr.Name) }); ok {
 		getSetExprObject = setExpr.Object
 	}
 	if getSetExprObject != nil {
