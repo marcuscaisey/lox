@@ -36,7 +36,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 			TextDocumentSync: &protocol.TextDocumentSyncOptionsOrTextDocumentSyncKind{
 				Value: &protocol.TextDocumentSyncOptions{
 					OpenClose: true,
-					Change:    protocol.TextDocumentSyncKindFull,
+					Change:    protocol.TextDocumentSyncKindIncremental,
 				},
 			},
 			CompletionProvider: &protocol.CompletionOptions{

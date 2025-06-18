@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/marcuscaisey/lox/golox/analysis"
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -45,18 +46,91 @@ func (h *Handler) textDocumentDidOpen(params *protocol.DidOpenTextDocumentParams
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_didChange
 func (h *Handler) textDocumentDidChange(params *protocol.DidChangeTextDocumentParams) error {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return err
+	}
+	src := doc.Text
 	for _, change := range params.ContentChanges {
 		switch change := change.Value.(type) {
 		case *protocol.IncrementalTextDocumentContentChangeEvent:
-			return errors.New("textDocument/didChange: incremental updates not supported")
-		case *protocol.FullTextDocumentContentChangeEvent:
-			if err := h.updateDoc(params.TextDocument.Uri, params.TextDocument.Version, string(change.Text)); err != nil {
+			src, err = applyIncrementalTextChange(src, change)
+			if err != nil {
 				return fmt.Errorf("textDocument/didChange: %s", err)
 			}
-			return nil
+		case *protocol.FullTextDocumentContentChangeEvent:
+			src = change.Text
 		}
 	}
+	if err := h.updateDoc(params.TextDocument.Uri, params.TextDocument.Version, src); err != nil {
+		return fmt.Errorf("textDocument/didChange: %s", err)
+	}
 	return nil
+}
+
+func applyIncrementalTextChange(text string, change *protocol.IncrementalTextDocumentContentChangeEvent) (string, error) {
+	utf16IdxToByteIdx := func(text string, utf16Idx int) (int, bool) {
+		if utf16Idx == 0 {
+			return 0, true
+		}
+		if i := strings.IndexRune(text, '\n'); i != 0 {
+			text = text[:i+1]
+		}
+		curUTF16Idx := 0
+		for i, r := range text {
+			if curUTF16Idx == utf16Idx {
+				return i, true
+			}
+			if curUTF16Idx > utf16Idx {
+				return 0, false
+			}
+			curUTF16Idx += utf16.RuneLen(r)
+		}
+		return 0, false
+	}
+
+	low := -1
+	high := -1
+	if change.Range.Start.Line == 0 && change.Range.Start.Character == 0 {
+		low = 0
+	}
+	if change.Range.Start.Line == 0 && change.Range.Start.Character == 0 {
+		high = 0
+	}
+
+	line := 0
+	for i, r := range text {
+		if r == '\n' || i == 0 {
+			if r == '\n' {
+				line++
+				i++
+			}
+			if line == change.Range.Start.Line && low < 0 {
+				byteIdx, ok := utf16IdxToByteIdx(text[i:], change.Range.Start.Character)
+				if !ok {
+					return "", fmt.Errorf("applying incremental text change: range start character %d on line %d not found", change.Range.Start.Character, line)
+				}
+				low = i + byteIdx
+			}
+			if line == change.Range.End.Line {
+				byteIdx, ok := utf16IdxToByteIdx(text[i:], change.Range.End.Character)
+				if !ok {
+					return "", fmt.Errorf("applying incremental text change: range end character %d on line %d not found", change.Range.Start.Character, line)
+				}
+				high = i + byteIdx
+				break
+			}
+		}
+	}
+
+	if low == -1 {
+		return "", fmt.Errorf("applying incremental text change: range start line %d not found", change.Range.Start.Line)
+	}
+	if high == -1 {
+		return "", fmt.Errorf("applying incremental text change: range end line %d not found", change.Range.End.Line)
+	}
+
+	return text[:low] + change.Text + text[high:], nil
 }
 
 func (h *Handler) updateDoc(uri string, version int, src string) error {
