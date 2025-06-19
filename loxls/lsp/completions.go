@@ -652,6 +652,7 @@ func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
 		g.walkMethodDecl(node)
 	case *ast.SetExpr:
 		g.walkSetExpr(node)
+	default:
 	}
 	return true
 }
