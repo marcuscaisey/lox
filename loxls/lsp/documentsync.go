@@ -3,6 +3,7 @@ package lsp
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"unicode/utf16"
 
@@ -15,16 +16,19 @@ import (
 )
 
 type document struct {
-	URI                   string
-	Version               int
-	Text                  string
+	// Client provided
+	URI     string
+	Version int
+	Text    string
+
+	// Server generated
 	Program               *ast.Program
+	Diagnostics           []*protocol.Diagnostic
 	IdentDecls            map[*ast.Ident]ast.Decl
 	KeywordCompletor      *keywordCompletor
 	IdentCompletor        *identCompletor
 	PropertyCompletions   []*completion
 	ThisPropertyCompletor *thisPropertyCompletor
-	HasErrors             bool
 }
 
 // document returns the document with the given URI, or an error if it doesn't exist.
@@ -169,6 +173,17 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		}
 	}
 
+	if doc, ok := h.docs[uri]; ok && !reflect.DeepEqual(diagnostics, doc.Diagnostics) {
+		err := h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
+			Uri:         uri,
+			Version:     version,
+			Diagnostics: diagnostics,
+		})
+		if err != nil {
+			return fmt.Errorf("updating document: %w", err)
+		}
+	}
+
 	h.docs[uri] = &document{
 		URI:                   uri,
 		Version:               version,
@@ -179,14 +194,10 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		IdentCompletor:        newIdentCompletor(program),
 		PropertyCompletions:   genPropertyCompletions(program),
 		ThisPropertyCompletor: newThisPropertyCompletor(program),
-		HasErrors:             err != nil,
+		Diagnostics:           diagnostics,
 	}
 
-	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
-		Uri:         uri,
-		Version:     version,
-		Diagnostics: diagnostics,
-	})
+	return nil
 }
 
 func uriToFilename(uri string) (string, error) {
