@@ -173,7 +173,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		}
 	}
 
-	if doc, ok := h.docs[uri]; ok && !reflect.DeepEqual(diagnostics, doc.Diagnostics) {
+	if doc, ok := h.docs[uri]; (!ok && len(diagnostics) > 0) || (ok && !reflect.DeepEqual(diagnostics, doc.Diagnostics)) {
 		err := h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
 			Uri:         uri,
 			Version:     version,
