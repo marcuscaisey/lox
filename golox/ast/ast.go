@@ -86,15 +86,15 @@ func (c *Comment) IsValid() bool         { return c != nil && !c.Comment.IsZero(
 //
 //	print 1; // *comment
 type CommentedStmt struct {
-	Stmt    Stmt        `print:"named"`
-	Comment token.Token `print:"named"`
+	Stmt    Stmt     `print:"named"`
+	Comment *Comment `print:"named"`
 	stmt
 }
 
 func (i *CommentedStmt) Start() token.Position { return i.Stmt.Start() }
 func (i *CommentedStmt) End() token.Position   { return last(i.Stmt, i.Comment).End() }
 func (i *CommentedStmt) IsValid() bool {
-	return i != nil && isValid(i.Stmt) && !i.Comment.IsZero()
+	return i != nil && isValid(i.Stmt) && isValid(i.Comment)
 }
 
 // Decl is the interface which all declaration nodes implement.

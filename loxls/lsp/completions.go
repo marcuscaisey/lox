@@ -34,6 +34,10 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		return nil, err
 	}
 
+	if _, ok := ast.Find(doc.Program, func(comment *ast.Comment) bool { return inRangeOrFollows(params.Position, comment) }); ok {
+		return nil, nil
+	}
+
 	replaceRange := &protocol.Range{Start: params.Position, End: params.Position}
 	if containingIdentRange, ok := containingIdentRange(doc.Program, params.Position); ok {
 		replaceRange = containingIdentRange

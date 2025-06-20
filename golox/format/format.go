@@ -109,7 +109,7 @@ func formatComment(stmt *ast.Comment) string {
 }
 
 func formatCommentedStmt(stmt *ast.CommentedStmt) string {
-	return fmt.Sprintf("%s %s", Node(stmt.Stmt), stmt.Comment.Lexeme)
+	return fmt.Sprintf("%s %s", Node(stmt.Stmt), stmt.Comment.Comment.Lexeme)
 }
 
 func formatVarDecl(decl *ast.VarDecl) string {

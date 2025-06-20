@@ -14,10 +14,12 @@ func Walk(node Node, f func(Node) bool) {
 	case *Comment:
 	case *CommentedStmt:
 		Walk(node.Stmt, f)
+		Walk(node.Comment, f)
 	case *VarDecl:
 		Walk(node.Name, f)
 		Walk(node.Initialiser, f)
 	case *FunDecl:
+		walkSlice(node.Doc, f)
 		Walk(node.Name, f)
 		Walk(node.Function, f)
 	case *Function:
@@ -26,9 +28,11 @@ func Walk(node Node, f func(Node) bool) {
 	case *ParamDecl:
 		Walk(node.Name, f)
 	case *ClassDecl:
+		walkSlice(node.Doc, f)
 		Walk(node.Name, f)
 		Walk(node.Body, f)
 	case *MethodDecl:
+		walkSlice(node.Doc, f)
 		Walk(node.Name, f)
 		Walk(node.Function, f)
 	case *ExprStmt:

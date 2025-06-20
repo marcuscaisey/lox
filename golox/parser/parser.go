@@ -342,7 +342,7 @@ func (p *parser) parseCommentedStmt(stmt ast.Stmt) (*ast.CommentedStmt, bool) {
 		return tok.Type == token.Comment && tok.Start().Line == stmt.End().Line
 	})
 	if ok && p.parseComments {
-		return &ast.CommentedStmt{Stmt: stmt, Comment: comment}, true
+		return &ast.CommentedStmt{Stmt: stmt, Comment: p.parseComment(comment)}, true
 	}
 	return nil, false
 }
