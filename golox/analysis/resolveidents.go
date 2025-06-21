@@ -89,7 +89,6 @@ type identResolver struct {
 
 func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
 	endScope := r.beginScope()
-	defer endScope()
 
 	r.globalScope = r.scopes.Peek()
 	for _, decl := range builtins {
@@ -101,6 +100,7 @@ func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[
 	r.globalDecls = r.readGlobalDecls(program)
 
 	ast.Walk(program, r.walk)
+	endScope()
 
 	return r.identDecls, r.errs
 }
