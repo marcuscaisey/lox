@@ -1,2 +1,2 @@
-// Package analysis implements functions to analyze syntactically valid Lox programs.
+// Package analysis implements functions to analyse Lox programs.
 package analysis

@@ -1,7 +1,7 @@
 package ast
 
-// Walk traverses an AST in depth-first order: It starts by calling f(node). If node is non-nil and f returns true, Walk
-// invokes f recursively for each of the non-nil children of node.
+// Walk traverses an AST in depth-first order: It starts by calling f(node). If f returns true, Walk invokes f
+// recursively for each of the non-nil children of node. If node is nil, Walk returns immediately.
 func Walk(node Node, f func(Node) bool) {
 	if isNil(node) || !f(node) {
 		return

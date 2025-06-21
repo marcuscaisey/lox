@@ -260,9 +260,7 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 		return nil, err
 	}
 
-	if len(doc.Diagnostics) > 0 {
-		// TODO: return error here instead?
-		h.log.Infof("textDocument/formatting: %s has errors. Skipping formatting.", params.TextDocument.Uri)
+	if doc.HasParseErrors {
 		return nil, nil
 	}
 

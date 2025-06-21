@@ -24,8 +24,8 @@ func WithREPLMode(enabled bool) ResolveIdentsOption {
 }
 
 // ResolveIdents resolves the identifiers in a program to their declarations.
-// It returns a map from identifier to the statement which declared it. If an error is returned then a possibly
-// incomplete map will still be returned along with it.
+// It returns a map from identifier to its declaration. If an error is returned then a possibly incomplete map will
+// still be returned along with it.
 // builtins is a list of builtin declarations to add to the global scope.
 //
 // For example, given the following code:
@@ -60,7 +60,14 @@ func WithREPLMode(enabled bool) ResolveIdentsOption {
 //	var x = 1;
 //	printX();
 func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...ResolveIdentsOption) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
-	r := newIdentResolver(opts...)
+	r := &identResolver{
+		scopes:                 stack.New[*scope](),
+		forwardDeclaredGlobals: map[string]bool{},
+		identDecls:             map[*ast.Ident]ast.Decl{},
+	}
+	for _, opt := range opts {
+		opt(r)
+	}
 	return r.Resolve(program, builtins)
 }
 
@@ -80,24 +87,7 @@ type identResolver struct {
 	replMode bool
 }
 
-func newIdentResolver(opts ...ResolveIdentsOption) *identResolver {
-	r := &identResolver{
-		scopes:                 stack.New[*scope](),
-		forwardDeclaredGlobals: map[string]bool{},
-		identDecls:             map[*ast.Ident]ast.Decl{},
-	}
-	for _, opt := range opts {
-		opt(r)
-	}
-	return r
-}
-
 func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
-	r.resolve(program, builtins)
-	return r.identDecls, r.errs
-}
-
-func (r *identResolver) resolve(program *ast.Program, builtins []ast.Decl) {
 	endScope := r.beginScope()
 	defer endScope()
 
@@ -111,6 +101,8 @@ func (r *identResolver) resolve(program *ast.Program, builtins []ast.Decl) {
 	r.globalDecls = r.readGlobalDecls(program)
 
 	ast.Walk(program, r.walk)
+
+	return r.identDecls, r.errs
 }
 
 func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Decl {
@@ -120,9 +112,13 @@ func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Dec
 			stmt = commentedStmt.Stmt
 		}
 		if decl, ok := stmt.(ast.Decl); ok {
-			name := decl.Ident().Token.Lexeme
+			ident := decl.Ident()
+			if !ident.IsValid() {
+				continue
+			}
+			name := ident.Token.Lexeme
 			if _, ok := decls[name]; !ok {
-				decls[decl.Ident().Token.Lexeme] = decl
+				decls[name] = decl
 			}
 		}
 	}
@@ -255,7 +251,7 @@ func (r *identResolver) beginScope() func() {
 
 func (r *identResolver) declareIdent(stmt ast.Decl) {
 	ident := stmt.Ident()
-	if ident.Token.Lexeme == token.PlaceholderIdent {
+	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
 		return
 	}
 	if r.scopes.Len() == 1 && r.forwardDeclaredGlobals[ident.Token.Lexeme] {
@@ -273,7 +269,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 }
 
 func (r *identResolver) defineIdent(ident *ast.Ident) {
-	if ident.Token.Lexeme == token.PlaceholderIdent {
+	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
 		return
 	}
 	for _, scope := range r.scopes.Backward() {
@@ -292,7 +288,7 @@ const (
 )
 
 func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
-	if ident.Token.Lexeme == token.PlaceholderIdent {
+	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
 		return
 	}
 	for level, scope := range r.scopes.Backward() {
@@ -365,6 +361,10 @@ func (r *identResolver) walkFunDecl(decl *ast.FunDecl) {
 }
 
 func (r *identResolver) walkFun(fun *ast.Function) {
+	if fun == nil {
+		return
+	}
+
 	endScope := r.beginScope()
 	defer endScope()
 
@@ -380,8 +380,12 @@ func (r *identResolver) walkFun(fun *ast.Function) {
 		r.declareIdent(param)
 		r.defineIdent(param.Name)
 	}
-	for _, stmt := range fun.Body.Stmts {
-		ast.Walk(stmt, r.walk)
+	if fun.Body != nil {
+		// We don't walk over the statements using ast.Walk(fun.Body, r.walk) because this would introduce another scope
+		// which would allow redeclaration of the parameters.
+		for _, stmt := range fun.Body.Stmts {
+			ast.Walk(stmt, r.walk)
+		}
 	}
 }
 
@@ -415,7 +419,9 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 }
 
 func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
-	r.identDecls[decl.Name] = decl
+	if decl.Name.IsValid() {
+		r.identDecls[decl.Name] = decl
+	}
 	r.walkFun(decl.Function)
 }
 
@@ -430,15 +436,9 @@ func (r *identResolver) walkBlock(block *ast.Block) {
 func (r *identResolver) walkForStmt(stmt *ast.ForStmt) {
 	endScope := r.beginScope()
 	defer endScope()
-	if stmt.Initialise != nil {
-		ast.Walk(stmt.Initialise, r.walk)
-	}
-	if stmt.Condition != nil {
-		ast.Walk(stmt.Condition, r.walk)
-	}
-	if stmt.Update != nil {
-		ast.Walk(stmt.Update, r.walk)
-	}
+	ast.Walk(stmt.Initialise, r.walk)
+	ast.Walk(stmt.Condition, r.walk)
+	ast.Walk(stmt.Update, r.walk)
 	ast.Walk(stmt.Body, r.walk)
 }
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 	"unicode/utf16"
 
@@ -23,6 +24,7 @@ type document struct {
 
 	// Server generated
 	Program               *ast.Program
+	HasParseErrors        bool
 	Diagnostics           []*protocol.Diagnostic
 	IdentDecls            map[*ast.Ident]ast.Decl
 	KeywordCompletor      *keywordCompletor
@@ -142,23 +144,21 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if err != nil {
 		return fmt.Errorf("updating document: %w", err)
 	}
+	var parseErrs loxerr.Errors
 	program, err := parser.Parse(strings.NewReader(string(src)), filename, parser.WithComments(true))
-
-	var loxErrs loxerr.Errors
-	var identDecls map[*ast.Ident]ast.Decl
-	if err != nil {
-		if !errors.As(err, &loxErrs) {
-			return fmt.Errorf("updating document: %w", err)
-		}
-	} else {
-		var builtins []ast.Decl
-		if filename != h.stubBuiltinsFilename {
-			builtins = h.stubBuiltins
-		}
-		identDecls, loxErrs = analysis.ResolveIdents(program, builtins)
-		loxErrs = append(loxErrs, analysis.CheckSemantics(program)...)
-		loxErrs.Sort()
+	if err != nil && !errors.As(err, &parseErrs) {
+		return fmt.Errorf("updating document: %w", err)
 	}
+
+	var builtins []ast.Decl
+	if filename != h.stubBuiltinsFilename {
+		builtins = h.stubBuiltins
+	}
+	identDecls, resolveErrs := analysis.ResolveIdents(program, builtins)
+	semanticErrs := analysis.CheckSemantics(program)
+
+	loxErrs := slices.Concat(parseErrs, resolveErrs, semanticErrs)
+	loxErrs.Sort()
 
 	diagnostics := []*protocol.Diagnostic{}
 	if filename != h.stubBuiltinsFilename {
@@ -189,12 +189,13 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		Version:               version,
 		Text:                  src,
 		Program:               program,
+		HasParseErrors:        len(parseErrs) > 0,
+		Diagnostics:           diagnostics,
 		IdentDecls:            identDecls,
 		KeywordCompletor:      newKeywordCompletor(program),
 		IdentCompletor:        newIdentCompletor(program),
 		PropertyCompletions:   genPropertyCompletions(program),
 		ThisPropertyCompletor: newThisPropertyCompletor(program),
-		Diagnostics:           diagnostics,
 	}
 
 	return nil

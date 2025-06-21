@@ -24,7 +24,7 @@ const (
 //   - functions cannot have more than 255 parameters
 //   - function calls cannot have more than 255 arguments
 func CheckSemantics(program *ast.Program) loxerr.Errors {
-	c := newSemanticChecker()
+	c := &semanticChecker{}
 	return c.Check(program)
 }
 
@@ -33,10 +33,6 @@ type semanticChecker struct {
 	curFunType funType
 
 	errs loxerr.Errors
-}
-
-func newSemanticChecker() *semanticChecker {
-	return &semanticChecker{}
 }
 
 func (c *semanticChecker) Check(program *ast.Program) loxerr.Errors {
@@ -87,6 +83,10 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 }
 
 func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
+	if fun == nil {
+		return
+	}
+
 	c.checkNumParams(fun.Params)
 
 	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
@@ -98,9 +98,7 @@ func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
 	c.curFunType = funType
 	defer func() { c.curFunType = prevFunType }()
 
-	for _, stmt := range fun.Body.Stmts {
-		ast.Walk(stmt, c.walk)
-	}
+	ast.Walk(fun.Body, c.walk)
 }
 
 func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {
@@ -117,15 +115,9 @@ func (c *semanticChecker) walkWhileStmt(stmt *ast.WhileStmt) {
 }
 
 func (c *semanticChecker) walkForStmt(stmt *ast.ForStmt) {
-	if stmt.Initialise != nil {
-		ast.Walk(stmt.Initialise, c.walk)
-	}
-	if stmt.Condition != nil {
-		ast.Walk(stmt.Condition, c.walk)
-	}
-	if stmt.Update != nil {
-		ast.Walk(stmt.Update, c.walk)
-	}
+	ast.Walk(stmt.Initialise, c.walk)
+	ast.Walk(stmt.Condition, c.walk)
+	ast.Walk(stmt.Update, c.walk)
 	endLoop := c.beginLoop()
 	defer endLoop()
 	ast.Walk(stmt.Body, c.walk)
@@ -142,6 +134,9 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) 
 	gettersByName := map[string]bool{}
 	setterIdentsByName := map[string]*ast.Ident{}
 	for _, methodDecl := range methods {
+		if !methodDecl.Name.IsValid() {
+			continue
+		}
 		switch {
 		case methodDecl.HasModifier(token.Get):
 			gettersByName[methodDecl.Name.Token.Lexeme] = true
@@ -157,6 +152,9 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) 
 }
 
 func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
+	if decl.Function == nil {
+		return
+	}
 	switch {
 	case decl.HasModifier(token.Get) && len(decl.Function.Params) > 0:
 		c.errs.AddSpanningRangesf(decl.Function.Params[0], decl.Function.Params[len(decl.Function.Params)-1], "property getter cannot have parameters")
@@ -201,7 +199,7 @@ func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
 }
 
 func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
-	if ident.Token.Lexeme == token.PlaceholderIdent {
+	if ident.IsValid() && ident.Token.Lexeme == token.PlaceholderIdent {
 		c.errs.Addf(ident, "%s cannot be used as a field name", token.PlaceholderIdent)
 	}
 }
