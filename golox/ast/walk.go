@@ -113,3 +113,17 @@ func Find[T Node](node Node, p Predicate[T]) (T, bool) {
 	})
 	return result, found
 }
+
+// FindLast is like [Find] except it returns the last non-nil node that p returns true for instead of the first.
+func FindLast[T Node](node Node, p Predicate[T]) (T, bool) {
+	var result T
+	var found bool
+	Walk(node, func(n Node) bool {
+		if nT, ok := n.(T); ok && p(nT) {
+			result = nT
+			found = true
+		}
+		return true
+	})
+	return result, found
+}
