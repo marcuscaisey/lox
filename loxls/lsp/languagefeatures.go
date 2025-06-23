@@ -320,7 +320,7 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 }
 
 func declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
-	ident, ok := ast.Find(doc.Program, func(ident *ast.Ident) bool { return inRange(pos, ident) })
+	ident, ok := ast.Find(doc.Program, inRangePredicate[*ast.Ident](pos))
 	if !ok {
 		return nil, false
 	}

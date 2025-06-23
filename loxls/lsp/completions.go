@@ -34,7 +34,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		return nil, err
 	}
 
-	if _, ok := ast.Find(doc.Program, func(comment *ast.Comment) bool { return inRangeOrFollows(params.Position, comment) }); ok {
+	if _, ok := ast.Find(doc.Program, inRangeOrFollowsPredicate[*ast.Comment](params.Position)); ok {
 		return nil, nil
 	}
 
@@ -56,9 +56,9 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 
 	var completions []*completion
 	var getSetExprObject ast.Expr
-	if getExpr, ok := ast.Find(doc.Program, func(getExpr *ast.GetExpr) bool { return inRangeOrFollows(params.Position, getExpr) }); ok {
+	if getExpr, ok := ast.Find(doc.Program, inRangeOrFollowsPredicate[*ast.GetExpr](params.Position)); ok {
 		getSetExprObject = getExpr.Object
-	} else if setExpr, ok := ast.Find(doc.Program, func(setExpr *ast.SetExpr) bool { return inRangeOrFollows(params.Position, setExpr.Name) }); ok {
+	} else if setExpr, ok := ast.Find(doc.Program, inRangeOrFollowsPredicate[*ast.SetExpr](params.Position)); ok {
 		getSetExprObject = setExpr.Object
 	}
 	if getSetExprObject != nil {

@@ -3,6 +3,7 @@ package lsp
 import (
 	"unicode/utf16"
 
+	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
@@ -32,6 +33,28 @@ func inRange(pos *protocol.Position, rang token.Range) bool {
 	return inRangePositions(pos, rang.Start(), rang.End())
 }
 
+// inRangeOrFollows reports whether a [protocol.Position] is at the end of or contained with a [token.Range].
+func inRangeOrFollows(pos *protocol.Position, rang token.Range) bool {
+	end := newPosition(rang.End())
+	return (pos.Line == end.Line && pos.Character == end.Character) || inRange(pos, rang)
+}
+
+// inRangePredicate accepts a [protocol.Position] and returns an [ast.Predicate] which reports whether that position is
+// contained within an [ast.Node] of type T.
+func inRangePredicate[T ast.Node](pos *protocol.Position) ast.Predicate[T] {
+	return func(node T) bool {
+		return inRange(pos, node)
+	}
+}
+
+// inRangeOrFollowsPredicate accepts a [protocol.Position] and returns an [ast.Predicate] which reports whether that position is
+// at the end of or contained within an [ast.Node] of type T.
+func inRangeOrFollowsPredicate[T ast.Node](pos *protocol.Position) ast.Predicate[T] {
+	return func(node T) bool {
+		return inRangeOrFollows(pos, node)
+	}
+}
+
 // inRangePositions is like [inRange] but accepts a start and end position instead.
 func inRangePositions(pos *protocol.Position, start token.Position, end token.Position) bool {
 	line := pos.Line + 1
@@ -45,12 +68,6 @@ func inRangePositions(pos *protocol.Position, start token.Position, end token.Po
 	} else {
 		return line > start.Line && line < end.Line
 	}
-}
-
-// inRangeOrFollows reports whether a [protocol.Position] is at the end of or contained with a [token.Range].
-func inRangeOrFollows(pos *protocol.Position, rang token.Range) bool {
-	end := newPosition(rang.End())
-	return (pos.Line == end.Line && pos.Character == end.Character) || inRange(pos, rang)
 }
 
 func columnUTF16(p token.Position) int {
