@@ -96,13 +96,16 @@ func walkSlice[T Node](nodes []T, f func(Node) bool) {
 	}
 }
 
-// Find traverses an AST in depth-first order, searching for a non-nil node for which f returns true. If one is found,
-// then that node is returned along with true. Otherwise, false and nil are returned.
-func Find[T Node](node Node, f func(T) bool) (T, bool) {
+// Predicate is used by [Find] to determine whether a traversed [Node] should be returned.
+type Predicate[T Node] func(T) bool
+
+// Find traverses an AST in depth-first order, searching for a non-nil node for which the predicate p returns true. If
+// one is found, then that node is returned along with true. Otherwise, the zero value of T and false are returned.
+func Find[T Node](node Node, p Predicate[T]) (T, bool) {
 	var result T
 	var found bool
 	Walk(node, func(n Node) bool {
-		if nT, ok := n.(T); ok && f(nT) {
+		if nT, ok := n.(T); ok && p(nT) {
 			result = nT
 			found = true
 		}
