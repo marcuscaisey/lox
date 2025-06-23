@@ -591,13 +591,7 @@ func newThisPropertyCompletor(program *ast.Program) *thisPropertyCompletor {
 }
 
 func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
-	classDecl, ok := ast.Find(c.program, func(classDecl *ast.ClassDecl) bool {
-		if !inRange(pos, classDecl) {
-			return false
-		}
-		_, ok := ast.Find(classDecl.Body, func(classDecl *ast.ClassDecl) bool { return inRange(pos, classDecl) })
-		return !ok
-	})
+	classDecl, ok := ast.FindLast(c.program, inRangePredicate[*ast.ClassDecl](pos))
 	if !ok {
 		return nil
 	}
