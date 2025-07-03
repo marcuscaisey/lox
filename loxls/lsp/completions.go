@@ -267,21 +267,16 @@ func (c *keywordCompletor) validStatementPosition(pos *protocol.Position) bool {
 	}
 
 	result := false
-	ast.Walk(c.program, func(n ast.Node) bool {
-		switch n.(type) {
-		case ast.Stmt:
-			if block, ok := n.(*ast.Block); ok && !block.LeftBrace.IsZero() && equalPositions(prevCharEnd, block.LeftBrace.End()) {
-				result = true
-				return false
-			}
-			if n.IsValid() && equalPositions(prevCharEnd, n.End()) {
-				result = true
-				return false
-			}
-			return true
-		default:
-			return true
+	ast.Walk(c.program, func(n ast.Stmt) bool {
+		if block, ok := n.(*ast.Block); ok && !block.LeftBrace.IsZero() && equalPositions(prevCharEnd, block.LeftBrace.End()) {
+			result = true
+			return false
 		}
+		if n.IsValid() && equalPositions(prevCharEnd, n.End()) {
+			result = true
+			return false
+		}
+		return true
 	})
 
 	return result

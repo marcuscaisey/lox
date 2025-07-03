@@ -36,24 +36,35 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 		return nil, err
 	}
 
-	decl, ok := declaration(doc, params.Position)
-	if !ok {
-		return nil, nil
-	}
+	var refs []ast.Node
 
-	references := references(doc, decl)
-	var locations protocol.LocationSlice
-	for _, reference := range references {
-		if reference == decl.Ident() && !params.Context.IncludeDeclaration {
-			continue
+	if _, ok := ast.Find(doc.Program, inRangePredicate[*ast.ThisExpr](params.Position)); ok {
+		if classDecl, ok := ast.FindLast(doc.Program, inRangePredicate[*ast.ClassDecl](params.Position)); ok {
+			ast.Walk(classDecl, func(thisExpr *ast.ThisExpr) bool {
+				refs = append(refs, thisExpr)
+				return false
+			})
 		}
-		locations = append(locations, &protocol.Location{
-			Uri:   filenameToURI(reference.Start().File.Name()),
-			Range: newRange(reference),
-		})
+
+	} else if decl, ok := declaration(doc, params.Position); ok {
+		declRefs := declarationReferences(doc, decl)
+		for _, ref := range declRefs {
+			if ref == decl.Ident() && !params.Context.IncludeDeclaration {
+				continue
+			}
+			refs = append(refs, ref)
+		}
 	}
 
-	return locations, nil
+	locs := make(protocol.LocationSlice, len(refs))
+	for i, ref := range refs {
+		locs[i] = &protocol.Location{
+			Uri:   filenameToURI(ref.Start().File.Name()),
+			Range: newRange(ref),
+		}
+	}
+
+	return locs, nil
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
@@ -293,7 +304,7 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 		return nil, nil
 	}
 
-	references := references(doc, decl)
+	references := declarationReferences(doc, decl)
 	edits := make([]*protocol.TextEditOrAnnotatedTextEdit, len(references))
 	for i, reference := range references {
 		edits[i] = &protocol.TextEditOrAnnotatedTextEdit{
@@ -328,7 +339,7 @@ func declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
 	return decl, ok
 }
 
-func references(doc *document, decl ast.Decl) []*ast.Ident {
+func declarationReferences(doc *document, decl ast.Decl) []*ast.Ident {
 	var references []*ast.Ident
 	for ident, identDecl := range doc.IdentDecls {
 		if identDecl.Start() == decl.Start() {

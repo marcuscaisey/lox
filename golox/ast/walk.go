@@ -1,9 +1,10 @@
 package ast
 
-// Walk traverses an AST in depth-first order: It starts by calling f(node). If f returns true, Walk invokes f
-// recursively for each of the non-nil children of node. If node is nil, Walk returns immediately.
-func Walk(node Node, f func(Node) bool) {
-	if isNil(node) || !f(node) {
+// Walk traverses an AST in depth-first order. If node is nil, Walk returns immediately. Otherwise, it starts by calling
+// f(node). If f returns true or node is not of type T, Walk invokes f recursively for each of the non-nil children of
+// node.
+func Walk[T Node](node Node, f func(T) bool) {
+	if nodeT, ok := node.(T); isNil(node) || (ok && !f(nodeT)) {
 		return
 	}
 	switch node := node.(type) {
@@ -90,7 +91,7 @@ func Walk(node Node, f func(Node) bool) {
 	}
 }
 
-func walkSlice[T Node](nodes []T, f func(Node) bool) {
+func walkSlice[sliceT, fT Node](nodes []sliceT, f func(fT) bool) {
 	for _, node := range nodes {
 		Walk(node, f)
 	}
@@ -104,9 +105,9 @@ type Predicate[T Node] func(T) bool
 func Find[T Node](node Node, p Predicate[T]) (T, bool) {
 	var result T
 	var found bool
-	Walk(node, func(n Node) bool {
-		if nT, ok := n.(T); ok && p(nT) {
-			result = nT
+	Walk(node, func(n T) bool {
+		if p(n) {
+			result = n
 			found = true
 		}
 		return !found
@@ -118,9 +119,9 @@ func Find[T Node](node Node, p Predicate[T]) (T, bool) {
 func FindLast[T Node](node Node, p Predicate[T]) (T, bool) {
 	var result T
 	var found bool
-	Walk(node, func(n Node) bool {
-		if nT, ok := n.(T); ok && p(nT) {
-			result = nT
+	Walk(node, func(n T) bool {
+		if p(n) {
+			result = n
 			found = true
 		}
 		return true
