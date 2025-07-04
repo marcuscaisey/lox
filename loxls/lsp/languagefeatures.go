@@ -2,6 +2,7 @@ package lsp
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -37,25 +38,15 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 	}
 
 	var refs []ast.Node
-
-	if _, ok := ast.Find(doc.Program, inRangePredicate[*ast.ThisExpr](params.Position)); ok {
-		if classDecl, ok := ast.FindLast(doc.Program, inRangePredicate[*ast.ClassDecl](params.Position)); ok {
-			ast.Walk(classDecl, func(thisExpr *ast.ThisExpr) bool {
-				refs = append(refs, thisExpr)
-				return false
-			})
-		}
-
-	} else if decl, ok := declaration(doc, params.Position); ok {
-		declRefs := declarationReferences(doc, decl)
-		for _, ref := range declRefs {
-			if ref == decl.Ident() && !params.Context.IncludeDeclaration {
-				continue
-			}
-			refs = append(refs, ref)
-		}
+	if propertyRefs, ok := propertyReferences(doc, params.Position, params.Context.IncludeDeclaration); ok {
+		refs = propertyRefs
+	} else if thisRefs, ok := thisReferences(doc, params.Position); ok {
+		refs = thisRefs
+	} else if declRefs, ok := declarationReferences(doc, params.Position, params.Context.IncludeDeclaration); ok {
+		refs = declRefs
 	}
 
+	slices.SortFunc(refs, func(a, b ast.Node) int { return a.Start().Compare(b.Start()) })
 	locs := make(protocol.LocationSlice, len(refs))
 	for i, ref := range refs {
 		locs[i] = &protocol.Location{
@@ -65,6 +56,85 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 	}
 
 	return locs, nil
+}
+
+func propertyReferences(doc *document, pos *protocol.Position, includeDecl bool) ([]ast.Node, bool) {
+	var name string
+	ast.Walk(doc.Program, func(n ast.Node) bool {
+		var ident *ast.Ident
+		switch n := n.(type) {
+		case *ast.MethodDecl:
+			ident = n.Name
+		case *ast.GetExpr:
+			ident = n.Name
+		case *ast.SetExpr:
+			ident = n.Name
+		default:
+			return true
+		}
+		if ident.IsValid() && inRange(pos, ident) {
+			name = ident.Token.Lexeme
+			return false
+		} else {
+			return true
+		}
+	})
+	if name == "" {
+		return nil, false
+	}
+
+	var refs []ast.Node
+	ast.Walk(doc.Program, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.MethodDecl:
+			if n.Name.IsValid() && n.Name.Token.Lexeme == name && includeDecl {
+				refs = append(refs, n.Name)
+			}
+		case *ast.GetExpr:
+			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
+				refs = append(refs, n.Name)
+			}
+		case *ast.SetExpr:
+			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
+				refs = append(refs, n.Name)
+			}
+		}
+		return true
+	})
+
+	return refs, true
+}
+
+func thisReferences(doc *document, pos *protocol.Position) ([]ast.Node, bool) {
+	if _, ok := ast.Find(doc.Program, inRangePredicate[*ast.ThisExpr](pos)); !ok {
+		return nil, false
+	}
+	classDecl, ok := ast.FindLast(doc.Program, inRangePredicate[*ast.ClassDecl](pos))
+	if !ok {
+		return nil, false
+	}
+	var refs []ast.Node
+	ast.Walk(classDecl, func(thisExpr *ast.ThisExpr) bool {
+		refs = append(refs, thisExpr)
+		return false
+	})
+	return refs, true
+}
+
+func declarationReferences(doc *document, pos *protocol.Position, includeDecl bool) ([]ast.Node, bool) {
+	decl, ok := declaration(doc, pos)
+	if !ok {
+		return nil, false
+	}
+
+	var refs []ast.Node
+	for ident, identDecl := range doc.IdentDecls {
+		if identDecl == decl && (includeDecl || ident != decl.Ident()) {
+			refs = append(refs, ident)
+		}
+	}
+
+	return refs, true
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
@@ -299,12 +369,11 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 		return nil, err
 	}
 
-	decl, ok := declaration(doc, params.Position)
+	references, ok := declarationReferences(doc, params.Position, true)
 	if !ok {
 		return nil, nil
 	}
 
-	references := declarationReferences(doc, decl)
 	edits := make([]*protocol.TextEditOrAnnotatedTextEdit, len(references))
 	for i, reference := range references {
 		edits[i] = &protocol.TextEditOrAnnotatedTextEdit{
@@ -337,16 +406,6 @@ func declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
 	}
 	decl, ok := doc.IdentDecls[ident]
 	return decl, ok
-}
-
-func declarationReferences(doc *document, decl ast.Decl) []*ast.Ident {
-	var references []*ast.Ident
-	for ident, identDecl := range doc.IdentDecls {
-		if identDecl.Start() == decl.Start() {
-			references = append(references, ident)
-		}
-	}
-	return references
 }
 
 func commentsText(doc []*ast.Comment) string {
