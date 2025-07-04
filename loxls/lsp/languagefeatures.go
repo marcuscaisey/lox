@@ -17,17 +17,68 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		return nil, err
 	}
 
-	decl, ok := declaration(doc, params.Position)
-	if !ok {
+	var defs []ast.Node
+	if propertyDefs, ok := propertyDefinitions(doc, params.Position); ok {
+		defs = propertyDefs
+	} else if decl, ok := declaration(doc, params.Position); ok {
+		defs = append(defs, decl.Ident())
+	} else {
 		return nil, nil
 	}
 
-	return &protocol.LocationOrLocationSlice{
-		Value: &protocol.Location{
-			Uri:   filenameToURI(decl.Start().File.Name()),
-			Range: newRange(decl.Ident()),
-		},
-	}, nil
+	slices.SortFunc(defs, func(a, b ast.Node) int { return a.Start().Compare(b.Start()) })
+	locs := make(protocol.LocationSlice, len(defs))
+	for i, def := range defs {
+		locs[i] = &protocol.Location{
+			Uri:   filenameToURI(def.Start().File.Name()),
+			Range: newRange(def),
+		}
+	}
+
+	return &protocol.LocationOrLocationSlice{Value: locs}, nil
+}
+
+func propertyDefinitions(doc *document, pos *protocol.Position) ([]ast.Node, bool) {
+	var name string
+	ast.Walk(doc.Program, func(n ast.Node) bool {
+		var ident *ast.Ident
+		switch n := n.(type) {
+		case *ast.MethodDecl:
+			ident = n.Name
+		case *ast.GetExpr:
+			ident = n.Name
+		case *ast.SetExpr:
+			ident = n.Name
+		default:
+			return true
+		}
+		if ident.IsValid() && inRange(pos, ident) {
+			name = ident.Token.Lexeme
+			return false
+		} else {
+			return true
+		}
+	})
+	if name == "" {
+		return nil, false
+	}
+
+	var defs []ast.Node
+	ast.Walk(doc.Program, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.MethodDecl:
+			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
+				defs = append(defs, n.Name)
+			}
+		case *ast.SetExpr:
+			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
+				defs = append(defs, n.Name)
+			}
+		}
+		return true
+	})
+
+	return defs, true
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
@@ -44,6 +95,8 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 		refs = thisRefs
 	} else if declRefs, ok := declarationReferences(doc, params.Position, params.Context.IncludeDeclaration); ok {
 		refs = declRefs
+	} else {
+		return nil, nil
 	}
 
 	slices.SortFunc(refs, func(a, b ast.Node) int { return a.Start().Compare(b.Start()) })
