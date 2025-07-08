@@ -23,14 +23,11 @@ type document struct {
 	Text    string
 
 	// Server generated
-	Program               *ast.Program
-	HasParseErrors        bool
-	Diagnostics           []*protocol.Diagnostic
-	IdentDecls            map[*ast.Ident]ast.Decl
-	KeywordCompletor      *keywordCompletor
-	IdentCompletor        *identCompletor
-	PropertyCompletions   []*completion
-	ThisPropertyCompletor *thisPropertyCompletor
+	Program        *ast.Program
+	HasParseErrors bool
+	Diagnostics    []*protocol.Diagnostic
+	IdentDecls     map[*ast.Ident]ast.Decl
+	Completor      *completor
 }
 
 // document returns the document with the given URI, or an error if it doesn't exist.
@@ -185,17 +182,14 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	}
 
 	h.docs[uri] = &document{
-		URI:                   uri,
-		Version:               version,
-		Text:                  src,
-		Program:               program,
-		HasParseErrors:        len(parseErrs) > 0,
-		Diagnostics:           diagnostics,
-		IdentDecls:            identDecls,
-		KeywordCompletor:      newKeywordCompletor(program),
-		IdentCompletor:        newIdentCompletor(program),
-		PropertyCompletions:   genPropertyCompletions(program),
-		ThisPropertyCompletor: newThisPropertyCompletor(program),
+		URI:            uri,
+		Version:        version,
+		Text:           src,
+		Program:        program,
+		HasParseErrors: len(parseErrs) > 0,
+		Diagnostics:    diagnostics,
+		IdentDecls:     identDecls,
+		Completor:      newCompletor(program, h.stubBuiltins),
 	}
 
 	return nil

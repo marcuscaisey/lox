@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/format"
@@ -387,6 +388,97 @@ func toSymbolInformations(docSymbols protocol.DocumentSymbolSlice, uri string) p
 	return symbolInfos
 }
 
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_completion
+func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*protocol.CompletionItemSliceOrCompletionList, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, ok := ast.Find(doc.Program, inRangeOrFollowsPredicate[*ast.Comment](params.Position)); ok {
+		return nil, nil
+	}
+
+	replaceRange := &protocol.Range{Start: params.Position, End: params.Position}
+	if containingIdentRange, ok := containingIdentRange(doc.Program, params.Position); ok {
+		replaceRange = containingIdentRange
+	}
+	insertRange := &protocol.Range{Start: replaceRange.Start, End: params.Position}
+
+	var itemDefaults *protocol.CompletionListItemDefaults
+	if slices.Contains(h.capabilities.GetTextDocument().GetCompletion().GetCompletionList().GetItemDefaults(), "editRange") {
+		itemDefaults = &protocol.CompletionListItemDefaults{EditRange: &protocol.RangeOrInsertReplaceRange{}}
+		if h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetInsertReplaceSupport() {
+			itemDefaults.EditRange.Value = &protocol.InsertReplaceRange{Insert: insertRange, Replace: replaceRange}
+		} else {
+			itemDefaults.EditRange.Value = insertRange
+		}
+	}
+
+	completions := doc.Completor.Complete(params.Position)
+
+	padding := len(fmt.Sprint(len(completions)))
+	items := make([]*protocol.CompletionItem, len(completions))
+	for i, completion := range completions {
+		var documentation *protocol.StringOrMarkupContent
+		if completion.Documentation != "" {
+			kind := protocol.MarkupKindPlainText
+			if len(h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetDocumentationFormat()) > 0 {
+				kind = h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetDocumentationFormat()[0]
+			}
+			documentation = &protocol.StringOrMarkupContent{
+				Value: &protocol.MarkupContent{
+					Kind:  kind,
+					Value: completion.Documentation,
+				},
+			}
+		}
+
+		var insertTextFormat protocol.InsertTextFormat
+		var snippet string
+		var textEditText string
+		if completion.Snippet != "" && h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetSnippetSupport() {
+			insertTextFormat = protocol.InsertTextFormatSnippet
+			snippet = completion.Snippet
+			if itemDefaults != nil {
+				textEditText = snippet
+			}
+		}
+
+		var textEdit *protocol.TextEditOrInsertReplaceEdit
+		if itemDefaults == nil {
+			newText := completion.Label
+			if snippet != "" {
+				newText = snippet
+			}
+			textEdit = &protocol.TextEditOrInsertReplaceEdit{}
+			if h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetInsertReplaceSupport() {
+				textEdit.Value = &protocol.InsertReplaceEdit{NewText: newText, Insert: insertRange, Replace: replaceRange}
+			} else {
+				textEdit.Value = &protocol.TextEdit{Range: insertRange, NewText: newText}
+			}
+		}
+
+		items[i] = &protocol.CompletionItem{
+			Label:            completion.Label,
+			Kind:             completion.Kind,
+			Detail:           completion.Detail,
+			Documentation:    documentation,
+			InsertTextFormat: insertTextFormat,
+			TextEdit:         textEdit,
+			TextEditText:     textEditText,
+			SortText:         fmt.Sprintf("%0*d", padding, i),
+		}
+	}
+
+	return &protocol.CompletionItemSliceOrCompletionList{
+		Value: &protocol.CompletionList{
+			ItemDefaults: itemDefaults,
+			Items:        items,
+		},
+	}, nil
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting
 func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingParams) ([]*protocol.TextEdit, error) {
 	doc, err := h.document(params.TextDocument.Uri)
@@ -491,4 +583,60 @@ func classDetail(decl *ast.ClassDecl) string {
 
 func filenameToURI(filename string) string {
 	return fmt.Sprintf("file://%s", filename)
+}
+
+// containingIdentRange returns the range of the identifier containing the given position and whether one exists.
+func containingIdentRange(program *ast.Program, pos *protocol.Position) (*protocol.Range, bool) {
+	file := program.Start().File
+	line := []rune(string(file.Line(pos.Line + 1)))
+	posIdx := len(utf16.Decode(utf16.Encode(line)[:pos.Character]))
+
+	startIdx := posIdx
+startIdxLoop:
+	for startIdx > 0 {
+		switch {
+		case isAlpha(line[startIdx-1]):
+			startIdx--
+		// Identifiers can't start with a digit so if the previous character is a digit, we need to find an alphabetic
+		// character which proceeds it before we can accept the digit.
+		case isDigit(line[startIdx-1]):
+			for i := startIdx - 2; i >= 0 && isAlphaNumeric(line[i]); i-- {
+				if isAlpha(line[i]) {
+					startIdx = i
+					continue startIdxLoop
+				}
+			}
+			break startIdxLoop
+		default:
+			break startIdxLoop
+		}
+	}
+	startChar := len(utf16.Encode(line[:startIdx]))
+
+	if startChar == pos.Character {
+		return nil, false
+	}
+
+	endIdx := posIdx
+	for endIdx < len(line) && isAlphaNumeric(line[endIdx]) {
+		endIdx++
+	}
+	endChar := len(utf16.Encode(line[:endIdx]))
+
+	return &protocol.Range{
+		Start: &protocol.Position{Line: pos.Line, Character: startChar},
+		End:   &protocol.Position{Line: pos.Line, Character: endChar},
+	}, true
+}
+
+func isDigit(r rune) bool {
+	return '0' <= r && r <= '9'
+}
+
+func isAlpha(r rune) bool {
+	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z') || r == '_'
+}
+
+func isAlphaNumeric(r rune) bool {
+	return isAlpha(r) || isDigit(r)
 }
