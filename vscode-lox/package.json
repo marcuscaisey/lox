@@ -1,0 +1,34 @@
+{
+  "name": "lox",
+  "displayName": "Lox",
+  "description": "Rich Lox language support for Visual Studio Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.103.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "lox",
+        "aliases": [
+          "Lox",
+          "lox"
+        ],
+        "extensions": [
+          ".lox"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lox",
+        "scopeName": "source.lox",
+        "path": "./syntaxes/lox.tmLanguage.json"
+      }
+    ]
+  }
+}
