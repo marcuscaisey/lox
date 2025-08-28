@@ -1,0 +1,94 @@
+{
+  "name": "lox",
+  "displayName": "Lox",
+  "version": "1.0.0",
+  "description": "Rich Lox language support for Visual Studio Code",
+  "categories": [
+    "Programming Languages"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcuscaisey/lox",
+    "directory": "vscode-lox"
+  },
+  "publisher": "marcuscaisey",
+  "main": "./out/extension.js",
+  "scripts": {
+    "bundle": "esbuild src/extension.ts --bundle --minify --outdir=out --external:vscode --platform=node --target=node16",
+    "compile-ls": "build/compile-ls.sh",
+    "lint": "eslint",
+    "package": "npx @vscode/vsce package --out out/lox.vsix",
+    "publish": "build/publish.sh",
+    "vscode:prepublish": "npm run compile-ls && npm run bundle",
+    "watch": "tsc --watch"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "Lox",
+      "properties": {
+        "lox.useLanguageServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the Lox language server \"loxls\" for powering language features like code navigation, completion, refactoring, formatting, and diagnostics."
+        },
+        "lox.loxlsPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path for the Lox language server \"loxls\". If left empty, the \"loxls\" binary bundled with the extension will be used. Provide either an absolute path or the name of the binary in PATH."
+        }
+      }
+    },
+    "configurationDefaults": {
+      "[lox]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+      }
+    },
+    "grammars": [
+      {
+        "language": "lox",
+        "scopeName": "source.lox",
+        "path": "./syntaxes/lox.tmLanguage.json"
+      }
+    ],
+    "languages": [
+      {
+        "id": "lox",
+        "aliases": [
+          "Lox",
+          "lox"
+        ],
+        "extensions": [
+          ".lox"
+        ],
+        "configuration": "./languages/lox.language-configuration.json",
+        "icon": {
+          "light": "./assets/crafting-interpreters-favicon.png",
+          "dark": "./assets/crafting-interpreters-favicon.png"
+        }
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "@tsconfig/node16": "^16.1.4",
+    "@types/node": "^16.14.2",
+    "@types/vscode": "~1.74.0",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
+    "esbuild": "^0.25.9",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0",
+    "jiti": "^2.5.1",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "icon": "assets/crafting-interpreters-header-small.png",
+  "attribution": "Icons are adapted from Crafting Interpreters by Bob Nystrom (https://craftinginterpreters.com/), licensed under CC BY-NC-ND 4.0 (https://creativecommons.org/licenses/by-nc-nd/4.0/)."
+}

@@ -1,0 +1,10 @@
+.gitignore
+.prettierrc.json
+.vscode/**
+.vscodeignore
+TODO
+build/**
+eslint.config.mjs
+node_modules/**
+src/**
+tsconfig.json
