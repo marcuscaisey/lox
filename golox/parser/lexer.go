@@ -3,6 +3,7 @@ package parser
 import (
 	"io"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/marcuscaisey/lox/golox/token"
@@ -155,7 +156,11 @@ func (l *lexer) Next() token.Token {
 		tok.EndPos = l.pos
 		tok.Type = token.Illegal
 		tok.Lexeme = string(ch)
-		l.errHandler(tok, "illegal character %#U", ch)
+		if unicode.IsPrint(ch) {
+			l.errHandler(tok, "illegal character %c", ch)
+		} else {
+			l.errHandler(tok, "illegal character %#U", ch)
+		}
 		return tok
 	}
 
