@@ -17,30 +17,3 @@ print 2;
   (comment)
   (print_statement
     (number)))
-
-================================================================================
-Multi-Line Comment
-================================================================================
-
-/*
- * Comment on its own line
- */
-/* Comment before statement */ print /* Comment in middle of statement */ 1; /* Comment after statement */
-/*
- * /* Nested comment */
- */
-print 2;
-
---------------------------------------------------------------------------------
-
-(source_file
-  (comment)
-  (comment)
-  (print_statement
-    (comment)
-    (number))
-  (comment)
-  (comment
-    (comment))
-  (print_statement
-    (number)))

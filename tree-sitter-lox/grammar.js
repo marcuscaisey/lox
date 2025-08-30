@@ -278,6 +278,6 @@ module.exports = grammar({
         ),
       ),
 
-    comment: (_) => choice(seq("//", /.*/), seq("/*", repeat(/./), "*/")),
+    comment: (_) => choice(seq("//", /.*/)),
   },
 });
