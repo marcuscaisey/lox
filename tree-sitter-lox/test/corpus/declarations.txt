@@ -37,7 +37,7 @@ Function Declaration - One Parameter
 ================================================================================
 
 fun id(x) {
-  return x;
+    return x;
 }
 
 --------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ Function Declaration - Two Parameters
 ================================================================================
 
 fun add(x, y) {
-  return x + y;
+    return x + y;
 }
 
 --------------------------------------------------------------------------------
@@ -78,10 +78,10 @@ Function Declaration - Nested
 ================================================================================
 
 fun add(x) {
-  fun add(y) {
-    return x + y;
-  }
-  return add;
+    fun add(y) {
+        return x + y;
+    }
+    return add;
 }
 
 --------------------------------------------------------------------------------
@@ -136,9 +136,9 @@ Class Declaration - One Method - No Parameters
 ================================================================================
 
 class Breakfast {
-  cook() {
-    print "Cooking breakfast!";
-  }
+    cook() {
+        print "Cooking breakfast!";
+    }
 }
 
 --------------------------------------------------------------------------------
@@ -159,9 +159,9 @@ Class Declaration - One Method - One Parameter
 ================================================================================
 
 class Breakfast {
-  serve(who) {
-    print "Enjoy your breakfast, " + who + ".";
-  }
+    serve(who) {
+        print "Enjoy your breakfast, " + who + ".";
+    }
 }
 
 --------------------------------------------------------------------------------
@@ -187,9 +187,9 @@ Class Declaration - One Method - Two Parameters
 ================================================================================
 
 class Breakfast {
-  serve(what, who) {
-    print "Enjoy your " + what + ", " + who + ".";
-  }
+    serve(what, who) {
+        print "Enjoy your " + what + ", " + who + ".";
+    }
 }
 
 --------------------------------------------------------------------------------
@@ -220,13 +220,13 @@ Class Declaration - Two Methods
 ================================================================================
 
 class Breakfast {
-  cook() {
-    print "Eggs a-fryin'!";
-  }
+    cook() {
+        print "Eggs a-fryin'!";
+    }
 
-  serve() {
-    print "Enjoy your breakfast.";
-  }
+    serve() {
+        print "Enjoy your breakfast.";
+    }
 }
 
 --------------------------------------------------------------------------------
@@ -253,9 +253,9 @@ Class Declaration - Init Method
 ================================================================================
 
 class Person {
-  init(name) {
-    this.name = name;
-  }
+    init(name) {
+        this.name = name;
+    }
 }
 
 --------------------------------------------------------------------------------
@@ -281,9 +281,9 @@ Class Declaration - Static Method
 ================================================================================
 
 class Math {
-  static square(n) {
-    return n * n;
-  }
+    static square(n) {
+        return n * n;
+    }
 }
 
 --------------------------------------------------------------------------------
@@ -308,9 +308,9 @@ Class Declaration - Getter
 ================================================================================
 
 class Circle {
-  get area() {
-    return (PI * this.radius) * this.radius;
-  }
+    get area() {
+        return (PI * this.radius) * this.radius;
+    }
 }
 
 --------------------------------------------------------------------------------
@@ -341,12 +341,12 @@ Class Declaration - Setter
 ================================================================================
 
 class Circle {
-  set radius(value) {
-    if (value <= 0) {
-      error("Circle radius must be positive.");
+    set radius(value) {
+        if (value <= 0) {
+            error("Circle radius must be positive.");
+        }
+        this._radius = value;
     }
-    this._radius = value;
-  }
 }
 
 --------------------------------------------------------------------------------
@@ -383,8 +383,8 @@ Class Declaration - Static Getter and Setter
 ================================================================================
 
 class Foo {
-  static get bar() {}
-  static set baz(value) {}
+    static get bar() {}
+    static set baz(value) {}
 }
 
 --------------------------------------------------------------------------------
