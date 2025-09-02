@@ -29,6 +29,12 @@
         "scopeName": "source.lox",
         "path": "./syntaxes/lox.tmLanguage.json"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "[lox]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+      }
+    }
   }
 }
