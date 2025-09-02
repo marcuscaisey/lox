@@ -2,7 +2,11 @@
   "name": "tree-sitter-lox",
   "version": "0.1.0",
   "description": "Lox grammar for tree-sitter",
-  "repository": "https://github.com/marcuscaisey/lox",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcuscaisey/lox",
+    "directory": "tree-sitter-lox"
+  },
   "license": "MIT",
   "author": {
     "name": "Marcus Caisey",
