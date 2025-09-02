@@ -31,7 +31,7 @@ fun(x, y) {
 //   ^ punctuation.delimiter
 //     ^ variable.parameter
 //      ^ punctuation.bracket
-  return x + y;
+    return x + y;
 };
 
 // Group expression

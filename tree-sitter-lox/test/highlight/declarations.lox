@@ -19,60 +19,60 @@ fun add(x, y) {
 class Point {
 // <- keyword.type
 //    ^ type
-  init(x, y) {
-// ^ constructor
-//    ^ punctuation.bracket
-//     ^ variable.parameter
-//      ^ punctuation.delimiter
-//        ^ variable.parameter
-//         ^ punctuation.bracket
-    this.x = x;
-//  ^ variable.builtin
-    this.y = y;
-  }
+    init(x, y) {
+//   ^ constructor
+//      ^ punctuation.bracket
+//       ^ variable.parameter
+//        ^ punctuation.delimiter
+//          ^ variable.parameter
+//           ^ punctuation.bracket
+        this.x = x;
+//      ^ variable.builtin
+        this.y = y;
+    }
 
-  add(other) {
-// ^ function.method
-    return Point(this.x + other.x, this.y + other.y);
-  }
+    add(other) {
+//   ^ function.method
+        return Point(this.x + other.x, this.y + other.y);
+    }
 }
 
 class Math {
-  static square(x) {
-// ^ keyword.modifier
-//       ^ function.method
-    return x * x;
-  }
+    static square(x) {
+//   ^ keyword.modifier
+//         ^ function.method
+        return x * x;
+    }
 }
 
 class Circle {
-  init(radius) {
-    this.radius = radius;
-  }
-
-  set radius(value) {
-// ^ keyword.modifier
-//    ^ function.method
-    if (value <= 0) {
-      error("Circle radius must be positive.");
+    init(radius) {
+        this.radius = radius;
     }
-    this._radius = value;
-  }
 
-  get area() {
-// ^ keyword.modifier
-//    ^ function.method
-    return PI * this.radius * this.radius;
-  }
+    set radius(value) {
+//   ^ keyword.modifier
+//        ^ function.method
+        if (value <= 0) {
+            error("Circle radius must be positive.");
+        }
+        this._radius = value;
+    }
+
+    get area() {
+//   ^ keyword.modifier
+//      ^ function.method
+        return PI * this.radius * this.radius;
+    }
 }
 
 class Foo {
-  static get bar() {}
-// ^ keyword.modifier
-//       ^ keyword.modifier
-//           ^ function.method
-  static set baz(value) {}
-// ^ keyword.modifier
-//       ^ keyword.modifier
-//           ^ function.method
+    static get bar() {}
+//   ^ keyword.modifier
+//         ^ keyword.modifier
+//             ^ function.method
+    static set baz(value) {}
+//   ^ keyword.modifier
+//         ^ keyword.modifier
+//             ^ function.method
 }
