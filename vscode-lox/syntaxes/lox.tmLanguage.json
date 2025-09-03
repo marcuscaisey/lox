@@ -339,6 +339,17 @@
     "keywords": {
       "patterns": [
         {
+          "match": "\\b(class)\\b\\s*([A-Za-z_][A-Za-z0-9_]*)?",
+          "captures": {
+            "1": {
+              "name": "storage.type.class.lox"
+            },
+            "2": {
+              "name": "entity.name.class.lox"
+            }
+          }
+        },
+        {
           "name": "keyword.control.conditional.lox",
           "match": "\\b(?:if|else)\\b"
         },
