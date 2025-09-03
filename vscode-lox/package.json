@@ -1,15 +1,25 @@
 {
   "name": "lox",
   "displayName": "Lox",
-  "description": "Rich Lox language support for Visual Studio Code",
   "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.103.0"
-  },
+  "description": "Rich Lox language support for Visual Studio Code",
   "categories": [
     "Programming Languages"
   ],
   "contributes": {
+    "configurationDefaults": {
+      "[lox]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
+      }
+    },
+    "grammars": [
+      {
+        "language": "lox",
+        "scopeName": "source.lox",
+        "path": "./syntaxes/lox.tmLanguage.json"
+      }
+    ],
     "languages": [
       {
         "id": "lox",
@@ -35,6 +45,7 @@
         "editor.insertSpaces": true,
         "editor.tabSize": 4
       }
-    }
+  "engines": {
+    "vscode": "^1.103.0"
   }
 }
