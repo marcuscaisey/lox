@@ -1,3 +1,9 @@
-.vscode/**
-.vscode-test/**
 .gitignore
+.vscode/**
+.vscodeignore
+eslint.config.mjs
+node_modules/**
+out/**
+!out/extension.js
+src/**
+tsconfig.json
