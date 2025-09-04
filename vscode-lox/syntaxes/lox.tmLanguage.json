@@ -350,6 +350,10 @@
           }
         },
         {
+          "name": "storage.type.var.lox",
+          "match": "\\bvar\\b"
+        },
+        {
           "name": "keyword.control.conditional.lox",
           "match": "\\b(?:if|else)\\b"
         },
