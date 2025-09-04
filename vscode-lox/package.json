@@ -30,20 +30,7 @@
         "extensions": [
           ".lox"
         ],
-        "configuration": "./language-configuration.json"
-      }
-    ],
-    "grammars": [
-      {
-        "language": "lox",
-        "scopeName": "source.lox",
-        "path": "./syntaxes/lox.tmLanguage.json"
-      }
-    ],
-    "configurationDefaults": {
-      "[lox]": {
-        "editor.insertSpaces": true,
-        "editor.tabSize": 4
+        "configuration": "./languages/lox.language-configuration.json"
       }
   "engines": {
     "vscode": "^1.103.0"
