@@ -53,7 +53,7 @@ func newCompletor(program *ast.Program, builtins []ast.Decl) *completor {
 // Complete returns the completions which should be suggested at a position.
 func (c *completor) Complete(pos *protocol.Position) []*completion {
 	var getSetExprObject ast.Expr
-	if getExpr, ok := ast.Find(c.program, inRangeOrFollowsPredicate[*ast.GetExpr](pos)); ok {
+	if getExpr, ok := outermostNodeAtOrBefore[*ast.GetExpr](c.program, pos); ok {
 		getSetExprObject = getExpr.Object
 	} else if setExpr, ok := ast.Find(c.program, func(setExpr *ast.SetExpr) bool {
 		return inRangeOrFollows(pos, setExpr) && inRangeOrFollows(pos, setExpr.Name)
@@ -469,7 +469,7 @@ func newThisPropertyCompletor(program *ast.Program) *thisPropertyCompletor {
 }
 
 func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
-	classDecl, ok := ast.FindLast(c.program, inRangePredicate[*ast.ClassDecl](pos))
+	classDecl, ok := innermostNodeAt[*ast.ClassDecl](c.program, pos)
 	if !ok {
 		return nil
 	}

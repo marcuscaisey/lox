@@ -160,10 +160,10 @@ func propertyReferences(doc *document, pos *protocol.Position, includeDecl bool)
 }
 
 func thisReferences(doc *document, pos *protocol.Position) ([]ast.Node, bool) {
-	if _, ok := ast.Find(doc.Program, inRangePredicate[*ast.ThisExpr](pos)); !ok {
+	if _, ok := outermostNodeAt[*ast.ThisExpr](doc.Program, pos); !ok {
 		return nil, false
 	}
-	classDecl, ok := ast.FindLast(doc.Program, inRangePredicate[*ast.ClassDecl](pos))
+	classDecl, ok := innermostNodeAt[*ast.ClassDecl](doc.Program, pos)
 	if !ok {
 		return nil, false
 	}
@@ -395,7 +395,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		return nil, err
 	}
 
-	if _, ok := ast.Find(doc.Program, inRangeOrFollowsPredicate[*ast.Comment](params.Position)); ok {
+	if _, ok := outermostNodeAtOrBefore[*ast.Comment](doc.Program, params.Position); ok {
 		return nil, nil
 	}
 
@@ -545,7 +545,7 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 }
 
 func declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
-	ident, ok := ast.Find(doc.Program, inRangePredicate[*ast.Ident](pos))
+	ident, ok := outermostNodeAt[*ast.Ident](doc.Program, pos)
 	if !ok {
 		return nil, false
 	}

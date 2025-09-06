@@ -39,22 +39,6 @@ func inRangeOrFollows(pos *protocol.Position, rang token.Range) bool {
 	return (pos.Line == end.Line && pos.Character == end.Character) || inRange(pos, rang)
 }
 
-// inRangePredicate accepts a [protocol.Position] and returns an [ast.Predicate] which reports whether that position is
-// contained within an [ast.Node] of type T.
-func inRangePredicate[T ast.Node](pos *protocol.Position) ast.Predicate[T] {
-	return func(node T) bool {
-		return inRange(pos, node)
-	}
-}
-
-// inRangeOrFollowsPredicate accepts a [protocol.Position] and returns an [ast.Predicate] which reports whether that position is
-// at the end of or contained within an [ast.Node] of type T.
-func inRangeOrFollowsPredicate[T ast.Node](pos *protocol.Position) ast.Predicate[T] {
-	return func(node T) bool {
-		return inRangeOrFollows(pos, node)
-	}
-}
-
 // inRangePositions is like [inRange] but accepts a start and end position instead.
 func inRangePositions(pos *protocol.Position, start token.Position, end token.Position) bool {
 	line := pos.Line + 1
@@ -68,6 +52,28 @@ func inRangePositions(pos *protocol.Position, start token.Position, end token.Po
 	} else {
 		return line > start.Line && line < end.Line
 	}
+}
+
+// outermostNodeAt returns the outermost node of a [*ast.Program] which has type T and contains a [*protocol.Position].
+func outermostNodeAt[T ast.Node](program *ast.Program, pos *protocol.Position) (T, bool) {
+	return ast.Find(program, func(node T) bool {
+		return inRange(pos, node)
+	})
+}
+
+// outermostNodeAtOrBefore returns the outermost node of a [*ast.Program] which has type T and contains or precedes a
+// [*protocol.Position].
+func outermostNodeAtOrBefore[T ast.Node](node ast.Node, pos *protocol.Position) (T, bool) {
+	return ast.Find(node, func(node T) bool {
+		return inRangeOrFollows(pos, node)
+	})
+}
+
+// innermostNodeAt returns the innermost node of a [*ast.Program] which has type T and contains a [*protocol.Position].
+func innermostNodeAt[T ast.Node](node ast.Node, pos *protocol.Position) (T, bool) {
+	return ast.FindLast(node, func(node T) bool {
+		return inRange(pos, node)
+	})
 }
 
 func columnUTF16(p token.Position) int {
