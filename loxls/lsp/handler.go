@@ -4,6 +4,7 @@ package lsp
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
@@ -100,7 +101,11 @@ func (h *Handler) handleNotification(method string, jsonParams *json.RawMessage)
 	case "textDocument/didClose":
 		return handleNotification(method, h.textDocumentDidClose, jsonParams)
 	default:
-		return fmt.Errorf("%s method not found", method)
+		if !strings.HasPrefix(method, "$/") {
+			// If a server or client receives notifications starting with ‘$/’ it is free to ignore the notification.
+			// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#dollarRequests
+			return fmt.Errorf("%s method not found", method)
+		}
 	}
 	return nil
 }
