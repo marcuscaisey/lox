@@ -55,7 +55,9 @@ func (c *completor) Complete(pos *protocol.Position) []*completion {
 	var getSetExprObject ast.Expr
 	if getExpr, ok := ast.Find(c.program, inRangeOrFollowsPredicate[*ast.GetExpr](pos)); ok {
 		getSetExprObject = getExpr.Object
-	} else if setExpr, ok := ast.Find(c.program, inRangeOrFollowsPredicate[*ast.SetExpr](pos)); ok {
+	} else if setExpr, ok := ast.Find(c.program, func(setExpr *ast.SetExpr) bool {
+		return inRangeOrFollows(pos, setExpr) && inRangeOrFollows(pos, setExpr.Name)
+	}); ok {
 		getSetExprObject = setExpr.Object
 	}
 	if getSetExprObject != nil {
