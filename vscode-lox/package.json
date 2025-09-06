@@ -20,6 +20,16 @@
         "editor.tabSize": 4
       }
     },
+    "configuration": {
+      "title": "Lox",
+      "properties": {
+        "lox.useLanguageServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the Lox language server \"loxls\" for powering language features like code navigation, completion, refactoring, formatting, and diagnostics."
+        }
+      }
+    },
     "grammars": [
       {
         "language": "lox",

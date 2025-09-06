@@ -11,6 +11,13 @@ let client: LanguageClient;
 export function activate(_context: vscode.ExtensionContext) {
   console.log("Activating Lox extension");
 
+  const config = vscode.workspace.getConfiguration("lox");
+
+  const useLanguageServer = config.get<boolean>("useLanguageServer", true);
+  if (!useLanguageServer) {
+    return;
+  }
+
   const serverOptions: ServerOptions = {
     command: "loxls",
     transport: TransportKind.stdio,
