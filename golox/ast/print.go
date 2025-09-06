@@ -76,7 +76,11 @@ func sprint(node Node, depth int) string {
 			continue
 		}
 
-		formattedValue, ok := formatValue(value, depth+1)
+		valueDepth := depth + 1
+		if tag == "unnamed" {
+			valueDepth = depth
+		}
+		formattedValue, ok := formatValue(value, valueDepth)
 		if !ok {
 			panic(fmt.Sprintf("%s field %s has unsupported type: %T", nodeType.Name(), field.Name, value.Interface()))
 		}
