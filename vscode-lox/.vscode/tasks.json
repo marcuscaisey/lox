@@ -8,6 +8,7 @@
         "kind": "build",
         "isDefault": true
       },
+      "isBackground": true,
       "problemMatcher": "$tsc-watch",
       "label": "npm: watch",
       "detail": "tsc --watch"
