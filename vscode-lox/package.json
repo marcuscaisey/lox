@@ -41,6 +41,9 @@
       }
     ]
   },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@tsconfig/node22": "^22.0.2",
