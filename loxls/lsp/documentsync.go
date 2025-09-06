@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"unicode/utf16"
+	"unicode/utf8"
 
 	"github.com/marcuscaisey/lox/golox/analysis"
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -76,18 +77,18 @@ func applyIncrementalTextChange(text string, change *protocol.IncrementalTextDoc
 		if utf16Idx == 0 {
 			return 0, true
 		}
-		if i := strings.IndexRune(text, '\n'); i != 0 {
+		if i := strings.IndexRune(text, '\n'); i != -1 {
 			text = text[:i+1]
 		}
 		curUTF16Idx := 0
 		for i, r := range text {
+			curUTF16Idx += utf16.RuneLen(r)
 			if curUTF16Idx == utf16Idx {
-				return i, true
+				return i + utf8.RuneLen(r), true
 			}
 			if curUTF16Idx > utf16Idx {
 				return 0, false
 			}
-			curUTF16Idx += utf16.RuneLen(r)
 		}
 		return 0, false
 	}
