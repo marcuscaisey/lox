@@ -1,31 +1,49 @@
-import * as vscode from "vscode";
-import {
-  LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
-  TransportKind,
-} from "vscode-languageclient/node";
+import { ExtensionContext, LogOutputChannel, window, workspace } from "vscode";
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
+
+const langServerEnabledKey = "lox.useLanguageServer";
 
 let client: LanguageClient | undefined;
 
-const useLanguageServerKey = "lox.useLanguageServer";
-
-export async function activate(context: vscode.ExtensionContext) {
-  const logger = vscode.window.createOutputChannel("Lox", { log: true });
+export function activate(context: ExtensionContext) {
+  const logger = window.createOutputChannel("Lox", { log: true });
   context.subscriptions.push(logger);
 
-  const config = vscode.workspace.getConfiguration();
+  workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration(langServerEnabledKey)) {
+      onDidChangeUseLanguageServer(logger);
+    }
+  });
 
-  const useLanguageServer = config.get<boolean>(useLanguageServerKey, true);
-  if (!useLanguageServer) {
-    logger.info(
-      `Not starting language server loxls (${useLanguageServerKey}: ${useLanguageServer.toString()})`,
-    );
+  onDidChangeUseLanguageServer(logger);
+}
+
+function onDidChangeUseLanguageServer(logger: LogOutputChannel) {
+  const enabled = workspace.getConfiguration().get<boolean>(langServerEnabledKey, true);
+
+  function logWithSetting(msg: string) {
+    logger.info(`${msg} (${langServerEnabledKey}: ${enabled.toString()})`);
+  }
+
+  if (!enabled) {
+    if (client) {
+      logWithSetting(`Stopping language server loxls`);
+      client.stop().then(
+        () => {
+          logger.info("Stopped language server loxls");
+        },
+        (reason: unknown) => {
+          logger.error(`Failed to stop language server loxls: ${String(reason)}`);
+        },
+      );
+      client = undefined;
+    } else {
+      logWithSetting("Not starting language server loxls");
+    }
     return;
   }
-  logger.info(
-    `Starting language server loxls (${useLanguageServerKey}: ${useLanguageServer.toString()})`,
-  );
+
+  logWithSetting("Starting language server loxls");
 
   const serverOptions: ServerOptions = {
     command: "loxls",
@@ -34,19 +52,21 @@ export async function activate(context: vscode.ExtensionContext) {
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ language: "lox" }],
     synchronize: {
-      fileEvents: vscode.workspace.createFileSystemWatcher("*.lox"),
+      fileEvents: workspace.createFileSystemWatcher("*.lox"),
     },
   };
   client = new LanguageClient("lox", "loxls", serverOptions, clientOptions);
 
-  try {
-    await client.start();
-  } catch (e) {
-    logger.error(`Failed to start language server loxls: ${String(e)}`);
-    return;
-  }
-  logger.info(
-    `Started language server loxls (version: ${client.initializeResult?.serverInfo?.version ?? "MISSING"})`,
+  client.start().then(
+    () => {
+      if (client) {
+        const version = client.initializeResult?.serverInfo?.version ?? "";
+        logger.info(`Started language server loxls (version: ${version})`);
+      }
+    },
+    (reason: unknown) => {
+      logger.error(`Failed to start language server loxls: ${String(reason)}`);
+    },
   );
 }
 
