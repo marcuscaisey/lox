@@ -6,7 +6,7 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 
-let client: LanguageClient;
+let client: LanguageClient | undefined;
 
 const useLanguageServerKey = "lox.useLanguageServer";
 
