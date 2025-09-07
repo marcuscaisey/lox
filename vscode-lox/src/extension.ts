@@ -8,15 +8,24 @@ import {
 
 let client: LanguageClient;
 
-export function activate(_context: vscode.ExtensionContext) {
-  console.log("Activating Lox extension");
+const useLanguageServerKey = "lox.useLanguageServer";
 
-  const config = vscode.workspace.getConfiguration("lox");
+export function activate(context: vscode.ExtensionContext) {
+  const logger = vscode.window.createOutputChannel("Lox", { log: true });
+  context.subscriptions.push(logger);
 
-  const useLanguageServer = config.get<boolean>("useLanguageServer", true);
+  const config = vscode.workspace.getConfiguration();
+
+  const useLanguageServer = config.get<boolean>(useLanguageServerKey, true);
   if (!useLanguageServer) {
+    logger.info(
+      `Not starting language server loxls (${useLanguageServerKey}: ${useLanguageServer.toString()})`,
+    );
     return;
   }
+  logger.info(
+    `Starting language server loxls (${useLanguageServerKey}: ${useLanguageServer.toString()})`,
+  );
 
   const serverOptions: ServerOptions = {
     command: "loxls",
@@ -33,7 +42,6 @@ export function activate(_context: vscode.ExtensionContext) {
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  console.log("Deactivating Lox extension");
   if (!client) {
     return undefined;
   }
