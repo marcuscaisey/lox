@@ -38,9 +38,13 @@ export async function activate(context: vscode.ExtensionContext) {
     },
   };
   client = new LanguageClient("lox", "loxls", serverOptions, clientOptions);
-  // TODO: handle exceptions from here
-  await client.start();
 
+  try {
+    await client.start();
+  } catch (e) {
+    logger.error(`Failed to start language server loxls: ${String(e)}`);
+    return;
+  }
   logger.info(
     `Started language server loxls (version: ${client.initializeResult?.serverInfo?.version ?? "MISSING"})`,
   );
