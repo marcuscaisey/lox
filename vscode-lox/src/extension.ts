@@ -10,7 +10,7 @@ let client: LanguageClient | undefined;
 
 const useLanguageServerKey = "lox.useLanguageServer";
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   const logger = vscode.window.createOutputChannel("Lox", { log: true });
   context.subscriptions.push(logger);
 
@@ -38,7 +38,12 @@ export function activate(context: vscode.ExtensionContext) {
     },
   };
   client = new LanguageClient("lox", "loxls", serverOptions, clientOptions);
-  client.start();
+  // TODO: handle exceptions from here
+  await client.start();
+
+  logger.info(
+    `Started language server loxls (version: ${client.initializeResult?.serverInfo?.version ?? "MISSING"})`,
+  );
 }
 
 export function deactivate(): Thenable<void> | undefined {
