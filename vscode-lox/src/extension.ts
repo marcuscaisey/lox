@@ -1,33 +1,34 @@
 import { ExtensionContext, LogOutputChannel, window, workspace } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
 
-const langServerEnabledKey = "lox.useLanguageServer";
+const useLanguageServerKey = "lox.useLanguageServer";
+const loxlsPathKey = "lox.loxlsPath";
 
 let client: LanguageClient | undefined;
 
-export function activate(context: ExtensionContext) {
+export function activate(context: ExtensionContext): void {
   const logger = window.createOutputChannel("Lox", { log: true });
   context.subscriptions.push(logger);
 
-  workspace.onDidChangeConfiguration((event) => {
-    if (event.affectsConfiguration(langServerEnabledKey)) {
-      onDidChangeUseLanguageServer(logger);
-    }
-  });
+  context.subscriptions.push(
+    workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration(useLanguageServerKey) || event.affectsConfiguration(loxlsPathKey)) {
+        onDidChangeLangServerConfig(logger);
+      }
+    }),
+  );
 
-  onDidChangeUseLanguageServer(logger);
+  onDidChangeLangServerConfig(logger);
 }
 
-function onDidChangeUseLanguageServer(logger: LogOutputChannel) {
-  const enabled = workspace.getConfiguration().get<boolean>(langServerEnabledKey, true);
+function onDidChangeLangServerConfig(logger: LogOutputChannel): void {
+  const config = workspace.getConfiguration();
+  const useLanguageServer = config.get<boolean>(useLanguageServerKey, true);
+  const loxlsPath = config.get<string>(loxlsPathKey, "loxls");
 
-  function logWithSetting(msg: string) {
-    logger.info(`${msg} (${langServerEnabledKey}: ${enabled.toString()})`);
-  }
-
-  if (!enabled) {
+  if (!useLanguageServer) {
     if (client) {
-      logWithSetting(`Stopping language server loxls`);
+      logger.info(`Stopping language server loxls (${useLanguageServerKey}: ${String(useLanguageServer)})`);
       client.stop().then(
         () => {
           logger.info("Stopped language server loxls");
@@ -38,15 +39,19 @@ function onDidChangeUseLanguageServer(logger: LogOutputChannel) {
       );
       client = undefined;
     } else {
-      logWithSetting("Not starting language server loxls");
+      logger.info(
+        `Not starting language server loxls (${useLanguageServerKey}: ${String(useLanguageServer)}, ${loxlsPathKey}: "${loxlsPath}")`,
+      );
     }
     return;
   }
 
-  logWithSetting("Starting language server loxls");
+  logger.info(
+    `Starting language server loxls (${useLanguageServerKey}: ${String(useLanguageServer)}, ${loxlsPathKey}: "${loxlsPath}")`,
+  );
 
   const serverOptions: ServerOptions = {
-    command: "loxls",
+    command: loxlsPath,
     transport: TransportKind.stdio,
   };
   const clientOptions: LanguageClientOptions = {
