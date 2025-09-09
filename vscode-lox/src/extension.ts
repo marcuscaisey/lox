@@ -41,8 +41,6 @@ async function onDidChangeLangServerConfig(): Promise<void> {
     logger.info(`Stopping language server loxls`);
     await stopClient();
   }
-
-  // TODO: restart existing language server if still enabled
   logger.info(`Starting language server loxls (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPath}")`);
 
   const serverOptions: ServerOptions = {
