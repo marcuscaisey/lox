@@ -6,22 +6,22 @@ const loxlsPathKey = "lox.loxlsPath";
 
 let client: LanguageClient | undefined;
 
-export function activate(context: ExtensionContext): void {
+export async function activate(context: ExtensionContext): Promise<void> {
   const logger = window.createOutputChannel("Lox", { log: true });
   context.subscriptions.push(logger);
 
   context.subscriptions.push(
-    workspace.onDidChangeConfiguration((event) => {
+    workspace.onDidChangeConfiguration(async (event) => {
       if (event.affectsConfiguration(useLanguageServerKey) || event.affectsConfiguration(loxlsPathKey)) {
-        onDidChangeLangServerConfig(logger);
+        await onDidChangeLangServerConfig(logger);
       }
     }),
   );
 
-  onDidChangeLangServerConfig(logger);
+  await onDidChangeLangServerConfig(logger);
 }
 
-function onDidChangeLangServerConfig(logger: LogOutputChannel): void {
+async function onDidChangeLangServerConfig(logger: LogOutputChannel): Promise<void> {
   const config = workspace.getConfiguration();
   const useLanguageServer = config.get<boolean>(useLanguageServerKey, true);
   const loxlsPath = config.get<string>(loxlsPathKey, "loxls");
@@ -29,26 +29,23 @@ function onDidChangeLangServerConfig(logger: LogOutputChannel): void {
   if (!useLanguageServer) {
     if (client) {
       logger.info(`Stopping language server loxls (${useLanguageServerKey}: false)`);
-      client.stop().then(
-        () => {
-          logger.info("Stopped language server loxls");
-        },
-        (reason: unknown) => {
-          logger.error(`Failed to stop language server loxls: ${String(reason)}`);
-        },
-      );
-      client = undefined;
+      await stopClient(logger);
     } else {
       logger.info(`Not starting language server loxls (${useLanguageServerKey}: false)`);
     }
     return;
   }
 
-  logger.info(
-    `Starting language server loxls (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPath}")`,
-  );
+  if (client) {
+    logger.info(`Stopping language server loxls`);
+    await stopClient(logger);
+  }
+
+  // TODO: restart existing language server if still enabled
+  logger.info(`Starting language server loxls (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPath}")`);
 
   const serverOptions: ServerOptions = {
+    // TODO: check whether this exists first
     command: loxlsPath,
     transport: TransportKind.stdio,
   };
@@ -60,17 +57,25 @@ function onDidChangeLangServerConfig(logger: LogOutputChannel): void {
   };
   client = new LanguageClient("lox", "loxls", serverOptions, clientOptions);
 
-  client.start().then(
-    () => {
-      if (client) {
-        const version = client.initializeResult?.serverInfo?.version ?? "";
-        logger.info(`Started language server loxls (version: ${version})`);
-      }
-    },
-    (reason: unknown) => {
-      logger.error(`Failed to start language server loxls: ${String(reason)}`);
-    },
-  );
+  try {
+    await client.start();
+  } catch (reason: unknown) {
+    logger.error(`Failed to start language server loxls: ${String(reason)}`);
+  }
+  logger.info(`Started language server loxls (version: ${client.initializeResult?.serverInfo?.version ?? ""})`);
+}
+
+async function stopClient(logger: LogOutputChannel): Promise<void> {
+  if (!client) {
+    return;
+  }
+  try {
+    await client.stop();
+  } catch (reason: unknown) {
+    logger.error(`Failed to stop language server loxls: ${String(reason)}`);
+  }
+  logger.info("Stopped language server loxls");
+  client = undefined;
 }
 
 export function deactivate(): Thenable<void> | undefined {

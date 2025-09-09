@@ -27,6 +27,11 @@
           "type": "boolean",
           "default": true,
           "description": "Use the Lox language server \"loxls\" for powering language features like code navigation, completion, refactoring, formatting, and diagnostics."
+        },
+        "lox.loxlsPath": {
+          "type": "string",
+          "default": "loxls",
+          "description": "Alternate path for the Lox language server \"loxls\". Provide either an absolute path or the name of the binary in PATH."
         }
       }
     },
