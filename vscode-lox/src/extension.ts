@@ -1,8 +1,12 @@
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+
 import { ExtensionContext, LogOutputChannel, window, workspace } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
 
 const useLanguageServerKey = "lox.useLanguageServer";
 const loxlsPathKey = "lox.loxlsPath";
+const defaultLoxlsPath = "loxls";
 
 let client: LanguageClient | undefined;
 let logger: LogOutputChannel;
@@ -25,7 +29,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 async function onDidChangeLangServerConfig(): Promise<void> {
   const config = workspace.getConfiguration();
   const useLanguageServer = config.get<boolean>(useLanguageServerKey, true);
-  const loxlsPath = config.get<string>(loxlsPathKey, "loxls");
+  const loxlsPath = config.get<string>(loxlsPathKey, defaultLoxlsPath);
 
   if (!useLanguageServer) {
     if (client) {
@@ -41,10 +45,22 @@ async function onDidChangeLangServerConfig(): Promise<void> {
     logger.info(`Stopping language server loxls`);
     await stopClient();
   }
+
+  if (!(await isExecutable(loxlsPath))) {
+    let msg = `Cannot find the Lox language server "loxls"`;
+    if (loxlsPath !== defaultLoxlsPath) {
+      msg += `(${loxlsPathKey}: ${loxlsPath})`;
+    }
+    msg +=
+      `. Check PATH, or install loxls and reload the window.` +
+      ` Install loxls with "go install github.com/marcuscaisey/lox/loxls@latest".`;
+    window.showErrorMessage(msg);
+    return;
+  }
+
   logger.info(`Starting language server loxls (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPath}")`);
 
   const serverOptions: ServerOptions = {
-    // TODO: check whether this exists first
     command: loxlsPath,
     transport: TransportKind.stdio,
   };
@@ -62,6 +78,38 @@ async function onDidChangeLangServerConfig(): Promise<void> {
     logger.error(`Failed to start language server loxls: ${String(reason)}`);
   }
   logger.info(`Started language server loxls (version: ${client.initializeResult?.serverInfo?.version ?? ""})`);
+}
+
+export async function isExecutable(nameOrPath: string): Promise<boolean> {
+  if (path.isAbsolute(nameOrPath)) {
+    if (await isFileExecutable(nameOrPath)) {
+      return true;
+    }
+    return false;
+  }
+
+  const pathVar = process.env.PATH ?? "";
+  for (const dir of pathVar.split(path.delimiter)) {
+    const candidate = path.join(dir, nameOrPath);
+    if (await isFileExecutable(candidate)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function isFileExecutable(p: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(p);
+    if (stats.isFile()) {
+      await fs.access(p, fs.constants.F_OK | fs.constants.X_OK);
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }
 
 async function stopClient(): Promise<void> {
