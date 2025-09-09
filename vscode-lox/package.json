@@ -6,6 +6,11 @@
   "categories": [
     "Programming Languages"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcuscaisey/lox",
+    "directory": "vscode-lox"
+  },
   "main": "./out/extension.js",
   "scripts": {
     "compile": "tsc",
@@ -14,12 +19,6 @@
     "watch": "tsc --watch"
   },
   "contributes": {
-    "configurationDefaults": {
-      "[lox]": {
-        "editor.insertSpaces": true,
-        "editor.tabSize": 4
-      }
-    },
     "configuration": {
       "title": "Lox",
       "properties": {
@@ -33,6 +32,12 @@
           "default": "loxls",
           "description": "Alternate path for the Lox language server \"loxls\". Provide either an absolute path or the name of the binary in PATH."
         }
+      }
+    },
+    "configurationDefaults": {
+      "[lox]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4
       }
     },
     "grammars": [
