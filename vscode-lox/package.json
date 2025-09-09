@@ -57,7 +57,11 @@
         "extensions": [
           ".lox"
         ],
-        "configuration": "./languages/lox.language-configuration.json"
+        "configuration": "./languages/lox.language-configuration.json",
+        "icon": {
+          "light": "./icons/crafting-interpreters-favicon.png",
+          "dark": "./icons/crafting-interpreters-favicon.png"
+        }
       }
     ]
   },
