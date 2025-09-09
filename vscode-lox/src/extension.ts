@@ -5,23 +5,24 @@ const useLanguageServerKey = "lox.useLanguageServer";
 const loxlsPathKey = "lox.loxlsPath";
 
 let client: LanguageClient | undefined;
+let logger: LogOutputChannel;
 
 export async function activate(context: ExtensionContext): Promise<void> {
-  const logger = window.createOutputChannel("Lox", { log: true });
+  logger = window.createOutputChannel("Lox", { log: true });
   context.subscriptions.push(logger);
 
   context.subscriptions.push(
     workspace.onDidChangeConfiguration(async (event) => {
       if (event.affectsConfiguration(useLanguageServerKey) || event.affectsConfiguration(loxlsPathKey)) {
-        await onDidChangeLangServerConfig(logger);
+        await onDidChangeLangServerConfig();
       }
     }),
   );
 
-  await onDidChangeLangServerConfig(logger);
+  await onDidChangeLangServerConfig();
 }
 
-async function onDidChangeLangServerConfig(logger: LogOutputChannel): Promise<void> {
+async function onDidChangeLangServerConfig(): Promise<void> {
   const config = workspace.getConfiguration();
   const useLanguageServer = config.get<boolean>(useLanguageServerKey, true);
   const loxlsPath = config.get<string>(loxlsPathKey, "loxls");
@@ -29,7 +30,7 @@ async function onDidChangeLangServerConfig(logger: LogOutputChannel): Promise<vo
   if (!useLanguageServer) {
     if (client) {
       logger.info(`Stopping language server loxls (${useLanguageServerKey}: false)`);
-      await stopClient(logger);
+      await stopClient();
     } else {
       logger.info(`Not starting language server loxls (${useLanguageServerKey}: false)`);
     }
@@ -38,7 +39,7 @@ async function onDidChangeLangServerConfig(logger: LogOutputChannel): Promise<vo
 
   if (client) {
     logger.info(`Stopping language server loxls`);
-    await stopClient(logger);
+    await stopClient();
   }
 
   // TODO: restart existing language server if still enabled
@@ -65,7 +66,7 @@ async function onDidChangeLangServerConfig(logger: LogOutputChannel): Promise<vo
   logger.info(`Started language server loxls (version: ${client.initializeResult?.serverInfo?.version ?? ""})`);
 }
 
-async function stopClient(logger: LogOutputChannel): Promise<void> {
+async function stopClient(): Promise<void> {
   if (!client) {
     return;
   }
