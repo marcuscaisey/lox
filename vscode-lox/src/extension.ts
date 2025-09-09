@@ -28,7 +28,7 @@ function onDidChangeLangServerConfig(logger: LogOutputChannel): void {
 
   if (!useLanguageServer) {
     if (client) {
-      logger.info(`Stopping language server loxls (${useLanguageServerKey}: ${String(useLanguageServer)})`);
+      logger.info(`Stopping language server loxls (${useLanguageServerKey}: false)`);
       client.stop().then(
         () => {
           logger.info("Stopped language server loxls");
@@ -39,15 +39,13 @@ function onDidChangeLangServerConfig(logger: LogOutputChannel): void {
       );
       client = undefined;
     } else {
-      logger.info(
-        `Not starting language server loxls (${useLanguageServerKey}: ${String(useLanguageServer)}, ${loxlsPathKey}: "${loxlsPath}")`,
-      );
+      logger.info(`Not starting language server loxls (${useLanguageServerKey}: false)`);
     }
     return;
   }
 
   logger.info(
-    `Starting language server loxls (${useLanguageServerKey}: ${String(useLanguageServer)}, ${loxlsPathKey}: "${loxlsPath}")`,
+    `Starting language server loxls (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPath}")`,
   );
 
   const serverOptions: ServerOptions = {
