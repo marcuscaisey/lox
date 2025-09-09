@@ -80,8 +80,7 @@ async function stopClient(): Promise<void> {
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (!client) {
-    return undefined;
+  if (client) {
+    return stopClient();
   }
-  return client.stop();
 }
