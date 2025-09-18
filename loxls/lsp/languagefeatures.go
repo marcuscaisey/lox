@@ -75,6 +75,7 @@ func propertyDefinitions(doc *document, pos *protocol.Position) ([]ast.Node, boo
 			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
 				defs = append(defs, n.Name)
 			}
+		default:
 		}
 		return true
 	})
@@ -152,6 +153,7 @@ func propertyReferences(doc *document, pos *protocol.Position, includeDecl bool)
 			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
 				refs = append(refs, n.Name)
 			}
+		default:
 		}
 		return true
 	})
