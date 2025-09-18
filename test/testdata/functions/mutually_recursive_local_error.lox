@@ -6,7 +6,6 @@
         return isOdd(n - 1); // error: isOdd has not been declared
     }
 
-    // error: isOdd has been declared but is never used
     fun isOdd(n) {
         if (n == 0) {
             return false;

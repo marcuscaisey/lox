@@ -46,7 +46,7 @@ func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
 		e.values[ident.Token.Lexeme] = nil
 		return e
 	} else {
-		panic(loxerr.Newf(ident, "%s has already been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has already been declared", ident.Token.Lexeme))
 	}
 }
 
@@ -69,7 +69,7 @@ func (e *globalEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	if _, ok := e.values[ident.Token.Lexeme]; ok {
 		e.values[ident.Token.Lexeme] = value
 	} else {
-		panic(loxerr.Newf(ident, "%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
 	}
 }
 
@@ -78,10 +78,10 @@ func (e *globalEnvironment) Get(ident *ast.Ident) loxObject {
 		if value != nil {
 			return value
 		} else {
-			panic(loxerr.Newf(ident, "%s has not been defined", ident.Token.Lexeme))
+			panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been defined", ident.Token.Lexeme))
 		}
 	} else {
-		panic(loxerr.Newf(ident, "%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
 	}
 }
 

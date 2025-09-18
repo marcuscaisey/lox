@@ -13,9 +13,21 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
+// Type is the type of an [Error].
+type Type int
+
+const (
+	// Fatal errors cause execution of the program to fail. For example, a parser error or a division by zero.
+	Fatal Type = iota
+	// NonFatal errors don't cause execution of the program to fail. For example, a variable has been declared but
+	// not used.
+	NonFatal
+)
+
 // Error describes an error that occurred during the execution of a Lox program.
-// It can describe an error which can be attributed to a range of characters in the source code.
+// It can describe any error which can be attributed to a range of characters in the source code.
 type Error struct {
+	Type  Type
 	Msg   string
 	start token.Position
 	end   token.Position
@@ -23,18 +35,19 @@ type Error struct {
 
 // Newf creates a [*Error].
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
-func Newf(rang token.Range, format string, args ...any) error {
-	return newf(rang.Start(), rang.End(), format, args...)
+func Newf(rang token.Range, typ Type, format string, args ...any) error {
+	return newf(rang.Start(), rang.End(), typ, format, args...)
 }
 
 // NewSpanningRangesf creates an [*Error] which spans the given [token.Range]s.
 // The error message is constructed from the given format string and arguments, as in [fmt.Sprintf].
-func NewSpanningRangesf(start, end token.Range, message string, args ...any) error {
-	return newf(start.Start(), end.End(), message, args...)
+func NewSpanningRangesf(start, end token.Range, typ Type, message string, args ...any) error {
+	return newf(start.Start(), end.End(), typ, message, args...)
 }
 
-func newf(start, end token.Position, format string, args ...any) error {
+func newf(start, end token.Position, typ Type, format string, args ...any) error {
 	return &Error{
+		Type:  typ,
 		Msg:   fmt.Sprintf(format, args...),
 		start: start,
 		end:   end,
@@ -115,14 +128,25 @@ type Errors []*Error
 
 // Addf adds a [*Error] to the list of errors.
 // The parameters are the same as for [Newf].
-func (e *Errors) Addf(rang token.Range, format string, args ...any) {
-	*e = append(*e, Newf(rang, format, args...).(*Error))
+func (e *Errors) Addf(rang token.Range, typ Type, format string, args ...any) {
+	*e = append(*e, Newf(rang, typ, format, args...).(*Error))
 }
 
 // AddSpanningRangesf adds an [*Error] to the list of errors.
 // The parameters are the same as for [NewSpanningRangesf].
-func (e *Errors) AddSpanningRangesf(start, end token.Range, format string, args ...any) {
-	*e = append(*e, NewSpanningRangesf(start, end, format, args...).(*Error))
+func (e *Errors) AddSpanningRangesf(start, end token.Range, typ Type, format string, args ...any) {
+	*e = append(*e, NewSpanningRangesf(start, end, typ, format, args...).(*Error))
+}
+
+// Fatal returns a new [Errors] containing only the errors in the list which are fatal.
+func (e Errors) Fatal() Errors {
+	errs := make(Errors, 0, len(e))
+	for _, err := range e {
+		if err.Type == Fatal {
+			errs = append(errs, err)
+		}
+	}
+	return errs
 }
 
 // Sort sorts the errors by their start position.

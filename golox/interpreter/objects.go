@@ -104,12 +104,12 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 			return n * right
 		case token.Slash:
 			if right == 0 {
-				panic(loxerr.Newf(op, "cannot divide by 0"))
+				panic(loxerr.Newf(op, loxerr.Fatal, "cannot divide by 0"))
 			}
 			return n / right
 		case token.Percent:
 			if right == 0 {
-				panic(loxerr.Newf(op, "cannot modulo by 0"))
+				panic(loxerr.Newf(op, loxerr.Fatal, "cannot modulo by 0"))
 			}
 			return loxNumber(math.Mod(float64(n), float64(right)))
 		case token.Plus:
@@ -143,10 +143,10 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
 	if math.Floor(float64(n)) != float64(n) {
-		panic(loxerr.Newf(op, "cannot multiply %m by non-integer %m", loxTypeString, loxTypeNumber))
+		panic(loxerr.Newf(op, loxerr.Fatal, "cannot multiply %m by non-integer %m", loxTypeString, loxTypeNumber))
 	}
 	if n < 0 {
-		panic(loxerr.Newf(op, "cannot multiply %m by negative %m", loxTypeString, loxTypeNumber))
+		panic(loxerr.Newf(op, loxerr.Fatal, "cannot multiply %m by negative %m", loxTypeString, loxTypeNumber))
 	}
 	return loxString(strings.Repeat(string(s), int(n)))
 }
@@ -377,7 +377,7 @@ func (p *property) Get(interpreter *Interpreter, instance *loxInstance, name *as
 
 func (p *property) Set(interpreter *Interpreter, instance *loxInstance, name *ast.Ident, value loxObject) {
 	if p.setter == nil {
-		panic(loxerr.Newf(name, "property '%s' of %m object is read-only", name.Token.Lexeme, instance.Type()))
+		panic(loxerr.Newf(name, loxerr.Fatal, "property '%s' of %m object is read-only", name.Token.Lexeme, instance.Type()))
 	}
 	interpreter.call(name.Start(), p.setter.Bind(instance), []loxObject{value})
 }
@@ -521,7 +521,7 @@ func (i *loxInstance) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
 		return method.Bind(i)
 	}
 
-	panic(loxerr.Newf(name, "%m object has no property %s", i.Type(), name.Token.Lexeme))
+	panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %s", i.Type(), name.Token.Lexeme))
 }
 
 func (i *loxInstance) Set(interpreter *Interpreter, name *ast.Ident, value loxObject) {

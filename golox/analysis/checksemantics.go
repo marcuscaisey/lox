@@ -103,7 +103,7 @@ func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
 
 func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {
 	if len(params) > maxParams {
-		c.errs.Addf(params[maxParams], "cannot define more than %d function parameters", maxParams)
+		c.errs.Addf(params[maxParams], loxerr.Fatal, "cannot define more than %d function parameters", maxParams)
 	}
 }
 
@@ -146,7 +146,7 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) 
 	}
 	for name, ident := range setterIdentsByName {
 		if !gettersByName[name] {
-			c.errs.Addf(ident, "write-only properties are not allowed")
+			c.errs.Addf(ident, loxerr.Fatal, "write-only properties are not allowed")
 		}
 	}
 }
@@ -157,12 +157,12 @@ func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
 	}
 	switch {
 	case decl.HasModifier(token.Get) && len(decl.Function.Params) > 0:
-		c.errs.AddSpanningRangesf(decl.Function.Params[0], decl.Function.Params[len(decl.Function.Params)-1], "property getter cannot have parameters")
+		c.errs.AddSpanningRangesf(decl.Function.Params[0], decl.Function.Params[len(decl.Function.Params)-1], loxerr.Fatal, "property getter cannot have parameters")
 	case decl.HasModifier(token.Set):
 		if len(decl.Function.Params) == 0 {
-			c.errs.Addf(decl.Name, "property setter must have a parameter")
+			c.errs.Addf(decl.Name, loxerr.Fatal, "property setter must have a parameter")
 		} else if len(decl.Function.Params) > 1 {
-			c.errs.AddSpanningRangesf(decl.Function.Params[1], decl.Function.Params[len(decl.Function.Params)-1], "property setter can only have one parameter")
+			c.errs.AddSpanningRangesf(decl.Function.Params[1], decl.Function.Params[len(decl.Function.Params)-1], loxerr.Fatal, "property setter can only have one parameter")
 		}
 	}
 
@@ -170,49 +170,49 @@ func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
 
 func (c *semanticChecker) checkBreakInLoop(stmt *ast.BreakStmt) {
 	if !c.inLoop {
-		c.errs.Addf(stmt, "%m can only be used inside a loop", token.Break)
+		c.errs.Addf(stmt, loxerr.Fatal, "%m can only be used inside a loop", token.Break)
 	}
 }
 
 func (c *semanticChecker) checkContinueInLoop(stmt *ast.ContinueStmt) {
 	if !c.inLoop {
-		c.errs.Addf(stmt, "%m can only be used inside a loop", token.Continue)
+		c.errs.Addf(stmt, loxerr.Fatal, "%m can only be used inside a loop", token.Continue)
 	}
 }
 
 func (c *semanticChecker) checkReturnInFun(stmt *ast.ReturnStmt) {
 	if c.curFunType == funTypeNone {
-		c.errs.Addf(stmt, "%m can only be used inside a function definition", token.Return)
+		c.errs.Addf(stmt, loxerr.Fatal, "%m can only be used inside a function definition", token.Return)
 	}
 }
 
 func (c *semanticChecker) checkNoConstructorReturn(stmt *ast.ReturnStmt) {
 	if stmt.Value != nil && c.curFunType.IsConstructor() {
-		c.errs.Addf(stmt, "%s() cannot return a value", token.ConstructorIdent)
+		c.errs.Addf(stmt, loxerr.Fatal, "%s() cannot return a value", token.ConstructorIdent)
 	}
 }
 
 func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
 	if expr.Ident.Token.Lexeme == token.PlaceholderIdent {
-		c.errs.Addf(expr.Ident, "%s cannot be used as a value", token.PlaceholderIdent)
+		c.errs.Addf(expr.Ident, loxerr.Fatal, "%s cannot be used as a value", token.PlaceholderIdent)
 	}
 }
 
 func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
 	if ident.IsValid() && ident.Token.Lexeme == token.PlaceholderIdent {
-		c.errs.Addf(ident, "%s cannot be used as a field name", token.PlaceholderIdent)
+		c.errs.Addf(ident, loxerr.Fatal, "%s cannot be used as a field name", token.PlaceholderIdent)
 	}
 }
 
 func (c *semanticChecker) checkThisInMethod(expr *ast.ThisExpr) {
 	if !c.curFunType.IsMethod() {
-		c.errs.Addf(expr, "%m can only be used inside a method definition", token.This)
+		c.errs.Addf(expr, loxerr.Fatal, "%m can only be used inside a method definition", token.This)
 	}
 }
 
 func (c *semanticChecker) checkNumArgs(args []ast.Expr) {
 	if len(args) > maxArgs {
-		c.errs.Addf(args[maxArgs], "cannot pass more than %d arguments to function", maxArgs)
+		c.errs.Addf(args[maxArgs], loxerr.Fatal, "cannot pass more than %d arguments to function", maxArgs)
 	}
 }
 

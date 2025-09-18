@@ -162,9 +162,13 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if filename != h.stubBuiltinsFilename {
 		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
 		for i, e := range loxErrs {
+			severity := protocol.DiagnosticSeverityError
+			if e.Type == loxerr.NonFatal {
+				severity = protocol.DiagnosticSeverityHint
+			}
 			diagnostics[i] = &protocol.Diagnostic{
 				Range:    newRange(e),
-				Severity: protocol.DiagnosticSeverityError,
+				Severity: severity,
 				Source:   "loxls",
 				Message:  e.Msg,
 			}

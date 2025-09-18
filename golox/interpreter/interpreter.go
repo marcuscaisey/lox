@@ -55,6 +55,7 @@ func New(opts ...Option) *Interpreter {
 func (i *Interpreter) Interpret(program *ast.Program) error {
 	_, errs := analysis.ResolveIdents(program, i.stubBuiltins, analysis.WithREPLMode(i.replMode))
 	errs = append(errs, analysis.CheckSemantics(program)...)
+	errs = errs.Fatal()
 	if err := errs.Err(); err != nil {
 		return err
 	}
@@ -328,7 +329,7 @@ func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObjec
 
 	callable, ok := callee.(loxCallable)
 	if !ok {
-		panic(loxerr.Newf(expr.Callee, "%m object is not callable", callee.Type()))
+		panic(loxerr.Newf(expr.Callee, loxerr.Fatal, "%m object is not callable", callee.Type()))
 	}
 
 	params := callable.Params()
@@ -351,19 +352,19 @@ func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObjec
 		}
 		panic(loxerr.Newf(
 			expr,
-			"%s() missing %d argument%s: %s", callable.CallableName(), arity-len(args), argumentSuffix, missingArgsStr,
+			loxerr.Fatal, "%s() missing %d argument%s: %s", callable.CallableName(), arity-len(args), argumentSuffix, missingArgsStr,
 		))
 	case len(args) > arity:
 		panic(loxerr.NewSpanningRangesf(
 			expr.Args[arity],
 			expr.Args[len(expr.Args)-1],
-			"%s() accepts %d arguments but %d were given", callable.CallableName(), arity, len(args),
+			loxerr.Fatal, "%s() accepts %d arguments but %d were given", callable.CallableName(), arity, len(args),
 		))
 	}
 
 	result := i.call(expr.Start(), callable, args)
 	if errorMsg, ok := result.(errorMsg); ok {
-		panic(loxerr.Newf(expr, "%s", string(errorMsg)))
+		panic(loxerr.Newf(expr, loxerr.Fatal, "%s", string(errorMsg)))
 	}
 	return result
 }
@@ -379,7 +380,7 @@ func (i *Interpreter) evalGetExpr(env environment, expr *ast.GetExpr) loxObject 
 	object := i.evalExpr(env, expr.Object)
 	getter, ok := object.(loxGetter)
 	if !ok {
-		panic(loxerr.Newf(expr, "property access is not valid for %m object", object.Type()))
+		panic(loxerr.Newf(expr, loxerr.Fatal, "property access is not valid for %m object", object.Type()))
 	}
 	return getter.Get(i, expr.Name)
 }
@@ -396,7 +397,7 @@ func (i *Interpreter) evalUnaryExpr(env environment, expr *ast.UnaryExpr) loxObj
 			return result
 		}
 	}
-	panic(loxerr.Newf(expr.Op, "%m operator cannot be used with type %m", expr.Op.Type, right.Type()))
+	panic(loxerr.Newf(expr.Op, loxerr.Fatal, "%m operator cannot be used with type %m", expr.Op.Type, right.Type()))
 }
 
 func (i *Interpreter) evalBinaryExpr(env environment, expr *ast.BinaryExpr) loxObject {
@@ -440,7 +441,7 @@ func (i *Interpreter) evalBinaryExpr(env environment, expr *ast.BinaryExpr) loxO
 				return result
 			}
 		}
-		panic(loxerr.Newf(expr.Op, "%m operator cannot be used with types %m and %m", expr.Op.Type, left.Type(), right.Type()))
+		panic(loxerr.Newf(expr.Op, loxerr.Fatal, "%m operator cannot be used with types %m and %m", expr.Op.Type, left.Type(), right.Type()))
 	}
 }
 
@@ -464,7 +465,7 @@ func (i *Interpreter) evalSetExpr(env environment, expr *ast.SetExpr) loxObject 
 	object := i.evalExpr(env, expr.Object)
 	setter, ok := object.(loxSetter)
 	if !ok {
-		panic(loxerr.Newf(expr, "property assignment is not valid for %m object", object.Type()))
+		panic(loxerr.Newf(expr, loxerr.Fatal, "property assignment is not valid for %m object", object.Type()))
 	}
 	value := i.evalExpr(env, expr.Value)
 	setter.Set(i, expr.Name, value)

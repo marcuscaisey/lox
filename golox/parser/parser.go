@@ -807,5 +807,5 @@ func (p *parser) addErrorf(rang token.Range, format string, args ...any) {
 		return
 	}
 	p.lastErrPos = start
-	p.errs.Addf(rang, format, args...)
+	p.errs.Addf(rang, loxerr.Fatal, format, args...)
 }
