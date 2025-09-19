@@ -32,7 +32,7 @@ async function onDidChangeLangServerConfig(context: ExtensionContext): Promise<v
     if (client) {
       await ensureClientStopped(`${useLanguageServerKey}: false`);
     } else {
-      logger.info(`Not starting language server loxls (${useLanguageServerKey}: false)`);
+      logger.info(`Not starting language server (${useLanguageServerKey}: false)`);
     }
     return;
   }
@@ -82,13 +82,13 @@ async function onDidChangeLangServerConfig(context: ExtensionContext): Promise<v
   };
   client = new LanguageClient("lox", "loxls", serverOptions, clientOptions);
 
-  logger.info(`Starting language server loxls (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPathValue}")`);
+  logger.info(`Starting language server (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPathValue}")`);
   try {
     await client.start();
   } catch (reason: unknown) {
-    logger.error(`Failed to start language server loxls: ${String(reason)}`);
+    logger.error(`Failed to start language server: ${String(reason)}`);
   }
-  logger.info(`Started language server loxls (version: ${client.initializeResult?.serverInfo?.version ?? ""})`);
+  logger.info(`Started language server (version: ${client.initializeResult?.serverInfo?.version ?? ""})`);
 }
 
 export async function isExecutable(nameOrPath: string): Promise<boolean> {
@@ -128,7 +128,7 @@ async function ensureClientStopped(context?: string): Promise<void> {
     return;
   }
   if (client.needsStop()) {
-    let msg = "Stopping language server loxls";
+    let msg = "Stopping language server";
     if (context) {
       msg += ` (${context})`;
     }
@@ -136,9 +136,9 @@ async function ensureClientStopped(context?: string): Promise<void> {
     try {
       await client.stop();
     } catch (reason: unknown) {
-      logger.error(`Failed to stop language server loxls: ${String(reason)}`);
+      logger.error(`Failed to stop language server: ${String(reason)}`);
     }
-    logger.info("Stopped language server loxls");
+    logger.info("Stopped language server");
   }
   client = undefined;
 }
