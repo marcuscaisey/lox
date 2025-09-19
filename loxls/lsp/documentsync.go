@@ -163,14 +163,17 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
 		for i, e := range loxErrs {
 			severity := protocol.DiagnosticSeverityError
-			if e.Type == loxerr.NonFatal {
+			var tags []protocol.DiagnosticTag
+			if e.Type == loxerr.Unused {
 				severity = protocol.DiagnosticSeverityHint
+				tags = append(tags, protocol.DiagnosticTagUnnecessary)
 			}
 			diagnostics[i] = &protocol.Diagnostic{
 				Range:    newRange(e),
 				Severity: severity,
 				Source:   "loxls",
 				Message:  e.Msg,
+				Tags:     tags,
 			}
 		}
 	}
