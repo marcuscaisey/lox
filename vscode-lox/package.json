@@ -35,6 +35,21 @@
           "type": "string",
           "default": "",
           "description": "Path for the Lox language server \"loxls\". If left empty, the \"loxls\" binary bundled with the extension will be used. Provide either an absolute path or the name of the binary in PATH."
+        },
+        "lox.trace.server": {
+          "type": "string",
+          "description": "Traces the communication between VS Code and the Lox language server.",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "enumDescriptions": [
+            "Turn tracing off",
+            "Trace messages only",
+            "Verbose message tracing"
+          ],
+          "default": "off"
         }
       }
     },

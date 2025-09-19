@@ -2,10 +2,18 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { ExtensionContext, LogOutputChannel, window, workspace } from "vscode";
-import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TraceValues,
+  TransportKind,
+} from "vscode-languageclient/node";
 
-const useLanguageServerKey = "lox.useLanguageServer";
-const loxlsPathKey = "lox.loxlsPath";
+const baseKey = "lox";
+const useLanguageServerKey = `${baseKey}.useLanguageServer`;
+const loxlsPathKey = `${baseKey}.loxlsPath`;
+const traceServerKey = `${baseKey}.trace.server`;
 
 let client: LanguageClient | undefined;
 let logger: LogOutputChannel;
@@ -16,7 +24,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
 
   context.subscriptions.push(
     workspace.onDidChangeConfiguration(async (event) => {
-      if (event.affectsConfiguration(useLanguageServerKey) || event.affectsConfiguration(loxlsPathKey)) {
+      if (event.affectsConfiguration(baseKey)) {
         await onDidChangeLangServerConfig(context);
       }
     }),
@@ -82,7 +90,10 @@ async function onDidChangeLangServerConfig(context: ExtensionContext): Promise<v
   };
   client = new LanguageClient("lox", "loxls", serverOptions, clientOptions);
 
-  logger.info(`Starting language server (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPathValue}")`);
+  const traceServer: TraceValues = config.get<TraceValues>(traceServerKey, TraceValues.Off);
+  logger.info(
+    `Starting language server (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPathValue}", ${traceServerKey}: "${traceServer}")`,
+  );
   try {
     await client.start();
   } catch (reason: unknown) {
