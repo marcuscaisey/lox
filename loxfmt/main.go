@@ -14,14 +14,14 @@ import (
 )
 
 var (
-	write    = flag.Bool("w", false, "Write result to (source) file instead of stdout")
-	printAST = flag.Bool("p", false, "Print the AST only")
+	write    = flag.Bool("write", false, "Write result to (source) file instead of stdout")
+	printAST = flag.Bool("print-ast", false, "Print the AST only")
 )
 
 func usage() {
-	fmt.Fprintf(flag.CommandLine.Output(), "Usage: loxfmt [flags] [path]\n")
-	fmt.Fprintf(flag.CommandLine.Output(), "\n")
-	fmt.Fprintf(flag.CommandLine.Output(), "Options:\n")
+	fmt.Fprintln(os.Stderr, "Usage: loxfmt [flags] [path]")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Options:")
 	flag.PrintDefaults()
 }
 
@@ -42,7 +42,7 @@ func main() {
 	path := flag.Arg(0)
 
 	if path == "" && *write {
-		exitWithUsageErr("error: cannot use -w with standard input")
+		exitWithUsageErr("cannot use -write with standard input")
 	}
 
 	if err := run(flag.Arg(0)); err != nil {

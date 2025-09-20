@@ -14,6 +14,8 @@ go install github.com/marcuscaisey/lox/loxfmt@latest
 Usage: loxfmt [flags] [path]
 
 Options:
-  -p    Print the AST only
-  -w    Write result to (source) file instead of stdout
+  -print-ast
+        Print the AST only
+  -write
+        Write result to (source) file instead of stdout
 ```
