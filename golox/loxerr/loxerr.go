@@ -156,25 +156,25 @@ func (e Errors) Sort() {
 	})
 }
 
+// Err converts the error list into an [error].
+func (e Errors) Err() error {
+	if len(e) == 0 {
+		return nil
+	}
+	return errors(e)
+}
+
+type errors Errors
+
 // Error formats the errors by concatenating their messages after sorting them by their start position.
-func (e Errors) Error() string {
+func (e errors) Error() string {
 	if len(e) == 0 {
 		panic("Error called on empty error list")
 	}
-	e.Sort()
+	Errors(e).Sort()
 	msgs := make([]string, len(e))
 	for i, err := range e {
 		msgs[i] = err.Error()
 	}
 	return strings.Join(msgs, "\n")
-}
-
-// Err returns the error list unchanged if its non-empty, otherwise nil.
-// This should be used to return an [Errors] from a function as an [error] so that it becomes an untyped nil if there
-// are no errors.
-func (e Errors) Err() error {
-	if len(e) == 0 {
-		return nil
-	}
-	return e
 }
