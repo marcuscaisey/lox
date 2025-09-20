@@ -14,6 +14,8 @@ go install github.com/marcuscaisey/lox/loxfmt@latest
 Usage: loxfmt [flags] [path]
 
 Options:
+  -help
+        Print this message
   -print-ast
         Print the AST only
   -write

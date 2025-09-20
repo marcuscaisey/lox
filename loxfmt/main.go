@@ -16,6 +16,7 @@ import (
 var (
 	write    = flag.Bool("write", false, "Write result to (source) file instead of stdout")
 	printAST = flag.Bool("print-ast", false, "Print the AST only")
+	help     = flag.Bool("help", false, "Print this message")
 )
 
 func usage() {
@@ -34,6 +35,11 @@ func exitWithUsageErr(msg string) {
 func main() {
 	flag.Usage = usage
 	flag.Parse()
+
+	if *help {
+		flag.Usage()
+		os.Exit(0)
+	}
 
 	if len(flag.Args()) > 1 {
 		exitWithUsageErr("at most one path can be provided")
