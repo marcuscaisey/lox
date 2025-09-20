@@ -1,6 +1,6 @@
-# Golox
+# golox
 
-Golox is a Go implementation of the Lox programming language.
+golox is a Go implementation of the Lox programming language.
 
 ## Installation
 
