@@ -9,7 +9,7 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
-	"github.com/marcuscaisey/lox/golox/analysis"
+	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/loxerr"
 	"github.com/marcuscaisey/lox/golox/parser"
@@ -152,8 +152,8 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if filename != h.stubBuiltinsFilename {
 		builtins = h.stubBuiltins
 	}
-	identDecls, resolveErrs := analysis.ResolveIdents(program, builtins)
-	semanticErrs := analysis.CheckSemantics(program)
+	identDecls, resolveErrs := analyse.ResolveIdents(program, builtins)
+	semanticErrs := analyse.CheckSemantics(program)
 
 	loxErrs := slices.Concat(parseErrs, resolveErrs, semanticErrs)
 	loxErrs.Sort()

@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/marcuscaisey/lox/golox/analysis"
+	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/loxerr"
 	"github.com/marcuscaisey/lox/golox/stubbuiltins"
@@ -53,8 +53,7 @@ func New(opts ...Option) *Interpreter {
 // Interpret executes a program and returns an error if one occurred.
 // Interpret can be called multiple times with different programs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program *ast.Program) error {
-	_, errs := analysis.ResolveIdents(program, i.stubBuiltins, analysis.WithREPLMode(i.replMode))
-	errs = append(errs, analysis.CheckSemantics(program)...)
+	errs := analyse.Program(program, i.stubBuiltins, analyse.WithREPLMode(i.replMode))
 	errs = errs.Fatal()
 	if err := errs.Err(); err != nil {
 		return err

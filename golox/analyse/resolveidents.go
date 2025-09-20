@@ -1,4 +1,4 @@
-package analysis
+package analyse
 
 import (
 	"iter"
@@ -8,20 +8,6 @@ import (
 	"github.com/marcuscaisey/lox/golox/stack"
 	"github.com/marcuscaisey/lox/golox/token"
 )
-
-// ResolveIdentsOption can be passed to [ResolveIdents] to configure the resolving behaviour.
-type ResolveIdentsOption func(*identResolver)
-
-// WithREPLMode configures identifiers to be resolved in REPL mode.
-// In REPL mode, the following identifier checks are disabled:
-//   - declared and never used
-//   - declared more than once in the same scope
-//   - used before they are declared
-func WithREPLMode(enabled bool) ResolveIdentsOption {
-	return func(i *identResolver) {
-		i.replMode = enabled
-	}
-}
 
 // ResolveIdents resolves the identifiers in a program to their declarations.
 // It returns a map from identifier to its declaration. If an error is returned then a possibly incomplete map will
@@ -59,19 +45,23 @@ func WithREPLMode(enabled bool) ResolveIdentsOption {
 //	}
 //	var x = 1;
 //	printX();
-func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...ResolveIdentsOption) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
+func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
+	cfg := &config{}
+	for _, opt := range opts {
+		opt(cfg)
+	}
 	r := &identResolver{
+		replMode:               cfg.replMode,
 		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
 		identDecls:             map[*ast.Ident]ast.Decl{},
-	}
-	for _, opt := range opts {
-		opt(r)
 	}
 	return r.Resolve(program, builtins)
 }
 
 type identResolver struct {
+	replMode bool
+
 	scopes                 *stack.Stack[*scope]
 	globalScope            *scope
 	globalDecls            map[string]ast.Decl
@@ -82,8 +72,6 @@ type identResolver struct {
 
 	identDecls map[*ast.Ident]ast.Decl
 	errs       loxerr.Errors
-
-	replMode bool
 }
 
 func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, loxerr.Errors) {

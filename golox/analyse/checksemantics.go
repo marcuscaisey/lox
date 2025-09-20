@@ -1,4 +1,4 @@
-package analysis
+package analyse
 
 import (
 	"github.com/marcuscaisey/lox/golox/ast"
