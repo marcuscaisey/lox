@@ -21,6 +21,7 @@ import (
 var (
 	program  = flag.String("program", "", "Program passed in as string")
 	printAST = flag.Bool("print-ast", false, "Print the AST only")
+	help     = flag.Bool("help", false, "Print this message")
 )
 
 func usage() {
@@ -36,8 +37,11 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	if *cmd != "" {
-		if err := run("", strings.NewReader(*cmd), interpreter.New()); err != nil {
+	if *help {
+		flag.Usage()
+		os.Exit(0)
+	}
+
 	if *program != "" {
 		if err := run("", strings.NewReader(*program), interpreter.New()); err != nil {
 			log.Fatal(err)

@@ -14,6 +14,8 @@ go install github.com/marcuscaisey/lox/golox@latest
 Usage: golox [options] [script]
 
 Options:
+  -help
+        Print this message
   -print-ast
         Print the AST only
   -program string
