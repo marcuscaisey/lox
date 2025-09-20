@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-golox_dir="$(dirname "$0")"
+golox_dir="$(realpath "$(dirname "$0")")"
 build_path="$golox_dir/../build/golox"
 pushd "$golox_dir" >/dev/null
 go build -o "$build_path" .
