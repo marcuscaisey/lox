@@ -19,26 +19,27 @@ import (
 )
 
 var (
-	cmd      = flag.String("c", "", "Program passed in as string")
-	printAST = flag.Bool("p", false, "Print the AST only")
+	program  = flag.String("program", "", "Program passed in as string")
+	printAST = flag.Bool("print-ast", false, "Print the AST only")
 )
 
-// nolint:revive
-func Usage() {
-	fmt.Fprintf(flag.CommandLine.Output(), "Usage: golox [options] [script]\n")
-	fmt.Fprintf(flag.CommandLine.Output(), "\n")
-	fmt.Fprintf(flag.CommandLine.Output(), "Options:\n")
+func usage() {
+	fmt.Fprintln(os.Stderr, "Usage: golox [options] [script]")
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "Options:")
 	flag.PrintDefaults()
 }
 
 func main() {
 	log.SetFlags(0)
 
-	flag.Usage = Usage
+	flag.Usage = usage
 	flag.Parse()
 
 	if *cmd != "" {
 		if err := run("", strings.NewReader(*cmd), interpreter.New()); err != nil {
+	if *program != "" {
+		if err := run("", strings.NewReader(*program), interpreter.New()); err != nil {
 			log.Fatal(err)
 		}
 		return

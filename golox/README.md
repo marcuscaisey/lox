@@ -14,9 +14,10 @@ go install github.com/marcuscaisey/lox/golox@latest
 Usage: golox [options] [script]
 
 Options:
-  -c string
+  -print-ast
+        Print the AST only
+  -program string
         Program passed in as string
-  -p    Print the AST only
 ```
 
 If no script is provided, a REPL is started, otherwise the supplied script is executed.
