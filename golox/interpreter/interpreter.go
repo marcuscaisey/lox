@@ -27,9 +27,9 @@ type Option func(*Interpreter)
 
 // WithREPLMode configures the interpreter to run in REPL mode.
 // In REPL mode, the interpreter prints the result of expression statements.
-func WithREPLMode() Option {
+func WithREPLMode(enabled bool) Option {
 	return func(i *Interpreter) {
-		i.replMode = true
+		i.replMode = enabled
 	}
 }
 

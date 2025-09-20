@@ -96,7 +96,7 @@ func runREPL() error {
 
 	fmt.Fprintln(os.Stderr, "Welcome to the Lox REPL. Press Ctrl-D to exit.")
 
-	interpreter := interpreter.New(interpreter.WithREPLMode())
+	interpreter := interpreter.New(interpreter.WithREPLMode(true))
 	for {
 		line, err := rl.Readline()
 		if err != nil {
