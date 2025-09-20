@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	program  = flag.String("program", "", "Program passed in as string")
-	printAST = flag.Bool("print-ast", false, "Print the AST only")
-	help     = flag.Bool("help", false, "Print this message")
+	program   = flag.String("program", "", "Program passed in as string")
+	printAST  = flag.Bool("ast", false, "Print the AST only")
+	printHelp = flag.Bool("help", false, "Print this message")
 )
 
 func usage() {
@@ -37,7 +37,7 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	if *help {
+	if *printHelp {
 		flag.Usage()
 		os.Exit(0)
 	}

@@ -16,7 +16,7 @@ Usage: golox [options] [script]
 Options:
   -help
         Print this message
-  -print-ast
+  -ast
         Print the AST only
   -program string
         Program passed in as string
@@ -70,7 +70,7 @@ fun add(x, y) {
 print add(3, 4);
 EOF
 
-golox -print-ast test.lox
+golox -ast test.lox
 ```
 
 #### Output

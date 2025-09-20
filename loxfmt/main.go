@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	write    = flag.Bool("write", false, "Write result to (source) file instead of stdout")
-	printAST = flag.Bool("print-ast", false, "Print the AST only")
-	help     = flag.Bool("help", false, "Print this message")
+	write     = flag.Bool("write", false, "Write result to (source) file instead of stdout")
+	printAST  = flag.Bool("ast", false, "Print the AST only")
+	printHelp = flag.Bool("help", false, "Print this message")
 )
 
 func usage() {
@@ -38,7 +38,7 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	if *help {
+	if *printHelp {
 		flag.Usage()
 		os.Exit(0)
 	}

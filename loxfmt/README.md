@@ -60,7 +60,7 @@ print add(3, 4);
 ### Print AST
 
 ```sh
-echo 'fun add(x, y) { return x + y; } print add(5, 6);' | loxfmt -print-ast
+echo 'fun add(x, y) { return x + y; } print add(5, 6);' | loxfmt -ast
 ```
 
 #### Output
