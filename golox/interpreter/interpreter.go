@@ -50,8 +50,8 @@ func New(opts ...Option) *Interpreter {
 	return interpreter
 }
 
-// Interpret interprets a program and returns an error if one occurred.
-// Interpret can be called multiple times with different ASTs and the state will be maintained between calls.
+// Interpret executes a program and returns an error if one occurred.
+// Interpret can be called multiple times with different programs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program *ast.Program) error {
 	_, errs := analysis.ResolveIdents(program, i.stubBuiltins, analysis.WithREPLMode(i.replMode))
 	errs = append(errs, analysis.CheckSemantics(program)...)
