@@ -17,7 +17,7 @@ Options:
   -help
         Print this message
   -print-ast
-        Print the AST only
+        Print the AST
   -write
         Write result to (source) file instead of stdout
 ```

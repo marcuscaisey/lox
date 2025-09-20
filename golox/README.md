@@ -17,7 +17,7 @@ Options:
   -help
         Print this message
   -ast
-        Print the AST only
+        Print the AST
   -program string
         Program passed in as string
 ```

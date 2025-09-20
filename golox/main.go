@@ -20,7 +20,7 @@ import (
 
 var (
 	program   = flag.String("program", "", "Program passed in as string")
-	printAST  = flag.Bool("ast", false, "Print the AST only")
+	printAST  = flag.Bool("ast", false, "Print the AST")
 	printHelp = flag.Bool("help", false, "Print this message")
 )
 

@@ -15,7 +15,7 @@ import (
 
 var (
 	write     = flag.Bool("write", false, "Write result to (source) file instead of stdout")
-	printAST  = flag.Bool("ast", false, "Print the AST only")
+	printAST  = flag.Bool("ast", false, "Print the AST")
 	printHelp = flag.Bool("help", false, "Print this message")
 )
 
@@ -29,7 +29,7 @@ func usage() {
 }
 
 func exitWithUsageErr(msg string) {
-	fmt.Fprintf(flag.CommandLine.Output(), "error: %s\n\n", msg)
+	fmt.Fprintf(os.Stderr, "error: %s\n\n", msg)
 	flag.Usage()
 	os.Exit(2)
 }
