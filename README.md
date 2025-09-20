@@ -8,6 +8,7 @@ Interpreters](https://craftinginterpreters.com). This repository contains:
   [tree-sitter-lox](tree-sitter-lox)
 - A formatter: [loxfmt](loxfmt)
 - A language server: [loxls](loxls)
+- A VS Code plugin: [vscode-lox](vscode-lox)
 
 Working Lox code examples can be found under [test/testdata](test/testdata).
 
