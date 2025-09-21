@@ -142,9 +142,9 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if err != nil {
 		return fmt.Errorf("updating document: %w", err)
 	}
-	var parseErrs loxerr.Errors
+	var parseLoxErrs loxerr.Errors
 	program, err := parser.Parse(strings.NewReader(string(src)), filename, parser.WithComments(true))
-	if err != nil && !errors.As(err, &parseErrs) {
+	if err != nil && !errors.As(err, &parseLoxErrs) {
 		return fmt.Errorf("updating document: %w", err)
 	}
 
@@ -152,10 +152,13 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if filename != h.stubBuiltinsFilename {
 		builtins = h.stubBuiltins
 	}
-	identDecls, resolveErrs := analyse.ResolveIdents(program, builtins)
-	semanticErrs := analyse.CheckSemantics(program)
+	identDecls, resolveErr := analyse.ResolveIdents(program, builtins)
+	semanticsErr := analyse.CheckSemantics(program)
 
-	loxErrs := slices.Concat(parseErrs, resolveErrs, semanticErrs)
+	var resolveLoxErrs, semanticsLoxErrs loxerr.Errors
+	errors.As(resolveErr, &resolveLoxErrs)
+	errors.As(semanticsErr, &semanticsLoxErrs)
+	loxErrs := slices.Concat(parseLoxErrs, resolveLoxErrs, semanticsLoxErrs)
 	loxErrs.Sort()
 
 	diagnostics := []*protocol.Diagnostic{}
@@ -194,7 +197,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		Version:        version,
 		Text:           src,
 		Program:        program,
-		HasParseErrors: len(parseErrs) > 0,
+		HasParseErrors: len(parseLoxErrs) > 0,
 		Diagnostics:    diagnostics,
 		IdentDecls:     identDecls,
 		Completor:      newCompletor(program, h.stubBuiltins),

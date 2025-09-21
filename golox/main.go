@@ -16,6 +16,7 @@ import (
 	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/interpreter"
+	"github.com/marcuscaisey/lox/golox/loxerr"
 	"github.com/marcuscaisey/lox/golox/parser"
 	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 )
@@ -93,8 +94,10 @@ func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) err
 	}
 	if *printHints {
 		builtins := stubbuiltins.MustParse("builtins.lox")
-		errs := analyse.Program(program, builtins)
-		return errs.NonFatal().Err()
+		err := analyse.Program(program, builtins)
+		var loxErrs loxerr.Errors
+		errors.As(err, &loxErrs)
+		return loxErrs.NonFatal().Err()
 	}
 	return interpreter.Interpret(program)
 }

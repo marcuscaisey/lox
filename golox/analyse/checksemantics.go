@@ -23,7 +23,9 @@ const (
 //   - property setter must have exactly one parameter
 //   - functions cannot have more than 255 parameters
 //   - function calls cannot have more than 255 arguments
-func CheckSemantics(program *ast.Program) loxerr.Errors {
+//
+// If there is an error, it will be of type [loxerr.Errors].
+func CheckSemantics(program *ast.Program) error {
 	c := &semanticChecker{}
 	return c.Check(program)
 }
@@ -35,9 +37,9 @@ type semanticChecker struct {
 	errs loxerr.Errors
 }
 
-func (c *semanticChecker) Check(program *ast.Program) loxerr.Errors {
+func (c *semanticChecker) Check(program *ast.Program) error {
 	ast.Walk(program, c.walk)
-	return c.errs
+	return c.errs.Err()
 }
 
 func (c *semanticChecker) walk(node ast.Node) bool {

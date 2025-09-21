@@ -45,7 +45,9 @@ import (
 //	}
 //	var x = 1;
 //	printX();
-func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
+//
+// If there is an error, it will be of type [loxerr.Errors].
+func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (map[*ast.Ident]ast.Decl, error) {
 	cfg := &config{}
 	for _, opt := range opts {
 		opt(cfg)
@@ -74,7 +76,7 @@ type identResolver struct {
 	errs       loxerr.Errors
 }
 
-func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, loxerr.Errors) {
+func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, error) {
 	endScope := r.beginScope()
 
 	r.globalScope = r.scopes.Peek()
@@ -89,7 +91,7 @@ func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[
 	ast.Walk(program, r.walk)
 	endScope()
 
-	return r.identDecls, r.errs
+	return r.identDecls, r.errs.Err()
 }
 
 func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Decl {

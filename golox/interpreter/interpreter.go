@@ -2,6 +2,7 @@
 package interpreter
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -53,9 +54,10 @@ func New(opts ...Option) *Interpreter {
 // Interpret executes a program and returns an error if one occurred.
 // Interpret can be called multiple times with different programs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program *ast.Program) error {
-	errs := analyse.Program(program, i.stubBuiltins, analyse.WithREPLMode(i.replMode))
-	errs = errs.Fatal()
-	if err := errs.Err(); err != nil {
+	err := analyse.Program(program, i.stubBuiltins, analyse.WithREPLMode(i.replMode))
+	var loxErrs loxerr.Errors
+	errors.As(err, &loxErrs)
+	if err := loxErrs.Fatal().Err(); err != nil {
 		return err
 	}
 	return i.interpretProgram(program)
