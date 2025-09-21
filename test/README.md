@@ -49,9 +49,9 @@ make test_loxfmt
 Run a specific test:
 
 ```sh
-make test_golox RUN=TestLox/TestInterpreter/Number/Modulo
-make test_golox_hints RUN=TestLox/TestInterpreter/Number/Modulo
-make test_loxfmt RUN=TestLox/TestFormatter/Number/Modulo
+make test_golox RUN=TestInterpreter/Number/Modulo
+make test_golox_hints RUN=TestInterpreterHints/Number/Modulo
+make test_loxfmt RUN=TestFormatter/Number/Modulo
 ```
 
 ## Updating the Test Expectations
@@ -68,7 +68,7 @@ make update_loxfmt_tests
 As with running the tests, you can update the expectations of a specific test as well:
 
 ```sh
-make update_golox_tests RUN=TestLox/TestInterpreter/Number/Modulo
-make update_golox_hint_tests RUN=TestLox/TestInterpreter/Number/Modulo
-make update_loxfmt_tests RUN=TestLox/TestFormatter/Number/Modulo
+make update_golox_tests RUN=TestInterpreter/Number/Modulo
+make update_golox_hint_tests RUN=TestInterpreterHints/Number/Modulo
+make update_loxfmt_tests RUN=TestFormatter/Number/Modulo
 ```

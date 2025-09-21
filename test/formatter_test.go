@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"errors"
+	"flag"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +11,15 @@ import (
 	"strings"
 	"testing"
 )
+
+var formatter = flag.String("formatter", "", "path to the formatter to test")
+
+func TestFormatter(t *testing.T) {
+	if *formatter == "" {
+		t.Skip("-formatter flag not provided")
+	}
+	runTests(t, newFormatterRunner(*pwd, *formatter), "testdata")
+}
 
 func newFormatterRunner(pwd string, formatter string) *formatterRunner {
 	return &formatterRunner{

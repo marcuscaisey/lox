@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"errors"
+	"flag"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,10 +15,30 @@ import (
 )
 
 var (
+	interpreter = flag.String("interpreter", "", "path to the interpreter to test")
+	hints       = flag.Bool("hints", false, "test the interpreter's hints")
+
 	printsRe = regexp.MustCompile(`// prints: (.+)`)
 	errorRe  = regexp.MustCompile(`// error: (.+)`)
 	hintRe   = regexp.MustCompile(`// hint: (.+)`)
 )
+
+func TestInterpreter(t *testing.T) {
+	if *interpreter == "" {
+		t.Skip("-interpreter flag not provided")
+	}
+	runTests(t, newInterpreterRunner(*pwd, *interpreter), "testdata")
+}
+
+func TestInterpreterHints(t *testing.T) {
+	if *interpreter == "" {
+		t.Skip("-interpreter flag not provided")
+	}
+	if !*hints {
+		t.Skip("-hints flag not provided")
+	}
+	runTests(t, newInterpreterHintsRunner(*pwd, *interpreter), "testdata")
+}
 
 func newInterpreterRunner(pwd string, interpreter string) *interpreterRunner {
 	return &interpreterRunner{

@@ -3,6 +3,7 @@ package test
 import (
 	"flag"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -22,47 +23,24 @@ func init() {
 }
 
 var (
-	pwd         = flag.String("pwd", "", "directory that the test was invoked from")
-	interpreter = flag.String("interpreter", "", "path to the interpreter to test")
-	formatter   = flag.String("formatter", "", "path to the formatter to test")
-	hints       = flag.Bool("hints", false, "test the interpreter's hints")
-	update      = flag.Bool("update", false, "updates the expected output of each test")
+	pwd    = flag.String("pwd", "", "directory that the test was invoked from")
+	update = flag.Bool("update", false, "updates the expected output of each test")
 
 	syntaxErrorComment = "// syntaxerror"
 )
 
+func TestMain(m *testing.M) {
+	flag.Parse()
+	if *pwd == "" {
+		fmt.Fprintln(os.Stderr, "-pwd flag must be provided")
+		os.Exit(2)
+	}
+	os.Exit(m.Run())
+}
+
 type testRunner interface {
 	Test(t *testing.T, path string)
 	Update(t *testing.T, path string)
-}
-
-func TestLox(t *testing.T) {
-	if *pwd == "" {
-		t.Fatal("-pwd flag must be provided")
-	}
-	if *hints && *interpreter == "" {
-		t.Fatal("-interpreter flag must be provided if -hints is")
-	}
-	if *interpreter != "" && *formatter != "" {
-		t.Fatal("-interpreter and -formatter flags cannot be provided together")
-	}
-	if *interpreter != "" {
-		if *hints {
-			t.Run("TestInterpreterHints", func(t *testing.T) {
-				runTests(t, newInterpreterHintsRunner(*pwd, *interpreter), "testdata")
-			})
-		} else {
-			t.Run("TestInterpreter", func(t *testing.T) {
-				runTests(t, newInterpreterRunner(*pwd, *interpreter), "testdata")
-			})
-		}
-	} else if *formatter != "" {
-		t.Run("TestFormatter", func(t *testing.T) {
-			runTests(t, newFormatterRunner(*pwd, *formatter), "testdata")
-		})
-	} else {
-		t.Fatal("one of -interpreter or -formatter flags must be provided")
-	}
 }
 
 func runTests(t *testing.T, runner testRunner, path string) {
