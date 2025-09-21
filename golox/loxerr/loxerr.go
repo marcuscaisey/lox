@@ -69,7 +69,7 @@ func (e *Error) End() token.Position {
 //
 // For example:
 //
-//	test.lox:2:7: error: unterminated string literal
+//	2:7: error: unterminated string literal
 //	print "bar;
 //	      ~~~~~
 func (e *Error) Error() string {

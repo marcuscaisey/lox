@@ -136,14 +136,15 @@ func (r *interpreterRunner) runInterpreter(t *testing.T, path string) *interpret
 		t.Fatal(err)
 	}
 	var errors [][]byte
-	errorRe := regexp.MustCompile(`(?m)^.+:\d+:\d+: error: (.+)$`)
-	for _, match := range errorRe.FindAllSubmatch(exitErr.Stderr, -1) {
-		errors = append(errors, match[1])
-	}
 	var hints [][]byte
-	hintRe := regexp.MustCompile(`(?m)^.+:\d+:\d+: hint: (.+)$`)
-	for _, match := range hintRe.FindAllSubmatch(exitErr.Stderr, -1) {
-		hints = append(hints, match[1])
+	errorHintRe := regexp.MustCompile(`(?m)^\d+:\d+: (error|hint): (.+)$`)
+	for _, match := range errorHintRe.FindAllSubmatch(exitErr.Stderr, -1) {
+		switch string(match[1]) {
+		case "hint":
+			hints = append(hints, match[2])
+		case "error":
+			errors = append(errors, match[2])
+		}
 	}
 
 	return &interpreterResult{

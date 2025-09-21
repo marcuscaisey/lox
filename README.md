@@ -545,12 +545,12 @@ fun add(y) {
 ```
 
 ```
-test.lox:4:5: error: init() cannot return a value
-    return this;
-    ~~~~~~~~~~~~
-test.lox:9:10: error: 'this' can only be used inside a method definition
-  return this.x + y;
-         ~~~~
+4:9: error: init() cannot return a value
+        return this;
+        ~~~~~~~~~~~~
+9:12: error: 'this' can only be used inside a method definition
+    return this.x + y;
+           ~~~~
 ```
 
 If an error occurs during the execution of a program, execution will halt and the error will be
@@ -589,15 +589,15 @@ main();
 ```
 
 ```
-test.lox:14:7: error: radius must be positive
-      error("radius must be positive");
-      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+14:13: error: radius must be positive
+            error("radius must be positive");
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Stack Trace (most recent call first):
-  test.lox:14:7  in set Circle.radius error("radius must be positive");
-  test.lox:5:10  in Circle.init       this.radius = radius;
-  test.lox:25:11 in main              var c = Circle(-1);
-  test.lox:29:1                       main();
+  14:13 in set Circle.radius error("radius must be positive");
+  5:14  in Circle.init       this.radius = radius;
+  25:13 in main              var c = Circle(-1);
+  29:1                       main();
 ```
 
 ### Built-in Functions

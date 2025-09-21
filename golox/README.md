@@ -127,7 +127,7 @@ golox -hints test.lox
 #### Output
 
 ```
-test.lox:1:5: hint: a has been declared but is never used
+1:5: hint: a has been declared but is never used
 var a = "unused";
     ~
 ```

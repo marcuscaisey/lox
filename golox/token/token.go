@@ -248,13 +248,9 @@ func (p Position) String() string {
 func (p Position) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'm':
-		var prefix string
-		if p.File.name != "" {
-			prefix = ansi.Sprint("${CYAN}", p.File.name, "${DEFAULT}:")
-		}
 		line := p.File.Line(p.Line)
 		col := runewidth.StringWidth(string(line[:p.Column])) + 1
-		ansi.Fprint(f, prefix, "${YELLOW}", p.Line, "${DEFAULT}:${YELLOW}", col, "${DEFAULT}")
+		ansi.Fprint(f, "${YELLOW}", p.Line, "${DEFAULT}:${YELLOW}", col, "${DEFAULT}")
 	case 's':
 		fmt.Fprint(f, p.String())
 	default:
