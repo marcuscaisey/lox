@@ -11,10 +11,6 @@ import (
 	"testing"
 )
 
-var (
-	noFormatComment = "// noformat"
-)
-
 func newFormatterRunner(pwd string, formatter string) *formatterRunner {
 	return &formatterRunner{
 		pwd:       pwd,
@@ -32,8 +28,8 @@ func (r *formatterRunner) Test(t *testing.T, path string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bytes.HasPrefix(want, []byte(noFormatComment)) {
-		t.Skipf("file is marked with %s", noFormatComment)
+	if bytes.HasPrefix(want, []byte(syntaxErrorComment)) {
+		t.Skipf("file is marked with %s", syntaxErrorComment)
 	}
 
 	got := r.runFormatter(t, path)
@@ -79,8 +75,8 @@ func (r *formatterRunner) Update(t *testing.T, path string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if bytes.HasPrefix(contents, []byte(noFormatComment)) {
-		t.Skipf("file is marked with %s", noFormatComment)
+	if bytes.HasPrefix(contents, []byte(syntaxErrorComment)) {
+		t.Skipf("file is marked with %s", syntaxErrorComment)
 	}
 	r.runFormatter(t, path, "-w")
 }

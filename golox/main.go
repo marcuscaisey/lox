@@ -13,15 +13,18 @@ import (
 
 	"github.com/chzyer/readline"
 
+	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/interpreter"
 	"github.com/marcuscaisey/lox/golox/parser"
+	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 )
 
 var (
-	program   = flag.String("program", "", "Program passed in as string")
-	printAST  = flag.Bool("ast", false, "Print the AST")
-	printHelp = flag.Bool("help", false, "Print this message")
+	program    = flag.String("program", "", "Program passed in as string")
+	printAST   = flag.Bool("ast", false, "Print the AST")
+	printHints = flag.Bool("hints", false, "Print any hints for improving the program")
+	printHelp  = flag.Bool("help", false, "Print this message")
 )
 
 func usage() {
@@ -29,6 +32,12 @@ func usage() {
 	fmt.Fprintln(os.Stderr)
 	fmt.Fprintln(os.Stderr, "Options:")
 	flag.PrintDefaults()
+}
+
+func exitWithUsageErr(msg string) {
+	fmt.Fprintf(os.Stderr, "error: %s\n\n", msg)
+	flag.Usage()
+	os.Exit(2)
 }
 
 func main() {
@@ -40,6 +49,15 @@ func main() {
 	if *printHelp {
 		flag.Usage()
 		os.Exit(0)
+	}
+
+	if *printHints {
+		switch {
+		case *printAST:
+			exitWithUsageErr("cannot use -ast and -hints together")
+		case *program == "" && len(flag.Args()) == 0:
+			exitWithUsageErr("cannot use -hints with the REPL")
+		}
 	}
 
 	if *program != "" {
@@ -65,15 +83,20 @@ func main() {
 }
 
 func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) error {
-	root, err := parser.Parse(r, filename)
+	program, err := parser.Parse(r, filename)
 	if *printAST {
-		ast.Print(root)
+		ast.Print(program)
 		return err
 	}
 	if err != nil {
 		return err
 	}
-	return interpreter.Interpret(root)
+	if *printHints {
+		builtins := stubbuiltins.MustParse("builtins.lox")
+		errs := analyse.Program(program, builtins)
+		return errs.NonFatal().Err()
+	}
+	return interpreter.Interpret(program)
 }
 
 func runREPL() error {

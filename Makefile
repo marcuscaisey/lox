@@ -2,16 +2,23 @@
 
 test:
 	-$(MAKE) test_golox
+	-$(MAKE) test_golox_hints
 	-$(MAKE) test_loxfmt
 
 test_golox:
 	$(MAKE) -C golox test
+
+test_golox_hints:
+	$(MAKE) -C golox test_hints
 
 test_loxfmt:
 	$(MAKE) -C loxfmt test
 
 update_golox_tests:
 	$(MAKE) -C golox update_tests
+
+update_golox_hint_tests:
+	$(MAKE) -C golox update_hint_tests
 
 update_loxfmt_tests:
 	$(MAKE) -C loxfmt update_tests

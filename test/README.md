@@ -1,8 +1,11 @@
 # Test Suite
 
-golox and loxfmt are tested against a suite of test files defined under [testdata](testdata). golox
-is tested by running each test file and comparing the output with the expected output defined in the
-file. loxfmt is tested by formatting each test file and asserting that the contents of the file are
+golox and loxfmt are tested against a suite of test files defined under [testdata](testdata).
+
+golox is tested by running each test file and comparing the output with the expected output defined
+in the file. golox with the -hints flag is also tested in the same way.
+
+loxfmt is tested by formatting each test file and asserting that the contents of the file are
 unchanged.
 
 ## Test File Format
@@ -11,6 +14,7 @@ Test files are regular Lox files containing comments which describe the expectat
 
 - `// prints: <value>` defines a string that should be printed to stdout.
 - `// error: <message>` defines an error message that should be printed to stderr.
+- `// hint: <message>` defines a hint message that should be printed to stderr.
 
 Both special comments can appear multiple times in a test file.
 
@@ -23,8 +27,8 @@ print 3.5 % 2; // prints: 1.5
 print 3 % 1.5; // prints: 0
 ```
 
-If a `// noformat` comment appears at the start of a test file, the file will be not be formatted.
-This is useful for files which contain syntax errors and can't be parsed.
+If a `// syntaxerror` comment appears at the start of a test file, the file will be not be formatted
+or tested against golox with the -hints flag.
 
 ## Running the Tests
 
@@ -38,14 +42,16 @@ Run the golox or loxfmt tests individually:
 
 ```sh
 make test_golox
+make test_golox_hints
 make test_loxfmt
 ```
 
 Run a specific test:
 
 ```sh
-make test_golox RUN=TestInterpreter/Number/Modulo
-make test_loxfmt RUN=TestFormatter/Number/Modulo
+make test_golox RUN=TestLox/TestInterpreter/Number/Modulo
+make test_golox_hints RUN=TestLox/TestInterpreter/Number/Modulo
+make test_loxfmt RUN=TestLox/TestFormatter/Number/Modulo
 ```
 
 ## Updating the Test Expectations
@@ -55,12 +61,14 @@ of the following commands:
 
 ```sh
 make update_golox_tests
+make update_golox_hint_tests
 make update_loxfmt_tests
 ```
 
 As with running the tests, you can update the expectations of a specific test as well:
 
 ```sh
-make update_golox_tests RUN=TestInterpreter/Number/Modulo
-make update_loxfmt_tests RUN=TestFormatter/Number/Modulo
+make update_golox_tests RUN=TestLox/TestInterpreter/Number/Modulo
+make update_golox_hint_tests RUN=TestLox/TestInterpreter/Number/Modulo
+make update_loxfmt_tests RUN=TestLox/TestFormatter/Number/Modulo
 ```

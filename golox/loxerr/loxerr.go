@@ -78,7 +78,11 @@ func (e *Error) Error() string {
 		return strings.TrimSuffix(b.String(), "\n")
 	}
 
-	ansi.Fprintf(&b, "${BOLD}%m: ${RED}error${DEFAULT}: %s${DEFAULT}${RESET_BOLD}\n", e.start, e.Msg)
+	class := "${RED}error"
+	if e.Type != Fatal {
+		class = "${BLUE}hint"
+	}
+	ansi.Fprintf(&b, "${BOLD}%m: "+class+"${DEFAULT}: %s${DEFAULT}${RESET_BOLD}\n", e.start, e.Msg)
 
 	lines := make([]string, e.end.Line-e.start.Line+1)
 	for i := e.start.Line; i <= e.end.Line; i++ {
@@ -143,6 +147,17 @@ func (e Errors) Fatal() Errors {
 	errs := make(Errors, 0, len(e))
 	for _, err := range e {
 		if err.Type == Fatal {
+			errs = append(errs, err)
+		}
+	}
+	return errs
+}
+
+// NonFatal returns a new [Errors] containing only the errors in the list which are not fatal.
+func (e Errors) NonFatal() Errors {
+	errs := make(Errors, 0, len(e))
+	for _, err := range e {
+		if err.Type != Fatal {
 			errs = append(errs, err)
 		}
 	}

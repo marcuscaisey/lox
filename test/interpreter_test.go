@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -15,6 +16,7 @@ import (
 var (
 	printsRe = regexp.MustCompile(`// prints: (.+)`)
 	errorRe  = regexp.MustCompile(`// error: (.+)`)
+	hintRe   = regexp.MustCompile(`// hint: (.+)`)
 )
 
 func newInterpreterRunner(pwd string, interpreter string) *interpreterRunner {
@@ -24,13 +26,30 @@ func newInterpreterRunner(pwd string, interpreter string) *interpreterRunner {
 	}
 }
 
+func newInterpreterHintsRunner(pwd string, interpreter string) *interpreterRunner {
+	return &interpreterRunner{
+		pwd:         pwd,
+		interpreter: interpreter,
+		hints:       true,
+	}
+}
+
 type interpreterRunner struct {
 	pwd         string
 	interpreter string
+	hints       bool
 }
 
 func (r *interpreterRunner) Test(t *testing.T, path string) {
-	want := r.parseExpectedResult(t, path)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.HasPrefix(data, []byte(syntaxErrorComment)) {
+		t.Skipf("file is marked with %s", syntaxErrorComment)
+	}
+
+	want := r.parseExpectedResult(data)
 	got := r.runInterpreter(t, path)
 
 	if want.ExitCode != got.ExitCode {
@@ -48,17 +67,28 @@ func (r *interpreterRunner) Test(t *testing.T, path string) {
 		t.Errorf("incorrect errors printed to stderr:\n%s", computeDiff(want.Errors, got.Errors))
 		t.Errorf("stderr:\n%s", got.Stderr)
 	}
+
+	if !cmp.Equal(want.Hints, got.Hints) {
+		t.Errorf("incorrect hints printed to stderr:\n%s", computeDiff(want.Hints, got.Hints))
+		t.Errorf("stderr:\n%s", got.Stderr)
+	}
 }
 
 type interpreterResult struct {
 	Stdout   []byte
 	Stderr   []byte
 	Errors   [][]byte
+	Hints    [][]byte
 	ExitCode int
 }
 
 func (r *interpreterRunner) runInterpreter(t *testing.T, path string) *interpreterResult {
-	cmd := exec.Command(r.interpreter, path)
+	var args []string
+	if r.hints {
+		args = append(args, "-hints")
+	}
+	args = append(args, path)
+	cmd := exec.Command(r.interpreter, args...)
 	relInterpeter, err := filepath.Rel(r.pwd, r.interpreter)
 	if err != nil {
 		t.Fatal(err)
@@ -71,8 +101,12 @@ func (r *interpreterRunner) runInterpreter(t *testing.T, path string) *interpret
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%s %s", relInterpeter, relPath)
-	t.Logf("go run ./golox %s", relPath)
+	flags := ""
+	if len(args) > 1 {
+		flags = strings.Join(args[:len(args)-1], " ") + " "
+	}
+	t.Logf("%s %s%s", relInterpeter, flags, relPath)
+	t.Logf("go run ./golox %s%s", flags, relPath)
 
 	stdout, err := cmd.Output()
 
@@ -85,28 +119,28 @@ func (r *interpreterRunner) runInterpreter(t *testing.T, path string) *interpret
 	for _, match := range errorRe.FindAllSubmatch(exitErr.Stderr, -1) {
 		errors = append(errors, match[1])
 	}
+	var hints [][]byte
+	hintRe := regexp.MustCompile(`(?m)^.+:\d+:\d+: hint: (.+)$`)
+	for _, match := range hintRe.FindAllSubmatch(exitErr.Stderr, -1) {
+		hints = append(hints, match[1])
+	}
 
 	return &interpreterResult{
 		Stdout:   stdout,
 		Stderr:   exitErr.Stderr,
 		Errors:   errors,
+		Hints:    hints,
 		ExitCode: cmd.ProcessState.ExitCode(),
 	}
 }
 
-func (r *interpreterRunner) parseExpectedResult(t *testing.T, path string) *interpreterResult {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	errors := r.parseExpectedErrors(data)
-
+func (r *interpreterRunner) parseExpectedResult(data []byte) *interpreterResult {
 	result := &interpreterResult{
 		Stdout: r.parseExpectedStdout(data),
-		Errors: errors,
+		Errors: r.parseExpectedErrors(data),
+		Hints:  r.parseExpectedHints(data),
 	}
-	if len(result.Errors) > 0 {
+	if len(result.Errors)+len(result.Hints) > 0 {
 		result.ExitCode = 1
 	}
 
@@ -114,6 +148,9 @@ func (r *interpreterRunner) parseExpectedResult(t *testing.T, path string) *inte
 }
 
 func (r *interpreterRunner) parseExpectedStdout(data []byte) []byte {
+	if r.hints {
+		return nil
+	}
 	var b bytes.Buffer
 	for _, match := range printsRe.FindAllSubmatch(data, -1) {
 		if !bytes.Equal(match[1], []byte("<empty>")) {
@@ -125,6 +162,9 @@ func (r *interpreterRunner) parseExpectedStdout(data []byte) []byte {
 }
 
 func (r *interpreterRunner) parseExpectedErrors(data []byte) [][]byte {
+	if r.hints {
+		return nil
+	}
 	var errors [][]byte
 	for _, match := range errorRe.FindAllSubmatch(data, -1) {
 		errors = append(errors, match[1])
@@ -132,7 +172,26 @@ func (r *interpreterRunner) parseExpectedErrors(data []byte) [][]byte {
 	return errors
 }
 
+func (r *interpreterRunner) parseExpectedHints(data []byte) [][]byte {
+	if !r.hints {
+		return nil
+	}
+	var hints [][]byte
+	for _, match := range hintRe.FindAllSubmatch(data, -1) {
+		hints = append(hints, match[1])
+	}
+	return hints
+}
+
 func (r *interpreterRunner) Update(t *testing.T, path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.HasPrefix(data, []byte(syntaxErrorComment)) {
+		t.Skipf("file is marked with %s", syntaxErrorComment)
+	}
+
 	t.Logf("updating expected output for %s", path)
 
 	result := r.runInterpreter(t, path)
@@ -150,17 +209,21 @@ func (r *interpreterRunner) Update(t *testing.T, path string) {
 		} else {
 			t.Logf("errors: <empty>")
 		}
+		if len(result.Hints) > 0 {
+			t.Logf("hints:\n%s", bytes.Join(result.Hints, []byte("\n")))
+		} else {
+			t.Logf("hints: <empty>")
+		}
 	} else {
 		t.Logf("stderr: <empty>")
 	}
 
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
+	if r.hints {
+		data = r.updateExpectedHints(t, path, data, result.Hints)
+	} else {
+		data = r.updateExpectedStdout(t, path, data, result.Stdout)
+		data = r.updateExpectedErrors(t, path, data, result.Errors)
 	}
-
-	data = r.updateExpectedStdout(t, path, data, result.Stdout)
-	data = r.updateExpectedErrors(t, path, data, result.Errors)
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		t.Fatal(err)
@@ -214,6 +277,29 @@ func (r *interpreterRunner) updateExpectedErrors(t *testing.T, path string, data
 		start, end := match[2], match[3]
 		b.Write(data[lastEnd:start])
 		b.Write(errors[i])
+		lastEnd = end
+	}
+	b.Write(data[lastEnd:])
+
+	return b.Bytes()
+}
+
+func (r *interpreterRunner) updateExpectedHints(t *testing.T, path string, data []byte, hints [][]byte) []byte {
+	matches := hintRe.FindAllSubmatchIndex(data, -1)
+	if len(hints) != len(matches) {
+		t.Fatalf(`%d "// hint:" %s found in %s but %d %s printed to stderr, these should be equal`,
+			len(matches), pluralise("comment", len(matches)), path, len(hints), pluralise("hint", len(hints)))
+	}
+	if len(hints) == 0 {
+		return data
+	}
+
+	var b bytes.Buffer
+	lastEnd := 0
+	for i, match := range matches {
+		start, end := match[2], match[3]
+		b.Write(data[lastEnd:start])
+		b.Write(hints[i])
 		lastEnd = end
 	}
 	b.Write(data[lastEnd:])

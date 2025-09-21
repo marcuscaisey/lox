@@ -14,10 +14,12 @@ go install github.com/marcuscaisey/lox/golox@latest
 Usage: golox [options] [script]
 
 Options:
-  -help
-        Print this message
   -ast
         Print the AST
+  -help
+        Print this message
+  -hints
+        Print any hints for improving the program
   -program string
         Program passed in as string
 ```
@@ -108,4 +110,24 @@ golox -program 'fun add(x, y) { return x + y; } print add(5, 6);'
 
 ```
 11
+```
+
+### Print hints
+
+```sh
+cat << EOF > test.lox
+var a = "unused";
+var b = "used";
+print b;
+EOF
+
+golox -hints test.lox
+```
+
+#### Output
+
+```
+test.lox:1:5: hint: a has been declared but is never used
+var a = "unused";
+    ~
 ```

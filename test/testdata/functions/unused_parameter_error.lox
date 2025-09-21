@@ -1,0 +1,6 @@
+// hint: z has been declared but is never used
+fun add(x, y, z) {
+    return x + y;
+}
+
+_ = add;

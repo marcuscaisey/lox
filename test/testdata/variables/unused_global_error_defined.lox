@@ -1,0 +1,3 @@
+var a = "unused"; // hint: a has been declared but is never used
+var b = "used";
+print b; // prints: used

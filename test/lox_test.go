@@ -25,7 +25,10 @@ var (
 	pwd         = flag.String("pwd", "", "directory that the test was invoked from")
 	interpreter = flag.String("interpreter", "", "path to the interpreter to test")
 	formatter   = flag.String("formatter", "", "path to the formatter to test")
+	hints       = flag.Bool("hints", false, "test the interpreter's hints")
 	update      = flag.Bool("update", false, "updates the expected output of each test")
+
+	syntaxErrorComment = "// syntaxerror"
 )
 
 type testRunner interface {
@@ -37,13 +40,22 @@ func TestLox(t *testing.T) {
 	if *pwd == "" {
 		t.Fatal("-pwd flag must be provided")
 	}
+	if *hints && *interpreter == "" {
+		t.Fatal("-interpreter flag must be provided if -hints is")
+	}
 	if *interpreter != "" && *formatter != "" {
 		t.Fatal("-interpreter and -formatter flags cannot be provided together")
 	}
 	if *interpreter != "" {
-		t.Run("TestInterpreter", func(t *testing.T) {
-			runTests(t, newInterpreterRunner(*pwd, *interpreter), "testdata")
-		})
+		if *hints {
+			t.Run("TestInterpreterHints", func(t *testing.T) {
+				runTests(t, newInterpreterHintsRunner(*pwd, *interpreter), "testdata")
+			})
+		} else {
+			t.Run("TestInterpreter", func(t *testing.T) {
+				runTests(t, newInterpreterRunner(*pwd, *interpreter), "testdata")
+			})
+		}
 	} else if *formatter != "" {
 		t.Run("TestFormatter", func(t *testing.T) {
 			runTests(t, newFormatterRunner(*pwd, *formatter), "testdata")
