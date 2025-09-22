@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -334,32 +333,18 @@ func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObjec
 	}
 
 	params := callable.Params()
-	arity := len(params)
-	switch {
-	case len(args) < arity:
-		argumentSuffix := ""
-		if arity-len(args) > 1 {
-			argumentSuffix = "s"
+	if len(args) != len(params) {
+		wereWas := "were"
+		if len(args) == 1 {
+			wereWas = "was"
 		}
-		missingArgs := params[len(args):]
-		var missingArgsStr string
-		switch len(missingArgs) {
-		case 1:
-			missingArgsStr = missingArgs[0]
-		case 2:
-			missingArgsStr = missingArgs[0] + " and " + missingArgs[1]
-		default:
-			missingArgsStr = strings.Join(missingArgs[:len(missingArgs)-1], ", ") + ", and " + missingArgs[len(missingArgs)-1]
+		argumentSuffix := "s"
+		if len(params) == 1 {
+			argumentSuffix = ""
 		}
 		panic(loxerr.Newf(
 			expr,
-			loxerr.Fatal, "%s() missing %d argument%s: %s", callable.CallableName(), arity-len(args), argumentSuffix, missingArgsStr,
-		))
-	case len(args) > arity:
-		panic(loxerr.NewSpanningRangesf(
-			expr.Args[arity],
-			expr.Args[len(expr.Args)-1],
-			loxerr.Fatal, "%s() accepts %d arguments but %d were given", callable.CallableName(), arity, len(args),
+			loxerr.Fatal, "%s() accepts %d argument%s but %d %s given", callable.CallableName(), len(params), argumentSuffix, len(args), wereWas,
 		))
 	}
 

@@ -2,4 +2,4 @@ fun add(a, b) {
     print a + b;
 }
 
-add(1); // error: add() missing 1 argument: b
+add(1); // error: add() accepts 2 arguments but 1 was given
