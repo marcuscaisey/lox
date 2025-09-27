@@ -1,6 +1,9 @@
 .PHONY: golox test update_tests
 
-BUILD_PATH = ${PWD}/build/golox
+MAKEFILE_DIR := $(dir $(abspath $(lastword ${MAKEFILE_LIST})))
+ROOT_DIR := $(realpath ${MAKEFILE_DIR}/..)
+BUILD_DIR := ${ROOT_DIR}/build
+BUILD_PATH := ${BUILD_DIR}/golox
 
 golox:
 	go build -o ${BUILD_PATH} .
