@@ -43,12 +43,12 @@ from the challenges in the book.
 
 Lox has four primitive types:
 
-| Name   | Description                  | Literal syntax | Truthiness                           |
-| ------ | ---------------------------- | -------------- | ------------------------------------ |
-| number | 64-bit floating point number | `123.4`        | `false` if `0`, `true` otherwise     |
-| string | UTF-8 string                 | `"hello"`      | `false` if `""`, `true` otherwise    |
-| bool   | Boolean value                | `true` `false` | `false` if `false`, `true` otherwise |
-| nil    | Absence of a value           | `nil`          | `false`                              |
+| Name   | Description                  | Literal syntax |
+| ------ | ---------------------------- | -------------- |
+| number | 64-bit floating point number | `123.4`        |
+| string | UTF-8 string                 | `"hello"`      |
+| bool   | Boolean value                | `true` `false` |
+| nil    | Absence of a value           | `nil`          |
 
 ### Expressions
 
@@ -217,6 +217,10 @@ From highest to lowest:
 | ,         | left-to-right |
 
 Any expression can be wrapped in `()` to override the default precedence.
+
+#### Truthiness
+
+Every value apart from `false` and `nil` is truthy.
 
 ### Statements
 

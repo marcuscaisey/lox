@@ -74,7 +74,6 @@ var (
 	_ loxObject        = loxNumber(0)
 	_ loxUnaryOperand  = loxNumber(0)
 	_ loxBinaryOperand = loxNumber(0)
-	_ loxTruther       = loxNumber(0)
 )
 
 func (n loxNumber) String() string {
@@ -83,10 +82,6 @@ func (n loxNumber) String() string {
 
 func (n loxNumber) Type() loxType {
 	return loxTypeNumber
-}
-
-func (n loxNumber) IsTruthy() loxBool {
-	return n != 0
 }
 
 func (n loxNumber) UnaryOp(op token.Token) loxObject {
@@ -156,7 +151,6 @@ type loxString string
 var (
 	_ loxObject        = loxString("")
 	_ loxBinaryOperand = loxString("")
-	_ loxTruther       = loxString("")
 )
 
 func (s loxString) String() string {
@@ -165,10 +159,6 @@ func (s loxString) String() string {
 
 func (s loxString) Type() loxType {
 	return loxTypeString
-}
-
-func (s loxString) IsTruthy() loxBool {
-	return s != ""
 }
 
 func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {

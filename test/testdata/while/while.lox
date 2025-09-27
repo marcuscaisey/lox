@@ -7,6 +7,6 @@ while (i < 3) {
     i = i + 1;
 }
 
-while ("") {
+while (false) {
     print "this should not be printed";
 }

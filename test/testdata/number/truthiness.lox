@@ -1,3 +1,3 @@
 print 1 ? "1 is truthy" : "1 is falsey"; // prints: 1 is truthy
-print 0 ? "0 is truthy" : "0 is falsey"; // prints: 0 is falsey
+print 0 ? "0 is truthy" : "0 is falsey"; // prints: 0 is truthy
 print -1 ? "-1 is truthy" : "-1 is falsey"; // prints: -1 is truthy
