@@ -1,12 +1,16 @@
 class AdderFactory {
-    newAdder(n) {
+    init(n) {
+        this._n = n;
+    }
+
+    newAdder() {
         fun adder(x) {
-            return x + n;
+            return x + this._n;
         }
         return adder;
     }
 }
 
-var adderFactory = AdderFactory();
-var add3 = adderFactory.newAdder(3);
+var adderFactory = AdderFactory(3);
+var add3 = adderFactory.newAdder();
 print add3(4); // prints: 7

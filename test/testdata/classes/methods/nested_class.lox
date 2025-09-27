@@ -1,0 +1,20 @@
+class Outer {
+    method() {
+        print this; // prints: [Outer object]
+
+        fun f() {
+            print this; // prints: [Outer object]
+
+            class Inner {
+                method() {
+                    print this; // prints: [Inner object]
+                }
+            }
+
+            Inner().method();
+        }
+        f();
+    }
+}
+
+Outer().method();

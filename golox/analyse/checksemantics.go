@@ -33,6 +33,7 @@ func CheckSemantics(program *ast.Program) error {
 type semanticChecker struct {
 	inLoop     bool
 	curFunType funType
+	inMethod   bool
 
 	errs loxerr.Errors
 }
@@ -99,6 +100,12 @@ func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
 	prevFunType := c.curFunType
 	c.curFunType = funType
 	defer func() { c.curFunType = prevFunType }()
+
+	if funType.IsMethod() {
+		prevInMethod := c.inMethod
+		c.inMethod = true
+		defer func() { c.inMethod = prevInMethod }()
+	}
 
 	ast.Walk(fun.Body, c.walk)
 }
@@ -207,7 +214,7 @@ func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
 }
 
 func (c *semanticChecker) checkThisInMethod(expr *ast.ThisExpr) {
-	if !c.curFunType.IsMethod() {
+	if !c.inMethod {
 		c.errs.Addf(expr, loxerr.Fatal, "%m can only be used inside a method definition", token.This)
 	}
 }
