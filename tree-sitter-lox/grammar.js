@@ -154,7 +154,7 @@ module.exports = grammar({
 
     number: (_) => /\d+(\.\d+)?/,
 
-    string: (_) => /"[^"\r\n]*"/,
+    string: (_) => /"[^"]*"/,
 
     boolean: (_) => choice("true", "false"),
 

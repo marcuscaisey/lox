@@ -677,7 +677,7 @@
     },
     "string": {
       "type": "PATTERN",
-      "value": "\"[^\"\\r\\n]*\""
+      "value": "\"[^\"]*\""
     },
     "boolean": {
       "type": "CHOICE",

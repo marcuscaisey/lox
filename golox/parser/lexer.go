@@ -213,7 +213,7 @@ func (l *lexer) consumeString() (s string, terminated bool) {
 	var b strings.Builder
 	b.WriteRune('"')
 	for {
-		if l.ch == eof || l.ch == '\n' || l.ch == '\r' {
+		if l.ch == eof {
 			return b.String(), false
 		}
 		ch := l.ch
