@@ -27,6 +27,9 @@ func TestInterpreter(t *testing.T) {
 	if *interpreter == "" {
 		t.Skip("-interpreter flag not provided")
 	}
+	if *hints {
+		t.Skip("-hints flag provided")
+	}
 	runTests(t, newInterpreterRunner(*pwd, *interpreter), "testdata")
 }
 
