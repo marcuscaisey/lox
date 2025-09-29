@@ -88,5 +88,5 @@ func (r *formatterRunner) Update(t *testing.T, path string) {
 	if bytes.HasPrefix(contents, []byte(syntaxErrorComment)) {
 		t.Skipf("file is marked with %s", syntaxErrorComment)
 	}
-	r.runFormatter(t, path, "-w")
+	r.runFormatter(t, path, "-write")
 }
