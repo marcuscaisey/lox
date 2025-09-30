@@ -6,13 +6,13 @@
         return isOdd(n - 1); // error: isOdd has not been declared
     }
 
-    // hint: isOdd has been declared but is never used
     fun isOdd(n) {
         if (n == 0) {
             return false;
         }
         return isEven(n - 1);
     }
+    _ = isOdd;
 
     print isEven(3);
 }
