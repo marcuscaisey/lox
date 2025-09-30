@@ -1,0 +1,6 @@
+fun f() {
+    print a; // prints: nil
+}
+
+var a;
+f();

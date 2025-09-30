@@ -401,12 +401,11 @@ Declarations are constructs that bind an identifier (name) to a value. It is not
 
 - declare a [non-blank](#blank-identifier) identifier more than once in the same local scope.
 - use a [non-blank](#blank-identifier) identifier before it has been declared.
-- use a declared identifier which has not been assigned a value (defined).
 
 #### Variable Declaration
 
-A variable declaration declares an identifier which can be assigned a value. You can optionally
-assign (define) an initial value to the variable.
+A variable declaration declares an identifier which can be assigned a value. Initially variables
+have a value of `nil`. You can optionally assign (define) a different value to the variable.
 
 ```lox
 var a;

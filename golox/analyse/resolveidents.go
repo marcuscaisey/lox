@@ -292,7 +292,7 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 			// in, then we can't definitely say that the identifier has been defined yet. It might be defined later
 			// before the function is called.
 			if op == identOpRead && !scope.IsDefined(ident.Token.Lexeme) && !(r.inFun && level <= r.funScopeLevel) { //nolint:staticcheck
-				r.errs.Addf(ident, loxerr.Fatal, "%s has not been defined", ident.Token.Lexeme)
+				r.errs.Addf(ident, loxerr.NonFatal, "%s has not been defined", ident.Token.Lexeme)
 			}
 			return
 		}

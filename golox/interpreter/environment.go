@@ -42,7 +42,7 @@ func (e *globalEnvironment) Child() environment {
 }
 
 func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
-	e.values[ident.Token.Lexeme] = nil
+	e.values[ident.Token.Lexeme] = loxNil{}
 	return e
 }
 
@@ -71,11 +71,7 @@ func (e *globalEnvironment) Assign(ident *ast.Ident, value loxObject) {
 
 func (e *globalEnvironment) Get(ident *ast.Ident) loxObject {
 	if value, ok := e.values[ident.Token.Lexeme]; ok {
-		if value != nil {
-			return value
-		} else {
-			panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been defined", ident.Token.Lexeme))
-		}
+		return value
 	} else {
 		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
 	}
@@ -101,7 +97,7 @@ func (e *localEnvironment) Child() environment {
 }
 
 func (e *localEnvironment) Declare(ident *ast.Ident) environment {
-	return newLocalEnvironment(e, ident.Token.Lexeme, nil)
+	return newLocalEnvironment(e, ident.Token.Lexeme, loxNil{})
 }
 
 func (e *localEnvironment) Define(name string, value loxObject) environment {
@@ -127,12 +123,7 @@ func (e *localEnvironment) Assign(ident *ast.Ident, value loxObject) {
 
 func (e *localEnvironment) Get(ident *ast.Ident) loxObject {
 	if ident.Token.Lexeme == e.name {
-		if e.value != nil {
-			return e.value
-		} else {
-			// This should have been caught by [analysis.ResolveIdents].
-			panic(fmt.Sprintf("%s has not been defined", ident.Token.Lexeme))
-		}
+		return e.value
 	} else if e.parent != nil {
 		return e.parent.Get(ident)
 	} else {

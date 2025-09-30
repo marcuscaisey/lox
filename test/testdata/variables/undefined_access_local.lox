@@ -1,0 +1,5 @@
+{
+    var a;
+    // hint: a has not been defined
+    print a; // prints: nil
+}
