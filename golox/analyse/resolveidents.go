@@ -226,7 +226,7 @@ func (r *identResolver) beginScope() func() {
 			return
 		}
 		for decl := range scope.UnusedDeclarations() {
-			r.errs.Addf(decl.Ident(), loxerr.Unused, "%s has been declared but is never used", decl.Ident().Token.Lexeme)
+			r.errs.Addf(decl.Ident(), loxerr.NonFatal, "%s has been declared but is never used", decl.Ident().Token.Lexeme)
 		}
 		for ident := range scope.UndeclaredUsages() {
 			if scope.IsDeclared(ident.Token.Lexeme) {
@@ -250,7 +250,11 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 		return
 	}
 	if scope := r.scopes.Peek(); scope.IsDeclared(ident.Token.Lexeme) {
-		r.errs.Addf(ident, loxerr.Fatal, "%s has already been declared", ident.Token.Lexeme)
+		typ := loxerr.Fatal
+		if r.scopes.Len() == 1 {
+			typ = loxerr.NonFatal
+		}
+		r.errs.Addf(ident, typ, "%s has already been declared", ident.Token.Lexeme)
 	} else {
 		scope.Declare(stmt)
 		r.identDecls[ident] = stmt

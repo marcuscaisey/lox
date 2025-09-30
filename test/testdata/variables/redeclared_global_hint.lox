@@ -1,0 +1,4 @@
+var a = 1;
+var a; // hint: a has already been declared
+a = 2;
+print a; // prints: 2

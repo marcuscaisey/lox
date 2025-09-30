@@ -1,5 +1,5 @@
 {
     var a = 1;
-    var a = 2; // error: a has already been declared
-    _ = a;
+    var a; // error: a has already been declared
+    a = 2;
 }

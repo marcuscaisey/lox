@@ -42,12 +42,8 @@ func (e *globalEnvironment) Child() environment {
 }
 
 func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
-	if _, ok := e.values[ident.Token.Lexeme]; !ok {
-		e.values[ident.Token.Lexeme] = nil
-		return e
-	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has already been declared", ident.Token.Lexeme))
-	}
+	e.values[ident.Token.Lexeme] = nil
+	return e
 }
 
 func (e *globalEnvironment) Define(name string, value loxObject) environment {

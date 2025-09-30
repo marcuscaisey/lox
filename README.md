@@ -399,7 +399,7 @@ greet(); // prints: Hello, World!
 
 Declarations are constructs that bind an identifier (name) to a value. It is not valid to:
 
-- declare a [non-blank](#blank-identifier) identifier more than once in the same lexical scope.
+- declare a [non-blank](#blank-identifier) identifier more than once in the same local scope.
 - use a [non-blank](#blank-identifier) identifier before it has been declared.
 - use a declared identifier which has not been assigned a value (defined).
 
