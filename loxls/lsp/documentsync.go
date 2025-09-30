@@ -3,7 +3,6 @@ package lsp
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 	"unicode/utf16"
@@ -26,7 +25,6 @@ type document struct {
 	// Server generated
 	Program        *ast.Program
 	HasParseErrors bool
-	Diagnostics    []*protocol.Diagnostic
 	IdentDecls     map[*ast.Ident]ast.Decl
 	Completor      *completor
 }
@@ -153,8 +151,18 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		builtins = h.stubBuiltins
 	}
 	identDecls, resolveErr := analyse.ResolveIdents(program, builtins)
-	semanticsErr := analyse.CheckSemantics(program)
 
+	h.docs[uri] = &document{
+		URI:            uri,
+		Version:        version,
+		Text:           src,
+		Program:        program,
+		HasParseErrors: len(parseLoxErrs) > 0,
+		IdentDecls:     identDecls,
+		Completor:      newCompletor(program, h.stubBuiltins),
+	}
+
+	semanticsErr := analyse.CheckSemantics(program)
 	var resolveLoxErrs, semanticsLoxErrs loxerr.Errors
 	errors.As(resolveErr, &resolveLoxErrs)
 	errors.As(semanticsErr, &semanticsLoxErrs)
@@ -181,29 +189,11 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		}
 	}
 
-	if doc, ok := h.docs[uri]; (!ok && len(diagnostics) > 0) || (ok && !reflect.DeepEqual(diagnostics, doc.Diagnostics)) {
-		err := h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
-			Uri:         uri,
-			Version:     version,
-			Diagnostics: diagnostics,
-		})
-		if err != nil {
-			return fmt.Errorf("updating document: %w", err)
-		}
-	}
-
-	h.docs[uri] = &document{
-		URI:            uri,
-		Version:        version,
-		Text:           src,
-		Program:        program,
-		HasParseErrors: len(parseLoxErrs) > 0,
-		Diagnostics:    diagnostics,
-		IdentDecls:     identDecls,
-		Completor:      newCompletor(program, h.stubBuiltins),
-	}
-
-	return nil
+	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
+		Uri:         uri,
+		Version:     version,
+		Diagnostics: diagnostics,
+	})
 }
 
 func uriToFilename(uri string) (string, error) {
