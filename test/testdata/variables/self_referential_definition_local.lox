@@ -1,5 +1,0 @@
-var a = "global a";
-{
-    var a = "shadowed " + a;
-    print a; // prints: shadowed global a
-}

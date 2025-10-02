@@ -117,7 +117,8 @@ func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Dec
 type declStatus int
 
 const (
-	declStatusDefined declStatus = 1 << iota
+	declStatusInitialising declStatus = 1 << iota
+	declStatusDefined
 	declStatusUsed
 )
 
@@ -160,6 +161,16 @@ func (s *scope) Declare(stmt ast.Decl) {
 	s.decls[name] = decl
 }
 
+// StartInitialising marks an identifier as being initialised in the scope.
+func (s *scope) StartInitialising(name string) {
+	s.decls[name].Status |= declStatusInitialising
+}
+
+// FinishInitialising unmarks an identifier as being initialised in the scope.
+func (s *scope) FinishInitialising(name string) {
+	s.decls[name].Status &= ^declStatusInitialising
+}
+
 // Declaration returns the statement which declared an identifier in the scope.
 func (s *scope) Declaration(name string) ast.Decl {
 	return s.decls[name].Stmt
@@ -184,6 +195,14 @@ func (s *scope) UseUndeclared(ident *ast.Ident) {
 func (s *scope) IsDeclared(name string) bool {
 	_, ok := s.decls[name]
 	return ok
+}
+
+// IsInitialising reports whether the identifier is being initialised in the scope.
+func (s *scope) IsInitialising(name string) bool {
+	if decl, ok := s.decls[name]; ok {
+		return decl.Status&declStatusInitialising != 0
+	}
+	return false
 }
 
 // IsDefined reports whether the identifier has been defined in the scope.
@@ -238,12 +257,16 @@ func (r *identResolver) beginScope() func() {
 	}
 }
 
+func (r *identResolver) inGlobalScope() bool {
+	return r.scopes.Len() == 1
+}
+
 func (r *identResolver) declareIdent(stmt ast.Decl) {
 	ident := stmt.Ident()
 	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
 		return
 	}
-	if r.scopes.Len() == 1 && r.forwardDeclaredGlobals[ident.Token.Lexeme] {
+	if r.inGlobalScope() && r.forwardDeclaredGlobals[ident.Token.Lexeme] {
 		if r.scopes.Peek().Declaration(ident.Token.Lexeme) != stmt {
 			r.errs.Addf(ident, loxerr.Fatal, "%s has already been declared", ident.Token.Lexeme)
 		}
@@ -251,7 +274,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 	}
 	if scope := r.scopes.Peek(); scope.IsDeclared(ident.Token.Lexeme) {
 		typ := loxerr.Fatal
-		if r.scopes.Len() == 1 {
+		if r.inGlobalScope() {
 			typ = loxerr.NonFatal
 		}
 		r.errs.Addf(ident, typ, "%s has already been declared", ident.Token.Lexeme)
@@ -268,6 +291,30 @@ func (r *identResolver) defineIdent(ident *ast.Ident) {
 	for _, scope := range r.scopes.Backward() {
 		if scope.IsDeclared(ident.Token.Lexeme) {
 			scope.Define(ident.Token.Lexeme)
+			return
+		}
+	}
+}
+
+func (r *identResolver) startInitialisingIdent(ident *ast.Ident) {
+	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
+		return
+	}
+	for _, scope := range r.scopes.Backward() {
+		if scope.IsDeclared(ident.Token.Lexeme) {
+			scope.StartInitialising(ident.Token.Lexeme)
+			return
+		}
+	}
+}
+
+func (r *identResolver) finishInitialisingIdent(ident *ast.Ident) {
+	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
+		return
+	}
+	for _, scope := range r.scopes.Backward() {
+		if scope.IsDeclared(ident.Token.Lexeme) {
+			scope.FinishInitialising(ident.Token.Lexeme)
 			return
 		}
 	}
@@ -323,7 +370,7 @@ func (r *identResolver) walk(node ast.Node) bool {
 	case *ast.FunExpr:
 		r.walkFunExpr(node)
 	case *ast.IdentExpr:
-		r.resolveIdentExpr(node)
+		r.walkIdentExpr(node)
 	case *ast.AssignmentExpr:
 		r.walkAssignmentExpr(node)
 	default:
@@ -334,8 +381,15 @@ func (r *identResolver) walk(node ast.Node) bool {
 
 func (r *identResolver) walkVarDecl(decl *ast.VarDecl) {
 	if decl.Initialiser != nil {
-		ast.Walk(decl.Initialiser, r.walk)
-		r.declareIdent(decl)
+		if r.inGlobalScope() {
+			ast.Walk(decl.Initialiser, r.walk)
+			r.declareIdent(decl)
+		} else {
+			r.declareIdent(decl)
+			r.startInitialisingIdent(decl.Name)
+			ast.Walk(decl.Initialiser, r.walk)
+			r.finishInitialisingIdent(decl.Name)
+		}
 		r.defineIdent(decl.Name)
 	} else {
 		r.declareIdent(decl)
@@ -436,7 +490,11 @@ func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
 	r.walkFun(expr.Function)
 }
 
-func (r *identResolver) resolveIdentExpr(expr *ast.IdentExpr) {
+func (r *identResolver) walkIdentExpr(expr *ast.IdentExpr) {
+	if !r.inGlobalScope() && r.scopes.Peek().IsInitialising(expr.Ident.Token.Lexeme) {
+		r.errs.Addf(expr, loxerr.Fatal, "%s read in its own initialiser", expr.Ident.Token.Lexeme)
+		return
+	}
 	r.resolveIdent(expr.Ident, identOpRead)
 }
 
