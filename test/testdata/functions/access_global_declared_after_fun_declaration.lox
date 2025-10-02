@@ -1,5 +1,5 @@
 fun f() {
-    print a;
+  print a;
 }
 var a = "global";
 f(); // prints: global

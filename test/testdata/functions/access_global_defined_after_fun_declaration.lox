@@ -1,15 +1,15 @@
 var a;
 fun f() {
-    print a;
+  print a;
 }
 a = "global";
 f(); // prints: global
 
 var b;
 {
-    fun f() {
-        print b;
-    }
-    b = "local";
-    f(); // prints: local
+  fun f() {
+    print b;
+  }
+  b = "local";
+  f(); // prints: local
 }

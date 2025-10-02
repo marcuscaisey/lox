@@ -1,21 +1,21 @@
 {
-    var a;
-    class Foo {
-        bar() {
-            print a;
-        }
+  var a;
+  class Foo {
+    bar() {
+      print a;
     }
-    a = "outer";
-    Foo().bar(); // prints: outer
+  }
+  a = "outer";
+  Foo().bar(); // prints: outer
 
-    var b;
-    {
-        class Foo {
-            bar() {
-                print b;
-            }
-        }
-        b = "inner";
-        Foo().bar(); // prints: inner
+  var b;
+  {
+    class Foo {
+      bar() {
+        print b;
+      }
     }
+    b = "inner";
+    Foo().bar(); // prints: inner
+  }
 }

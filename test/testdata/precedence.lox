@@ -31,9 +31,9 @@ print --1 * "foo"; // prints: foo
 
 // call and property access have higher precedence than unary -
 class C {
-    init(x) {
-        this.x = x;
-    }
+  init(x) {
+    this.x = x;
+  }
 }
 print -C(1).x; // prints: -1
 

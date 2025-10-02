@@ -1,10 +1,10 @@
 for (var i = 0; i < 10; i = i + 1) {
-    if (i < 2) {
-        // prints: 0
-        // prints: 1
-        print i;
-    } else {
-        // error: counter reached 2
-        error("counter reached 2");
-    }
+  if (i < 2) {
+    // prints: 0
+    // prints: 1
+    print i;
+  } else {
+    // error: counter reached 2
+    error("counter reached 2");
+  }
 }

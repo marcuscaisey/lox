@@ -1,5 +1,5 @@
 fun setX(value) {
-    x = value;
+  x = value;
 }
 
 setX(2); // error: x has not been declared

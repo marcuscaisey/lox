@@ -1,13 +1,13 @@
 var _ = 1;
 var _ = 2;
 {
-    var _ = 3;
-    var _ = 4;
+  var _ = 3;
+  var _ = 4;
 }
 
 var value = "original";
 fun updateValue() {
-    value = "updated";
+  value = "updated";
 }
 
 var _ = updateValue();

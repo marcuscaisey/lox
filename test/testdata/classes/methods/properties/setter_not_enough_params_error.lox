@@ -1,8 +1,8 @@
 class Foo {
-    get bar() {}
+  get bar() {}
 
-    // error: property setter must have a parameter
-    set bar() {}
+  // error: property setter must have a parameter
+  set bar() {}
 }
 
 _ = Foo;

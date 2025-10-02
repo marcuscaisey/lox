@@ -1,7 +1,7 @@
 class Foo {
-    static bar() {
-        return "bar method";
-    }
+  static bar() {
+    return "bar method";
+  }
 }
 
 Foo.bar = "bar field";

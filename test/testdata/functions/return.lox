@@ -1,10 +1,10 @@
 fun returnsValue() {
-    return "return value";
+  return "return value";
 }
 
 fun returnsNoValue() {
-    return;
-    print "should not print";
+  return;
+  print "should not print";
 }
 
 fun noReturn() {}

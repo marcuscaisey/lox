@@ -1,20 +1,20 @@
 class Foo {
-    getClosure() {
-        fun f() {
-            fun g() {
-                fun h() {
-                    return this.toString();
-                }
-                return h;
-            }
-            return g;
+  getClosure() {
+    fun f() {
+      fun g() {
+        fun h() {
+          return this.toString();
         }
-        return f;
+        return h;
+      }
+      return g;
     }
+    return f;
+  }
 
-    toString() {
-        return "Foo";
-    }
+  toString() {
+    return "Foo";
+  }
 }
 
 var closure = Foo().getClosure();

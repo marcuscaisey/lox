@@ -1,7 +1,7 @@
 var a;
 
 fun f() {
-    print a; // prints: nil
+  print a; // prints: nil
 }
 
 f();

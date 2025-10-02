@@ -9,7 +9,7 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-const indentSize = 4
+const indentSize = 2
 
 // Node formats node in canonical Lox style and returns the result. node is expected to be a syntactically correct.
 func Node(node ast.Node) string {

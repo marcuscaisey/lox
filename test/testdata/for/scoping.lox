@@ -5,12 +5,12 @@ var c;
 var d = "global d";
 
 for (var a = "local a";;) {
-    print a; // prints: local a
-    print b; // prints: global b
-    c = "global c";
-    var d = "local d";
-    var _ = d;
-    break;
+  print a; // prints: local a
+  print b; // prints: global b
+  c = "global c";
+  var d = "local d";
+  var _ = d;
+  break;
 }
 
 print c; // prints: global c

@@ -1,8 +1,8 @@
 class Foo {
-    // error: write-only properties are not allowed
-    set bar(value) {
-        this._bar = value;
-    }
+  // error: write-only properties are not allowed
+  set bar(value) {
+    this._bar = value;
+  }
 }
 
 _ = Foo;

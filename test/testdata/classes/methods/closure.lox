@@ -1,12 +1,12 @@
 fun newCounter() {
-    var i = 0;
-    class Counter {
-        increment() {
-            i = i + 1;
-            return i;
-        }
+  var i = 0;
+  class Counter {
+    increment() {
+      i = i + 1;
+      return i;
     }
-    return Counter();
+  }
+  return Counter();
 }
 
 var counter = newCounter();

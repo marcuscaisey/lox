@@ -1,11 +1,11 @@
 class Foo {
-    init(bar) {
-        this.bar = bar;
-    }
+  init(bar) {
+    this.bar = bar;
+  }
 
-    static setBar(bar) {
-        this.bar = bar;
-    }
+  static setBar(bar) {
+    this.bar = bar;
+  }
 }
 
 var foo = Foo("instance bar");

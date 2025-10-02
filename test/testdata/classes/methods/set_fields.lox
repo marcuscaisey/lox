@@ -1,16 +1,16 @@
 class Point {
-    init(x, y) {
-        this.x = x;
-        this.y = y;
-    }
+  init(x, y) {
+    this.x = x;
+    this.y = y;
+  }
 
-    setX(x) {
-        this.x = x;
-    }
+  setX(x) {
+    this.x = x;
+  }
 
-    setY(y) {
-        this.y = y;
-    }
+  setY(y) {
+    this.y = y;
+  }
 }
 
 var p = Point(1, 2);

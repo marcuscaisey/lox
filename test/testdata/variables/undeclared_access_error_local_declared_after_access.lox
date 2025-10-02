@@ -1,4 +1,4 @@
 {
-    x = 1; // error: x has been used before its declaration
-    var x;
+  x = 1; // error: x has been used before its declaration
+  var x;
 }

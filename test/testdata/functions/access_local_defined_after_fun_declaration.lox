@@ -1,17 +1,17 @@
 {
-    var a;
-    fun f() {
-        print a;
-    }
-    a = "outer";
-    f(); // prints: outer
+  var a;
+  fun f() {
+    print a;
+  }
+  a = "outer";
+  f(); // prints: outer
 
-    var b;
-    {
-        fun f() {
-            print b;
-        }
-        b = "inner";
-        f(); // prints: inner
+  var b;
+  {
+    fun f() {
+      print b;
     }
+    b = "inner";
+    f(); // prints: inner
+  }
 }

@@ -1,4 +1,4 @@
 class Foo {
-    init() {}
+  init() {}
 }
 print type(Foo().init); // prints: function

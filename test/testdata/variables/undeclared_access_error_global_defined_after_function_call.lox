@@ -1,5 +1,5 @@
 fun printX() {
-    print x;
+  print x;
 }
 
 printX(); // error: x has not been declared

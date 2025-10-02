@@ -1,6 +1,6 @@
 while (true) {
-    fun() {
-        continue; // error: 'continue' can only be used inside a loop
-    }();
-    break;
+  fun() {
+    continue; // error: 'continue' can only be used inside a loop
+  }();
+  break;
 }

@@ -1,7 +1,7 @@
 class Foo {
-    static setBar(bar) {
-        this.bar = bar;
-    }
+  static setBar(bar) {
+    this.bar = bar;
+  }
 }
 
 var setBar = Foo.setBar;

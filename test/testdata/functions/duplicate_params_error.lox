@@ -1,9 +1,9 @@
 // error: x has already been declared
 // error: y has already been declared
 fun f(x, y, z, x, y) {
-    _ = x;
-    _ = y;
-    _ = z;
+  _ = x;
+  _ = y;
+  _ = z;
 }
 
 _ = f;
