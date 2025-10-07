@@ -18,7 +18,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Test
-        run: make test_golox
+        run: go test ./golox
 
   test-loxfmt:
     name: Test loxfmt
@@ -31,7 +31,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Test
-        run: make test_loxfmt
+        run: go test ./loxfmt
 
   test-tree-sitter-lox:
     name: Test tree-sitter-lox

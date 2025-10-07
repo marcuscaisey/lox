@@ -35,23 +35,23 @@ or tested against golox with the -hints flag.
 Run all tests:
 
 ```sh
-make test
+go test ./...
 ```
 
 Run the golox or loxfmt tests individually:
 
 ```sh
-make test_golox
-make test_golox_hints
-make test_loxfmt
+go test ./golox
+go test ./golox -test-hints
+go test ./loxfmt
 ```
 
 Run a specific test:
 
 ```sh
-make test_golox RUN=TestInterpreter/Number/Modulo
-make test_golox_hints RUN=TestInterpreterHints/Number/Modulo
-make test_loxfmt RUN=TestFormatter/Number/Modulo
+go test ./golox -test.run TestInterpreter/Number/Modulo
+go test ./golox -test-hints -test.run TestInterpreterHints/Number/Modulo
+go test ./loxfmt -test.run TestInterpreter/Number/Modulo
 ```
 
 ## Updating the Test Expectations
@@ -60,15 +60,15 @@ The expectations of each test can be updated to match the current implementation
 of the following commands:
 
 ```sh
-make update_golox_tests
-make update_golox_hint_tests
-make update_loxfmt_tests
+go test ./golox -update
+go test ./golox -test-hints -update
+go test ./loxfmt -update
 ```
 
 As with running the tests, you can update the expectations of a specific test as well:
 
 ```sh
-make update_golox_tests RUN=TestInterpreter/Number/Modulo
-make update_golox_hint_tests RUN=TestInterpreterHints/Number/Modulo
-make update_loxfmt_tests RUN=TestFormatter/Number/Modulo
+go test ./golox -test.run TestInterpreter/Number/Modulo -update
+go test ./golox -test-hints -test.run TestInterpreterHints/Number/Modulo -update
+go test ./loxfmt -test.run TestInterpreter/Number/Modulo -update
 ```

@@ -1,4 +1,4 @@
-package test
+package main_test
 
 import (
 	"bytes"
@@ -6,75 +6,62 @@ import (
 	"flag"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/marcuscaisey/lox/test/loxtest"
 )
 
 var (
-	interpreter = flag.String("interpreter", "", "path to the interpreter to test")
-	hints       = flag.Bool("hints", false, "test the interpreter's hints")
+	testHints = flag.Bool("test-hints", false, "test the interpreter's hints")
 
 	printsRe = regexp.MustCompile(`// prints: (.+)`)
 	errorRe  = regexp.MustCompile(`// error: (.+)`)
 	hintRe   = regexp.MustCompile(`// hint: (.+)`)
 )
 
-func TestInterpreter(t *testing.T) {
-	if *interpreter == "" {
-		t.Skip("-interpreter flag not provided")
+func TestGolox(t *testing.T) {
+	goloxPath := loxtest.MustBuildBinary(t, "golox")
+	if *testHints {
+		t.Skip("-test-hints flag provided")
 	}
-	if *hints {
-		t.Skip("-hints flag provided")
-	}
-	runTests(t, newInterpreterRunner(*pwd, *interpreter), "testdata")
+	runner := newRunner(goloxPath)
+	loxtest.Run(t, runner, loxtest.WithSkipSyntaxErrors(false))
 }
 
-func TestInterpreterHints(t *testing.T) {
-	if *interpreter == "" {
-		t.Skip("-interpreter flag not provided")
+func TestGoloxHints(t *testing.T) {
+	path := loxtest.MustBuildBinary(t, "golox")
+	if !*testHints {
+		t.Skip("-test-hints flag not provided")
 	}
-	if !*hints {
-		t.Skip("-hints flag not provided")
-	}
-	runTests(t, newInterpreterHintsRunner(*pwd, *interpreter), "testdata")
+	runner := newHintsRunner(path)
+	loxtest.Run(t, runner)
 }
 
-func newInterpreterRunner(pwd string, interpreter string) *interpreterRunner {
-	return &interpreterRunner{
-		pwd:         pwd,
-		interpreter: interpreter,
+func newRunner(goloxPath string) *runner {
+	return &runner{
+		goloxPath: goloxPath,
 	}
 }
 
-func newInterpreterHintsRunner(pwd string, interpreter string) *interpreterRunner {
-	return &interpreterRunner{
-		pwd:         pwd,
-		interpreter: interpreter,
-		hints:       true,
+func newHintsRunner(goloxPath string) *runner {
+	return &runner{
+		goloxPath: goloxPath,
+		hints:     true,
 	}
 }
 
-type interpreterRunner struct {
-	pwd         string
-	interpreter string
-	hints       bool
+type runner struct {
+	goloxPath string
+	hints     bool
 }
 
-func (r *interpreterRunner) Test(t *testing.T, path string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if bytes.HasPrefix(data, []byte(syntaxErrorComment)) {
-		t.Skipf("file is marked with %s", syntaxErrorComment)
-	}
-
-	want := r.parseExpectedResult(data)
-	got := r.runInterpreter(t, path)
+func (r *runner) Test(t *testing.T, path string) {
+	want := r.mustParseExpectedResult(t, path)
+	got := r.mustRunInterpreter(t, path)
 
 	if want.ExitCode != got.ExitCode {
 		t.Errorf("exit code = %d, want %d", got.ExitCode, want.ExitCode)
@@ -84,16 +71,16 @@ func (r *interpreterRunner) Test(t *testing.T, path string) {
 	}
 
 	if !bytes.Equal(want.Stdout, got.Stdout) {
-		t.Errorf("incorrect output printed to stdout:\n%s", computeTextDiff(string(want.Stdout), string(got.Stdout)))
+		t.Errorf("incorrect output printed to stdout:\n%s", loxtest.ComputeTextDiff(string(want.Stdout), string(got.Stdout)))
 	}
 
 	if !cmp.Equal(want.Errors, got.Errors) {
-		t.Errorf("incorrect errors printed to stderr:\n%s", computeDiff(want.Errors, got.Errors))
+		t.Errorf("incorrect errors printed to stderr:\n%s", loxtest.ComputeDiff(want.Errors, got.Errors))
 		t.Errorf("stderr:\n%s", got.Stderr)
 	}
 
 	if !cmp.Equal(want.Hints, got.Hints) {
-		t.Errorf("incorrect hints printed to stderr:\n%s", computeDiff(want.Hints, got.Hints))
+		t.Errorf("incorrect hints printed to stderr:\n%s", loxtest.ComputeDiff(want.Hints, got.Hints))
 		t.Errorf("stderr:\n%s", got.Stderr)
 	}
 }
@@ -106,31 +93,14 @@ type interpreterResult struct {
 	ExitCode int
 }
 
-func (r *interpreterRunner) runInterpreter(t *testing.T, path string) *interpreterResult {
+func (r *runner) mustRunInterpreter(t *testing.T, path string) *interpreterResult {
 	var args []string
 	if r.hints {
 		args = append(args, "-hints")
 	}
 	args = append(args, path)
-	cmd := exec.Command(r.interpreter, args...)
-	relInterpeter, err := filepath.Rel(r.pwd, r.interpreter)
-	if err != nil {
-		t.Fatal(err)
-	}
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	relPath, err := filepath.Rel(r.pwd, absPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	flags := ""
-	if len(args) > 1 {
-		flags = strings.Join(args[:len(args)-1], " ") + " "
-	}
-	t.Logf("%s %s%s", relInterpeter, flags, relPath)
-	t.Logf("go run ./golox %s%s", flags, relPath)
+	cmd := exec.Command(r.goloxPath, args...)
+	t.Logf("go run ./golox %s", strings.Join(args, " "))
 
 	stdout, err := cmd.Output()
 
@@ -159,7 +129,12 @@ func (r *interpreterRunner) runInterpreter(t *testing.T, path string) *interpret
 	}
 }
 
-func (r *interpreterRunner) parseExpectedResult(data []byte) *interpreterResult {
+func (r *runner) mustParseExpectedResult(t *testing.T, path string) *interpreterResult {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	result := &interpreterResult{
 		Stdout: r.parseExpectedStdout(data),
 		Errors: r.parseExpectedErrors(data),
@@ -172,7 +147,7 @@ func (r *interpreterRunner) parseExpectedResult(data []byte) *interpreterResult 
 	return result
 }
 
-func (r *interpreterRunner) parseExpectedStdout(data []byte) []byte {
+func (r *runner) parseExpectedStdout(data []byte) []byte {
 	if r.hints {
 		return nil
 	}
@@ -186,7 +161,7 @@ func (r *interpreterRunner) parseExpectedStdout(data []byte) []byte {
 	return b.Bytes()
 }
 
-func (r *interpreterRunner) parseExpectedErrors(data []byte) [][]byte {
+func (r *runner) parseExpectedErrors(data []byte) [][]byte {
 	if r.hints {
 		return nil
 	}
@@ -197,7 +172,7 @@ func (r *interpreterRunner) parseExpectedErrors(data []byte) [][]byte {
 	return errors
 }
 
-func (r *interpreterRunner) parseExpectedHints(data []byte) [][]byte {
+func (r *runner) parseExpectedHints(data []byte) [][]byte {
 	if !r.hints {
 		return nil
 	}
@@ -208,18 +183,10 @@ func (r *interpreterRunner) parseExpectedHints(data []byte) [][]byte {
 	return hints
 }
 
-func (r *interpreterRunner) Update(t *testing.T, path string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if bytes.HasPrefix(data, []byte(syntaxErrorComment)) {
-		t.Skipf("file is marked with %s", syntaxErrorComment)
-	}
-
+func (r *runner) Update(t *testing.T, path string) {
 	t.Logf("updating expected output for %s", path)
 
-	result := r.runInterpreter(t, path)
+	result := r.mustRunInterpreter(t, path)
 
 	t.Logf("exit code: %d", result.ExitCode)
 	if len(result.Stdout) > 0 {
@@ -243,11 +210,15 @@ func (r *interpreterRunner) Update(t *testing.T, path string) {
 		t.Logf("stderr: <empty>")
 	}
 
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if r.hints {
-		data = r.updateExpectedHints(t, path, data, result.Hints)
+		data = r.mustUpdateExpectedHints(t, path, data, result.Hints)
 	} else {
-		data = r.updateExpectedStdout(t, path, data, result.Stdout)
-		data = r.updateExpectedErrors(t, path, data, result.Errors)
+		data = r.mustUpdateExpectedStdout(t, path, data, result.Stdout)
+		data = r.mustUpdateExpectedErrors(t, path, data, result.Errors)
 	}
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
@@ -255,7 +226,7 @@ func (r *interpreterRunner) Update(t *testing.T, path string) {
 	}
 }
 
-func (r *interpreterRunner) updateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte) []byte {
+func (r *runner) mustUpdateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte) []byte {
 	var lines [][]byte
 	if len(stdout) > 0 {
 		lines = bytes.Split(bytes.TrimSuffix(stdout, []byte("\n")), []byte("\n"))
@@ -286,7 +257,7 @@ func (r *interpreterRunner) updateExpectedStdout(t *testing.T, path string, data
 	return b.Bytes()
 }
 
-func (r *interpreterRunner) updateExpectedErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
+func (r *runner) mustUpdateExpectedErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
 	matches := errorRe.FindAllSubmatchIndex(data, -1)
 	if len(errors) != len(matches) {
 		t.Fatalf(`%d "// error:" %s found in %s but %d %s printed to stderr, these should be equal`,
@@ -309,7 +280,7 @@ func (r *interpreterRunner) updateExpectedErrors(t *testing.T, path string, data
 	return b.Bytes()
 }
 
-func (r *interpreterRunner) updateExpectedHints(t *testing.T, path string, data []byte, hints [][]byte) []byte {
+func (r *runner) mustUpdateExpectedHints(t *testing.T, path string, data []byte, hints [][]byte) []byte {
 	matches := hintRe.FindAllSubmatchIndex(data, -1)
 	if len(hints) != len(matches) {
 		t.Fatalf(`%d "// hint:" %s found in %s but %d %s printed to stderr, these should be equal`,
