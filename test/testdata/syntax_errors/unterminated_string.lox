@@ -1,4 +1,4 @@
 // syntaxerror
 // error: unterminated string literal
 print "aaaa;
-print "this won't be printed";
+print 1; // this shouldn't be printed
