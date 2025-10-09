@@ -13,19 +13,15 @@ import (
 
 	"github.com/chzyer/readline"
 
-	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/interpreter"
-	"github.com/marcuscaisey/lox/golox/loxerr"
 	"github.com/marcuscaisey/lox/golox/parser"
-	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 )
 
 var (
-	program    = flag.String("program", "", "Program passed in as string")
-	printAST   = flag.Bool("ast", false, "Print the AST")
-	printHints = flag.Bool("hints", false, "Print any hints for improving the program")
-	printHelp  = flag.Bool("help", false, "Print this message")
+	program   = flag.String("program", "", "Program passed in as string")
+	printAST  = flag.Bool("ast", false, "Print the AST")
+	printHelp = flag.Bool("help", false, "Print this message")
 )
 
 func usage() {
@@ -52,15 +48,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *printHints {
-		switch {
-		case *printAST:
-			exitWithUsageErr("cannot use -ast and -hints together")
-		case *program == "" && len(flag.Args()) == 0:
-			exitWithUsageErr("cannot use -hints with the REPL")
-		}
-	}
-
 	if *program != "" {
 		if err := run("", strings.NewReader(*program), interpreter.New()); err != nil {
 			log.Fatal(err)
@@ -78,8 +65,7 @@ func main() {
 			log.Fatal(err)
 		}
 	default:
-		flag.Usage()
-		os.Exit(2)
+		exitWithUsageErr("at most one path can be provided")
 	}
 }
 
@@ -91,13 +77,6 @@ func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) err
 	}
 	if err != nil {
 		return err
-	}
-	if *printHints {
-		builtins := stubbuiltins.MustParse("builtins.lox")
-		err := analyse.Program(program, builtins)
-		var loxErrs loxerr.Errors
-		errors.As(err, &loxErrs)
-		return loxErrs.NonFatal().Err()
 	}
 	return interpreter.Interpret(program)
 }

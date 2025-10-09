@@ -1,9 +1,10 @@
 # Test Suite
 
-golox and loxfmt are tested against a suite of test files defined under [testdata](testdata).
+golox, loxlint, and loxfmt are tested against a suite of test files defined under
+[testdata](testdata).
 
-golox is tested by running each test file and comparing the output with the expected output defined
-in the file. golox with the -hints flag is also tested in the same way.
+golox and loxlint are tested by running each test file and comparing the output with the expected
+output defined in the file.
 
 loxfmt is tested by formatting each test file and asserting that the contents of the file are
 unchanged.
@@ -16,7 +17,7 @@ Test files are regular Lox files containing comments which describe the expectat
 - `// error: <message>` defines an error message that should be printed to stderr.
 - `// hint: <message>` defines a hint message that should be printed to stderr.
 
-Both special comments can appear multiple times in a test file.
+All special comments can appear multiple times in a test file.
 
 For example:
 
@@ -27,8 +28,8 @@ print 3.5 % 2; // prints: 1.5
 print 3 % 1.5; // prints: 0
 ```
 
-If a `// syntaxerror` comment appears at the start of a test file, the file will be not be formatted
-or tested against golox with the -hints flag.
+If a `// syntaxerror` comment appears at the start of a test file, it will be skipped when not
+testing golox.
 
 ## Running the Tests
 
@@ -42,16 +43,16 @@ Run the golox or loxfmt tests individually:
 
 ```sh
 go test ./golox
-go test ./golox -test-hints
+go test ./loxlint
 go test ./loxfmt
 ```
 
 Run a specific test:
 
 ```sh
-go test ./golox -test.run TestInterpreter/Number/Modulo
-go test ./golox -test-hints -test.run TestInterpreterHints/Number/Modulo
-go test ./loxfmt -test.run TestInterpreter/Number/Modulo
+go test ./golox -test.run TestGolox/Number/Modulo
+go test ./loxlint -test.run TestLoxlint/Number/Modulo
+go test ./loxfmt -test.run TestLoxfmt/Number/Modulo
 ```
 
 ## Updating the Test Expectations
@@ -61,14 +62,14 @@ of the following commands:
 
 ```sh
 go test ./golox -update
-go test ./golox -test-hints -update
+go test ./loxlint -update
 go test ./loxfmt -update
 ```
 
 As with running the tests, you can update the expectations of a specific test as well:
 
 ```sh
-go test ./golox -test.run TestInterpreter/Number/Modulo -update
-go test ./golox -test-hints -test.run TestInterpreterHints/Number/Modulo -update
-go test ./loxfmt -test.run TestInterpreter/Number/Modulo -update
+go test ./golox -test.run TestGolox/Number/Modulo -update
+go test ./loxlint -test.run TestLoxlint/Number/Modulo -update
+go test ./loxfmt -test.run TestLoxfmt/Number/Modulo -update
 ```

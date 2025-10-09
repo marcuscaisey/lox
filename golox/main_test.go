@@ -3,11 +3,9 @@ package main_test
 import (
 	"bytes"
 	"errors"
-	"flag"
 	"os"
 	"os/exec"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -16,29 +14,14 @@ import (
 )
 
 var (
-	testHints = flag.Bool("test-hints", false, "test the interpreter's hints")
-
 	printsRe = regexp.MustCompile(`// prints: (.+)`)
 	errorRe  = regexp.MustCompile(`// error: (.+)`)
-	hintRe   = regexp.MustCompile(`// hint: (.+)`)
 )
 
 func TestGolox(t *testing.T) {
 	goloxPath := loxtest.MustBuildBinary(t, "golox")
-	if *testHints {
-		t.Skip("-test-hints flag provided")
-	}
 	runner := newRunner(goloxPath)
 	loxtest.Run(t, runner, loxtest.WithSkipSyntaxErrors(false))
-}
-
-func TestGoloxHints(t *testing.T) {
-	path := loxtest.MustBuildBinary(t, "golox")
-	if !*testHints {
-		t.Skip("-test-hints flag not provided")
-	}
-	runner := newHintsRunner(path)
-	loxtest.Run(t, runner)
 }
 
 func newRunner(goloxPath string) *runner {
@@ -47,27 +30,16 @@ func newRunner(goloxPath string) *runner {
 	}
 }
 
-func newHintsRunner(goloxPath string) *runner {
-	return &runner{
-		goloxPath: goloxPath,
-		hints:     true,
-	}
-}
-
 type runner struct {
 	goloxPath string
-	hints     bool
 }
 
 func (r *runner) Test(t *testing.T, path string) {
 	want := r.mustParseExpectedResult(t, path)
-	got := r.mustRunInterpreter(t, path)
+	got := r.mustRunGolox(t, path)
 
 	if want.ExitCode != got.ExitCode {
-		t.Errorf("exit code = %d, want %d", got.ExitCode, want.ExitCode)
-		t.Logf("stdout:\n%s", got.Stdout)
-		t.Logf("stderr:\n%s", got.Stderr)
-		return
+		t.Fatalf("exit code = %d, want %d\nstdout:\n%s\nstderr:\n%s", got.ExitCode, want.ExitCode, got.Stdout, got.Stderr)
 	}
 
 	if !bytes.Equal(want.Stdout, got.Stdout) {
@@ -75,32 +47,20 @@ func (r *runner) Test(t *testing.T, path string) {
 	}
 
 	if !cmp.Equal(want.Errors, got.Errors) {
-		t.Errorf("incorrect errors printed to stderr:\n%s", loxtest.ComputeDiff(want.Errors, got.Errors))
-		t.Errorf("stderr:\n%s", got.Stderr)
-	}
-
-	if !cmp.Equal(want.Hints, got.Hints) {
-		t.Errorf("incorrect hints printed to stderr:\n%s", loxtest.ComputeDiff(want.Hints, got.Hints))
-		t.Errorf("stderr:\n%s", got.Stderr)
+		t.Errorf("incorrect errors printed to stderr:\n%s\nstderr:\n%s", loxtest.ComputeDiff(want.Errors, got.Errors), got.Stderr)
 	}
 }
 
-type interpreterResult struct {
+type goloxResult struct {
 	Stdout   []byte
 	Stderr   []byte
 	Errors   [][]byte
-	Hints    [][]byte
 	ExitCode int
 }
 
-func (r *runner) mustRunInterpreter(t *testing.T, path string) *interpreterResult {
-	var args []string
-	if r.hints {
-		args = append(args, "-hints")
-	}
-	args = append(args, path)
-	cmd := exec.Command(r.goloxPath, args...)
-	t.Logf("go run ./golox %s", strings.Join(args, " "))
+func (r *runner) mustRunGolox(t *testing.T, path string) *goloxResult {
+	cmd := exec.Command(r.goloxPath, path)
+	t.Logf("go run ./golox %s", path)
 
 	stdout, err := cmd.Output()
 
@@ -109,38 +69,30 @@ func (r *runner) mustRunInterpreter(t *testing.T, path string) *interpreterResul
 		t.Fatal(err)
 	}
 	var errors [][]byte
-	var hints [][]byte
-	errorHintRe := regexp.MustCompile(`(?m)^\d+:\d+: (error|hint): (.+)$`)
-	for _, match := range errorHintRe.FindAllSubmatch(exitErr.Stderr, -1) {
-		switch string(match[1]) {
-		case "hint":
-			hints = append(hints, match[2])
-		case "error":
-			errors = append(errors, match[2])
-		}
+	errorRe := regexp.MustCompile(`(?m)^\d+:\d+: error: (.+)$`)
+	for _, match := range errorRe.FindAllSubmatch(exitErr.Stderr, -1) {
+		errors = append(errors, match[1])
 	}
 
-	return &interpreterResult{
+	return &goloxResult{
 		Stdout:   stdout,
 		Stderr:   exitErr.Stderr,
 		Errors:   errors,
-		Hints:    hints,
 		ExitCode: cmd.ProcessState.ExitCode(),
 	}
 }
 
-func (r *runner) mustParseExpectedResult(t *testing.T, path string) *interpreterResult {
+func (r *runner) mustParseExpectedResult(t *testing.T, path string) *goloxResult {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	result := &interpreterResult{
+	result := &goloxResult{
 		Stdout: r.parseExpectedStdout(data),
 		Errors: r.parseExpectedErrors(data),
-		Hints:  r.parseExpectedHints(data),
 	}
-	if len(result.Errors)+len(result.Hints) > 0 {
+	if len(result.Errors) > 0 {
 		result.ExitCode = 1
 	}
 
@@ -148,9 +100,6 @@ func (r *runner) mustParseExpectedResult(t *testing.T, path string) *interpreter
 }
 
 func (r *runner) parseExpectedStdout(data []byte) []byte {
-	if r.hints {
-		return nil
-	}
 	var b bytes.Buffer
 	for _, match := range printsRe.FindAllSubmatch(data, -1) {
 		if !bytes.Equal(match[1], []byte("<empty>")) {
@@ -162,9 +111,6 @@ func (r *runner) parseExpectedStdout(data []byte) []byte {
 }
 
 func (r *runner) parseExpectedErrors(data []byte) [][]byte {
-	if r.hints {
-		return nil
-	}
 	var errors [][]byte
 	for _, match := range errorRe.FindAllSubmatch(data, -1) {
 		errors = append(errors, match[1])
@@ -172,21 +118,10 @@ func (r *runner) parseExpectedErrors(data []byte) [][]byte {
 	return errors
 }
 
-func (r *runner) parseExpectedHints(data []byte) [][]byte {
-	if !r.hints {
-		return nil
-	}
-	var hints [][]byte
-	for _, match := range hintRe.FindAllSubmatch(data, -1) {
-		hints = append(hints, match[1])
-	}
-	return hints
-}
-
 func (r *runner) Update(t *testing.T, path string) {
 	t.Logf("updating expected output for %s", path)
 
-	result := r.mustRunInterpreter(t, path)
+	result := r.mustRunGolox(t, path)
 
 	t.Logf("exit code: %d", result.ExitCode)
 	if len(result.Stdout) > 0 {
@@ -201,11 +136,6 @@ func (r *runner) Update(t *testing.T, path string) {
 		} else {
 			t.Logf("errors: <empty>")
 		}
-		if len(result.Hints) > 0 {
-			t.Logf("hints:\n%s", bytes.Join(result.Hints, []byte("\n")))
-		} else {
-			t.Logf("hints: <empty>")
-		}
 	} else {
 		t.Logf("stderr: <empty>")
 	}
@@ -214,12 +144,8 @@ func (r *runner) Update(t *testing.T, path string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.hints {
-		data = r.mustUpdateExpectedHints(t, path, data, result.Hints)
-	} else {
-		data = r.mustUpdateExpectedStdout(t, path, data, result.Stdout)
-		data = r.mustUpdateExpectedErrors(t, path, data, result.Errors)
-	}
+	data = r.mustUpdateExpectedStdout(t, path, data, result.Stdout)
+	data = r.mustUpdateExpectedErrors(t, path, data, result.Errors)
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		t.Fatal(err)
@@ -273,29 +199,6 @@ func (r *runner) mustUpdateExpectedErrors(t *testing.T, path string, data []byte
 		start, end := match[2], match[3]
 		b.Write(data[lastEnd:start])
 		b.Write(errors[i])
-		lastEnd = end
-	}
-	b.Write(data[lastEnd:])
-
-	return b.Bytes()
-}
-
-func (r *runner) mustUpdateExpectedHints(t *testing.T, path string, data []byte, hints [][]byte) []byte {
-	matches := hintRe.FindAllSubmatchIndex(data, -1)
-	if len(hints) != len(matches) {
-		t.Fatalf(`%d "// hint:" %s found in %s but %d %s printed to stderr, these should be equal`,
-			len(matches), pluralise("comment", len(matches)), path, len(hints), pluralise("hint", len(hints)))
-	}
-	if len(hints) == 0 {
-		return data
-	}
-
-	var b bytes.Buffer
-	lastEnd := 0
-	for i, match := range matches {
-		start, end := match[2], match[3]
-		b.Write(data[lastEnd:start])
-		b.Write(hints[i])
 		lastEnd = end
 	}
 	b.Write(data[lastEnd:])

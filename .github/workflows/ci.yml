@@ -20,6 +20,19 @@ jobs:
       - name: Test
         run: go test ./golox
 
+  test-loxlint:
+    name: Test loxlint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout commit
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Test
+        run: go test ./loxlint
+
   test-loxfmt:
     name: Test loxfmt
     runs-on: ubuntu-latest
