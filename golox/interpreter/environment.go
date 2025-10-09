@@ -116,8 +116,7 @@ func (e *localEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	} else if e.parent != nil {
 		e.parent.Assign(ident, value)
 	} else {
-		// This should have been caught by [analysis.ResolveIdents].
-		panic(fmt.Sprintf("%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
 	}
 }
 
@@ -127,7 +126,6 @@ func (e *localEnvironment) Get(ident *ast.Ident) loxObject {
 	} else if e.parent != nil {
 		return e.parent.Get(ident)
 	} else {
-		// This should have been caught by [analysis.ResolveIdents].
-		panic(fmt.Sprintf("%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
 	}
 }
