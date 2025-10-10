@@ -2,7 +2,11 @@
 //
 // Format strings (or string arguments to functions which don't accept a format string) can contain placeholders of the
 // form ${NAME}, where NAME is the name of an ANSI code. The placeholder will be replaced with the corresponding ANSI
-// escape sequence in the output. The following ANSI codes are supported:
+// escape sequence in the output. For functions which accept a format string and arguments, the ${NAME} placeholders are
+// replaced after the arguments have been interpolated into the format string. Placeholders can therefore can be
+// dynamically defined.
+//
+// The following ANSI codes are supported:
 //   - RESET
 //   - BOLD
 //   - FAINT
@@ -108,18 +112,18 @@ func replaceArgs(a []any) []any {
 // Fprintf formats according to a format specifier and writes to w.
 // It returns the number of bytes written and any write error encountered.
 func Fprintf(w io.Writer, format string, a ...any) (n int, err error) {
-	return fmt.Fprintf(w, replace(format), a...)
+	return fmt.Fprint(w, Sprintf(format, a...))
 }
 
 // Printf formats according to a format specifier and writes to standard output.
 // It returns the number of bytes written and any write error encountered.
 func Printf(format string, a ...any) (n int, err error) {
-	return fmt.Printf(replace(format), a...)
+	return fmt.Print(Sprintf(format, a...))
 }
 
 // Sprintf formats according to a format specifier and returns the resulting string.
 func Sprintf(format string, a ...any) string {
-	return fmt.Sprintf(replace(format), a...)
+	return replace(fmt.Sprintf(format, a...))
 }
 
 // Fprint formats using the default formats for its operands and writes to w.
