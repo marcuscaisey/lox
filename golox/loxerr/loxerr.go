@@ -17,11 +17,12 @@ import (
 type Type int
 
 const (
-	// Fatal errors cause execution of the program to fail. For example, a parser error or a division by zero.
+	// Fatal errors cause execution of the program to fail.
+	// For example, a parser error or a division by zero.
 	Fatal Type = iota
-	// NonFatal errors don't cause execution of the program to fail. For example, a variable has been declared but
-	// not used.
-	NonFatal
+	// Hint errors indicate an aspect of the program which could be improved but won't cause execution to fail.
+	// For example, a variable has been declared but not used.
+	Hint
 )
 
 // Error describes an error that occurred during the execution of a Lox program.

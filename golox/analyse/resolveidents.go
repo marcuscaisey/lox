@@ -245,7 +245,7 @@ func (r *identResolver) beginScope() func() {
 			return
 		}
 		for decl := range scope.UnusedDeclarations() {
-			r.errs.Addf(decl.Ident(), loxerr.NonFatal, "%s has been declared but is never used", decl.Ident().Token.Lexeme)
+			r.errs.Addf(decl.Ident(), loxerr.Hint, "%s has been declared but is never used", decl.Ident().Token.Lexeme)
 		}
 		for ident := range scope.UndeclaredUsages() {
 			if scope.IsDeclared(ident.Token.Lexeme) {
@@ -275,7 +275,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 	if scope := r.scopes.Peek(); scope.IsDeclared(ident.Token.Lexeme) {
 		typ := loxerr.Fatal
 		if r.inGlobalScope() {
-			typ = loxerr.NonFatal
+			typ = loxerr.Hint
 		}
 		r.errs.Addf(ident, typ, "%s has already been declared", ident.Token.Lexeme)
 	} else {
@@ -339,7 +339,7 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 			// in, then we can't definitely say that the identifier has been defined yet. It might be defined later
 			// before the function is called.
 			if op == identOpRead && !scope.IsDefined(ident.Token.Lexeme) && !(r.inFun && level <= r.funScopeLevel) { //nolint:staticcheck
-				r.errs.Addf(ident, loxerr.NonFatal, "%s has not been defined", ident.Token.Lexeme)
+				r.errs.Addf(ident, loxerr.Hint, "%s has not been defined", ident.Token.Lexeme)
 			}
 			return
 		}

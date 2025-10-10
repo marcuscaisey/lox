@@ -175,7 +175,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		for i, e := range loxErrs {
 			severity := protocol.DiagnosticSeverityError
 			var tags []protocol.DiagnosticTag
-			if e.Type == loxerr.NonFatal {
+			if e.Type == loxerr.Hint {
 				severity = protocol.DiagnosticSeverityHint
 				if strings.HasSuffix(e.Msg, "has been declared but is never used") {
 					tags = append(tags, protocol.DiagnosticTagUnnecessary)
