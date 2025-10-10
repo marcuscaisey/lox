@@ -54,6 +54,7 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 	}
 	r := &identResolver{
 		replMode:               cfg.replMode,
+		fatalOnly:              cfg.fatalOnly,
 		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
 		identDecls:             map[*ast.Ident]ast.Decl{},
@@ -62,7 +63,8 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 }
 
 type identResolver struct {
-	replMode bool
+	replMode  bool
+	fatalOnly bool
 
 	scopes                 *stack.Stack[*scope]
 	globalScope            *scope
@@ -112,6 +114,13 @@ func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Dec
 		}
 	}
 	return decls
+}
+
+func (r *identResolver) addErrorf(rang token.Range, typ loxerr.Type, format string, args ...any) {
+	if r.fatalOnly && typ != loxerr.Fatal {
+		return
+	}
+	r.errs.Addf(rang, typ, format, args...)
 }
 
 type declStatus int
@@ -245,13 +254,13 @@ func (r *identResolver) beginScope() func() {
 			return
 		}
 		for decl := range scope.UnusedDeclarations() {
-			r.errs.Addf(decl.Ident(), loxerr.Hint, "%s has been declared but is never used", decl.Ident().Token.Lexeme)
+			r.addErrorf(decl.Ident(), loxerr.Hint, "%s has been declared but is never used", decl.Ident().Token.Lexeme)
 		}
 		for ident := range scope.UndeclaredUsages() {
 			if scope.IsDeclared(ident.Token.Lexeme) {
-				r.errs.Addf(ident, loxerr.Fatal, "%s has been used before its declaration", ident.Token.Lexeme)
+				r.addErrorf(ident, loxerr.Fatal, "%s has been used before its declaration", ident.Token.Lexeme)
 			} else {
-				r.errs.Addf(ident, loxerr.Warning, "%s has not been declared", ident.Token.Lexeme)
+				r.addErrorf(ident, loxerr.Warning, "%s has not been declared", ident.Token.Lexeme)
 			}
 		}
 	}
@@ -268,7 +277,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 	}
 	if r.inGlobalScope() && r.forwardDeclaredGlobals[ident.Token.Lexeme] {
 		if r.scopes.Peek().Declaration(ident.Token.Lexeme) != stmt {
-			r.errs.Addf(ident, loxerr.Fatal, "%s has already been declared", ident.Token.Lexeme)
+			r.addErrorf(ident, loxerr.Fatal, "%s has already been declared", ident.Token.Lexeme)
 		}
 		return
 	}
@@ -277,7 +286,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 		if r.inGlobalScope() {
 			typ = loxerr.Hint
 		}
-		r.errs.Addf(ident, typ, "%s has already been declared", ident.Token.Lexeme)
+		r.addErrorf(ident, typ, "%s has already been declared", ident.Token.Lexeme)
 	} else {
 		scope.Declare(stmt)
 		r.identDecls[ident] = stmt
@@ -339,7 +348,7 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 			// in, then we can't definitely say that the identifier has been defined yet. It might be defined later
 			// before the function is called.
 			if op == identOpRead && !scope.IsDefined(ident.Token.Lexeme) && !(r.inFun && level <= r.funScopeLevel) { //nolint:staticcheck
-				r.errs.Addf(ident, loxerr.Hint, "%s has not been defined", ident.Token.Lexeme)
+				r.addErrorf(ident, loxerr.Hint, "%s has not been defined", ident.Token.Lexeme)
 			}
 			return
 		}
@@ -492,7 +501,7 @@ func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
 
 func (r *identResolver) walkIdentExpr(expr *ast.IdentExpr) {
 	if !r.inGlobalScope() && r.scopes.Peek().IsInitialising(expr.Ident.Token.Lexeme) {
-		r.errs.Addf(expr, loxerr.Fatal, "%s read in its own initialiser", expr.Ident.Token.Lexeme)
+		r.addErrorf(expr, loxerr.Fatal, "%s read in its own initialiser", expr.Ident.Token.Lexeme)
 		return
 	}
 	r.resolveIdent(expr.Ident, identOpRead)

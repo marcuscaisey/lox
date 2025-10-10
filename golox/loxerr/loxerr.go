@@ -155,17 +155,6 @@ func (e *Errors) AddSpanningRangesf(start, end token.Range, typ Type, format str
 	*e = append(*e, NewSpanningRangesf(start, end, typ, format, args...).(*Error))
 }
 
-// Fatal returns a new [Errors] containing only the errors in the list which are fatal.
-func (e Errors) Fatal() Errors {
-	errs := make(Errors, 0, len(e))
-	for _, err := range e {
-		if err.Type == Fatal {
-			errs = append(errs, err)
-		}
-	}
-	return errs
-}
-
 // NonFatal returns a new [Errors] containing only the errors in the list which are not fatal.
 func (e Errors) NonFatal() Errors {
 	errs := make(Errors, 0, len(e))
