@@ -15,7 +15,8 @@ import (
 
 var (
 	hintRe    = regexp.MustCompile(`// hint: (.+)`)
-	warningRe = regexp.MustCompile(`// warning: (.+)`)
+	warningRe = regexp.MustCompile(`// lint warning: (.+)`)
+	hintRe    = regexp.MustCompile(`// lint hint: (.+)`)
 )
 
 func TestLoxlint(t *testing.T) {
@@ -168,7 +169,7 @@ func (r *runner) Update(t *testing.T, path string) {
 func (r *runner) mustUpdateExpectedWarnings(t *testing.T, path string, data []byte, warnings [][]byte) []byte {
 	matches := warningRe.FindAllSubmatchIndex(data, -1)
 	if len(warnings) != len(matches) {
-		t.Fatalf(`%d "// warning:" %s found in %s but %d %s printed to stderr, these should be equal`,
+		t.Fatalf(`%d "// lint warning:" %s found in %s but %d %s printed to stderr, these should be equal`,
 			len(matches), pluralise("comment", len(matches)), path, len(warnings), pluralise("warning", len(warnings)))
 	}
 	if len(warnings) == 0 {
@@ -191,7 +192,7 @@ func (r *runner) mustUpdateExpectedWarnings(t *testing.T, path string, data []by
 func (r *runner) mustUpdateExpectedHints(t *testing.T, path string, data []byte, hints [][]byte) []byte {
 	matches := hintRe.FindAllSubmatchIndex(data, -1)
 	if len(hints) != len(matches) {
-		t.Fatalf(`%d "// hint:" %s found in %s but %d %s printed to stderr, these should be equal`,
+		t.Fatalf(`%d "// lint hint:" %s found in %s but %d %s printed to stderr, these should be equal`,
 			len(matches), pluralise("comment", len(matches)), path, len(hints), pluralise("hint", len(hints)))
 	}
 	if len(hints) == 0 {
