@@ -173,9 +173,14 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if filename != h.stubBuiltinsFilename {
 		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
 		for i, e := range loxErrs {
-			severity := protocol.DiagnosticSeverityError
+			var severity protocol.DiagnosticSeverity
 			var tags []protocol.DiagnosticTag
-			if e.Type == loxerr.Hint {
+			switch e.Type {
+			case loxerr.Fatal:
+				severity = protocol.DiagnosticSeverityError
+			case loxerr.Warning:
+				severity = protocol.DiagnosticSeverityWarning
+			case loxerr.Hint:
 				severity = protocol.DiagnosticSeverityHint
 				if strings.HasSuffix(e.Msg, "has been declared but is never used") {
 					tags = append(tags, protocol.DiagnosticTagUnnecessary)

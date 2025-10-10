@@ -20,7 +20,10 @@ const (
 	// Fatal errors cause execution of the program to fail.
 	// For example, a parser error or a division by zero.
 	Fatal Type = iota
-	// Hint errors indicate an aspect of the program which could be improved but won't cause execution to fail.
+	// Warning errors may cause execution of the program to fail
+	// For example, a variable is used which has not been declared.
+	Warning
+	// Hint errors won't cause execution to fail.
 	// For example, a variable has been declared but not used.
 	Hint
 )
@@ -79,11 +82,20 @@ func (e *Error) Error() string {
 		return strings.TrimSuffix(b.String(), "\n")
 	}
 
-	class := "${RED}error"
-	if e.Type != Fatal {
-		class = "${BLUE}hint"
+	var typeColour string
+	var typ string
+	switch e.Type {
+	case Fatal:
+		typeColour = "RED"
+		typ = "error"
+	case Warning:
+		typeColour = "YELLOW"
+		typ = "warning"
+	case Hint:
+		typeColour = "BLUE"
+		typ = "hint"
 	}
-	ansi.Fprintf(&b, "${BOLD}%m: "+class+"${DEFAULT}: %s${DEFAULT}${RESET_BOLD}\n", e.start, e.Msg)
+	ansi.Fprintf(&b, "${BOLD}%m: ${%s}%s${DEFAULT}: %s${DEFAULT}${RESET_BOLD}\n", e.start, typeColour, typ, e.Msg)
 
 	lines := make([]string, e.end.Line-e.start.Line+1)
 	for i := e.start.Line; i <= e.end.Line; i++ {
