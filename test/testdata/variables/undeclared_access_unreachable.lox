@@ -1,0 +1,5 @@
+if (false) {
+  print a; // warning: a has not been declared
+}
+
+print "got here"; // prints: got here

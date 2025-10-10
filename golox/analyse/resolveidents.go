@@ -251,7 +251,7 @@ func (r *identResolver) beginScope() func() {
 			if scope.IsDeclared(ident.Token.Lexeme) {
 				r.errs.Addf(ident, loxerr.Fatal, "%s has been used before its declaration", ident.Token.Lexeme)
 			} else {
-				r.errs.Addf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme)
+				r.errs.Addf(ident, loxerr.Warning, "%s has not been declared", ident.Token.Lexeme)
 			}
 		}
 	}

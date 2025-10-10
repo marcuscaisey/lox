@@ -3,7 +3,9 @@
     if (n == 0) {
       return true;
     }
-    return isOdd(n - 1); // error: isOdd has not been declared
+    // warning: isOdd has not been declared
+    // error: isOdd has not been declared
+    return isOdd(n - 1);
   }
 
   fun isOdd(n) {

@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	hintRe = regexp.MustCompile(`// hint: (.+)`)
+	hintRe    = regexp.MustCompile(`// hint: (.+)`)
+	warningRe = regexp.MustCompile(`// warning: (.+)`)
 )
 
 func TestLoxlint(t *testing.T) {
@@ -53,6 +54,7 @@ func (r *runner) Test(t *testing.T, path string) {
 type loxlintResult struct {
 	Stdout   []byte
 	Stderr   []byte
+	Warnings [][]byte
 	Hints    [][]byte
 	ExitCode int
 }
@@ -68,14 +70,21 @@ func (r *runner) mustRunLoxlint(t *testing.T, path string) *loxlintResult {
 		t.Fatal(err)
 	}
 	var hints [][]byte
-	hintRe := regexp.MustCompile(`(?m)^\d+:\d+: hint: (.+)$`)
-	for _, match := range hintRe.FindAllSubmatch(exitErr.Stderr, -1) {
-		hints = append(hints, match[1])
+	var warnings [][]byte
+	warningHintRe := regexp.MustCompile(`(?m)^\d+:\d+: (warning|hint): (.+)$`)
+	for _, match := range warningHintRe.FindAllSubmatch(exitErr.Stderr, -1) {
+		switch string(match[1]) {
+		case "warning":
+			warnings = append(warnings, match[2])
+		case "hint":
+			hints = append(hints, match[2])
+		}
 	}
 
 	return &loxlintResult{
 		Stdout:   stdout,
 		Stderr:   exitErr.Stderr,
+		Warnings: warnings,
 		Hints:    hints,
 		ExitCode: cmd.ProcessState.ExitCode(),
 	}
@@ -88,14 +97,22 @@ func (r *runner) mustParseExpectedResult(t *testing.T, path string) *loxlintResu
 	}
 
 	result := &loxlintResult{
-		Stdout: nil,
-		Hints:  r.parseExpectedHints(data),
+		Warnings: r.parseExpectedWarnings(data),
+		Hints:    r.parseExpectedHints(data),
 	}
-	if len(result.Hints) > 0 {
+	if len(result.Warnings)+len(result.Hints) > 0 {
 		result.ExitCode = 1
 	}
 
 	return result
+}
+
+func (r *runner) parseExpectedWarnings(data []byte) [][]byte {
+	var warnings [][]byte
+	for _, match := range warningRe.FindAllSubmatch(data, -1) {
+		warnings = append(warnings, match[1])
+	}
+	return warnings
 }
 
 func (r *runner) parseExpectedHints(data []byte) [][]byte {
@@ -119,6 +136,11 @@ func (r *runner) Update(t *testing.T, path string) {
 	}
 	if len(result.Stderr) > 0 {
 		t.Logf("stderr:\n%s", result.Stderr)
+		if len(result.Warnings) > 0 {
+			t.Logf("warnings:\n%s", bytes.Join(result.Warnings, []byte("\n")))
+		} else {
+			t.Logf("warnings: <empty>")
+		}
 		if len(result.Hints) > 0 {
 			t.Logf("hints:\n%s", bytes.Join(result.Hints, []byte("\n")))
 		} else {
@@ -135,11 +157,35 @@ func (r *runner) Update(t *testing.T, path string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	data = r.mustUpdateExpectedWarnings(t, path, data, result.Warnings)
 	data = r.mustUpdateExpectedHints(t, path, data, result.Hints)
 
 	if err := os.WriteFile(path, data, 0644); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func (r *runner) mustUpdateExpectedWarnings(t *testing.T, path string, data []byte, warnings [][]byte) []byte {
+	matches := warningRe.FindAllSubmatchIndex(data, -1)
+	if len(warnings) != len(matches) {
+		t.Fatalf(`%d "// warning:" %s found in %s but %d %s printed to stderr, these should be equal`,
+			len(matches), pluralise("comment", len(matches)), path, len(warnings), pluralise("warning", len(warnings)))
+	}
+	if len(warnings) == 0 {
+		return data
+	}
+
+	var b bytes.Buffer
+	lastEnd := 0
+	for i, match := range matches {
+		start, end := match[2], match[3]
+		b.Write(data[lastEnd:start])
+		b.Write(warnings[i])
+		lastEnd = end
+	}
+	b.Write(data[lastEnd:])
+
+	return b.Bytes()
 }
 
 func (r *runner) mustUpdateExpectedHints(t *testing.T, path string, data []byte, hints [][]byte) []byte {

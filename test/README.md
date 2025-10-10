@@ -13,9 +13,10 @@ unchanged.
 
 Test files are regular Lox files containing comments which describe the expectations of the test:
 
-- `// prints: <value>` defines a string that should be printed to stdout.
-- `// error: <message>` defines an error message that should be printed to stderr.
-- `// hint: <message>` defines a hint message that should be printed to stderr.
+- `// prints: <value>` defines a string that should be printed to stdout by golox.
+- `// error: <message>` defines an error message that should be printed to stderr by golox.
+- `// warning: <message>` defines a warning message that should be printed to stderr by loxlint.
+- `// hint: <message>` defines a hint message that should be printed to stderr by loxlint.
 
 All special comments can appear multiple times in a test file.
 

@@ -1,3 +1,5 @@
 {
-  a = 1; // error: a has not been declared
+  // warning: a has not been declared
+  // error: a has not been declared
+  a = 1;
 }
