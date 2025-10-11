@@ -168,91 +168,15 @@ func (r *runner) Update(t *testing.T, path string) {
 		return
 	}
 
-	data, err := os.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	data = r.mustUpdateExpectedErrors(t, path, data, result.Errors)
-	data = r.mustUpdateExpectedWarnings(t, path, data, result.Warnings)
-	data = r.mustUpdateExpectedHints(t, path, data, result.Hints)
+	contents = loxtest.MustUpdateComments(t, path, contents, errorRe, result.Errors)
+	contents = loxtest.MustUpdateComments(t, path, contents, warningRe, result.Warnings)
+	contents = loxtest.MustUpdateComments(t, path, contents, hintRe, result.Hints)
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, contents, 0644); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func (r *runner) mustUpdateExpectedErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
-	matches := errorRe.FindAllSubmatchIndex(data, -1)
-	if len(errors) != len(matches) {
-		t.Fatalf(`%d "// lint error:" %s found in %s but %d %s printed to stderr, these should be equal`,
-			len(matches), pluralise("comment", len(matches)), path, len(errors), pluralise("error", len(errors)))
-	}
-	if len(errors) == 0 {
-		return data
-	}
-
-	var b bytes.Buffer
-	lastEnd := 0
-	for i, match := range matches {
-		start, end := match[2], match[3]
-		b.Write(data[lastEnd:start])
-		b.Write(errors[i])
-		lastEnd = end
-	}
-	b.Write(data[lastEnd:])
-
-	return b.Bytes()
-}
-
-func (r *runner) mustUpdateExpectedWarnings(t *testing.T, path string, data []byte, warnings [][]byte) []byte {
-	matches := warningRe.FindAllSubmatchIndex(data, -1)
-	if len(warnings) != len(matches) {
-		t.Fatalf(`%d "// lint warning:" %s found in %s but %d %s printed to stderr, these should be equal`,
-			len(matches), pluralise("comment", len(matches)), path, len(warnings), pluralise("warning", len(warnings)))
-	}
-	if len(warnings) == 0 {
-		return data
-	}
-
-	var b bytes.Buffer
-	lastEnd := 0
-	for i, match := range matches {
-		start, end := match[2], match[3]
-		b.Write(data[lastEnd:start])
-		b.Write(warnings[i])
-		lastEnd = end
-	}
-	b.Write(data[lastEnd:])
-
-	return b.Bytes()
-}
-
-func (r *runner) mustUpdateExpectedHints(t *testing.T, path string, data []byte, hints [][]byte) []byte {
-	matches := hintRe.FindAllSubmatchIndex(data, -1)
-	if len(hints) != len(matches) {
-		t.Fatalf(`%d "// lint hint:" %s found in %s but %d %s printed to stderr, these should be equal`,
-			len(matches), pluralise("comment", len(matches)), path, len(hints), pluralise("hint", len(hints)))
-	}
-	if len(hints) == 0 {
-		return data
-	}
-
-	var b bytes.Buffer
-	lastEnd := 0
-	for i, match := range matches {
-		start, end := match[2], match[3]
-		b.Write(data[lastEnd:start])
-		b.Write(hints[i])
-		lastEnd = end
-	}
-	b.Write(data[lastEnd:])
-
-	return b.Bytes()
-}
-
-func pluralise(s string, n int) string {
-	if n == 1 {
-		return s
-	}
-	return s + "s"
 }

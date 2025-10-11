@@ -140,75 +140,14 @@ func (r *runner) Update(t *testing.T, path string) {
 		t.Logf("stderr: <empty>")
 	}
 
-	data, err := os.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	data = r.mustUpdateExpectedStdout(t, path, data, result.Stdout)
-	data = r.mustUpdateExpectedErrors(t, path, data, result.Errors)
+	contents = loxtest.MustUpdateComments(t, path, contents, printsRe, bytes.Split(result.Stdout, []byte("\n")))
+	contents = loxtest.MustUpdateComments(t, path, contents, errorRe, result.Errors)
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := os.WriteFile(path, contents, 0644); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func (r *runner) mustUpdateExpectedStdout(t *testing.T, path string, data []byte, stdout []byte) []byte {
-	var lines [][]byte
-	if len(stdout) > 0 {
-		lines = bytes.Split(bytes.TrimSuffix(stdout, []byte("\n")), []byte("\n"))
-	}
-	matches := printsRe.FindAllSubmatchIndex(data, -1)
-	if len(lines) != len(matches) {
-		t.Fatalf(`%d "// prints" %s found in %s but %d %s printed to stdout, these should be equal`,
-			len(matches), pluralise("comment", len(matches)), path, len(lines), pluralise("line", len(lines)))
-	}
-	if len(stdout) == 0 {
-		return data
-	}
-
-	var b bytes.Buffer
-	lastEnd := 0
-	for i, match := range matches {
-		start, end := match[2], match[3]
-		b.Write(data[lastEnd:start])
-		if bytes.Equal(lines[i], []byte("")) {
-			b.WriteString("<empty>")
-		} else {
-			b.Write(lines[i])
-		}
-		lastEnd = end
-	}
-	b.Write(data[lastEnd:])
-
-	return b.Bytes()
-}
-
-func (r *runner) mustUpdateExpectedErrors(t *testing.T, path string, data []byte, errors [][]byte) []byte {
-	matches := errorRe.FindAllSubmatchIndex(data, -1)
-	if len(errors) != len(matches) {
-		t.Fatalf(`%d "// error:" %s found in %s but %d %s printed to stderr, these should be equal`,
-			len(matches), pluralise("comment", len(matches)), path, len(errors), pluralise("error", len(errors)))
-	}
-	if len(errors) == 0 {
-		return data
-	}
-
-	var b bytes.Buffer
-	lastEnd := 0
-	for i, match := range matches {
-		start, end := match[2], match[3]
-		b.Write(data[lastEnd:start])
-		b.Write(errors[i])
-		lastEnd = end
-	}
-	b.Write(data[lastEnd:])
-
-	return b.Bytes()
-}
-
-func pluralise(s string, n int) string {
-	if n == 1 {
-		return s
-	}
-	return s + "s"
 }

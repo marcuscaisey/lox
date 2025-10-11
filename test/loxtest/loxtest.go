@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"unicode"
@@ -190,4 +191,39 @@ func mustGoModuleRoot(t *testing.T) string {
 
 	t.Fatal("determining go module root: no parent directory containing go.mod found")
 	return ""
+}
+
+// MustUpdateComments updates the comments of a file matching the given pattern with the contents of the given lines.
+func MustUpdateComments(t *testing.T, filePath string, fileContents []byte, commentPattern *regexp.Regexp, lines [][]byte) []byte {
+	matches := commentPattern.FindAllSubmatchIndex(fileContents, -1)
+	if len(lines) != len(matches) {
+		t.Fatalf(`%d "%s" %s found in %s but %d %s output, these should be equal`,
+			len(matches), commentPattern, pluralise("comment", len(matches)), filePath, len(lines), pluralise("line", len(lines)))
+	}
+	if len(lines) == 0 {
+		return fileContents
+	}
+
+	var b bytes.Buffer
+	lastEnd := 0
+	for i, match := range matches {
+		start, end := match[2], match[3]
+		b.Write(fileContents[lastEnd:start])
+		if bytes.Equal(lines[i], []byte("")) {
+			b.WriteString("<empty>")
+		} else {
+			b.Write(lines[i])
+		}
+		lastEnd = end
+	}
+	b.Write(fileContents[lastEnd:])
+
+	return b.Bytes()
+}
+
+func pluralise(s string, n int) string {
+	if n == 1 {
+		return s
+	}
+	return s + "s"
 }
