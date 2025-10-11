@@ -1,5 +1,6 @@
 class Foo {
   // error: property getter cannot have parameters
+  // lint error: property getter cannot have parameters
   get bar(x, y) {
     _ = x;
     _ = y;

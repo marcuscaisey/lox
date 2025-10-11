@@ -1,1 +1,3 @@
-print _; // error: _ cannot be used as a value
+// error: _ cannot be used as a value
+// lint error: _ cannot be used as a value
+print _;

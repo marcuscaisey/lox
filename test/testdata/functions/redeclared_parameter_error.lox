@@ -1,5 +1,7 @@
 fun f(x) {
-  var x = 1; // error: x has already been declared
+  // error: x has already been declared
+  // lint error: x has already been declared
+  var x = 1;
   _ = x;
 }
 

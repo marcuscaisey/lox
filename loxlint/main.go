@@ -3,14 +3,12 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/marcuscaisey/lox/golox/analyse"
-	"github.com/marcuscaisey/lox/golox/loxerr"
 	"github.com/marcuscaisey/lox/golox/parser"
 	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 )
@@ -70,10 +68,7 @@ func run(path string) error {
 	}
 
 	builtins := stubbuiltins.MustParse("builtins.lox")
-	err = analyse.Program(program, builtins)
-	var loxErrs loxerr.Errors
-	errors.As(err, &loxErrs)
-	if err := loxErrs.NonFatal().Err(); err != nil {
+	if err := analyse.Program(program, builtins); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

@@ -3,7 +3,9 @@ class Foo {
     fun() {
       return 1;
     }();
-    return 2; // error: init() cannot return a value
+    // error: init() cannot return a value
+    // lint error: init() cannot return a value
+    return 2;
   }
 }
 

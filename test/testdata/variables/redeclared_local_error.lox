@@ -1,5 +1,7 @@
 {
   var a = 1;
-  var a; // error: a has already been declared
+  // error: a has already been declared
+  // lint error: a has already been declared
+  var a;
   a = 2;
 }

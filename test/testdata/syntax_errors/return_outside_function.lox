@@ -1,2 +1,3 @@
 // error: 'return' can only be used inside a function definition
+// lint error: 'return' can only be used inside a function definition
 return 2;

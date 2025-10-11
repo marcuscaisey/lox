@@ -2,6 +2,7 @@ class Foo {
   get bar() {}
 
   // error: property setter can only have one parameter
+  // lint error: property setter can only have one parameter
   set bar(x, y) {
     _ = x;
     _ = y;

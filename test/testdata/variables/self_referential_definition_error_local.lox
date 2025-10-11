@@ -1,6 +1,8 @@
 var a = "global a";
 _ = a;
 {
-  var a = "shadowed " + a; // error: a read in its own initialiser
+  // error: a read in its own initialiser
+  // lint error: a read in its own initialiser
+  var a = "shadowed " + a;
   print a;
 }

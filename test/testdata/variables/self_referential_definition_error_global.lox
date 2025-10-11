@@ -1,2 +1,4 @@
-var a = a; // error: a has been used before its declaration
+// error: a has been used before its declaration
+// lint error: a has been used before its declaration
+var a = a;
 print a;

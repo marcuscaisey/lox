@@ -1,6 +1,8 @@
 for (;;) {
   fun() {
-    break; // error: 'break' can only be used inside a loop
+    // error: 'break' can only be used inside a loop
+    // lint error: 'break' can only be used inside a loop
+    break;
   }();
   break;
 }

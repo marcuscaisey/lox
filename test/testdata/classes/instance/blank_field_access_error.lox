@@ -1,6 +1,8 @@
 class Foo {
   bar() {
-    print this._; // error: _ cannot be used as a field name
+    // error: _ cannot be used as a field name
+    // lint error: _ cannot be used as a field name
+    print this._;
   }
 }
 var foo = Foo();

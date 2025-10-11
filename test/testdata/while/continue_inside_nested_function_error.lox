@@ -1,6 +1,8 @@
 while (true) {
   fun c() {
-    continue; // error: 'continue' can only be used inside a loop
+    // error: 'continue' can only be used inside a loop
+    // lint error: 'continue' can only be used inside a loop
+    continue;
   }
   c();
   break;

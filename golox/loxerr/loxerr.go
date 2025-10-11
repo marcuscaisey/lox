@@ -155,17 +155,6 @@ func (e *Errors) AddSpanningRangesf(start, end token.Range, typ Type, format str
 	*e = append(*e, NewSpanningRangesf(start, end, typ, format, args...).(*Error))
 }
 
-// NonFatal returns a new [Errors] containing only the errors in the list which are not fatal.
-func (e Errors) NonFatal() Errors {
-	errs := make(Errors, 0, len(e))
-	for _, err := range e {
-		if err.Type != Fatal {
-			errs = append(errs, err)
-		}
-	}
-	return errs
-}
-
 // Sort sorts the errors by their start position.
 func (e Errors) Sort() {
 	slices.SortFunc(e, func(e1, e2 *Error) int {

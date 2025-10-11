@@ -2,6 +2,7 @@ class Foo {
   get bar() {}
 
   // error: property setter must have a parameter
+  // lint error: property setter must have a parameter
   set bar() {}
 }
 

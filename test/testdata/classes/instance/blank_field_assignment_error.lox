@@ -1,6 +1,8 @@
 class Foo {
   init() {
-    this._ = 2; // error: _ cannot be used as a field name
+    // error: _ cannot be used as a field name
+    // lint error: _ cannot be used as a field name
+    this._ = 2;
   }
 }
 Foo();

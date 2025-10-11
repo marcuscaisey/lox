@@ -1,2 +1,3 @@
 // error: 'continue' can only be used inside a loop
+// lint error: 'continue' can only be used inside a loop
 continue;
