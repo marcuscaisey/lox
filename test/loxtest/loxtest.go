@@ -1,3 +1,4 @@
+// Package loxtest implements utilities for testing lox tools on the corpus of lox files defined under test/testdata.
 package loxtest
 
 import (
@@ -121,6 +122,8 @@ func snakeToPascalCase(s string) string {
 	return b.String()
 }
 
+// ComputeDiff returns a human-readable report of the differences between a wanted and got value.
+// If there are no differences, an empty string is returned.
 func ComputeDiff(want, got any) string {
 	diff := cmp.Diff(want, got, cmp.Transformer("BytesToString", func(b []byte) string {
 		return string(b)
@@ -128,7 +131,9 @@ func ComputeDiff(want, got any) string {
 	return ansi.Sprintf("${GREEN}want -\n${RED}got +${DEFAULT}\n%s", colouriseDiff(diff))
 }
 
-// TODO: what's the difference between this and ComputeDiff?
+// ComputeTextDiff returns a human-readable report of the differences between a wanted and got string.
+// If there are no differences, an empty string is returned.
+// The output of this function is more readable than [ComputeDiff] for string inputs.
 func ComputeTextDiff(want, got string) string {
 	edits := myers.ComputeEdits(span.URIFromPath("want"), want, got)
 	diff := fmt.Sprint(gotextdiff.ToUnified("want", "got", want, edits))
