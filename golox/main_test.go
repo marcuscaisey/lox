@@ -83,14 +83,14 @@ func (r *runner) mustRunGolox(t *testing.T, path string) *goloxResult {
 }
 
 func (r *runner) mustParseExpectedResult(t *testing.T, path string) *goloxResult {
-	data, err := os.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	result := &goloxResult{
-		Stdout: r.parseExpectedStdout(data),
-		Errors: r.parseExpectedErrors(data),
+		Stdout: r.parseExpectedStdout(contents),
+		Errors: loxtest.ParseComments(contents, errorRe),
 	}
 	if len(result.Errors) > 0 {
 		result.ExitCode = 1
@@ -108,14 +108,6 @@ func (r *runner) parseExpectedStdout(data []byte) []byte {
 		b.WriteRune('\n')
 	}
 	return b.Bytes()
-}
-
-func (r *runner) parseExpectedErrors(data []byte) [][]byte {
-	var errors [][]byte
-	for _, match := range errorRe.FindAllSubmatch(data, -1) {
-		errors = append(errors, match[1])
-	}
-	return errors
 }
 
 func (r *runner) Update(t *testing.T, path string) {

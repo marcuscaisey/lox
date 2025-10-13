@@ -97,45 +97,21 @@ func (r *runner) mustRunLoxlint(t *testing.T, path string) *loxlintResult {
 }
 
 func (r *runner) mustParseExpectedResult(t *testing.T, path string) *loxlintResult {
-	data, err := os.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	result := &loxlintResult{
-		Errors:   r.parseExpectedErrors(data),
-		Warnings: r.parseExpectedWarnings(data),
-		Hints:    r.parseExpectedHints(data),
+		Errors:   loxtest.ParseComments(contents, errorRe),
+		Warnings: loxtest.ParseComments(contents, warningRe),
+		Hints:    loxtest.ParseComments(contents, hintRe),
 	}
 	if len(result.Errors)+len(result.Warnings)+len(result.Hints) > 0 {
 		result.ExitCode = 1
 	}
 
 	return result
-}
-
-func (r *runner) parseExpectedErrors(data []byte) [][]byte {
-	var errors [][]byte
-	for _, match := range errorRe.FindAllSubmatch(data, -1) {
-		errors = append(errors, match[1])
-	}
-	return errors
-}
-
-func (r *runner) parseExpectedWarnings(data []byte) [][]byte {
-	var warnings [][]byte
-	for _, match := range warningRe.FindAllSubmatch(data, -1) {
-		warnings = append(warnings, match[1])
-	}
-	return warnings
-}
-
-func (r *runner) parseExpectedHints(data []byte) [][]byte {
-	var hints [][]byte
-	for _, match := range hintRe.FindAllSubmatch(data, -1) {
-		hints = append(hints, match[1])
-	}
-	return hints
 }
 
 func (r *runner) Update(t *testing.T, path string) {

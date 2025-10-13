@@ -193,6 +193,15 @@ func mustGoModuleRoot(t *testing.T) string {
 	return ""
 }
 
+// ParseComments parses the comments of a file matching the given pattern.
+func ParseComments(fileContents []byte, commentPattern *regexp.Regexp) [][]byte {
+	var lines [][]byte
+	for _, match := range commentPattern.FindAllSubmatch(fileContents, -1) {
+		lines = append(lines, match[1])
+	}
+	return lines
+}
+
 // MustUpdateComments updates the comments of a file matching the given pattern with the contents of the given lines.
 func MustUpdateComments(t *testing.T, filePath string, fileContents []byte, commentPattern *regexp.Regexp, lines [][]byte) []byte {
 	matches := commentPattern.FindAllSubmatchIndex(fileContents, -1)
