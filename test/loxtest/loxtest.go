@@ -124,7 +124,6 @@ func snakeToPascalCase(s string) string {
 }
 
 // ComputeDiff returns a human-readable report of the differences between a wanted and got value.
-// If there are no differences, an empty string is returned.
 func ComputeDiff(want, got any) string {
 	diff := cmp.Diff(want, got, cmp.Transformer("BytesToString", func(b []byte) string {
 		return string(b)
@@ -197,7 +196,11 @@ func mustGoModuleRoot(t *testing.T) string {
 func ParseComments(fileContents []byte, commentPattern *regexp.Regexp) [][]byte {
 	var lines [][]byte
 	for _, match := range commentPattern.FindAllSubmatch(fileContents, -1) {
-		lines = append(lines, match[1])
+		line := match[1]
+		if bytes.Equal(match[1], []byte("<empty>")) {
+			line = []byte{}
+		}
+		lines = append(lines, line)
 	}
 	return lines
 }

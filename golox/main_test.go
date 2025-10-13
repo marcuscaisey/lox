@@ -88,8 +88,10 @@ func (r *runner) mustParseExpectedResult(t *testing.T, path string) *goloxResult
 		t.Fatal(err)
 	}
 
+	stdoutLines := loxtest.ParseComments(contents, printsRe)
+	stdoutLines = append(stdoutLines, []byte{})
 	result := &goloxResult{
-		Stdout: r.parseExpectedStdout(contents),
+		Stdout: bytes.Join(stdoutLines, []byte("\n")),
 		Errors: loxtest.ParseComments(contents, errorRe),
 	}
 	if len(result.Errors) > 0 {
@@ -97,17 +99,6 @@ func (r *runner) mustParseExpectedResult(t *testing.T, path string) *goloxResult
 	}
 
 	return result
-}
-
-func (r *runner) parseExpectedStdout(data []byte) []byte {
-	var b bytes.Buffer
-	for _, match := range printsRe.FindAllSubmatch(data, -1) {
-		if !bytes.Equal(match[1], []byte("<empty>")) {
-			b.Write(match[1])
-		}
-		b.WriteRune('\n')
-	}
-	return b.Bytes()
 }
 
 func (r *runner) Update(t *testing.T, path string) {
