@@ -1,4 +1,4 @@
 // error: x has been used before its declaration
 // lint error: x has been used before its declaration
 x = 1;
-var x;
+var x = 2;
