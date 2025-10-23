@@ -1,7 +1,6 @@
 package main_test
 
 import (
-	"bytes"
 	"errors"
 	"os"
 	"os/exec"
@@ -36,8 +35,8 @@ func (r *runner) Test(t *testing.T, path string) {
 
 	got := r.mustRun(t, path)
 
-	if !bytes.Equal(want, got) {
-		t.Errorf("incorrect output printed to stdout:\n%s", loxtest.ComputeTextDiff(string(want), string(got)))
+	if diff := loxtest.TextDiff(string(got), string(want)); diff != "" {
+		t.Errorf("incorrect output printed to stdout:\n%s\nstdout:\n%s", diff, got)
 	}
 }
 
@@ -45,7 +44,7 @@ func (r *runner) Update(t *testing.T, path string) {
 	r.mustRun(t, path, "-write")
 }
 
-func (r *runner) mustRun(t *testing.T, path string, flags ...string) []byte {
+func (r *runner) mustRun(t *testing.T, path string, flags ...string) string {
 	args := append(slices.Clone(flags), path)
 	cmd := exec.Command(r.loxfmtPath, args...)
 	t.Logf("go run ./loxfmt %s", strings.Join(args, " "))
@@ -59,5 +58,5 @@ func (r *runner) mustRun(t *testing.T, path string, flags ...string) []byte {
 		t.Fatal(err)
 	}
 
-	return stdout
+	return string(stdout)
 }

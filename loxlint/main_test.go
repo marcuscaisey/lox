@@ -1,14 +1,12 @@
 package main_test
 
 import (
-	"bytes"
 	"errors"
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 
 	"github.com/marcuscaisey/lox/test/loxtest"
 )
@@ -39,25 +37,25 @@ func (r *runner) Test(t *testing.T, path string) {
 	want := r.mustParseExpectedResult(t, path)
 	got := r.mustRunLoxlint(t, path)
 
-	if want.ExitCode != got.ExitCode {
+	if got.ExitCode != want.ExitCode {
 		t.Fatalf("exit code = %d, want %d\nstdout:\n%s\nstderr:\n%s", got.ExitCode, want.ExitCode, got.Stdout, got.Stderr)
 	}
 
-	if len(got.Stdout) > 0 {
-		t.Errorf("no output expected to be printed to stdout\nstdout:\n%s", got.Stdout)
+	if diff := loxtest.TextDiff(got.Stdout, want.Stdout); diff != "" {
+		t.Errorf("incorrect output printed to stdout:\n%s\nstdout:\n%s", diff, got.Stdout)
 	}
 
-	if !cmp.Equal(want.Hints, got.Hints) {
-		t.Errorf("incorrect hints printed to stderr:\n%s\nstderr:\n%s", loxtest.ComputeDiff(want.Hints, got.Hints), got.Stderr)
+	if diff := loxtest.LinesDiff(got.Hints, want.Hints); diff != "" {
+		t.Errorf("incorrect hints printed to stderr:\n%s\nstderr:\n%s", diff, got.Stderr)
 	}
 }
 
 type loxlintResult struct {
-	Stdout   []byte
+	Stdout   string
 	Stderr   []byte
-	Errors   [][]byte
-	Warnings [][]byte
-	Hints    [][]byte
+	Errors   []string
+	Warnings []string
+	Hints    []string
 	ExitCode int
 }
 
@@ -71,11 +69,11 @@ func (r *runner) mustRunLoxlint(t *testing.T, path string) *loxlintResult {
 	if err != nil && !errors.As(err, &exitErr) {
 		t.Fatal(err)
 	}
-	var errors [][]byte
-	var warnings [][]byte
-	var hints [][]byte
+	var errors []string
+	var warnings []string
+	var hints []string
 	errorWarningHintRe := regexp.MustCompile(`(?m)^\d+:\d+: (error|warning|hint): (.+)$`)
-	for _, match := range errorWarningHintRe.FindAllSubmatch(exitErr.Stderr, -1) {
+	for _, match := range errorWarningHintRe.FindAllStringSubmatch(string(exitErr.Stderr), -1) {
 		switch string(match[1]) {
 		case "error":
 			errors = append(errors, match[2])
@@ -87,7 +85,7 @@ func (r *runner) mustRunLoxlint(t *testing.T, path string) *loxlintResult {
 	}
 
 	return &loxlintResult{
-		Stdout:   stdout,
+		Stdout:   string(stdout),
 		Stderr:   exitErr.Stderr,
 		Errors:   errors,
 		Warnings: warnings,
@@ -128,12 +126,12 @@ func (r *runner) Update(t *testing.T, path string) {
 	if len(result.Stderr) > 0 {
 		t.Logf("stderr:\n%s", result.Stderr)
 		if len(result.Warnings) > 0 {
-			t.Logf("warnings:\n%s", bytes.Join(result.Warnings, []byte("\n")))
+			t.Logf("warnings:\n%s", strings.Join(result.Warnings, "\n"))
 		} else {
 			t.Logf("warnings: <empty>")
 		}
 		if len(result.Hints) > 0 {
-			t.Logf("hints:\n%s", bytes.Join(result.Hints, []byte("\n")))
+			t.Logf("hints:\n%s", strings.Join(result.Hints, "\n"))
 		} else {
 			t.Logf("hints: <empty>")
 		}

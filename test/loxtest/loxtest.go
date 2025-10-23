@@ -14,7 +14,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
@@ -123,21 +122,23 @@ func snakeToPascalCase(s string) string {
 	return b.String()
 }
 
-// ComputeDiff returns a human-readable report of the differences between a wanted and got value.
-func ComputeDiff(want, got any) string {
-	diff := cmp.Diff(want, got, cmp.Transformer("BytesToString", func(b []byte) string {
-		return string(b)
-	}))
-	return ansi.Sprintf("${GREEN}want -\n${RED}got +${DEFAULT}\n%s", colouriseDiff(diff))
-}
-
-// ComputeTextDiff returns a human-readable report of the differences between a wanted and got string.
+// TextDiff returns a human-readable report of the differences between a wanted and got string.
 // If there are no differences, an empty string is returned.
-// The output of this function is more readable than [ComputeDiff] for string inputs.
-func ComputeTextDiff(want, got string) string {
+func TextDiff(got, want string) string {
+	if got == want {
+		return ""
+	}
 	edits := myers.ComputeEdits(span.URIFromPath("want"), want, got)
 	diff := fmt.Sprint(gotextdiff.ToUnified("want", "got", want, edits))
 	return colouriseDiff(diff)
+}
+
+// LinesDiff returns a human-readable report of the differences between a wanted and got slice of strings.
+// If there are no differences, an empty string is returned.
+func LinesDiff(got, want []string) string {
+	gotStr := strings.Join(got, "\n") + "\n"
+	wantStr := strings.Join(want, "\n") + "\n"
+	return TextDiff(gotStr, wantStr)
 }
 
 func colouriseDiff(diff string) string {
@@ -193,12 +194,12 @@ func mustGoModuleRoot(t *testing.T) string {
 }
 
 // ParseComments parses the comments of a file matching the given pattern.
-func ParseComments(fileContents []byte, commentPattern *regexp.Regexp) [][]byte {
-	var lines [][]byte
-	for _, match := range commentPattern.FindAllSubmatch(fileContents, -1) {
+func ParseComments(fileContents []byte, commentPattern *regexp.Regexp) []string {
+	var lines []string
+	for _, match := range commentPattern.FindAllStringSubmatch(string(fileContents), -1) {
 		line := match[1]
-		if bytes.Equal(match[1], []byte("<empty>")) {
-			line = []byte{}
+		if line == "<empty>" {
+			line = ""
 		}
 		lines = append(lines, line)
 	}
@@ -206,11 +207,11 @@ func ParseComments(fileContents []byte, commentPattern *regexp.Regexp) [][]byte 
 }
 
 // MustUpdateComments updates the comments of a file matching the given pattern with the contents of the given lines.
-func MustUpdateComments(t *testing.T, filePath string, fileContents []byte, commentPattern *regexp.Regexp, lines [][]byte) []byte {
-	matches := commentPattern.FindAllSubmatchIndex(fileContents, -1)
+func MustUpdateComments(t *testing.T, filePath string, fileContents []byte, commentPattern *regexp.Regexp, lines []string) []byte {
+	matches := commentPattern.FindAllStringSubmatchIndex(string(fileContents), -1)
 	if len(lines) != len(matches) {
-		t.Fatalf(`%d "%s" %s found in %s but %d %s output, these should be equal`,
-			len(matches), commentPattern, pluralise("comment", len(matches)), filePath, len(lines), pluralise("line", len(lines)))
+		t.Fatalf("%d %q %s found in %s but %d %s output, these should be equal\nlines: %q",
+			len(matches), commentPattern, pluralise("comment", len(matches)), filePath, len(lines), pluralise("line", len(lines)), lines)
 	}
 	if len(lines) == 0 {
 		return fileContents
@@ -221,10 +222,10 @@ func MustUpdateComments(t *testing.T, filePath string, fileContents []byte, comm
 	for i, match := range matches {
 		start, end := match[2], match[3]
 		b.Write(fileContents[lastEnd:start])
-		if bytes.Equal(lines[i], []byte("")) {
+		if lines[i] == "" {
 			b.WriteString("<empty>")
 		} else {
-			b.Write(lines[i])
+			b.WriteString(lines[i])
 		}
 		lastEnd = end
 	}

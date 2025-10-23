@@ -9,10 +9,7 @@ require (
 )
 
 // Test-only
-require (
-	github.com/google/go-cmp v0.6.0
-	github.com/hexops/gotextdiff v1.0.3
-)
+require github.com/hexops/gotextdiff v1.0.3
 
 require (
 	github.com/marcuscaisey/go-sumtype v0.0.0-20241208122212-4c96c503b8ce // indirect
