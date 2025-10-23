@@ -29,6 +29,7 @@ func WithREPLMode(enabled bool) Option {
 	}
 }
 
+// WithFatalOnly configures only fatal errors to be reported.
 func WithFatalOnly(enabled bool) Option {
 	return func(i *config) {
 		i.fatalOnly = enabled
