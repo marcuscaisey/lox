@@ -45,6 +45,14 @@ func (r *runner) Test(t *testing.T, path string) {
 		t.Errorf("incorrect output printed to stdout:\n%s\nstdout:\n%s", diff, got.Stdout)
 	}
 
+	if diff := loxtest.LinesDiff(got.Errors, want.Errors); diff != "" {
+		t.Errorf("incorrect errors printed to stderr:\n%s\nstderr:\n%s", diff, got.Stderr)
+	}
+
+	if diff := loxtest.LinesDiff(got.Warnings, want.Warnings); diff != "" {
+		t.Errorf("incorrect warnings printed to stderr:\n%s\nstderr:\n%s", diff, got.Stderr)
+	}
+
 	if diff := loxtest.LinesDiff(got.Hints, want.Hints); diff != "" {
 		t.Errorf("incorrect hints printed to stderr:\n%s\nstderr:\n%s", diff, got.Stderr)
 	}
@@ -125,6 +133,11 @@ func (r *runner) Update(t *testing.T, path string) {
 	}
 	if len(result.Stderr) > 0 {
 		t.Logf("stderr:\n%s", result.Stderr)
+		if len(result.Errors) > 0 {
+			t.Logf("errors:\n%s", strings.Join(result.Errors, "\n"))
+		} else {
+			t.Logf("errors: <empty>")
+		}
 		if len(result.Warnings) > 0 {
 			t.Logf("warnings:\n%s", strings.Join(result.Warnings, "\n"))
 		} else {
