@@ -258,7 +258,7 @@ func (r *identResolver) beginScope() func() {
 		}
 		for ident := range scope.UndeclaredUsages() {
 			if scope.IsDeclared(ident.Token.Lexeme) {
-				r.addErrorf(ident, loxerr.Fatal, "%s has been used before its declaration", ident.Token.Lexeme)
+				r.addErrorf(ident, loxerr.Warning, "%s has been used before its declaration", ident.Token.Lexeme)
 			} else {
 				r.addErrorf(ident, loxerr.Warning, "%s has not been declared", ident.Token.Lexeme)
 			}
