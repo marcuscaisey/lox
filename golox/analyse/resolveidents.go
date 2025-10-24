@@ -277,7 +277,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 	}
 	if r.inGlobalScope() && r.forwardDeclaredGlobals[ident.Token.Lexeme] {
 		if r.scopes.Peek().Declaration(ident.Token.Lexeme) != stmt {
-			r.addErrorf(ident, loxerr.Fatal, "%s has already been declared", ident.Token.Lexeme)
+			r.addErrorf(ident, loxerr.Hint, "%s has already been declared", ident.Token.Lexeme)
 		}
 		return
 	}
