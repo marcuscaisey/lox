@@ -53,7 +53,6 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 		opt(cfg)
 	}
 	r := &identResolver{
-		replMode:               cfg.replMode,
 		fatalOnly:              cfg.fatalOnly,
 		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
@@ -63,7 +62,6 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 }
 
 type identResolver struct {
-	replMode  bool
 	fatalOnly bool
 
 	scopes                 *stack.Stack[*scope]
@@ -250,9 +248,6 @@ func (r *identResolver) beginScope() func() {
 	r.scopes.Push(newScope())
 	return func() {
 		scope := r.scopes.Pop()
-		if r.replMode {
-			return
-		}
 		for decl := range scope.UnusedDeclarations() {
 			r.addErrorf(decl.Ident(), loxerr.Hint, "%s has been declared but is never used", decl.Ident().Token.Lexeme)
 		}

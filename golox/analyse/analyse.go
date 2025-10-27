@@ -13,26 +13,13 @@ import (
 type Option func(*config)
 
 type config struct {
-	replMode  bool
 	fatalOnly bool
-}
-
-// WithREPLMode configures identifiers to be resolved in REPL mode.
-// In REPL mode, the following identifier checks are disabled:
-//   - declared and never used
-//   - declared more than once in the same scope
-//   - used before they are declared
-func WithREPLMode(enabled bool) Option {
-	// TODO: maybe we can get rid of this after removing most of the fatal errors from ResolveIdents?
-	return func(i *config) {
-		i.replMode = enabled
-	}
 }
 
 // WithFatalOnly configures only fatal errors to be reported.
 func WithFatalOnly(enabled bool) Option {
-	return func(i *config) {
-		i.fatalOnly = enabled
+	return func(cfg *config) {
+		cfg.fatalOnly = enabled
 	}
 }
 
