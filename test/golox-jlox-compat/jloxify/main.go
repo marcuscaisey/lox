@@ -35,6 +35,7 @@ var errorReplacements = map[string]errorReplacement{
 	`^invalid assignment target$`:                              {65, "Error at '=': Invalid assignment target."},
 	`^([A-Za-z_][A-Za-z0-9_]*) has already been declared$`:     {65, "Error at '$1': Already a variable with this name in this scope."},
 	`^([A-Za-z_][A-Za-z0-9_]*) read in its own initialiser$`:   {65, "Error at '$1': Can't read local variable in its own initializer."},
+	`^cannot pass more than 255 arguments to function$`:        {65, "Error at '$snippet': Can't have more than 255 arguments."},
 	`^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?\(\) accepts (\d+) arguments? but (\d+) (?:was|were) given$`: {70, `Expected $1 arguments but got $2.`},
 	`^'(?:<|<=|>|>=|-|/)' operator cannot be used with types '[A-Za-z_][A-Za-z0-9_]*' and '[A-Za-z_][A-Za-z0-9_]*'$`:  {70, "Operands must be numbers."},
 	`^'-' operator cannot be used with type '[A-Za-z_][A-Za-z0-9_]*'$`:                                                {70, "Operand must be a number."},
