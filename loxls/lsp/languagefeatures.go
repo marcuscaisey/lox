@@ -1,6 +1,7 @@
 package lsp
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/format"
+	"github.com/marcuscaisey/lox/golox/loxerr"
+	"github.com/marcuscaisey/lox/golox/parser"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
@@ -494,7 +497,26 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 		return nil, nil
 	}
 
-	formatted := format.Node(doc.Program)
+	program, err := parser.Parse(strings.NewReader(doc.Text), doc.Filename, parser.WithComments(true))
+	if err != nil {
+		var loxErrs loxerr.Errors
+		if errors.As(err, &loxErrs) {
+			diagnostics := loxErrsToDiagnostics(loxErrs)
+			err := h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
+				Uri:         doc.URI,
+				Version:     doc.Version,
+				Diagnostics: diagnostics,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("textDocument/formatting: %w", err)
+			}
+			return nil, nil
+		} else {
+			return nil, fmt.Errorf("textDocument/formatting: %w", err)
+		}
+	}
+
+	formatted := format.Node(program)
 	if formatted == doc.Text {
 		return nil, nil
 	}

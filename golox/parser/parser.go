@@ -799,6 +799,9 @@ func (p *parser) next() {
 	p.prevTok = p.tok
 	p.tok = p.nextTok
 	p.nextTok = p.lexer.Next()
+	if p.tok.Type == token.Comment && !p.parseComments {
+		p.next()
+	}
 }
 
 func (p *parser) addErrorf(rang token.Range, format string, args ...any) {

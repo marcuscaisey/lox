@@ -23,6 +23,7 @@ type document struct {
 	Text    string
 
 	// Server generated
+	Filename       string
 	Program        *ast.Program
 	HasParseErrors bool
 	IdentDecls     map[*ast.Ident]ast.Decl
@@ -140,8 +141,8 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if err != nil {
 		return fmt.Errorf("updating document: %w", err)
 	}
+	program, err := parser.Parse(strings.NewReader(string(src)), filename)
 	var parseLoxErrs loxerr.Errors
-	program, err := parser.Parse(strings.NewReader(string(src)), filename, parser.WithComments(true))
 	if err != nil && !errors.As(err, &parseLoxErrs) {
 		return fmt.Errorf("updating document: %w", err)
 	}
@@ -156,6 +157,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		URI:            uri,
 		Version:        version,
 		Text:           src,
+		Filename:       filename,
 		Program:        program,
 		HasParseErrors: len(parseLoxErrs) > 0,
 		IdentDecls:     identDecls,
@@ -171,29 +173,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 
 	diagnostics := []*protocol.Diagnostic{}
 	if filename != h.stubBuiltinsFilename {
-		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
-		for i, e := range loxErrs {
-			var severity protocol.DiagnosticSeverity
-			var tags []protocol.DiagnosticTag
-			switch e.Type {
-			case loxerr.Fatal:
-				severity = protocol.DiagnosticSeverityError
-			case loxerr.Warning:
-				severity = protocol.DiagnosticSeverityWarning
-			case loxerr.Hint:
-				severity = protocol.DiagnosticSeverityHint
-				if strings.HasSuffix(e.Msg, "has been declared but is never used") {
-					tags = append(tags, protocol.DiagnosticTagUnnecessary)
-				}
-			}
-			diagnostics[i] = &protocol.Diagnostic{
-				Range:    newRange(e),
-				Severity: severity,
-				Source:   "loxls",
-				Message:  e.Msg,
-				Tags:     tags,
-			}
-		}
+		diagnostics = loxErrsToDiagnostics(loxErrs)
 	}
 
 	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
@@ -201,6 +181,33 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		Version:     version,
 		Diagnostics: diagnostics,
 	})
+}
+
+func loxErrsToDiagnostics(loxErrs loxerr.Errors) []*protocol.Diagnostic {
+	diagnostics := make([]*protocol.Diagnostic, len(loxErrs))
+	for i, e := range loxErrs {
+		var severity protocol.DiagnosticSeverity
+		var tags []protocol.DiagnosticTag
+		switch e.Type {
+		case loxerr.Fatal:
+			severity = protocol.DiagnosticSeverityError
+		case loxerr.Warning:
+			severity = protocol.DiagnosticSeverityWarning
+		case loxerr.Hint:
+			severity = protocol.DiagnosticSeverityHint
+			if strings.HasSuffix(e.Msg, "has been declared but is never used") {
+				tags = append(tags, protocol.DiagnosticTagUnnecessary)
+			}
+		}
+		diagnostics[i] = &protocol.Diagnostic{
+			Range:    newRange(e),
+			Severity: severity,
+			Source:   "loxls",
+			Message:  e.Msg,
+			Tags:     tags,
+		}
+	}
+	return diagnostics
 }
 
 func uriToFilename(uri string) (string, error) {
