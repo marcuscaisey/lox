@@ -2,6 +2,7 @@ package main_test
 
 import (
 	"errors"
+	"flag"
 	"os"
 	"os/exec"
 	"regexp"
@@ -12,12 +13,17 @@ import (
 )
 
 var (
+	interpreter = flag.String("interpreter", "", "Interpreter to run tests against instead of golox")
+
 	printsRe = regexp.MustCompile(`// prints: (.+)`)
 	errorRe  = regexp.MustCompile(`// error: (.+)`)
 )
 
 func TestGolox(t *testing.T) {
-	goloxPath := loxtest.MustBuildBinary(t, "golox")
+	goloxPath := *interpreter
+	if goloxPath == "" {
+		goloxPath = loxtest.MustBuildBinary(t, "golox")
+	}
 	runner := newRunner(goloxPath)
 	loxtest.Run(t, runner, loxtest.WithSkipSyntaxErrors(false))
 }
