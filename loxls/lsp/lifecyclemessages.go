@@ -16,12 +16,15 @@ import (
 func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.InitializeResult, error) {
 	h.capabilities = params.GetCapabilities()
 
-	stubBuiltinsFilename, err := writeStubBuiltins()
+	cacheDir, err := os.UserCacheDir()
 	if err != nil {
+		return nil, fmt.Errorf("writing stub builtins to cache directory: %s", err)
+	}
+	h.stubBuiltinsFilename = fmt.Sprintf("%s/loxls/builtins.lox", cacheDir)
+	h.stubBuiltins = stubbuiltins.MustParse(h.stubBuiltinsFilename, stubbuiltins.WithExtraFeatures(h.extraFeatures))
+	if err := writeStubBuiltins(h.stubBuiltinsFilename, h.stubBuiltins[0].Start().File.Contents); err != nil {
 		return nil, err
 	}
-	h.stubBuiltinsFilename = stubBuiltinsFilename
-	h.stubBuiltins = stubbuiltins.MustParse(stubBuiltinsFilename)
 
 	version, err := buildVersionStr()
 	if err != nil {
@@ -67,26 +70,21 @@ func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.Initi
 	}, nil
 }
 
-func writeStubBuiltins() (string, error) {
-	cacheDir, err := os.UserCacheDir()
-	if err != nil {
-		return "", fmt.Errorf("writing stub builtins to cache directory: %s", err)
-	}
-	filename := fmt.Sprintf("%s/loxls/builtins.lox", cacheDir)
+func writeStubBuiltins(filename string, contents []byte) error {
 	if data, err := os.ReadFile(filename); err == nil {
-		if bytes.Equal(data, stubbuiltins.Source) {
-			return filename, nil
+		if bytes.Equal(data, contents) {
+			return nil
 		}
 	} else if !os.IsNotExist(err) {
-		return "", fmt.Errorf("writing stub builtins to cache directory: checking if existing stubs up to date: %s", err)
+		return fmt.Errorf("writing stub builtins to cache directory: checking if existing stubs up to date: %s", err)
 	}
 	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
-		return "", fmt.Errorf("writing stub builtins to cache directory: %s", err)
+		return fmt.Errorf("writing stub builtins to cache directory: %s", err)
 	}
-	if err := os.WriteFile(filename, stubbuiltins.Source, 0644); err != nil {
-		return "", fmt.Errorf("writing stub builtins to cache directory: %s", err)
+	if err := os.WriteFile(filename, contents, 0644); err != nil {
+		return fmt.Errorf("writing stub builtins to cache directory: %s", err)
 	}
-	return filename, nil
+	return nil
 }
 
 func buildVersionStr() (string, error) {

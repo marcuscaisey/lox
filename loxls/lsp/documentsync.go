@@ -141,7 +141,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if err != nil {
 		return fmt.Errorf("updating document: %w", err)
 	}
-	program, err := parser.Parse(strings.NewReader(string(src)), filename)
+	program, err := parser.Parse(strings.NewReader(string(src)), filename, parser.WithExtraFeatures(h.extraFeatures))
 	var parseLoxErrs loxerr.Errors
 	if err != nil && !errors.As(err, &parseLoxErrs) {
 		return fmt.Errorf("updating document: %w", err)
@@ -151,7 +151,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if filename != h.stubBuiltinsFilename {
 		builtins = h.stubBuiltins
 	}
-	identDecls, resolveErr := analyse.ResolveIdents(program, builtins)
+	identDecls, resolveErr := analyse.ResolveIdents(program, builtins, analyse.WithExtraFeatures(h.extraFeatures))
 
 	h.docs[uri] = &document{
 		URI:            uri,
@@ -164,7 +164,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		Completor:      newCompletor(program, h.stubBuiltins),
 	}
 
-	semanticsErr := analyse.CheckSemantics(program)
+	semanticsErr := analyse.CheckSemantics(program, analyse.WithExtraFeatures(h.extraFeatures))
 	var resolveLoxErrs, semanticsLoxErrs loxerr.Errors
 	errors.As(resolveErr, &resolveLoxErrs)
 	errors.As(semanticsErr, &semanticsLoxErrs)

@@ -11,15 +11,39 @@ import (
 	"github.com/marcuscaisey/lox/golox/parser"
 )
 
-// Source is the source code for stubs of Lox's built-ins.
-//
 //go:embed builtins.lox
-var Source []byte
+var builtinsSrc []byte
+
+//go:embed builtins_extra_features.lox
+var builtinsExtraFeaturesSrc []byte
+
+type config struct {
+	extraFeatures bool
+}
+
+// Option can be passed to [MustParse] to configure its behaviour.
+type Option func(*config)
+
+// WithExtraFeatures enables extra features that golox implements but the base Lox language does not.
+// Extra features are enabled by default.
+func WithExtraFeatures(enabled bool) Option {
+	return func(c *config) {
+		c.extraFeatures = enabled
+	}
+}
 
 // MustParse parses the stubs of Lox's built-ins and returns the declarations.
 // filename is the name of the file that the declarations will be associated with.
-func MustParse(filename string) []ast.Decl {
-	program, err := parser.Parse(bytes.NewBuffer(Source), filename, parser.WithComments(true))
+func MustParse(filename string, opts ...Option) []ast.Decl {
+	cfg := &config{extraFeatures: true}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+	src := builtinsSrc
+	if cfg.extraFeatures {
+		src = builtinsExtraFeaturesSrc
+	}
+	program, err := parser.Parse(bytes.NewBuffer(src), filename, parser.WithComments(true))
 	if err != nil {
 		panic(fmt.Sprintf("parsing built-in stubs: %s", err))
 	}

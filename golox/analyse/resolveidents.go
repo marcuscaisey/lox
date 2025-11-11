@@ -48,12 +48,10 @@ import (
 //
 // If there is an error, it will be of type [loxerr.Errors].
 func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (map[*ast.Ident]ast.Decl, error) {
-	cfg := &config{}
-	for _, opt := range opts {
-		opt(cfg)
-	}
+	cfg := newConfig(opts)
 	r := &identResolver{
 		fatalOnly:              cfg.fatalOnly,
+		extraFeatures:          cfg.extraFeatures,
 		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
 		identDecls:             map[*ast.Ident]ast.Decl{},
@@ -62,7 +60,8 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 }
 
 type identResolver struct {
-	fatalOnly bool
+	fatalOnly     bool
+	extraFeatures bool
 
 	scopes                 *stack.Stack[*scope]
 	globalScope            *scope
@@ -267,7 +266,7 @@ func (r *identResolver) inGlobalScope() bool {
 
 func (r *identResolver) declareIdent(stmt ast.Decl) {
 	ident := stmt.Ident()
-	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
+	if !ident.IsValid() || (r.extraFeatures && ident.Token.Lexeme == token.PlaceholderIdent) {
 		return
 	}
 	if r.inGlobalScope() && r.forwardDeclaredGlobals[ident.Token.Lexeme] {
@@ -289,7 +288,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 }
 
 func (r *identResolver) defineIdent(ident *ast.Ident) {
-	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
+	if !ident.IsValid() || (r.extraFeatures && ident.Token.Lexeme == token.PlaceholderIdent) {
 		return
 	}
 	for _, scope := range r.scopes.Backward() {
@@ -301,7 +300,7 @@ func (r *identResolver) defineIdent(ident *ast.Ident) {
 }
 
 func (r *identResolver) startInitialisingIdent(ident *ast.Ident) {
-	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
+	if !ident.IsValid() || (r.extraFeatures && ident.Token.Lexeme == token.PlaceholderIdent) {
 		return
 	}
 	for _, scope := range r.scopes.Backward() {
@@ -313,7 +312,7 @@ func (r *identResolver) startInitialisingIdent(ident *ast.Ident) {
 }
 
 func (r *identResolver) finishInitialisingIdent(ident *ast.Ident) {
-	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
+	if !ident.IsValid() || (r.extraFeatures && ident.Token.Lexeme == token.PlaceholderIdent) {
 		return
 	}
 	for _, scope := range r.scopes.Backward() {
@@ -332,7 +331,7 @@ const (
 )
 
 func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
-	if !ident.IsValid() || ident.Token.Lexeme == token.PlaceholderIdent {
+	if !ident.IsValid() || (r.extraFeatures && ident.Token.Lexeme == token.PlaceholderIdent) {
 		return
 	}
 	for level, scope := range r.scopes.Backward() {

@@ -2,6 +2,7 @@ package parser
 
 import (
 	"io"
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -20,6 +21,8 @@ type errorHandler func(tok token.Token, format string, args ...any)
 // Syntax errors are handled by calling the error handler function which can be set using SetErrorHandler. The default
 // error handler is a no-op.
 type lexer struct {
+	extraFeatures bool
+
 	src        []byte
 	errHandler errorHandler
 
@@ -39,8 +42,9 @@ func newLexer(r io.Reader, filename string) (*lexer, error) {
 	}
 
 	l := &lexer{
-		src:        src,
-		errHandler: func(token.Token, string, ...any) {},
+		extraFeatures: true,
+		src:           src,
+		errHandler:    func(token.Token, string, ...any) {},
 		pos: token.Position{
 			File:   token.NewFile(filename, src),
 			Line:   1,
@@ -96,7 +100,7 @@ func (l *lexer) Next() token.Token {
 			tok.Type = token.Slash
 			break
 		}
-	case l.ch == '%':
+	case l.extraFeatures && l.ch == '%':
 		tok.Type = token.Percent
 	case l.ch == '<':
 		tok.Type = token.Less
@@ -116,9 +120,9 @@ func (l *lexer) Next() token.Token {
 			l.next()
 			tok.Type = token.BangEqual
 		}
-	case l.ch == '?':
+	case l.ch == '?' && l.extraFeatures:
 		tok.Type = token.Question
-	case l.ch == ':':
+	case l.ch == ':' && l.extraFeatures:
 		tok.Type = token.Colon
 	case l.ch == '(':
 		tok.Type = token.LeftParen
@@ -148,6 +152,9 @@ func (l *lexer) Next() token.Token {
 		ident := l.consumeIdent()
 		tok.EndPos = l.pos
 		tok.Type = token.IdentType(ident)
+		if !l.extraFeatures && slices.Contains([]token.Type{token.Break, token.Continue, token.Static, token.Get, token.Set}, tok.Type) {
+			tok.Type = token.Ident
+		}
 		tok.Lexeme = ident
 		return tok
 	default:
@@ -276,25 +283,30 @@ func (l *lexer) next() {
 		return
 	}
 
-	r, size := utf8.DecodeRune(l.src[l.readOffset:])
-	l.lastReadSize = size
-	l.readOffset += size
-
-	if r == utf8.RuneError {
-		// If we get here then we've read exactly one invalid UTF-8 byte
-		tok := token.Token{
-			StartPos: l.pos,
-			EndPos:   l.pos,
-			Type:     token.Illegal,
-			Lexeme:   string(l.src[l.offset : l.offset+1]),
+	if l.extraFeatures {
+		r, size := utf8.DecodeRune(l.src[l.readOffset:])
+		l.lastReadSize = size
+		l.readOffset += size
+		if r == utf8.RuneError {
+			// If we get here then we've read exactly one invalid UTF-8 byte
+			tok := token.Token{
+				StartPos: l.pos,
+				EndPos:   l.pos,
+				Type:     token.Illegal,
+				Lexeme:   string(l.src[l.offset : l.offset+1]),
+			}
+			tok.EndPos.Column++
+			l.errHandler(tok, "invalid UTF-8 byte %#x", l.src[l.offset])
+			l.next()
+			return
 		}
-		tok.EndPos.Column++
-		l.errHandler(tok, "invalid UTF-8 byte %#x", l.src[l.offset])
-		l.next()
-		return
-	}
+		l.ch = r
 
-	l.ch = r
+	} else {
+		l.ch = rune(l.src[l.readOffset])
+		l.lastReadSize = 1
+		l.readOffset++
+	}
 }
 
 // peek returns the next character without advancing the lexer.

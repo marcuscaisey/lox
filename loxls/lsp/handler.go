@@ -13,6 +13,9 @@ import (
 
 // Handler handles JSON-RPC requests and notifications.
 type Handler struct {
+	// Config
+	extraFeatures bool
+
 	// Dependencies
 	client *client
 	log    *logger
@@ -29,7 +32,8 @@ type Handler struct {
 // NewHandler returns a new Handler.
 func NewHandler() *Handler {
 	return &Handler{
-		docs: map[string]*document{},
+		extraFeatures: false,
+		docs:          map[string]*document{},
 	}
 }
 

@@ -21,6 +21,15 @@ func WithComments(enabled bool) Option {
 	}
 }
 
+// WithExtraFeatures enables extra features that golox implements but the base Lox language does not.
+// Extra features are enabled by default.
+func WithExtraFeatures(enabled bool) Option {
+	return func(p *parser) {
+		p.extraFeatures = enabled
+		p.lexer.extraFeatures = enabled
+	}
+}
+
 // Parse parses the source code read from r.
 // filename is the name of the file being parsed.
 // If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
@@ -31,7 +40,11 @@ func Parse(r io.Reader, filename string, opts ...Option) (*ast.Program, error) {
 		return nil, fmt.Errorf("parsing lox source: %w", err)
 	}
 
-	p := &parser{lexer: lexer, classBodyScopeDepth: -1}
+	p := &parser{
+		extraFeatures:       true,
+		lexer:               lexer,
+		classBodyScopeDepth: -1,
+	}
 	lexer.SetErrorHandler(func(tok token.Token, format string, args ...any) {
 		p.addErrorf(tok, format, args...)
 	})
@@ -43,6 +56,9 @@ func Parse(r io.Reader, filename string, opts ...Option) (*ast.Program, error) {
 }
 
 type parser struct {
+	parseComments bool
+	extraFeatures bool
+
 	lexer   *lexer
 	prevTok token.Token
 	tok     token.Token // token currently being considered
@@ -53,8 +69,6 @@ type parser struct {
 
 	errs       loxerr.Errors
 	lastErrPos token.Position
-
-	parseComments bool
 }
 
 // Parse parses the source code and returns the root node of the abstract syntax tree.
@@ -508,7 +522,11 @@ func (p *parser) parseExpr() (ast.Expr, bool) {
 }
 
 func (p *parser) parseCommaExpr() (ast.Expr, bool) {
-	return p.parseBinaryExpr(p.parseAssignmentExpr, token.Comma)
+	if p.extraFeatures {
+		return p.parseBinaryExpr(p.parseAssignmentExpr, token.Comma)
+	} else {
+		return p.parseAssignmentExpr()
+	}
 }
 
 func (p *parser) parseAssignmentExpr() (ast.Expr, bool) {
@@ -672,7 +690,7 @@ func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 		return &ast.IdentExpr{Ident: &ast.Ident{Token: tok}}, true
 	case p.match(token.This):
 		return &ast.ThisExpr{This: tok}, true
-	case p.match(token.Fun):
+	case p.extraFeatures && p.match(token.Fun):
 		return p.parseFunExpr(tok)
 	case p.match(token.LeftParen):
 		expr := &ast.GroupExpr{LeftParen: tok}

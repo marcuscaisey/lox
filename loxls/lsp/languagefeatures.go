@@ -34,7 +34,7 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 	locs := make(protocol.LocationSlice, len(defs))
 	for i, def := range defs {
 		locs[i] = &protocol.Location{
-			Uri:   filenameToURI(def.Start().File.Name()),
+			Uri:   filenameToURI(def.Start().File.Name),
 			Range: newRange(def),
 		}
 	}
@@ -108,7 +108,7 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 	locs := make(protocol.LocationSlice, len(refs))
 	for i, ref := range refs {
 		locs[i] = &protocol.Location{
-			Uri:   filenameToURI(ref.Start().File.Name()),
+			Uri:   filenameToURI(ref.Start().File.Name),
 			Range: newRange(ref),
 		}
 	}

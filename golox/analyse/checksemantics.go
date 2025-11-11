@@ -25,12 +25,15 @@ const (
 //   - function calls cannot have more than 255 arguments
 //
 // If there is an error, it will be of type [loxerr.Errors].
-func CheckSemantics(program *ast.Program) error {
-	c := &semanticChecker{}
+func CheckSemantics(program *ast.Program, opts ...Option) error {
+	cfg := newConfig(opts)
+	c := &semanticChecker{extraFeatures: cfg.extraFeatures}
 	return c.Check(program)
 }
 
 type semanticChecker struct {
+	extraFeatures bool
+
 	inLoop     bool
 	curFunType funType
 	inMethod   bool
@@ -202,13 +205,13 @@ func (c *semanticChecker) checkNoConstructorReturn(stmt *ast.ReturnStmt) {
 }
 
 func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
-	if expr.Ident.Token.Lexeme == token.PlaceholderIdent {
+	if c.extraFeatures && expr.Ident.Token.Lexeme == token.PlaceholderIdent {
 		c.errs.Addf(expr.Ident, loxerr.Fatal, "%s cannot be used as a value", token.PlaceholderIdent)
 	}
 }
 
 func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
-	if ident.IsValid() && ident.Token.Lexeme == token.PlaceholderIdent {
+	if c.extraFeatures && ident.IsValid() && ident.Token.Lexeme == token.PlaceholderIdent {
 		c.errs.Addf(ident, loxerr.Fatal, "%s cannot be used as a field name", token.PlaceholderIdent)
 	}
 }

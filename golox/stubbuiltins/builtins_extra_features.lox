@@ -3,3 +3,9 @@
 
 // Returns the number of seconds since the Unix epoch.
 fun clock() {}
+
+// Returns the type of the object.
+fun type(object) {}
+
+// Throws a runtime error with the given message.
+fun error(msg) {}
