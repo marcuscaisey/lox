@@ -1,0 +1,15 @@
+fun newCounter() {
+  var i = 0;
+  class Counter {
+    init() {
+      i = i + 1;
+      print i;
+    }
+  }
+  return Counter;
+}
+
+var counter = newCounter();
+counter(); // prints: 1
+counter(); // prints: 2
+counter(); // prints: 3

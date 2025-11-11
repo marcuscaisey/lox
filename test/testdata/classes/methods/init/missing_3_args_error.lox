@@ -1,0 +1,7 @@
+class Foo {
+  init(a, b, c) {
+    print a + b + c;
+  }
+}
+
+Foo(); // error: Foo.init() accepts 3 arguments but 0 were given

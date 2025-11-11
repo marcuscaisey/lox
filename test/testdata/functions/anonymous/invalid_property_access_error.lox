@@ -1,0 +1,1 @@
+fun() {}.y; // error: property access is not valid for 'function' object

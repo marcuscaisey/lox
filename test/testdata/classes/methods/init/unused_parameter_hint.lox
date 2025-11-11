@@ -1,0 +1,8 @@
+class Foo {
+  // lint hint: z has been declared but is never used
+  init(x, y, z) {
+    print x + y;
+  }
+}
+
+_ = Foo;

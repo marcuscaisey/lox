@@ -1,0 +1,17 @@
+class Foo {
+  returnsValue() {
+    return "return value";
+  }
+
+  returnsNoValue() {
+    return;
+    print "should not print";
+  }
+
+  noReturn() {}
+}
+
+var foo = Foo();
+print foo.returnsValue(); // prints: return value
+print foo.returnsNoValue(); // prints: nil
+print foo.noReturn(); // prints: nil

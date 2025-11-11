@@ -1,0 +1,5 @@
+var add = fun(x, y) {
+  print x + y;
+};
+
+add(1, 2, 3); // error: (anonymous)() accepts 2 arguments but 3 were given

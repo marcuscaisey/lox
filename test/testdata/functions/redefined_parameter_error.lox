@@ -1,0 +1,8 @@
+fun f(x) {
+  // error: x has already been declared
+  // lint error: x has already been declared
+  var x = 1;
+  _ = x;
+}
+
+_ = f;

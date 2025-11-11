@@ -1,0 +1,11 @@
+class Foo {
+  static _() {
+    return 1;
+  }
+
+  static _() {
+    return 2;
+  }
+}
+
+_ = Foo;

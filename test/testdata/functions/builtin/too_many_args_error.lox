@@ -1,0 +1,1 @@
+clock(1, 2, 3); // error: clock() accepts 0 arguments but 3 were given

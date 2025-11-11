@@ -1,0 +1,7 @@
+class Foo {
+  static add(a, b, c) {
+    print a + b + c;
+  }
+}
+
+Foo.add(); // error: Foo.add() accepts 3 arguments but 0 were given

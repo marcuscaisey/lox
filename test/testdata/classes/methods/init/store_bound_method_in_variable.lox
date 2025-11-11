@@ -1,0 +1,13 @@
+class Point {
+  init(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+}
+
+var p = Point(1, 2);
+var initP = p.init;
+initP(3, 4);
+
+print p.x; // prints: 3
+print p.y; // prints: 4

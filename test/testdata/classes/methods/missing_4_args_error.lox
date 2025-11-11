@@ -1,0 +1,7 @@
+class Foo {
+  add(a, b, c, d) {
+    print a + b + c + d;
+  }
+}
+
+Foo().add(); // error: Foo.add() accepts 4 arguments but 0 were given

@@ -1,0 +1,17 @@
+class Foo {
+  static greet() {
+    print "Hello, World!";
+  }
+
+  static add2(x) {
+    print x + 2;
+  }
+
+  static add(x, y) {
+    print x + y;
+  }
+}
+
+Foo.greet(); // prints: Hello, World!
+Foo.add2(1); // prints: 3
+Foo.add(2, 3); // prints: 5

@@ -1,0 +1,4 @@
+class Foo {
+  static bar() {}
+}
+Foo.bar - 1; // error: '-' operator cannot be used with types 'function' and 'number'
