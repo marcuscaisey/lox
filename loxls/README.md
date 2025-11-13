@@ -10,11 +10,19 @@ https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/spe
 go install github.com/marcuscaisey/lox/loxls@latest
 ```
 
-## Usage
+## Settings
 
+loxls can be configured via the `initializationOptions` of the `initialize` request. The default
+settings are shown below.
+
+```jsonc
+{
+  // Enable the language server to understand the extra features that
+  // https://github.com/marcuscaisey/lox implements but the base Lox language does not.
+  "extraFeatures": true
+}
 ```
-Usage: loxls
-```
+
 ## Implemented Features
 
 ### Language Features

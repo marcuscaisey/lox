@@ -12,6 +12,7 @@ import {
 
 const baseKey = "lox";
 const useLanguageServerKey = `${baseKey}.useLanguageServer`;
+const enableExtraFeaturesKey = `${baseKey}.enableExtraFeatures`;
 const loxlsPathKey = `${baseKey}.loxlsPath`;
 const traceServerKey = `${baseKey}.trace.server`;
 
@@ -31,6 +32,10 @@ export async function activate(context: ExtensionContext): Promise<void> {
   );
 
   await onDidChangeLangServerConfig(context);
+}
+
+interface InitializationOptions {
+  extraFeatures: boolean;
 }
 
 async function onDidChangeLangServerConfig(context: ExtensionContext): Promise<void> {
@@ -82,8 +87,13 @@ async function onDidChangeLangServerConfig(context: ExtensionContext): Promise<v
     command: loxlsPath,
     transport: TransportKind.stdio,
   };
+  const enableExtraFeatures = config.get<boolean>(enableExtraFeaturesKey, false)
+  const initializationOptions: InitializationOptions = {
+    extraFeatures: enableExtraFeatures,
+  };
   const clientOptions: LanguageClientOptions = {
     documentSelector: [{ language: "lox" }],
+    initializationOptions: initializationOptions,
     synchronize: {
       fileEvents: workspace.createFileSystemWatcher("*.lox"),
     },
@@ -92,7 +102,7 @@ async function onDidChangeLangServerConfig(context: ExtensionContext): Promise<v
 
   const traceServer: TraceValues = config.get<TraceValues>(traceServerKey, TraceValues.Off);
   logger.info(
-    `Starting language server (${useLanguageServerKey}: true, ${loxlsPathKey}: "${loxlsPathValue}", ${traceServerKey}: "${traceServer}")`,
+    `Starting language server (${useLanguageServerKey}: true, ${enableExtraFeaturesKey}: ${String(enableExtraFeatures)}, ${loxlsPathKey}: "${loxlsPathValue}", ${traceServerKey}: "${traceServer}")`,
   );
   try {
     await client.start();

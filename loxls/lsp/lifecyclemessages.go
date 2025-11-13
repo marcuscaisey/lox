@@ -12,9 +12,23 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
+type initializationOptions struct {
+	ExtraFeatures *bool `json:"extraFeatures"`
+}
+
+func (i *initializationOptions) GetExtraFeatures() *bool {
+	if i == nil {
+		return nil
+	}
+	return i.ExtraFeatures
+}
+
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initialize
-func (h *Handler) initialize(params *protocol.InitializeParams) (*protocol.InitializeResult, error) {
+func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOptions]) (*protocol.InitializeResult, error) {
 	h.capabilities = params.GetCapabilities()
+	if extraFeatures := params.GetInitializationOptions().GetExtraFeatures(); extraFeatures != nil {
+		h.extraFeatures = *extraFeatures
+	}
 
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {

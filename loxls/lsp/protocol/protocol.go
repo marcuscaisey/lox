@@ -3908,7 +3908,7 @@ func (t TraceValues) MarshalJSON() ([]byte, error) {
 // The initialize parameters
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#xInitializeParams
-type XInitializeParams struct {
+type XInitializeParams[InitializationOptions any] struct {
 	*WorkDoneProgressParams
 	// The process Id of the parent process that started
 	// the server.
@@ -3943,12 +3943,12 @@ type XInitializeParams struct {
 	// The capabilities provided by the client (editor or tool)
 	Capabilities *ClientCapabilities `json:"capabilities"`
 	// User provided initialization options.
-	InitializationOptions LSPAny `json:"initializationOptions,omitempty"`
+	InitializationOptions InitializationOptions `json:"initializationOptions,omitempty"`
 	// The initial trace setting. If omitted trace is disabled ('off').
 	Trace TraceValues `json:"trace,omitempty"`
 }
 
-func (x *XInitializeParams) GetProcessId() int {
+func (x *XInitializeParams[InitializationOptions]) GetProcessId() int {
 	if x == nil {
 		var zero int
 		return zero
@@ -3956,7 +3956,7 @@ func (x *XInitializeParams) GetProcessId() int {
 	return x.ProcessId
 }
 
-func (x *XInitializeParams) GetClientInfo() *XInitializeParamsClientInfo {
+func (x *XInitializeParams[InitializationOptions]) GetClientInfo() *XInitializeParamsClientInfo {
 	if x == nil {
 		var zero *XInitializeParamsClientInfo
 		return zero
@@ -3964,7 +3964,7 @@ func (x *XInitializeParams) GetClientInfo() *XInitializeParamsClientInfo {
 	return x.ClientInfo
 }
 
-func (x *XInitializeParams) GetLocale() string {
+func (x *XInitializeParams[InitializationOptions]) GetLocale() string {
 	if x == nil {
 		var zero string
 		return zero
@@ -3972,7 +3972,7 @@ func (x *XInitializeParams) GetLocale() string {
 	return x.Locale
 }
 
-func (x *XInitializeParams) GetRootPath() string {
+func (x *XInitializeParams[InitializationOptions]) GetRootPath() string {
 	if x == nil {
 		var zero string
 		return zero
@@ -3980,7 +3980,7 @@ func (x *XInitializeParams) GetRootPath() string {
 	return x.RootPath
 }
 
-func (x *XInitializeParams) GetRootUri() string {
+func (x *XInitializeParams[InitializationOptions]) GetRootUri() string {
 	if x == nil {
 		var zero string
 		return zero
@@ -3988,7 +3988,7 @@ func (x *XInitializeParams) GetRootUri() string {
 	return x.RootUri
 }
 
-func (x *XInitializeParams) GetCapabilities() *ClientCapabilities {
+func (x *XInitializeParams[InitializationOptions]) GetCapabilities() *ClientCapabilities {
 	if x == nil {
 		var zero *ClientCapabilities
 		return zero
@@ -3996,15 +3996,15 @@ func (x *XInitializeParams) GetCapabilities() *ClientCapabilities {
 	return x.Capabilities
 }
 
-func (x *XInitializeParams) GetInitializationOptions() LSPAny {
+func (x *XInitializeParams[InitializationOptions]) GetInitializationOptions() InitializationOptions {
 	if x == nil {
-		var zero LSPAny
+		var zero InitializationOptions
 		return zero
 	}
 	return x.InitializationOptions
 }
 
-func (x *XInitializeParams) GetTrace() TraceValues {
+func (x *XInitializeParams[InitializationOptions]) GetTrace() TraceValues {
 	if x == nil {
 		var zero TraceValues
 		return zero
@@ -4060,8 +4060,8 @@ func (w *WorkspaceFoldersInitializeParams) GetWorkspaceFolders() []*WorkspaceFol
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#initializeParams
-type InitializeParams struct {
-	*XInitializeParams
+type InitializeParams[InitializationOptions any] struct {
+	*XInitializeParams[InitializationOptions]
 	*WorkspaceFoldersInitializeParams
 }
 

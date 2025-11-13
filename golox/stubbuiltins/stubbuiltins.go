@@ -24,7 +24,8 @@ type config struct {
 // Option can be passed to [MustParse] to configure its behaviour.
 type Option func(*config)
 
-// WithExtraFeatures enables extra features that golox implements but the base Lox language does not.
+// WithExtraFeatures enables extra features that https://github.com/marcuscaisey/lox implements but the base Lox
+// language does not.
 // Extra features are enabled by default.
 func WithExtraFeatures(enabled bool) Option {
 	return func(c *config) {

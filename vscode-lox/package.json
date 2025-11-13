@@ -31,6 +31,11 @@
           "default": true,
           "description": "Use the Lox language server \"loxls\" for powering language features like code navigation, completion, refactoring, formatting, and diagnostics."
         },
+        "lox.enableExtraFeatures": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable the Lox language server \"loxls\" to understand the extra features that https://github.com/marcuscaisey/lox implements but the base Lox language does not."
+        },
         "lox.loxlsPath": {
           "type": "string",
           "default": "",

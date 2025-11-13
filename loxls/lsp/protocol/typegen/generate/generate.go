@@ -25,6 +25,8 @@ var sumTypeVariantDiscriminators = map[string]map[string]string{
 	},
 }
 
+const initializationOptionsType = "InitializationOptions"
+
 // Source returns an unformatted Go source file containing declarations of the given types.
 // Types are resolved using the given meta model.
 // The file will belong to the given package.
@@ -125,7 +127,11 @@ func (g *generator) genTypeDeclForSumType(namespace string, typ *metamodel.Type)
 
 func (g *generator) genRefTypeDecl(name string) string {
 	if structure, ok := g.metaModel.Structure(name); ok {
-		return g.genStructDecl(structure)
+		typ := g.genStructDecl(structure)
+		if name == "_InitializeParams" {
+			typ += fmt.Sprintf("[%s]", initializationOptionsType)
+		}
+		return typ
 	} else if alias, ok := g.metaModel.TypeAlias(name); ok {
 		return g.genTypeAliasDecl(alias)
 	} else if enum, ok := g.metaModel.Enumeration(name); ok {
@@ -160,7 +166,7 @@ func (g *generator) genStructDecl(structure *metamodel.Structure) string {
 
 	const text = `
 {{.comment}}
-type {{.name}} struct {
+type {{.name}}{{.nameSuffix}} struct {
 	{{- range .fields}}
 	{{.}}
 	{{- end}}
@@ -168,7 +174,7 @@ type {{.name}} struct {
 
 {{with $receiver := slice $.name 0 1 | lowerFirstLetter}}
 {{range $.fieldData}}
-func ({{$receiver}} *{{$.name}}) Get{{.Name}}() {{.Type}} {
+func ({{$receiver}} *{{$.name}}{{$.receiverTypeSuffix}}) Get{{.Name}}() {{.Type}} {
 	if {{$receiver}} == nil {
 		var zero {{.Type}}
 		return zero
@@ -178,7 +184,20 @@ func ({{$receiver}} *{{$.name}}) Get{{.Name}}() {{.Type}} {
 {{end}}
 {{end}}
 `
-	data := map[string]any{"comment": comment, "name": name, "fields": fields, "fieldData": fieldData}
+	nameSuffix := ""
+	receiverTypeSuffix := ""
+	if name == "InitializeParams" || name == "XInitializeParams" {
+		nameSuffix = fmt.Sprintf("[%s any]", initializationOptionsType)
+		receiverTypeSuffix = fmt.Sprintf("[%s]", initializationOptionsType)
+	}
+	data := map[string]any{
+		"comment":            comment,
+		"name":               name,
+		"nameSuffix":         nameSuffix,
+		"receiverTypeSuffix": receiverTypeSuffix,
+		"fields":             fields,
+		"fieldData":          fieldData,
+	}
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 
@@ -195,11 +214,17 @@ type structFieldData struct {
 
 func (g *generator) structFieldData(structName string, prop *metamodel.Property) *structFieldData {
 	name := upperFirstLetter(sanitiseName(prop.Name))
+	var typ string
+	if structName == "XInitializeParams" && name == "InitializationOptions" {
+		typ = initializationOptionsType
+	} else {
+		typ = g.genTypeDecl(structName+name, prop.Type)
+	}
 	return &structFieldData{
 		Comment:  g.comment(prop.Documentation, prop.Deprecated),
 		Optional: prop.Optional,
 		Name:     name,
-		Type:     g.genTypeDecl(structName+name, prop.Type),
+		Type:     typ,
 		JSONName: prop.Name,
 	}
 }
