@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-11-15
+
+### Added
+
+- Add `lox.enableExtraFeatures` setting to enable extra features that
+  https://github.com/marcuscaisey/lox implements but the base Lox language does not.
+
+### Fixed
+
+- Allow multiline strings.
+- Allow globals to be redeclared.
+- Allow undefined variable access.
+- Allow comments everywhere.
+- Disallow referencing local in its initialiser.
+- Reduce indent size from 4 spaces to 2.
+- Don't report 'x can only be used inside a method definition' error inside nested functions.
+- Report 'x has been used before its declaration' as warning instead of error.
+- Report 'x has not been declared' as warning instead of error.
+
+### Changed
+
+- Disable by default extra features that https://github.com/marcuscaisey/lox implements but the base
+  Lox language does not.
+
 ## [1.1.0] - 2025-09-19
 
 ### Added
@@ -12,9 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `lox.trace.server` setting to enable tracing the communication between VS Code and the Lox
   language server.
 
-### Changes
+### Changed
 
-- Report unused declarations as hints instead of errors.
+- Report 'x has been declared but is never used' as hint instead of error.
 - Stop mentioning "loxls" in extension logs where unneccessary.
 
 ## [1.0.0] - 2025-09-16
@@ -27,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Diagnostics - Build and lint errors shown as you type.
 - Syntax highlighting.
 
-[Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v1.0.0...HEAD
+[Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v2.0.0...HEAD
+[2.0.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v2.0.0/vscode-lox
 [1.1.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v1.1.0/vscode-lox
 [1.0.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v1.0.0/vscode-lox
