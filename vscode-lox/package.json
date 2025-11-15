@@ -1,7 +1,7 @@
 {
   "name": "lox",
   "displayName": "Lox",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Rich Lox language support for Visual Studio Code",
   "categories": [
     "Programming Languages"
