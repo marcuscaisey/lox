@@ -11,11 +11,12 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
+var log *logger
+
 // Handler handles JSON-RPC requests and notifications.
 type Handler struct {
 	// Dependencies
 	client *client
-	log    *logger
 
 	// Internal state
 	initialized          bool
@@ -80,7 +81,7 @@ func handleRequest[T any, R any](handler requestHandler[T, R], jsonParams *json.
 // HandleNotification responds to a JSON-RPC notification.
 func (h *Handler) HandleNotification(method string, jsonParams *json.RawMessage) {
 	if err := h.handleNotification(method, jsonParams); err != nil {
-		h.log.Error(err.Error())
+		log.Error(err.Error())
 	}
 }
 
@@ -125,5 +126,5 @@ func handleNotification[T any](method string, handler notificationHandler[T], js
 // SetClient sets the client that the handler can use to send requests and notifications to the server's client.
 func (h *Handler) SetClient(client *jsonrpc.Client) {
 	h.client = newClient(client)
-	h.log = newLogger(h.client)
+	log = newLogger(h.client)
 }

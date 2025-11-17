@@ -42,7 +42,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOp
 
 	version, err := buildVersionStr()
 	if err != nil {
-		h.log.Errorf("initialize: %s", err)
+		log.Errorf("initialize: %s", err)
 	}
 
 	h.initialized = true
