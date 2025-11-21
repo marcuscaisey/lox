@@ -290,7 +290,7 @@ func NewFile(name string, contents []byte) *File {
 	return f
 }
 
-// Line returns the nth line of the file.
+// Line returns the nth (1-based) line of the file.
 func (f *File) Line(n int) []byte {
 	low := f.lineOffsets[n-1]
 	high := len(f.Contents)

@@ -163,10 +163,21 @@ func (c *keywordCompletor) validStatementPosition(pos *protocol.Position) bool {
 	return result
 }
 
-// previousCharacterEnd returns the end position of the previous non-whitespace character and whether one exists.
+// previousCharacterEnd returns the end position of the previous non-whitespace character which isn't part of a comment
+// and whether one exists.
 func (c *keywordCompletor) previousCharacterEnd(pos *protocol.Position) (*protocol.Position, bool) {
 	lastCharEnd := func(line []rune) (int, bool) {
-		for i, rune := range slices.Backward(line) {
+		if len(line) == 0 {
+			return 0, false
+		}
+		commentIdx := len(line)
+		for i := range line[:len(line)-1] {
+			if line[i] == '/' && line[i+1] == '/' {
+				commentIdx = i
+				break
+			}
+		}
+		for i, rune := range slices.Backward(line[:commentIdx]) {
 			if !unicode.IsSpace(rune) {
 				return len(utf16.Encode(line[:i+1])), true
 			}
