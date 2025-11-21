@@ -15,15 +15,15 @@ import (
 )
 
 var (
-	expressionKeywords       = []string{"true", "false", "nil"}
-	statementKeywordSnippets = []keywordSnippet{
-		{"print", "print $0;"},
-		{"var", "var $0;"},
-		{"if", "if ($1) {\n    $0\n}"},
-		{"while", "while ($1) {\n    $0\n}"},
-		{"for", "for ($1;$2;$3) {\n    $0\n}"},
-		{"fun", "fun $1($2) {\n    $0\n}"},
-		{"class", "class $1 {\n    $0\n}"},
+	expressionKeywords = []string{"true", "false", "nil"}
+	statementSnippets  = []statementSnippet{
+		{"print", "print $0;", "print statement", "Snippet for a print statement"},
+		{"var", "var $0;", "variable declaration", "Snippet for a variable declaration"},
+		{"if", "if ($1) {\n    $0\n}", "if statement", "Snippet for an if statement"},
+		{"while", "while ($1) {\n    $0\n}", "while loop", "Snippet for a while loop"},
+		{"for", "for ($1;$2;$3) {\n    $0\n}", "for loop", "Snippet for a for loop"},
+		{"fun", "fun $1($2) {\n    $0\n}", "function declaration", "Snippet for a function declaration"},
+		{"class", "class $1 {\n    $0\n}", "class declaration", "Snippet for a class declaration"},
 	}
 )
 
@@ -101,9 +101,11 @@ func newKeywordCompletor(program *ast.Program) *keywordCompletor {
 	return &keywordCompletor{program: program}
 }
 
-type keywordSnippet struct {
-	Keyword string
-	Snippet string
+type statementSnippet struct {
+	Keyword            string
+	Snippet            string
+	ShortDocumentation string
+	Documentation      string
 }
 
 // Complete returns completions for keywords which are valid at the given position.
@@ -117,11 +119,13 @@ func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
 	}
 
 	if c.validStatementPosition(pos) {
-		for _, keywordSnippet := range statementKeywordSnippets {
+		for _, ss := range statementSnippets {
 			compls = append(compls, &completion{
-				Label:   keywordSnippet.Keyword,
-				Kind:    protocol.CompletionItemKindKeyword,
-				Snippet: keywordSnippet.Snippet,
+				Label:         ss.Keyword,
+				Kind:          protocol.CompletionItemKindSnippet,
+				Detail:        ss.ShortDocumentation,
+				Snippet:       ss.Snippet,
+				Documentation: ss.Documentation,
 			})
 		}
 	}

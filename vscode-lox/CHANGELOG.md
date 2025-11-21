@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Suggest statement keyword snippets after comments.
 
+### Changed
+
+- Change
+  [kind](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind)
+  of keyword snippet completion items from Keyword to Snippet.
+
 ## [2.0.1] - 2025-11-15
 
 ### Fixed
