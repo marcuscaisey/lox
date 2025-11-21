@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+[Unreleased]
+
+## [2.1.0]
 
 ### Fixed
 
@@ -69,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Diagnostics - Build and lint errors shown as you type.
 - Syntax highlighting.
 
-[Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v2.0.1...HEAD
+[Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v2.1.0...HEAD
+[2.1.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v2.1.0/vscode-lox
 [2.0.1]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v2.0.1/vscode-lox
 [2.0.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v2.0.0/vscode-lox
 [1.1.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v1.1.0/vscode-lox
