@@ -25,11 +25,21 @@ var (
 		{"fun", "fun $1($2) {\n  $0\n}", "function", "Snippet for a function"},
 		{"class", "class $1 {\n  $0\n}", "class", "Snippet for a class"},
 	}
+	classBodySnippets = []snippet{
+		{"init", "init($1) {\n  $0\n}", "constructor", "Snippet for a constructor"},
+		{"method", "${1:name}($2) {\n  $0\n}", "method", "Snippet for a method"},
+		{"get", "get ${1:name}() {\n  $0\n}", "property getter", "Snippet for a property getter"},
+		{"set", "set ${1:name}(${2:value}) {\n  $0\n}", "property setter", "Snippet for a property setter"},
+		{"static", "static ${1:name}($2) {\n  $0\n}", "class method", "Snippet for a class method"},
+		{"staticget", "static get ${1:name}() {\n  $0\n}", "class property getter", "Snippet for a class property getter"},
+		{"staticset", "static set ${1:name}(${2:value}) {\n  $0\n}", "class property setter", "Snippet for a class property setter"},
+	}
 )
 
 // completor provides completions of text that is being typed in a program.
 type completor struct {
 	program               *ast.Program
+	classBodyCompletor    *classBodyCompletor
 	identCompletor        *identCompletor
 	keywordCompletor      *keywordCompletor
 	builtinCompls         []*completion
@@ -42,6 +52,7 @@ type completor struct {
 func newCompletor(program *ast.Program, builtins []ast.Decl) *completor {
 	return &completor{
 		program:               program,
+		classBodyCompletor:    newClassBodyCompletor(program),
 		identCompletor:        newIdentCompletor(program),
 		keywordCompletor:      newKeywordCompletor(program),
 		builtinCompls:         declCompletions(builtins),
@@ -51,7 +62,10 @@ func newCompletor(program *ast.Program, builtins []ast.Decl) *completor {
 }
 
 // Complete returns the completions which should be suggested at a position.
-func (c *completor) Complete(pos *protocol.Position) []*completion {
+func (c *completor) Complete(pos *protocol.Position) (compls []*completion, isIncomplete bool) {
+	if compls, isIncomplete, ok := c.classBodyCompletor.Complete(pos); ok {
+		return compls, isIncomplete
+	}
 	var getSetExprObject ast.Expr
 	if getExpr, ok := outermostNodeAtOrBefore[*ast.GetExpr](c.program, pos); ok {
 		getSetExprObject = getExpr.Object
@@ -62,17 +76,82 @@ func (c *completor) Complete(pos *protocol.Position) []*completion {
 	}
 	if getSetExprObject != nil {
 		if _, ok := getSetExprObject.(*ast.ThisExpr); ok {
-			return c.thisPropertyCompletor.Complete(pos)
+			return c.thisPropertyCompletor.Complete(pos), false
 		} else {
-			return c.propertyCompls
+			return c.propertyCompls, false
 		}
 	} else {
 		return slices.Concat(
 			c.identCompletor.Complete(pos),
 			c.keywordCompletor.Complete(pos),
 			c.builtinCompls,
-		)
+		), false
 	}
+}
+
+type classBodyCompletor struct {
+	program *ast.Program
+}
+
+func newClassBodyCompletor(program *ast.Program) *classBodyCompletor {
+	return &classBodyCompletor{program: program}
+}
+
+func (c *classBodyCompletor) Complete(pos *protocol.Position) (compls []*completion, isIncomplete bool, ok bool) {
+	classDecl, ok := c.inClassBody(pos)
+	if !ok {
+		return nil, false, false
+	}
+	initDefined := false
+	for _, methodDecl := range classDecl.Methods() {
+		if methodDecl.Name.IsValid() && methodDecl.Name.Token.Lexeme == "init" {
+			initDefined = true
+			break
+		}
+	}
+	compls = make([]*completion, 0, len(classBodySnippets))
+	ident, inIdent := outermostNodeAtOrBefore[*ast.Ident](classDecl, pos)
+	for _, snippet := range classBodySnippets {
+		if snippet.Label == "init" && initDefined {
+			continue
+		}
+		compl := &completion{
+			Label:         snippet.Label,
+			Kind:          protocol.CompletionItemKindSnippet,
+			Detail:        snippet.ShortDoc,
+			Snippet:       snippet.Content,
+			Documentation: snippet.Doc,
+		}
+		if compl.Label == "method" && inIdent {
+			compl.Label = ident.Token.Lexeme
+			compl.Snippet = strings.ReplaceAll(compl.Snippet, "${1:name}", ident.Token.Lexeme)
+		}
+		compls = append(compls, compl)
+	}
+	return compls, true, true
+}
+
+func (c *classBodyCompletor) inClassBody(pos *protocol.Position) (*ast.ClassDecl, bool) {
+	classDecl, ok := innermostNodeAt[*ast.ClassDecl](c.program, pos)
+	if !ok {
+		return nil, false
+	}
+	if classDecl.Body == nil || !inRange(pos, classDecl.Body) {
+		return nil, false
+	}
+	for _, methodDecl := range classDecl.Methods() {
+		if methodDecl.Function != nil && inRange(pos, methodDecl.Function) {
+			return nil, false
+		}
+	}
+	return classDecl, true
+}
+
+type snippet struct {
+	Label    string
+	Content  string
+	ShortDoc string
+	Doc      string
 }
 
 // completion contains a subset of [protocol.CompletionItem] fields plus some others which can be used to populate a
@@ -101,13 +180,6 @@ func newKeywordCompletor(program *ast.Program) *keywordCompletor {
 	return &keywordCompletor{program: program}
 }
 
-type statementSnippet struct {
-	Keyword            string
-	Snippet            string
-	ShortDocumentation string
-	Documentation      string
-}
-
 // Complete returns completions for keywords which are valid at the given position.
 func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
 	compls := make([]*completion, len(expressionKeywords))
@@ -119,13 +191,13 @@ func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
 	}
 
 	if c.validStatementPosition(pos) {
-		for _, ss := range statementSnippets {
+		for _, snippet := range statementSnippets {
 			compls = append(compls, &completion{
-				Label:         ss.Keyword,
+				Label:         snippet.Label,
 				Kind:          protocol.CompletionItemKindSnippet,
-				Detail:        ss.ShortDocumentation,
-				Snippet:       ss.Snippet,
-				Documentation: ss.Documentation,
+				Detail:        snippet.ShortDoc,
+				Snippet:       snippet.Content,
+				Documentation: snippet.Doc,
 			})
 		}
 	}

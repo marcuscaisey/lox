@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]
 
+### Added
+
+- Suggest method snippets inside class bodies
+
 ### Fixed
 
 - Reduce snippet indent size from 4 to 2.

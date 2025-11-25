@@ -420,7 +420,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		}
 	}
 
-	completions := doc.Completor.Complete(params.Position)
+	completions, isIncomplete := doc.Completor.Complete(params.Position)
 
 	padding := len(fmt.Sprint(len(completions)))
 	items := make([]*protocol.CompletionItem, len(completions))
@@ -478,6 +478,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 
 	return &protocol.CompletionItemSliceOrCompletionList{
 		Value: &protocol.CompletionList{
+			IsIncomplete: isIncomplete,
 			ItemDefaults: itemDefaults,
 			Items:        items,
 		},
