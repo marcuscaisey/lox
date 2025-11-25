@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Change variable declaration snippet detail from "variable declaration" to "variable".
+- Change variable snippet detail from "variable declaration" to "variable".
+- Change function snippet detail from "function declaration" to "function".
 
 ## [2.1.0]
 
