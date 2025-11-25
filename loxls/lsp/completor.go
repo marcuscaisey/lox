@@ -18,7 +18,7 @@ var (
 	expressionKeywords = []string{"true", "false", "nil"}
 	statementSnippets  = []statementSnippet{
 		{"print", "print $0;", "print statement", "Snippet for a print statement"},
-		{"var", "var $0;", "variable declaration", "Snippet for a variable declaration"},
+		{"var", "var $0;", "variable", "Snippet for a variable"},
 		{"if", "if ($1) {\n  $0\n}", "if statement", "Snippet for an if statement"},
 		{"while", "while ($1) {\n  $0\n}", "while loop", "Snippet for a while loop"},
 		{"for", "for ($1;$2;$3) {\n  $0\n}", "for loop", "Snippet for a for loop"},

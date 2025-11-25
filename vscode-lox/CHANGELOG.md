@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reduce snippet indent size from 4 to 2.
 
+### Changed
+
+- Change variable declaration snippet detail from "variable declaration" to "variable".
+
 ## [2.1.0]
 
 ### Fixed
