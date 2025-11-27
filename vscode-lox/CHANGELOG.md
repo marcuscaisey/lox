@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change variable snippet detail from "variable declaration" to "variable".
 - Change function snippet detail from "function declaration" to "function".
 - Change class snippet detail from "class declaration" to "class".
+- Add placeholders to all snippets where appropriate
 
 ## [2.1.0]
 

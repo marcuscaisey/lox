@@ -18,12 +18,12 @@ var (
 	expressionKeywords = []string{"true", "false", "nil"}
 	statementSnippets  = []snippet{
 		{"print", "print $0;", "print statement", "Snippet for a print statement"},
-		{"var", "var $0;", "variable", "Snippet for a variable"},
+		{"var", "var ${1:name} = ${2:value};$0", "variable", "Snippet for a variable"},
 		{"if", "if ($1) {\n  $0\n}", "if statement", "Snippet for an if statement"},
 		{"while", "while ($1) {\n  $0\n}", "while loop", "Snippet for a while loop"},
-		{"for", "for ($1;$2;$3) {\n  $0\n}", "for loop", "Snippet for a for loop"},
-		{"fun", "fun $1($2) {\n  $0\n}", "function", "Snippet for a function"},
-		{"class", "class $1 {\n  $0\n}", "class", "Snippet for a class"},
+		{"for", "for (var ${1:i} = ${2:0}; $1 < ${3:n}; $1 = $1 + 1) {\n  $0\n}", "for loop", "Snippet for a for loop"},
+		{"fun", "fun ${1:name}($2) {\n  $0\n}", "function", "Snippet for a function"},
+		{"class", "class ${1:name} {\n  $0\n}", "class", "Snippet for a class"},
 	}
 	classBodySnippets = []snippet{
 		{"init", "init($1) {\n  $0\n}", "constructor", "Snippet for a constructor"},
