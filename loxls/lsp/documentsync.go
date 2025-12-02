@@ -23,11 +23,10 @@ type document struct {
 	Text    string
 
 	// Server generated
-	Filename       string
-	Program        *ast.Program
-	HasParseErrors bool
-	IdentDecls     map[*ast.Ident]ast.Decl
-	Completor      *completor
+	Filename   string
+	Program    *ast.Program
+	IdentDecls map[*ast.Ident]ast.Decl
+	Completor  *completor
 }
 
 // document returns the document with the given URI, or an error if it doesn't exist.
@@ -154,14 +153,13 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	identDecls, resolveErr := analyse.ResolveIdents(program, builtins, analyse.WithExtraFeatures(h.extraFeatures))
 
 	h.docs[uri] = &document{
-		URI:            uri,
-		Version:        version,
-		Text:           src,
-		Filename:       filename,
-		Program:        program,
-		HasParseErrors: len(parseLoxErrs) > 0,
-		IdentDecls:     identDecls,
-		Completor:      newCompletor(program, h.stubBuiltins),
+		URI:        uri,
+		Version:    version,
+		Text:       src,
+		Filename:   filename,
+		Program:    program,
+		IdentDecls: identDecls,
+		Completor:  newCompletor(program, h.stubBuiltins),
 	}
 
 	semanticsErr := analyse.CheckSemantics(program, analyse.WithExtraFeatures(h.extraFeatures))

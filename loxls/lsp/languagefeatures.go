@@ -492,12 +492,6 @@ func (h *Handler) textDocumentFormatting(params *protocol.DocumentFormattingPara
 		return nil, err
 	}
 
-	if doc.HasParseErrors {
-		// TODO: return error here instead?
-		log.Infof("textDocument/formatting: %s has errors. Skipping formatting.", params.TextDocument.Uri)
-		return nil, nil
-	}
-
 	program, err := parser.Parse(strings.NewReader(doc.Text), doc.Filename, parser.WithComments(true))
 	if err != nil {
 		var loxErrs loxerr.Errors
