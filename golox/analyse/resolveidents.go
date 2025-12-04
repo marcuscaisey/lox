@@ -148,8 +148,6 @@ func newScope() *scope {
 
 // DeclareName marks an identifier which is not defined in code as declared in the scope.
 func (s *scope) DeclareName(name string) {
-	// TODO: This makes builtins appear as if they're variables (i.e. when hovered over in the editor). Come up with a
-	// better way to handle these.
 	s.Declare(&ast.VarDecl{
 		Name: &ast.Ident{
 			Token: token.Token{Lexeme: name},
