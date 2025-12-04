@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Suggest method snippets inside class bodies.
+- Allow renaming methods and object properties.
 
 ### Fixed
 

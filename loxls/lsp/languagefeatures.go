@@ -93,14 +93,8 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 		return nil, err
 	}
 
-	var refs []ast.Node
-	if propertyRefs, ok := propertyReferences(doc, params.Position, params.Context.IncludeDeclaration); ok {
-		refs = propertyRefs
-	} else if thisRefs, ok := thisReferences(doc, params.Position); ok {
-		refs = thisRefs
-	} else if declRefs, ok := declarationReferences(doc, params.Position, params.Context.IncludeDeclaration); ok {
-		refs = declRefs
-	} else {
+	refs, ok := references(doc, params.Position, params.Context.IncludeDeclaration)
+	if !ok {
 		return nil, nil
 	}
 
@@ -114,6 +108,19 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 	}
 
 	return locs, nil
+}
+
+func references(doc *document, pos *protocol.Position, includeDecl bool) (references []ast.Node, ok bool) {
+	if propertyRefs, ok := propertyReferences(doc, pos, includeDecl); ok {
+		return propertyRefs, true
+	}
+	if thisRefs, ok := thisReferences(doc, pos); ok {
+		return thisRefs, true
+	}
+	if declRefs, ok := declarationReferences(doc, pos, includeDecl); ok {
+		return declRefs, true
+	}
+	return nil, false
 }
 
 func propertyReferences(doc *document, pos *protocol.Position, includeDecl bool) ([]ast.Node, bool) {
@@ -535,16 +542,16 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 		return nil, err
 	}
 
-	references, ok := declarationReferences(doc, params.Position, true)
+	refs, ok := references(doc, params.Position, true)
 	if !ok {
 		return nil, nil
 	}
 
-	edits := make([]*protocol.TextEditOrAnnotatedTextEdit, len(references))
-	for i, reference := range references {
+	edits := make([]*protocol.TextEditOrAnnotatedTextEdit, len(refs))
+	for i, ref := range refs {
 		edits[i] = &protocol.TextEditOrAnnotatedTextEdit{
 			Value: &protocol.TextEdit{
-				Range:   newRange(reference),
+				Range:   newRange(ref),
 				NewText: params.NewName,
 			},
 		}
