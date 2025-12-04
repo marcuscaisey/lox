@@ -16,6 +16,7 @@ import (
 
 var (
 	expressionKeywords = []string{"true", "false", "nil"}
+	statementKeywords  = []string{"print", "var", "if", "else", "while", "for", "break", "continue", "fun", "return", "class"}
 	statementSnippets  = []snippet{
 		{"var", "var ${1:name} = ${2:value};$0", "variable", "Snippet for a variable"},
 		{"if", "if ($1) {\n  $0\n}", "if statement", "Snippet for an if statement"},
@@ -181,13 +182,7 @@ func newKeywordCompletor(program *ast.Program) *keywordCompletor {
 
 // Complete returns completions for keywords which are valid at the given position.
 func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
-	compls := make([]*completion, len(expressionKeywords))
-	for i, keyword := range expressionKeywords {
-		compls[i] = &completion{
-			Label: keyword,
-			Kind:  protocol.CompletionItemKindKeyword,
-		}
-	}
+	compls := make([]*completion, 0, len(expressionKeywords))
 
 	if c.validStatementPosition(pos) {
 		for _, snippet := range statementSnippets {
@@ -199,6 +194,19 @@ func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
 				Documentation: snippet.Doc,
 			})
 		}
+		for _, keyword := range statementKeywords {
+			compls = append(compls, &completion{
+				Label: keyword,
+				Kind:  protocol.CompletionItemKindKeyword,
+			})
+		}
+	}
+
+	for _, keyword := range expressionKeywords {
+		compls = append(compls, &completion{
+			Label: keyword,
+			Kind:  protocol.CompletionItemKindKeyword,
+		})
 	}
 
 	return compls
