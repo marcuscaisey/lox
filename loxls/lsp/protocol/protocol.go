@@ -8961,6 +8961,360 @@ func (h *Hover) GetRange() *Range {
 	return h.Range
 }
 
+// How a signature help was triggered.
+//
+// @since 3.15.0
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#signatureHelpTriggerKind
+type SignatureHelpTriggerKind uint32
+
+const (
+	// Signature help was invoked manually by the user or by a command.
+	SignatureHelpTriggerKindInvoked SignatureHelpTriggerKind = 1
+	// Signature help was triggered by a trigger character.
+	SignatureHelpTriggerKindTriggerCharacter SignatureHelpTriggerKind = 2
+	// Signature help was triggered by the cursor moving or by the document content changing.
+	SignatureHelpTriggerKindContentChange SignatureHelpTriggerKind = 3
+)
+
+var validSignatureHelpTriggerKindValues = map[uint32]bool{
+	1: true,
+	2: true,
+	3: true,
+}
+
+func (s *SignatureHelpTriggerKind) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var uint32Value uint32
+	if err := json.Unmarshal(data, &uint32Value); err != nil {
+		return err
+	}
+	if !validSignatureHelpTriggerKindValues[uint32Value] {
+		return fmt.Errorf("cannot unmarshal %v into SignatureHelpTriggerKind: custom values are not supported", uint32Value)
+	}
+	*s = SignatureHelpTriggerKind(uint32Value)
+
+	return nil
+}
+
+func (s SignatureHelpTriggerKind) MarshalJSON() ([]byte, error) {
+	var uint32Value = uint32(s)
+	if !validSignatureHelpTriggerKindValues[uint32Value] {
+		return nil, fmt.Errorf("cannot marshal %v into SignatureHelpTriggerKind: custom values are not supported", uint32Value)
+	}
+	return json.Marshal(uint32Value)
+
+}
+
+type ParameterInformationLabelRange struct {
+	Start int
+	End   int
+}
+
+func (p *ParameterInformationLabelRange) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	items := make([]json.RawMessage, 2)
+	if err := json.Unmarshal(data, &items); err != nil {
+		return err
+	}
+	if len(items) != 2 {
+		return fmt.Errorf("protocol: cannot unmarshal %s into ParameterInformationLabelRange: expected tuple with 2 items, got %d", data, len(items))
+	}
+	var item0 int
+	if err := json.Unmarshal(items[0], &item0); err != nil {
+		return &json.UnmarshalTypeError{
+			Value:  string(items[0]),
+			Type:   reflect.TypeFor[int](),
+			Struct: "ParameterInformationLabelRange",
+			Field:  "Start",
+		}
+	}
+	p.Start = item0
+	var item1 int
+	if err := json.Unmarshal(items[1], &item1); err != nil {
+		return &json.UnmarshalTypeError{
+			Value:  string(items[1]),
+			Type:   reflect.TypeFor[int](),
+			Struct: "ParameterInformationLabelRange",
+			Field:  "End",
+		}
+	}
+	p.End = item1
+	return nil
+}
+
+func (p *ParameterInformationLabelRange) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{
+		p.Start,
+		p.End,
+	})
+}
+
+// StringOrParameterInformationLabelRange contains either of the following types:
+//   - [String]
+//   - [*ParameterInformationLabelRange]
+type StringOrParameterInformationLabelRange struct {
+	Value StringOrParameterInformationLabelRangeValue
+}
+
+// StringOrParameterInformationLabelRangeValue is either of the following types:
+//   - [String]
+//   - [*ParameterInformationLabelRange]
+//
+//gosumtype:decl StringOrParameterInformationLabelRangeValue
+type StringOrParameterInformationLabelRangeValue interface {
+	isStringOrParameterInformationLabelRangeValue()
+}
+
+func (String) isStringOrParameterInformationLabelRangeValue()                          {}
+func (*ParameterInformationLabelRange) isStringOrParameterInformationLabelRangeValue() {}
+
+func (s *StringOrParameterInformationLabelRange) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var stringValue String
+	if err := json.Unmarshal(data, &stringValue); err == nil {
+		s.Value = stringValue
+		return nil
+	}
+	var parameterInformationLabelRangeValue *ParameterInformationLabelRange
+	if err := json.Unmarshal(data, &parameterInformationLabelRangeValue); err == nil {
+		s.Value = parameterInformationLabelRangeValue
+		return nil
+	}
+	return &json.UnmarshalTypeError{
+		Value: string(data),
+		Type:  reflect.TypeFor[*StringOrParameterInformationLabelRange](),
+	}
+}
+
+func (s *StringOrParameterInformationLabelRange) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.Value)
+}
+
+// Represents a parameter of a callable-signature. A parameter can
+// have a label and a doc-comment.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#parameterInformation
+type ParameterInformation struct {
+	// The label of this parameter information.
+	//
+	// Either a string or an inclusive start and exclusive end offsets within its containing
+	// signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
+	// string representation as `Position` and `Range` does.
+	//
+	// *Note*: a label of type string should be a substring of its containing signature label.
+	// Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
+	Label *StringOrParameterInformationLabelRange `json:"label"`
+	// The human-readable doc-comment of this parameter. Will be shown
+	// in the UI but can be omitted.
+	Documentation *StringOrMarkupContent `json:"documentation,omitempty"`
+}
+
+func (p *ParameterInformation) GetLabel() *StringOrParameterInformationLabelRange {
+	if p == nil {
+		var zero *StringOrParameterInformationLabelRange
+		return zero
+	}
+	return p.Label
+}
+
+func (p *ParameterInformation) GetDocumentation() *StringOrMarkupContent {
+	if p == nil {
+		var zero *StringOrMarkupContent
+		return zero
+	}
+	return p.Documentation
+}
+
+// Represents the signature of something callable. A signature
+// can have a label, like a function-name, a doc-comment, and
+// a set of parameters.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#signatureInformation
+type SignatureInformation struct {
+	// The label of this signature. Will be shown in
+	// the UI.
+	Label string `json:"label"`
+	// The human-readable doc-comment of this signature. Will be shown
+	// in the UI but can be omitted.
+	Documentation *StringOrMarkupContent `json:"documentation,omitempty"`
+	// The parameters of this signature.
+	Parameters []*ParameterInformation `json:"parameters,omitempty"`
+	// The index of the active parameter.
+	//
+	// If provided, this is used in place of `SignatureHelp.activeParameter`.
+	//
+	// @since 3.16.0
+	ActiveParameter int `json:"activeParameter,omitempty"`
+}
+
+func (s *SignatureInformation) GetLabel() string {
+	if s == nil {
+		var zero string
+		return zero
+	}
+	return s.Label
+}
+
+func (s *SignatureInformation) GetDocumentation() *StringOrMarkupContent {
+	if s == nil {
+		var zero *StringOrMarkupContent
+		return zero
+	}
+	return s.Documentation
+}
+
+func (s *SignatureInformation) GetParameters() []*ParameterInformation {
+	if s == nil {
+		var zero []*ParameterInformation
+		return zero
+	}
+	return s.Parameters
+}
+
+func (s *SignatureInformation) GetActiveParameter() int {
+	if s == nil {
+		var zero int
+		return zero
+	}
+	return s.ActiveParameter
+}
+
+// Signature help represents the signature of something
+// callable. There can be multiple signature but only one
+// active and only one active parameter.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#signatureHelp
+type SignatureHelp struct {
+	// One or more signatures.
+	Signatures []*SignatureInformation `json:"signatures"`
+	// The active signature. If omitted or the value lies outside the
+	// range of `signatures` the value defaults to zero or is ignored if
+	// the `SignatureHelp` has no signatures.
+	//
+	// Whenever possible implementors should make an active decision about
+	// the active signature and shouldn't rely on a default value.
+	//
+	// In future version of the protocol this property might become
+	// mandatory to better express this.
+	ActiveSignature int `json:"activeSignature,omitempty"`
+	// The active parameter of the active signature. If omitted or the value
+	// lies outside the range of `signatures[activeSignature].parameters`
+	// defaults to 0 if the active signature has parameters. If
+	// the active signature has no parameters it is ignored.
+	// In future version of the protocol this property might become
+	// mandatory to better express the active parameter if the
+	// active signature does have any.
+	ActiveParameter int `json:"activeParameter,omitempty"`
+}
+
+func (s *SignatureHelp) GetSignatures() []*SignatureInformation {
+	if s == nil {
+		var zero []*SignatureInformation
+		return zero
+	}
+	return s.Signatures
+}
+
+func (s *SignatureHelp) GetActiveSignature() int {
+	if s == nil {
+		var zero int
+		return zero
+	}
+	return s.ActiveSignature
+}
+
+func (s *SignatureHelp) GetActiveParameter() int {
+	if s == nil {
+		var zero int
+		return zero
+	}
+	return s.ActiveParameter
+}
+
+// Additional information about the context in which a signature help request was triggered.
+//
+// @since 3.15.0
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#signatureHelpContext
+type SignatureHelpContext struct {
+	// Action that caused signature help to be triggered.
+	TriggerKind SignatureHelpTriggerKind `json:"triggerKind"`
+	// Character that caused signature help to be triggered.
+	//
+	// This is undefined when `triggerKind !== SignatureHelpTriggerKind.TriggerCharacter`
+	TriggerCharacter string `json:"triggerCharacter,omitempty"`
+	// `true` if signature help was already showing when it was triggered.
+	//
+	// Retriggers occurs when the signature help is already active and can be caused by actions such as
+	// typing a trigger character, a cursor move, or document content changes.
+	IsRetrigger bool `json:"isRetrigger"`
+	// The currently active `SignatureHelp`.
+	//
+	// The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field updated based on
+	// the user navigating through available signatures.
+	ActiveSignatureHelp *SignatureHelp `json:"activeSignatureHelp,omitempty"`
+}
+
+func (s *SignatureHelpContext) GetTriggerKind() SignatureHelpTriggerKind {
+	if s == nil {
+		var zero SignatureHelpTriggerKind
+		return zero
+	}
+	return s.TriggerKind
+}
+
+func (s *SignatureHelpContext) GetTriggerCharacter() string {
+	if s == nil {
+		var zero string
+		return zero
+	}
+	return s.TriggerCharacter
+}
+
+func (s *SignatureHelpContext) GetIsRetrigger() bool {
+	if s == nil {
+		var zero bool
+		return zero
+	}
+	return s.IsRetrigger
+}
+
+func (s *SignatureHelpContext) GetActiveSignatureHelp() *SignatureHelp {
+	if s == nil {
+		var zero *SignatureHelp
+		return zero
+	}
+	return s.ActiveSignatureHelp
+}
+
+// Parameters for a {@link SignatureHelpRequest}.
+//
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#signatureHelpParams
+type SignatureHelpParams struct {
+	*TextDocumentPositionParams
+	*WorkDoneProgressParams
+	// The signature help context. This is only available if the client specifies
+	// to send this using the client capability `textDocument.signatureHelp.contextSupport === true`
+	//
+	// @since 3.15.0
+	Context *SignatureHelpContext `json:"context,omitempty"`
+}
+
+func (s *SignatureHelpParams) GetContext() *SignatureHelpContext {
+	if s == nil {
+		var zero *SignatureHelpContext
+		return zero
+	}
+	return s.Context
+}
+
 // Parameters for a {@link DefinitionRequest}.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#definitionParams
