@@ -67,6 +67,7 @@ type parser struct {
 
 	scopeDepth          int
 	classBodyScopeDepth int
+	midStmtComments     []*ast.Comment
 
 	errs       loxerr.Errors
 	lastErrPos token.Position
@@ -130,6 +131,12 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 			doc = nil
 		}
 		stmts = append(stmts, stmt)
+		if len(p.midStmtComments) > 0 {
+			for _, comment := range p.midStmtComments {
+				stmts = append(stmts, comment)
+			}
+			p.midStmtComments = p.midStmtComments[:0]
+		}
 	}
 	return stmts
 }
@@ -181,6 +188,14 @@ func (p *parser) parseDecl() (ast.Stmt, bool) {
 
 	if commentedStmt, ok := p.parseCommentedStmt(stmt); ok {
 		return commentedStmt, ok
+	}
+
+	if p.parseComments && len(p.midStmtComments) > 0 {
+		stmt = &ast.CommentedStmt{
+			Stmt:    stmt,
+			Comment: p.midStmtComments[0],
+		}
+		p.midStmtComments = p.midStmtComments[1:]
 	}
 
 	return stmt, true
@@ -703,6 +718,9 @@ func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 			return expr, false
 		}
 		return expr, true
+	case p.match(token.Comment):
+		p.midStmtComments = append(p.midStmtComments, p.parseComment(tok))
+		return p.parsePrimaryExpr()
 	// Error productions
 	case p.match(token.EqualEqual, token.BangEqual, token.Less, token.LessEqual, token.Greater, token.GreaterEqual, token.Asterisk, token.Slash, token.Plus):
 		p.addErrorf(tok, "binary operator %m must have left and right operands", tok.Type)
@@ -725,11 +743,7 @@ func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 		}
 		return expr, true
 	default:
-		if tok.Type == token.Comment {
-			p.addErrorf(tok, "comments can only appear where declarations can appear or at the end of statements")
-		} else {
-			p.addErrorf(tok, "expected expression")
-		}
+		p.addErrorf(tok, "expected expression")
 		return nil, false
 	}
 }
