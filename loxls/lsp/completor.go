@@ -688,7 +688,6 @@ func funCompletion(decl *ast.FunDecl) (*completion, bool) {
 		Label:         decl.Name.Token.Lexeme,
 		Kind:          protocol.CompletionItemKindFunction,
 		Detail:        funDetail(decl.Function),
-		Snippet:       callSnippet(decl.Name.Token.Lexeme),
 		Documentation: commentsText(decl.Doc),
 	}, true
 }
@@ -701,7 +700,6 @@ func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
 		Label:         decl.Name.Token.Lexeme,
 		Kind:          protocol.CompletionItemKindClass,
 		Detail:        classDetail(decl),
-		Snippet:       callSnippet(decl.Name.Token.Lexeme),
 		Documentation: commentsText(decl.Doc),
 	}, true
 }
@@ -722,27 +720,20 @@ func methodCompletion(decl *ast.MethodDecl) (*completion, bool) {
 	}
 	var kind protocol.CompletionItemKind
 	var detail string
-	var snippet string
 	var documentation string
 	if decl.HasModifier(token.Get, token.Set) {
 		kind = protocol.CompletionItemKindProperty
 	} else {
 		kind = protocol.CompletionItemKindMethod
 		detail = funDetail(decl.Function)
-		snippet = callSnippet(decl.Name.Token.Lexeme)
 		documentation = commentsText(decl.Doc)
 	}
 	return &completion{
 		Label:         decl.Name.Token.Lexeme,
 		Kind:          kind,
 		Detail:        detail,
-		Snippet:       snippet,
 		Documentation: documentation,
 	}, true
-}
-
-func callSnippet(name string) string {
-	return fmt.Sprintf("%s($1)$0", name)
 }
 
 func declCompletion(decl ast.Decl) (*completion, bool) {
