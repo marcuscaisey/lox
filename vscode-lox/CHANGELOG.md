@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Reduce snippet indent size from 4 to 2.
+- Highlight comments in the middle of expressions.
 
 ### Changed
 
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add placeholders to all snippets where appropriate.
 
 ### Removed
+
 - `print` snippet.
 - Function call brackets snippet.
 

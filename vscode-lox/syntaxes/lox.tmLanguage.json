@@ -149,6 +149,9 @@
           "include": "#literal"
         },
         {
+          "include": "#comment"
+        },
+        {
           "include": "#function-expression"
         },
         {
