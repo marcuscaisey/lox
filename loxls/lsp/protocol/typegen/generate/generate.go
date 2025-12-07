@@ -17,6 +17,11 @@ var sumTypeVariantNameOverrides = map[string]string{
 	"TextDocumentContentChangeEventOr1":      "IncrementalTextDocumentContentChangeEvent",
 	"TextDocumentContentChangeEventOr2":      "FullTextDocumentContentChangeEvent",
 	"CompletionListItemDefaultsEditRangeOr2": "InsertReplaceRange",
+	"ParameterInformationLabelOr2":           "ParameterInformationLabelRange",
+}
+
+var tupleTypeFieldNameOverrides = map[string][]string{
+	"ParameterInformationLabelRange": {"Start", "End"},
 }
 
 var sumTypeVariantDiscriminators = map[string]map[string]string{
@@ -104,12 +109,13 @@ func (g *generator) genTypeDecl(namespace string, typ *metamodel.Type) string {
 		return g.genStringLiteralDecl(namespace, typ.Value)
 	case metamodel.ArrayType:
 		return g.sliceType(namespace, typ.Element)
+	case metamodel.TupleType:
+		return g.tupleType(namespace, typ.Items)
 	case metamodel.MapType:
 		return g.mapType(namespace, typ.Key, typ.Value)
-	case metamodel.AndType, metamodel.BooleanLiteralType, metamodel.IntegerLiteralType, metamodel.TupleType:
-		panic(fmt.Sprintf("unhandled type: %T", typ))
+	default:
+		panic(fmt.Sprintf("unhandled type for namespace %q: %T", namespace, typ))
 	}
-	panic("unreachable")
 }
 
 func (g *generator) genTypeDeclForSumType(namespace string, typ *metamodel.Type) string {
@@ -150,30 +156,38 @@ func (g *generator) genStructDecl(structure *metamodel.Structure) string {
 	g.gennedTypes[name] = true
 
 	comment := g.commentForType(name, structure.Documentation, structure.Deprecated)
-	var fields []string
+	embeddedTypes := make([]string, len(structure.Extends)+len(structure.Mixins))
 	for _, typ := range slices.Concat(structure.Extends, structure.Mixins) {
 		typ, ok := typ.Value.(metamodel.ReferenceType)
 		if !ok {
 			panic("non-reference parent type or mixin not supported")
 		}
-		fields = append(fields, g.genRefTypeDecl(typ.Name))
+		embeddedTypes = append(embeddedTypes, g.genRefTypeDecl(typ.Name))
 	}
-	fieldData := make([]*structFieldData, len(structure.Properties))
+	fields := make([]*structField, len(structure.Properties))
 	for i, prop := range structure.Properties {
-		fieldData[i] = g.structFieldData(name, prop)
-		fields = append(fields, structField(fieldData[i]))
+		fields[i] = g.structField(name, prop)
+	}
+	nameSuffix := ""
+	receiverTypeSuffix := ""
+	if name == "InitializeParams" || name == "XInitializeParams" {
+		nameSuffix = fmt.Sprintf("[%s any]", initializationOptionsType)
+		receiverTypeSuffix = fmt.Sprintf("[%s]", initializationOptionsType)
 	}
 
 	const text = `
 {{.comment}}
 type {{.name}}{{.nameSuffix}} struct {
+	{{- range .embeddedTypes}}
+	{{.}}
+	{{- end}}
 	{{- range .fields}}
 	{{.}}
 	{{- end}}
 }
 
 {{with $receiver := slice $.name 0 1 | lowerFirstLetter}}
-{{range $.fieldData}}
+{{range $.fields}}
 func ({{$receiver}} *{{$.name}}{{$.receiverTypeSuffix}}) Get{{.Name}}() {{.Type}} {
 	if {{$receiver}} == nil {
 		var zero {{.Type}}
@@ -184,19 +198,13 @@ func ({{$receiver}} *{{$.name}}{{$.receiverTypeSuffix}}) Get{{.Name}}() {{.Type}
 {{end}}
 {{end}}
 `
-	nameSuffix := ""
-	receiverTypeSuffix := ""
-	if name == "InitializeParams" || name == "XInitializeParams" {
-		nameSuffix = fmt.Sprintf("[%s any]", initializationOptionsType)
-		receiverTypeSuffix = fmt.Sprintf("[%s]", initializationOptionsType)
-	}
 	data := map[string]any{
 		"comment":            comment,
 		"name":               name,
 		"nameSuffix":         nameSuffix,
 		"receiverTypeSuffix": receiverTypeSuffix,
+		"embeddedTypes":      embeddedTypes,
 		"fields":             fields,
-		"fieldData":          fieldData,
 	}
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
@@ -204,7 +212,7 @@ func ({{$receiver}} *{{$.name}}{{$.receiverTypeSuffix}}) Get{{.Name}}() {{.Type}
 	return "*" + name
 }
 
-type structFieldData struct {
+type structField struct {
 	Comment  string
 	Optional bool
 	Name     string
@@ -212,7 +220,7 @@ type structFieldData struct {
 	JSONName string
 }
 
-func (g *generator) structFieldData(structName string, prop *metamodel.Property) *structFieldData {
+func (g *generator) structField(structName string, prop *metamodel.Property) *structField {
 	name := upperFirstLetter(sanitiseName(prop.Name))
 	var typ string
 	if structName == "XInitializeParams" && name == "InitializationOptions" {
@@ -220,7 +228,7 @@ func (g *generator) structFieldData(structName string, prop *metamodel.Property)
 	} else {
 		typ = g.genTypeDecl(structName+name, prop.Type)
 	}
-	return &structFieldData{
+	return &structField{
 		Comment:  g.comment(prop.Documentation, prop.Deprecated),
 		Optional: prop.Optional,
 		Name:     name,
@@ -229,18 +237,18 @@ func (g *generator) structFieldData(structName string, prop *metamodel.Property)
 	}
 }
 
-func structField(data *structFieldData) string {
+func (f *structField) String() string {
 	const text = `
-{{- if .data.Comment}}
-{{- .data.Comment}}
+{{- if .field.Comment}}
+{{- .field.Comment}}
 {{end}}
-{{- if .data.Optional}}
-{{- .data.Name}} {{.data.Type}} {{jsonTag .data.JSONName "omitempty"}}
+{{- if .field.Optional}}
+{{- .field.Name}} {{.field.Type}} {{jsonTag .field.JSONName "omitempty"}}
 {{- else}}
-{{- .data.Name}} {{.data.Type}} {{jsonTag .data.JSONName}}
+{{- .field.Name}} {{.field.Type}} {{jsonTag .field.JSONName}}
 {{- end -}}
 `
-	return mustExecuteTemplate(text, map[string]any{"data": data})
+	return mustExecuteTemplate(text, map[string]any{"field": f})
 }
 
 func (g *generator) genTypeAliasDecl(typeAlias *metamodel.TypeAlias) string {
@@ -306,6 +314,7 @@ func (g *generator) genEnumDecl(enum *metamodel.Enumeration) string {
 		}
 	}
 
+	g.importPkgs("bytes", "encoding/json", "fmt")
 	const text = `
 {{.comment}}
 type {{.name}} {{.type}}
@@ -358,7 +367,6 @@ func ({{$receiver}} {{$.name}}) MarshalJSON() ([]byte, error) {
 {{end}}
 {{end}}
 `
-	g.importPkgs("fmt")
 	data := map[string]any{"comment": comment, "name": name, "type": typ, "members": members, "supportsCustomValues": enum.SupportsCustomValues}
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
@@ -403,6 +411,10 @@ func (g *generator) genSumTypeDecl(namespace string, variants []*metamodel.Type)
 	}
 	g.gennedTypes[name] = true
 
+	g.importPkgs("bytes", "encoding/json", "reflect")
+	if len(discriminators) > 0 {
+		g.importPkgs("maps", "slices")
+	}
 	const text = `
 {{with $interface := .name | printf "%sValue" -}}
 // {{$.name}} contains either of the following types:
@@ -470,10 +482,6 @@ func ({{$receiver}} *{{$.name}}) MarshalJSON() ([]byte, error) {
 }
 {{end}}
 `
-	g.importPkgs("bytes", "encoding/json", "reflect")
-	if len(discriminators) > 0 {
-		g.importPkgs("maps", "slices")
-	}
 	data := map[string]any{
 		"name":           name,
 		"variants":       variantTypes,
@@ -528,11 +536,9 @@ func (g *generator) genStructDeclForLiteral(name string, structLiteral metamodel
 	g.gennedTypes[name] = true
 
 	comment := g.comment(structLiteral.Documentation, structLiteral.Deprecated)
-	fields := make([]string, len(structLiteral.Properties))
-	fieldData := make([]*structFieldData, len(structLiteral.Properties))
+	fields := make([]*structField, len(structLiteral.Properties))
 	for i, prop := range structLiteral.Properties {
-		fieldData[i] = g.structFieldData(name, prop)
-		fields[i] = structField(fieldData[i])
+		fields[i] = g.structField(name, prop)
 	}
 
 	const text = `
@@ -544,7 +550,7 @@ type {{.name}} struct {
 }
 
 {{with $receiver := slice $.name 0 1 | lowerFirstLetter}}
-{{range $.fieldData}}
+{{range $.fields}}
 func ({{$receiver}} *{{$.name}}) Get{{.Name}}() {{.Type}} {
 	if {{$receiver}} == nil {
 		return *new({{.Type}})
@@ -554,7 +560,7 @@ func ({{$receiver}} *{{$.name}}) Get{{.Name}}() {{.Type}} {
 {{end}}
 {{end}}
 `
-	data := map[string]any{"comment": comment, "name": name, "fields": fields, "fieldData": fieldData}
+	data := map[string]any{"comment": comment, "name": name, "fields": fields}
 	decl := mustExecuteTemplate(text, data)
 	g.typeDecls = append(g.typeDecls, decl)
 
@@ -567,6 +573,7 @@ func (g *generator) genStringLiteralDecl(name string, value string) string {
 	}
 	g.gennedTypes[name] = true
 
+	g.importPkgs("encoding/json", "fmt")
 	const text = `
 type {{.name}} struct{}
 
@@ -614,6 +621,95 @@ func (g *generator) genSliceDecl(namespace string, elementType *metamodel.Type) 
 	g.gennedTypes[name] = true
 	g.typeDecls = append(g.typeDecls, fmt.Sprintf("type %s []%s", name, goElementType))
 	return name
+}
+
+func (g *generator) tupleType(name string, itemTypes []*metamodel.Type) string {
+	if g.gennedTypes[name] {
+		return "*" + name
+	}
+	g.gennedTypes[name] = true
+
+	fields := make([]*tupleField, len(itemTypes))
+	var fieldNames []string
+	if override, ok := tupleTypeFieldNameOverrides[name]; ok {
+		if len(override) != len(fields) {
+			panic(fmt.Sprintf("incorrect number of field name overrides for tuple type %s: expected %d, got %d", name, len(fields), len(override)))
+		}
+		fieldNames = override
+	} else {
+		fieldNames = make([]string, len(fields))
+		for i := range len(fieldNames) {
+			fieldNames[i] = fmt.Sprintf("Item%d", i)
+		}
+	}
+	for i, itemType := range itemTypes {
+		fieldName := fieldNames[i]
+		fields[i] = &tupleField{
+			Name: fieldName,
+			Type: g.genTypeDecl(name+fieldName, itemType),
+		}
+	}
+
+	g.importPkgs("bytes", "encoding/json", "fmt", "reflect")
+	const text = `
+type {{.name}} struct {
+	{{- range .fields}}
+	{{.}}
+	{{- end}}
+}
+
+{{with $receiver := slice $.name 0 1 | lowerFirstLetter}}
+func ({{$receiver}} *{{$.name}}) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	items := make([]json.RawMessage, {{len $.fields}})
+	if err := json.Unmarshal(data, &items); err != nil {
+		return err
+	}
+	if len(items) != {{len $.fields}} {
+		return fmt.Errorf("protocol: cannot unmarshal %s into {{$.name}}: expected tuple with {{len $.fields}} items, got %d", data, len(items))
+	}
+	{{- range $i, $field := $.fields}}
+	{{- with $itemVar := printf "item%d" $i}}
+	var {{$itemVar}} {{$field.Type}}
+	if err := json.Unmarshal(items[{{$i}}], &{{$itemVar}}); err != nil {
+		return &json.UnmarshalTypeError{
+			Value: string(items[{{$i}}]),
+			Type: reflect.TypeFor[{{$field.Type}}](),
+			Struct: "{{$.name}}",
+			Field: "{{$field.Name}}",
+		}
+	}
+	{{$receiver}}.{{$field.Name}} = {{$itemVar}}
+	{{- end}}
+	{{- end}}
+	return nil
+}
+
+func ({{$receiver}} *{{$.name}}) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]any{
+		{{- range $.fields}}
+		{{$receiver}}.{{.Name}},
+		{{- end}}
+	})
+}
+{{end}}
+`
+	data := map[string]any{"name": name, "fields": fields}
+	decl := mustExecuteTemplate(text, data)
+	g.typeDecls = append(g.typeDecls, decl)
+
+	return "*" + name
+}
+
+type tupleField struct {
+	Name string
+	Type string
+}
+
+func (t *tupleField) String() string {
+	return fmt.Sprintf("%s %s", t.Name, t.Type)
 }
 
 func (g *generator) mapType(namespace string, keyType metamodel.MapKeyType, valueType *metamodel.Type) string {
