@@ -277,7 +277,7 @@ type loxFunction struct {
 func newLoxFunction(name string, fun *ast.Function, typ funType, closure environment) *loxFunction {
 	paramNames := make([]string, len(fun.Params))
 	for i, param := range fun.Params {
-		paramNames[i] = param.Name.Token.Lexeme
+		paramNames[i] = param.Name.String()
 	}
 	f := &loxFunction{
 		name:    name,
@@ -367,7 +367,7 @@ func (p *property) Get(interpreter *Interpreter, instance *loxInstance, name *as
 
 func (p *property) Set(interpreter *Interpreter, instance *loxInstance, name *ast.Ident, value loxObject) {
 	if p.setter == nil {
-		panic(loxerr.Newf(name, loxerr.Fatal, "property '%s' of %m object is read-only", name.Token.Lexeme, instance.Type()))
+		panic(loxerr.Newf(name, loxerr.Fatal, "property '%s' of %m object is read-only", name.String(), instance.Type()))
 	}
 	interpreter.call(name.Start(), p.setter.Bind(instance), []loxObject{value})
 }
@@ -400,7 +400,7 @@ func newLoxClassWithMetaclass(name string, methods []*ast.MethodDecl, env enviro
 	settersByName := make(map[string]*loxFunction, len(methods))
 	for _, decl := range methods {
 		var funcMap map[string]*loxFunction
-		methodName := name + "." + decl.Name.Token.Lexeme
+		methodName := name + "." + decl.Name.String()
 		switch {
 		case decl.HasModifier(token.Get):
 			funcMap = gettersByName
@@ -411,7 +411,7 @@ func newLoxClassWithMetaclass(name string, methods []*ast.MethodDecl, env enviro
 		default:
 			funcMap = methodsByName
 		}
-		funcMap[decl.Name.Token.Lexeme] = newLoxFunction(methodName, decl.Function, methodFunType(decl), env)
+		funcMap[decl.Name.String()] = newLoxFunction(methodName, decl.Function, methodFunType(decl), env)
 	}
 	// Every setter must have a corresponding getter so we can just iterate over the getters
 	propertiesByName := make(map[string]*property, len(gettersByName))
@@ -499,28 +499,28 @@ func (i *loxInstance) Type() loxType {
 }
 
 func (i *loxInstance) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
-	if property, ok := i.class.GetProperty(name.Token.Lexeme); ok {
+	if property, ok := i.class.GetProperty(name.String()); ok {
 		return property.Get(interpreter, i, name)
 	}
 
-	if value, ok := i.fieldValuesByName[name.Token.Lexeme]; ok {
+	if value, ok := i.fieldValuesByName[name.String()]; ok {
 		return value
 	}
 
-	if method, ok := i.class.GetMethod(name.Token.Lexeme); ok {
+	if method, ok := i.class.GetMethod(name.String()); ok {
 		return method.Bind(i)
 	}
 
-	panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %s", i.Type(), name.Token.Lexeme))
+	panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %s", i.Type(), name.String()))
 }
 
 func (i *loxInstance) Set(interpreter *Interpreter, name *ast.Ident, value loxObject) {
-	if property, ok := i.class.GetProperty(name.Token.Lexeme); ok {
+	if property, ok := i.class.GetProperty(name.String()); ok {
 		property.Set(interpreter, i, name, value)
 		return
 	}
 
-	i.fieldValuesByName[name.Token.Lexeme] = value
+	i.fieldValuesByName[name.String()] = value
 }
 
 // errorMsg is a special object which is returned by the built-in error function. It will be caught by the interpreter

@@ -42,7 +42,7 @@ func (e *globalEnvironment) Child() environment {
 }
 
 func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
-	e.values[ident.Token.Lexeme] = loxNil{}
+	e.values[ident.String()] = loxNil{}
 	return e
 }
 
@@ -60,20 +60,20 @@ func (e *globalEnvironment) Define(name string, value loxObject) environment {
 
 func (e *globalEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	if value == nil {
-		panic(fmt.Sprintf("attempt to assign nil to %s", ident.Token.Lexeme))
+		panic(fmt.Sprintf("attempt to assign nil to %s", ident.String()))
 	}
-	if _, ok := e.values[ident.Token.Lexeme]; ok {
-		e.values[ident.Token.Lexeme] = value
+	if _, ok := e.values[ident.String()]; ok {
+		e.values[ident.String()] = value
 	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
 	}
 }
 
 func (e *globalEnvironment) Get(ident *ast.Ident) loxObject {
-	if value, ok := e.values[ident.Token.Lexeme]; ok {
+	if value, ok := e.values[ident.String()]; ok {
 		return value
 	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
 	}
 }
 
@@ -97,7 +97,7 @@ func (e *localEnvironment) Child() environment {
 }
 
 func (e *localEnvironment) Declare(ident *ast.Ident) environment {
-	return newLocalEnvironment(e, ident.Token.Lexeme, loxNil{})
+	return newLocalEnvironment(e, ident.String(), loxNil{})
 }
 
 func (e *localEnvironment) Define(name string, value loxObject) environment {
@@ -109,23 +109,23 @@ func (e *localEnvironment) Define(name string, value loxObject) environment {
 
 func (e *localEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	if value == nil {
-		panic(fmt.Sprintf("attempt to assign nil to %s", ident.Token.Lexeme))
+		panic(fmt.Sprintf("attempt to assign nil to %s", ident.String()))
 	}
-	if ident.Token.Lexeme == e.name {
+	if ident.String() == e.name {
 		e.value = value
 	} else if e.parent != nil {
 		e.parent.Assign(ident, value)
 	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
 	}
 }
 
 func (e *localEnvironment) Get(ident *ast.Ident) loxObject {
-	if ident.Token.Lexeme == e.name {
+	if ident.String() == e.name {
 		return e.value
 	} else if e.parent != nil {
 		return e.parent.Get(ident)
 	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.Token.Lexeme))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
 	}
 }

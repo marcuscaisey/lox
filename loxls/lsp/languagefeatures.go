@@ -54,7 +54,7 @@ func propertyDefinitions(doc *document, pos *protocol.Position) ([]ast.Node, boo
 			return true
 		}
 		if ident.IsValid() && inRange(pos, ident) {
-			name = ident.Token.Lexeme
+			name = ident.String()
 			return false
 		} else {
 			return true
@@ -68,11 +68,11 @@ func propertyDefinitions(doc *document, pos *protocol.Position) ([]ast.Node, boo
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case *ast.MethodDecl:
-			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
+			if n.Name.IsValid() && n.Name.String() == name {
 				defs = append(defs, n.Name)
 			}
 		case *ast.SetExpr:
-			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
+			if n.Name.IsValid() && n.Name.String() == name {
 				defs = append(defs, n.Name)
 			}
 		default:
@@ -135,7 +135,7 @@ func propertyReferences(doc *document, pos *protocol.Position, includeDecl bool)
 			return true
 		}
 		if ident.IsValid() && inRange(pos, ident) {
-			name = ident.Token.Lexeme
+			name = ident.String()
 			return false
 		} else {
 			return true
@@ -149,15 +149,15 @@ func propertyReferences(doc *document, pos *protocol.Position, includeDecl bool)
 	ast.Walk(doc.Program, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case *ast.MethodDecl:
-			if n.Name.IsValid() && n.Name.Token.Lexeme == name && includeDecl {
+			if n.Name.IsValid() && n.Name.String() == name && includeDecl {
 				refs = append(refs, n.Name)
 			}
 		case *ast.GetExpr:
-			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
+			if n.Name.IsValid() && n.Name.String() == name {
 				refs = append(refs, n.Name)
 			}
 		case *ast.SetExpr:
-			if n.Name.IsValid() && n.Name.Token.Lexeme == name {
+			if n.Name.IsValid() && n.Name.String() == name {
 				refs = append(refs, n.Name)
 			}
 		default:
@@ -216,13 +216,13 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 	var body string
 	switch decl := decl.(type) {
 	case *ast.VarDecl, *ast.ParamDecl:
-		header = fmt.Sprintf("var %s", decl.Ident().Token.Lexeme)
+		header = fmt.Sprintf("var %s", decl.Ident().String())
 	case *ast.FunDecl:
-		header = fmt.Sprintf("fun %s(%s)", decl.Name.Token.Lexeme, formatParams(decl.Function.Params))
+		header = fmt.Sprintf("fun %s(%s)", decl.Name.String(), formatParams(decl.Function.Params))
 		body = commentsText(decl.Doc)
 	case *ast.ClassDecl:
 		var b strings.Builder
-		fmt.Fprintf(&b, "class %s", decl.Name.Token.Lexeme)
+		fmt.Fprintf(&b, "class %s", decl.Name.String())
 		if methods := decl.Methods(); len(methods) > 0 {
 			fmt.Fprint(&b, " {\n")
 			for _, methodDecl := range methods {
@@ -270,7 +270,7 @@ func hoverMethodDeclHeader(decl *ast.MethodDecl) string {
 	for _, modifier := range decl.Modifiers {
 		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
 	}
-	fmt.Fprintf(&b, "%s(%s)", decl.Name.Token.Lexeme, formatParams(decl.Function.Params))
+	fmt.Fprintf(&b, "%s(%s)", decl.Name.String(), formatParams(decl.Function.Params))
 	return b.String()
 }
 
@@ -280,7 +280,7 @@ func formatParams(params []*ast.ParamDecl) string {
 	}
 	var b strings.Builder
 	for i, param := range params {
-		fmt.Fprint(&b, param.Name.Token.Lexeme)
+		fmt.Fprint(&b, param.Name.String())
 		if i < len(params)-1 {
 			fmt.Fprint(&b, ", ")
 		}
@@ -303,7 +303,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				return false
 			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
-				Name:           n.Name.Token.Lexeme,
+				Name:           n.Name.String(),
 				Kind:           protocol.SymbolKindVariable,
 				Range:          newRange(n),
 				SelectionRange: newRange(n.Name),
@@ -314,7 +314,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				return false
 			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
-				Name:           n.Name.Token.Lexeme,
+				Name:           n.Name.String(),
 				Detail:         funDetail(n.Function),
 				Kind:           protocol.SymbolKindFunction,
 				Range:          newRange(n),
@@ -326,7 +326,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				return false
 			}
 			class := &protocol.DocumentSymbol{
-				Name:           n.Name.Token.Lexeme,
+				Name:           n.Name.String(),
 				Detail:         classDetail(n),
 				Kind:           protocol.SymbolKindClass,
 				Range:          newRange(n),
@@ -355,7 +355,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				}
 
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
-					Name:           fmt.Sprintf("%s.%s%s", class.Name, method.Name.Token.Lexeme, modifiers),
+					Name:           fmt.Sprintf("%s.%s%s", class.Name, method.Name.String(), modifiers),
 					Detail:         funDetail(method.Function),
 					Kind:           kind,
 					Range:          newRange(method),
@@ -578,7 +578,7 @@ func funDetail(fun *ast.Function) string {
 	params := make([]string, 0, len(fun.Params))
 	for _, paramDecl := range fun.Params {
 		if paramDecl.Name.IsValid() {
-			params = append(params, paramDecl.Name.Token.Lexeme)
+			params = append(params, paramDecl.Name.String())
 		}
 	}
 	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
@@ -588,7 +588,7 @@ func classDetail(decl *ast.ClassDecl) string {
 	if !decl.Name.IsValid() {
 		return ""
 	}
-	return fmt.Sprintf("class %s", decl.Name.Token.Lexeme)
+	return fmt.Sprintf("class %s", decl.Name.String())
 }
 
 func filenameToURI(filename string) string {

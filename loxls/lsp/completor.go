@@ -104,7 +104,7 @@ func (c *classBodyCompletor) Complete(pos *protocol.Position) (compls []*complet
 	}
 	initDefined := false
 	for _, methodDecl := range classDecl.Methods() {
-		if methodDecl.Name.IsValid() && methodDecl.Name.Token.Lexeme == "init" {
+		if methodDecl.Name.IsValid() && methodDecl.Name.String() == "init" {
 			initDefined = true
 			break
 		}
@@ -123,8 +123,8 @@ func (c *classBodyCompletor) Complete(pos *protocol.Position) (compls []*complet
 			Documentation: snippet.Doc,
 		}
 		if compl.Label == "method" && inIdent {
-			compl.Label = ident.Token.Lexeme
-			compl.Snippet = strings.ReplaceAll(compl.Snippet, "${1:name}", ident.Token.Lexeme)
+			compl.Label = ident.String()
+			compl.Snippet = strings.ReplaceAll(compl.Snippet, "${1:name}", ident.String())
 		}
 		compls = append(compls, compl)
 	}
@@ -479,7 +479,7 @@ func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*co
 	paramCompls := make([]*completion, 0, len(fun.Params))
 	for _, paramDecl := range fun.Params {
 		if paramDecl.Name.IsValid() {
-			paramCompls = append(paramCompls, &completion{Label: paramDecl.Name.Token.Lexeme, Kind: protocol.CompletionItemKindVariable})
+			paramCompls = append(paramCompls, &completion{Label: paramDecl.Name.String(), Kind: protocol.CompletionItemKindVariable})
 		}
 	}
 
@@ -538,7 +538,7 @@ func genPropertyCompletions(program *ast.Program) []*completion {
 	for classDecl, classCompls := range complsByClassDecl {
 		for _, compl := range classCompls {
 			b := &strings.Builder{}
-			fmt.Fprintf(b, "_From class: %s_", classDecl.Name.Token.Lexeme)
+			fmt.Fprintf(b, "_From class: %s_", classDecl.Name.String())
 			if compl.Documentation != "" {
 				fmt.Fprintf(b, "\n\n%s", compl.Documentation)
 			}
@@ -675,7 +675,7 @@ func varCompletion(decl *ast.VarDecl) (*completion, bool) {
 		return nil, false
 	}
 	return &completion{
-		Label: decl.Name.Token.Lexeme,
+		Label: decl.Name.String(),
 		Kind:  protocol.CompletionItemKindVariable,
 	}, true
 }
@@ -685,7 +685,7 @@ func funCompletion(decl *ast.FunDecl) (*completion, bool) {
 		return nil, false
 	}
 	return &completion{
-		Label:         decl.Name.Token.Lexeme,
+		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindFunction,
 		Detail:        funDetail(decl.Function),
 		Documentation: commentsText(decl.Doc),
@@ -697,7 +697,7 @@ func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
 		return nil, false
 	}
 	return &completion{
-		Label:         decl.Name.Token.Lexeme,
+		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindClass,
 		Detail:        classDetail(decl),
 		Documentation: commentsText(decl.Doc),
@@ -709,7 +709,7 @@ func fieldCompletion(ident *ast.Ident) (*completion, bool) {
 		return nil, false
 	}
 	return &completion{
-		Label: ident.Token.Lexeme,
+		Label: ident.String(),
 		Kind:  protocol.CompletionItemKindField,
 	}, true
 }
@@ -729,7 +729,7 @@ func methodCompletion(decl *ast.MethodDecl) (*completion, bool) {
 		documentation = commentsText(decl.Doc)
 	}
 	return &completion{
-		Label:         decl.Name.Token.Lexeme,
+		Label:         decl.Name.String(),
 		Kind:          kind,
 		Detail:        detail,
 		Documentation: documentation,

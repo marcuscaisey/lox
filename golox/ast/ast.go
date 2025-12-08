@@ -44,6 +44,7 @@ type Ident struct {
 func (i *Ident) Start() token.Position { return i.Token.Start() }
 func (i *Ident) End() token.Position   { return i.Token.End() }
 func (i *Ident) IsValid() bool         { return i != nil && !i.Token.IsZero() }
+func (i *Ident) String() string        { return i.Token.Lexeme }
 
 // Stmt is the interface which all statement nodes implement.
 //

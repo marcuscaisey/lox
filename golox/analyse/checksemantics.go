@@ -151,9 +151,9 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) 
 		}
 		switch {
 		case methodDecl.HasModifier(token.Get):
-			gettersByName[methodDecl.Name.Token.Lexeme] = true
+			gettersByName[methodDecl.Name.String()] = true
 		case methodDecl.HasModifier(token.Set):
-			setterIdentsByName[methodDecl.Name.Token.Lexeme] = methodDecl.Name
+			setterIdentsByName[methodDecl.Name.String()] = methodDecl.Name
 		}
 	}
 	for name, ident := range setterIdentsByName {
@@ -205,13 +205,13 @@ func (c *semanticChecker) checkNoConstructorReturn(stmt *ast.ReturnStmt) {
 }
 
 func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
-	if c.extraFeatures && expr.Ident.Token.Lexeme == token.PlaceholderIdent {
+	if c.extraFeatures && expr.Ident.String() == token.PlaceholderIdent {
 		c.errs.Addf(expr.Ident, loxerr.Fatal, "%s cannot be used as a value", token.PlaceholderIdent)
 	}
 }
 
 func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
-	if c.extraFeatures && ident.IsValid() && ident.Token.Lexeme == token.PlaceholderIdent {
+	if c.extraFeatures && ident.IsValid() && ident.String() == token.PlaceholderIdent {
 		c.errs.Addf(ident, loxerr.Fatal, "%s cannot be used as a field name", token.PlaceholderIdent)
 	}
 }

@@ -83,7 +83,7 @@ func Node(node ast.Node) string {
 }
 
 func formatIdent(ident *ast.Ident) string {
-	return ident.Token.Lexeme
+	return ident.String()
 }
 
 func formatProgram(program *ast.Program) string {
@@ -273,7 +273,7 @@ func formatLiteralExpr(expr *ast.LiteralExpr) string {
 }
 
 func formatIdentExpr(expr *ast.IdentExpr) string {
-	return expr.Ident.Token.Lexeme
+	return expr.Ident.String()
 }
 
 func formatThisExpr(*ast.ThisExpr) string {

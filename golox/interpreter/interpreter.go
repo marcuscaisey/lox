@@ -133,7 +133,7 @@ func (i *Interpreter) execVarDecl(env environment, stmt *ast.VarDecl) environmen
 	if stmt.Initialiser != nil {
 		value = i.evalExpr(env, stmt.Initialiser)
 	}
-	if stmt.Name.Token.Lexeme == token.PlaceholderIdent {
+	if stmt.Name.String() == token.PlaceholderIdent {
 		return env
 	}
 	newEnv := env.Declare(stmt.Name)
@@ -144,20 +144,20 @@ func (i *Interpreter) execVarDecl(env environment, stmt *ast.VarDecl) environmen
 }
 
 func (i *Interpreter) execFunDecl(env environment, stmt *ast.FunDecl) environment {
-	if stmt.Name.Token.Lexeme == token.PlaceholderIdent {
+	if stmt.Name.String() == token.PlaceholderIdent {
 		return env
 	}
 	newEnv := env.Declare(stmt.Name)
-	newEnv.Assign(stmt.Name, newLoxFunction(stmt.Name.Token.Lexeme, stmt.Function, funTypeFunction, newEnv))
+	newEnv.Assign(stmt.Name, newLoxFunction(stmt.Name.String(), stmt.Function, funTypeFunction, newEnv))
 	return newEnv
 }
 
 func (i *Interpreter) execClassDecl(env environment, stmt *ast.ClassDecl) environment {
-	if stmt.Name.Token.Lexeme == token.PlaceholderIdent {
+	if stmt.Name.String() == token.PlaceholderIdent {
 		return env
 	}
 	newEnv := env.Declare(stmt.Name)
-	newEnv.Assign(stmt.Name, newLoxClass(stmt.Name.Token.Lexeme, stmt.Methods(), newEnv))
+	newEnv.Assign(stmt.Name, newLoxClass(stmt.Name.String(), stmt.Methods(), newEnv))
 	return newEnv
 }
 
@@ -437,7 +437,7 @@ func (i *Interpreter) evalTernaryExpr(env environment, expr *ast.TernaryExpr) lo
 
 func (i *Interpreter) evalAssignmentExpr(env environment, expr *ast.AssignmentExpr) loxObject {
 	value := i.evalExpr(env, expr.Right)
-	if expr.Left.Token.Lexeme != token.PlaceholderIdent {
+	if expr.Left.String() != token.PlaceholderIdent {
 		env.Assign(expr.Left, value)
 	}
 	return value

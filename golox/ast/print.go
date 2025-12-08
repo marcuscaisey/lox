@@ -24,7 +24,7 @@ func sprint(node Node, depth int) string {
 	case *LiteralExpr:
 		return node.Value.Lexeme
 	case *IdentExpr:
-		return node.Ident.Token.Lexeme
+		return node.Ident.String()
 	default:
 	}
 
@@ -104,7 +104,7 @@ func formatValue(value reflect.Value, depth int) (string, bool) {
 	case token.Token:
 		child = value.Lexeme
 	case *Ident:
-		child = value.Token.Lexeme
+		child = value.String()
 	case Node:
 		child = sprint(value, depth)
 	case bool:
