@@ -1,8 +1,6 @@
 package lsp
 
 import (
-	"unicode/utf16"
-
 	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
@@ -55,5 +53,5 @@ func inRangePositions(pos *protocol.Position, start token.Position, end token.Po
 
 func columnUTF16(p token.Position) int {
 	line := p.File.Line(p.Line)
-	return len(utf16.Encode([]rune(string(line[:p.Column]))))
+	return utf16Len([]rune(string(line[:p.Column])))
 }
