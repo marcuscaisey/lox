@@ -188,6 +188,7 @@ type {{.name}}{{.nameSuffix}} struct {
 
 {{with $receiver := slice $.name 0 1 | lowerFirstLetter}}
 {{range $.fields}}
+{{.Comment}}
 func ({{$receiver}} *{{$.name}}{{$.receiverTypeSuffix}}) Get{{.Name}}() {{.Type}} {
 	if {{$receiver}} == nil {
 		var zero {{.Type}}
@@ -551,6 +552,7 @@ type {{.name}} struct {
 
 {{with $receiver := slice $.name 0 1 | lowerFirstLetter}}
 {{range $.fields}}
+{{.Comment}}
 func ({{$receiver}} *{{$.name}}) Get{{.Name}}() {{.Type}} {
 	if {{$receiver}} == nil {
 		return *new({{.Type}})

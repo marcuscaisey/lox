@@ -66,6 +66,7 @@ type WorkDoneProgressParams struct {
 	WorkDoneToken ProgressToken `json:"workDoneToken,omitempty"`
 }
 
+// An optional token that a server can use to report work done progress.
 func (w *WorkDoneProgressParams) GetWorkDoneToken() ProgressToken {
 	if w == nil {
 		var zero ProgressToken
@@ -81,6 +82,7 @@ type XInitializeParamsClientInfo struct {
 	Version string `json:"version,omitempty"`
 }
 
+// The name of the client as defined by the client.
 func (x *XInitializeParamsClientInfo) GetName() string {
 	if x == nil {
 		return *new(string)
@@ -88,6 +90,7 @@ func (x *XInitializeParamsClientInfo) GetName() string {
 	return x.Name
 }
 
+// The client's version as defined by the client.
 func (x *XInitializeParamsClientInfo) GetVersion() string {
 	if x == nil {
 		return *new(string)
@@ -196,6 +199,9 @@ type WorkspaceEditClientCapabilitiesChangeAnnotationSupport struct {
 	GroupsOnLabel bool `json:"groupsOnLabel,omitempty"`
 }
 
+// Whether the client groups edits with equal labels into tree nodes,
+// for instance all edits labelled with "Changes in Strings" would
+// be a tree node.
 func (w *WorkspaceEditClientCapabilitiesChangeAnnotationSupport) GetGroupsOnLabel() bool {
 	if w == nil {
 		return *new(bool)
@@ -232,6 +238,7 @@ type WorkspaceEditClientCapabilities struct {
 	ChangeAnnotationSupport *WorkspaceEditClientCapabilitiesChangeAnnotationSupport `json:"changeAnnotationSupport,omitempty"`
 }
 
+// The client supports versioned document changes in `WorkspaceEdit`s
 func (w *WorkspaceEditClientCapabilities) GetDocumentChanges() bool {
 	if w == nil {
 		var zero bool
@@ -240,6 +247,10 @@ func (w *WorkspaceEditClientCapabilities) GetDocumentChanges() bool {
 	return w.DocumentChanges
 }
 
+// The resource operations the client supports. Clients should at least
+// support 'create', 'rename' and 'delete' files and folders.
+//
+// @since 3.13.0
 func (w *WorkspaceEditClientCapabilities) GetResourceOperations() []ResourceOperationKind {
 	if w == nil {
 		var zero []ResourceOperationKind
@@ -248,6 +259,10 @@ func (w *WorkspaceEditClientCapabilities) GetResourceOperations() []ResourceOper
 	return w.ResourceOperations
 }
 
+// The failure handling strategy of a client if applying the workspace edit
+// fails.
+//
+// @since 3.13.0
 func (w *WorkspaceEditClientCapabilities) GetFailureHandling() FailureHandlingKind {
 	if w == nil {
 		var zero FailureHandlingKind
@@ -256,6 +271,13 @@ func (w *WorkspaceEditClientCapabilities) GetFailureHandling() FailureHandlingKi
 	return w.FailureHandling
 }
 
+// Whether the client normalizes line endings to the client specific
+// setting.
+// If set to `true` the client will normalize line ending characters
+// in a workspace edit to the client-specified new line
+// character.
+//
+// @since 3.16.0
 func (w *WorkspaceEditClientCapabilities) GetNormalizesLineEndings() bool {
 	if w == nil {
 		var zero bool
@@ -264,6 +286,10 @@ func (w *WorkspaceEditClientCapabilities) GetNormalizesLineEndings() bool {
 	return w.NormalizesLineEndings
 }
 
+// Whether the client in general supports change annotations on text edits,
+// create file, rename file and delete file changes.
+//
+// @since 3.16.0
 func (w *WorkspaceEditClientCapabilities) GetChangeAnnotationSupport() *WorkspaceEditClientCapabilitiesChangeAnnotationSupport {
 	if w == nil {
 		var zero *WorkspaceEditClientCapabilitiesChangeAnnotationSupport
@@ -278,6 +304,7 @@ type DidChangeConfigurationClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Did change configuration notification supports dynamic registration.
 func (d *DidChangeConfigurationClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -299,6 +326,9 @@ type DidChangeWatchedFilesClientCapabilities struct {
 	RelativePatternSupport bool `json:"relativePatternSupport,omitempty"`
 }
 
+// Did change watched files notification supports dynamic registration. Please note
+// that the current protocol doesn't support static configuration for file changes
+// from the server side.
 func (d *DidChangeWatchedFilesClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -307,6 +337,10 @@ func (d *DidChangeWatchedFilesClientCapabilities) GetDynamicRegistration() bool 
 	return d.DynamicRegistration
 }
 
+// Whether the client has support for {@link  RelativePattern relative pattern}
+// or not.
+//
+// @since 3.17.0
 func (d *DidChangeWatchedFilesClientCapabilities) GetRelativePatternSupport() bool {
 	if d == nil {
 		var zero bool
@@ -415,6 +449,14 @@ type WorkspaceSymbolClientCapabilitiesSymbolKind struct {
 	ValueSet []SymbolKind `json:"valueSet,omitempty"`
 }
 
+// The symbol kind values the client supports. When this
+// property exists the client also guarantees that it will
+// handle values outside its set gracefully and falls back
+// to a default value when unknown.
+//
+// If this property is not present the client only supports
+// the symbol kinds from `File` to `Array` as defined in
+// the initial version of the protocol.
 func (w *WorkspaceSymbolClientCapabilitiesSymbolKind) GetValueSet() []SymbolKind {
 	if w == nil {
 		return *new([]SymbolKind)
@@ -468,6 +510,7 @@ type WorkspaceSymbolClientCapabilitiesTagSupport struct {
 	ValueSet []SymbolTag `json:"valueSet"`
 }
 
+// The tags supported by the client.
 func (w *WorkspaceSymbolClientCapabilitiesTagSupport) GetValueSet() []SymbolTag {
 	if w == nil {
 		return *new([]SymbolTag)
@@ -481,6 +524,8 @@ type WorkspaceSymbolClientCapabilitiesResolveSupport struct {
 	Properties []string `json:"properties"`
 }
 
+// The properties that a client can resolve lazily. Usually
+// `location.range`
 func (w *WorkspaceSymbolClientCapabilitiesResolveSupport) GetProperties() []string {
 	if w == nil {
 		return *new([]string)
@@ -509,6 +554,7 @@ type WorkspaceSymbolClientCapabilities struct {
 	ResolveSupport *WorkspaceSymbolClientCapabilitiesResolveSupport `json:"resolveSupport,omitempty"`
 }
 
+// Symbol request supports dynamic registration.
 func (w *WorkspaceSymbolClientCapabilities) GetDynamicRegistration() bool {
 	if w == nil {
 		var zero bool
@@ -517,6 +563,7 @@ func (w *WorkspaceSymbolClientCapabilities) GetDynamicRegistration() bool {
 	return w.DynamicRegistration
 }
 
+// Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
 func (w *WorkspaceSymbolClientCapabilities) GetSymbolKind() *WorkspaceSymbolClientCapabilitiesSymbolKind {
 	if w == nil {
 		var zero *WorkspaceSymbolClientCapabilitiesSymbolKind
@@ -525,6 +572,10 @@ func (w *WorkspaceSymbolClientCapabilities) GetSymbolKind() *WorkspaceSymbolClie
 	return w.SymbolKind
 }
 
+// The client supports tags on `SymbolInformation`.
+// Clients supporting tags have to handle unknown tags gracefully.
+//
+// @since 3.16.0
 func (w *WorkspaceSymbolClientCapabilities) GetTagSupport() *WorkspaceSymbolClientCapabilitiesTagSupport {
 	if w == nil {
 		var zero *WorkspaceSymbolClientCapabilitiesTagSupport
@@ -533,6 +584,11 @@ func (w *WorkspaceSymbolClientCapabilities) GetTagSupport() *WorkspaceSymbolClie
 	return w.TagSupport
 }
 
+// The client support partial workspace symbols. The client will send the
+// request `workspaceSymbol/resolve` to the server to resolve additional
+// properties.
+//
+// @since 3.17.0
 func (w *WorkspaceSymbolClientCapabilities) GetResolveSupport() *WorkspaceSymbolClientCapabilitiesResolveSupport {
 	if w == nil {
 		var zero *WorkspaceSymbolClientCapabilitiesResolveSupport
@@ -549,6 +605,7 @@ type ExecuteCommandClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Execute command supports dynamic registration.
 func (e *ExecuteCommandClientCapabilities) GetDynamicRegistration() bool {
 	if e == nil {
 		var zero bool
@@ -571,6 +628,13 @@ type SemanticTokensWorkspaceClientCapabilities struct {
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
+// Whether the client implementation supports a refresh request sent from
+// the server to the client.
+//
+// Note that this event is global and will force the client to refresh all
+// semantic tokens currently shown. It should be used with absolute care
+// and is useful for situation where a server for example detects a project
+// wide change that requires such a calculation.
 func (s *SemanticTokensWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if s == nil {
 		var zero bool
@@ -593,6 +657,13 @@ type CodeLensWorkspaceClientCapabilities struct {
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
+// Whether the client implementation supports a refresh request sent from the
+// server to the client.
+//
+// Note that this event is global and will force the client to refresh all
+// code lenses currently shown. It should be used with absolute care and is
+// useful for situation where a server for example detect a project wide
+// change that requires such a calculation.
 func (c *CodeLensWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if c == nil {
 		var zero bool
@@ -626,6 +697,7 @@ type FileOperationClientCapabilities struct {
 	WillDelete bool `json:"willDelete,omitempty"`
 }
 
+// Whether the client supports dynamic registration for file requests/notifications.
 func (f *FileOperationClientCapabilities) GetDynamicRegistration() bool {
 	if f == nil {
 		var zero bool
@@ -634,6 +706,7 @@ func (f *FileOperationClientCapabilities) GetDynamicRegistration() bool {
 	return f.DynamicRegistration
 }
 
+// The client has support for sending didCreateFiles notifications.
 func (f *FileOperationClientCapabilities) GetDidCreate() bool {
 	if f == nil {
 		var zero bool
@@ -642,6 +715,7 @@ func (f *FileOperationClientCapabilities) GetDidCreate() bool {
 	return f.DidCreate
 }
 
+// The client has support for sending willCreateFiles requests.
 func (f *FileOperationClientCapabilities) GetWillCreate() bool {
 	if f == nil {
 		var zero bool
@@ -650,6 +724,7 @@ func (f *FileOperationClientCapabilities) GetWillCreate() bool {
 	return f.WillCreate
 }
 
+// The client has support for sending didRenameFiles notifications.
 func (f *FileOperationClientCapabilities) GetDidRename() bool {
 	if f == nil {
 		var zero bool
@@ -658,6 +733,7 @@ func (f *FileOperationClientCapabilities) GetDidRename() bool {
 	return f.DidRename
 }
 
+// The client has support for sending willRenameFiles requests.
 func (f *FileOperationClientCapabilities) GetWillRename() bool {
 	if f == nil {
 		var zero bool
@@ -666,6 +742,7 @@ func (f *FileOperationClientCapabilities) GetWillRename() bool {
 	return f.WillRename
 }
 
+// The client has support for sending didDeleteFiles notifications.
 func (f *FileOperationClientCapabilities) GetDidDelete() bool {
 	if f == nil {
 		var zero bool
@@ -674,6 +751,7 @@ func (f *FileOperationClientCapabilities) GetDidDelete() bool {
 	return f.DidDelete
 }
 
+// The client has support for sending willDeleteFiles requests.
 func (f *FileOperationClientCapabilities) GetWillDelete() bool {
 	if f == nil {
 		var zero bool
@@ -698,6 +776,13 @@ type InlineValueWorkspaceClientCapabilities struct {
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
+// Whether the client implementation supports a refresh request sent from the
+// server to the client.
+//
+// Note that this event is global and will force the client to refresh all
+// inline values currently shown. It should be used with absolute care and is
+// useful for situation where a server for example detects a project wide
+// change that requires such a calculation.
 func (i *InlineValueWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if i == nil {
 		var zero bool
@@ -722,6 +807,13 @@ type InlayHintWorkspaceClientCapabilities struct {
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
+// Whether the client implementation supports a refresh request sent from
+// the server to the client.
+//
+// Note that this event is global and will force the client to refresh all
+// inlay hints currently shown. It should be used with absolute care and
+// is useful for situation where a server for example detects a project wide
+// change that requires such a calculation.
 func (i *InlayHintWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if i == nil {
 		var zero bool
@@ -746,6 +838,13 @@ type DiagnosticWorkspaceClientCapabilities struct {
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
+// Whether the client implementation supports a refresh request sent from
+// the server to the client.
+//
+// Note that this event is global and will force the client to refresh all
+// pulled diagnostics currently shown. It should be used with absolute care and
+// is useful for situation where a server for example detects a project wide
+// change that requires such a calculation.
 func (d *DiagnosticWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if d == nil {
 		var zero bool
@@ -774,6 +873,16 @@ type FoldingRangeWorkspaceClientCapabilities struct {
 	RefreshSupport bool `json:"refreshSupport,omitempty"`
 }
 
+// Whether the client implementation supports a refresh request sent from the
+// server to the client.
+//
+// Note that this event is global and will force the client to refresh all
+// folding ranges currently shown. It should be used with absolute care and is
+// useful for situation where a server for example detects a project wide
+// change that requires such a calculation.
+//
+// @since 3.18.0
+// @proposed
 func (f *FoldingRangeWorkspaceClientCapabilities) GetRefreshSupport() bool {
 	if f == nil {
 		var zero bool
@@ -844,6 +953,9 @@ type WorkspaceClientCapabilities struct {
 	FoldingRange *FoldingRangeWorkspaceClientCapabilities `json:"foldingRange,omitempty"`
 }
 
+// The client supports applying batch edits
+// to the workspace by supporting the request
+// 'workspace/applyEdit'
 func (w *WorkspaceClientCapabilities) GetApplyEdit() bool {
 	if w == nil {
 		var zero bool
@@ -852,6 +964,7 @@ func (w *WorkspaceClientCapabilities) GetApplyEdit() bool {
 	return w.ApplyEdit
 }
 
+// Capabilities specific to `WorkspaceEdit`s.
 func (w *WorkspaceClientCapabilities) GetWorkspaceEdit() *WorkspaceEditClientCapabilities {
 	if w == nil {
 		var zero *WorkspaceEditClientCapabilities
@@ -860,6 +973,7 @@ func (w *WorkspaceClientCapabilities) GetWorkspaceEdit() *WorkspaceEditClientCap
 	return w.WorkspaceEdit
 }
 
+// Capabilities specific to the `workspace/didChangeConfiguration` notification.
 func (w *WorkspaceClientCapabilities) GetDidChangeConfiguration() *DidChangeConfigurationClientCapabilities {
 	if w == nil {
 		var zero *DidChangeConfigurationClientCapabilities
@@ -868,6 +982,7 @@ func (w *WorkspaceClientCapabilities) GetDidChangeConfiguration() *DidChangeConf
 	return w.DidChangeConfiguration
 }
 
+// Capabilities specific to the `workspace/didChangeWatchedFiles` notification.
 func (w *WorkspaceClientCapabilities) GetDidChangeWatchedFiles() *DidChangeWatchedFilesClientCapabilities {
 	if w == nil {
 		var zero *DidChangeWatchedFilesClientCapabilities
@@ -876,6 +991,7 @@ func (w *WorkspaceClientCapabilities) GetDidChangeWatchedFiles() *DidChangeWatch
 	return w.DidChangeWatchedFiles
 }
 
+// Capabilities specific to the `workspace/symbol` request.
 func (w *WorkspaceClientCapabilities) GetSymbol() *WorkspaceSymbolClientCapabilities {
 	if w == nil {
 		var zero *WorkspaceSymbolClientCapabilities
@@ -884,6 +1000,7 @@ func (w *WorkspaceClientCapabilities) GetSymbol() *WorkspaceSymbolClientCapabili
 	return w.Symbol
 }
 
+// Capabilities specific to the `workspace/executeCommand` request.
 func (w *WorkspaceClientCapabilities) GetExecuteCommand() *ExecuteCommandClientCapabilities {
 	if w == nil {
 		var zero *ExecuteCommandClientCapabilities
@@ -892,6 +1009,9 @@ func (w *WorkspaceClientCapabilities) GetExecuteCommand() *ExecuteCommandClientC
 	return w.ExecuteCommand
 }
 
+// The client has support for workspace folders.
+//
+// @since 3.6.0
 func (w *WorkspaceClientCapabilities) GetWorkspaceFolders() bool {
 	if w == nil {
 		var zero bool
@@ -900,6 +1020,9 @@ func (w *WorkspaceClientCapabilities) GetWorkspaceFolders() bool {
 	return w.WorkspaceFolders
 }
 
+// The client supports `workspace/configuration` requests.
+//
+// @since 3.6.0
 func (w *WorkspaceClientCapabilities) GetConfiguration() bool {
 	if w == nil {
 		var zero bool
@@ -908,6 +1031,10 @@ func (w *WorkspaceClientCapabilities) GetConfiguration() bool {
 	return w.Configuration
 }
 
+// Capabilities specific to the semantic token requests scoped to the
+// workspace.
+//
+// @since 3.16.0.
 func (w *WorkspaceClientCapabilities) GetSemanticTokens() *SemanticTokensWorkspaceClientCapabilities {
 	if w == nil {
 		var zero *SemanticTokensWorkspaceClientCapabilities
@@ -916,6 +1043,10 @@ func (w *WorkspaceClientCapabilities) GetSemanticTokens() *SemanticTokensWorkspa
 	return w.SemanticTokens
 }
 
+// Capabilities specific to the code lens requests scoped to the
+// workspace.
+//
+// @since 3.16.0.
 func (w *WorkspaceClientCapabilities) GetCodeLens() *CodeLensWorkspaceClientCapabilities {
 	if w == nil {
 		var zero *CodeLensWorkspaceClientCapabilities
@@ -924,6 +1055,9 @@ func (w *WorkspaceClientCapabilities) GetCodeLens() *CodeLensWorkspaceClientCapa
 	return w.CodeLens
 }
 
+// The client has support for file notifications/requests for user operations on files.
+//
+// Since 3.16.0
 func (w *WorkspaceClientCapabilities) GetFileOperations() *FileOperationClientCapabilities {
 	if w == nil {
 		var zero *FileOperationClientCapabilities
@@ -932,6 +1066,10 @@ func (w *WorkspaceClientCapabilities) GetFileOperations() *FileOperationClientCa
 	return w.FileOperations
 }
 
+// Capabilities specific to the inline values requests scoped to the
+// workspace.
+//
+// @since 3.17.0.
 func (w *WorkspaceClientCapabilities) GetInlineValue() *InlineValueWorkspaceClientCapabilities {
 	if w == nil {
 		var zero *InlineValueWorkspaceClientCapabilities
@@ -940,6 +1078,10 @@ func (w *WorkspaceClientCapabilities) GetInlineValue() *InlineValueWorkspaceClie
 	return w.InlineValue
 }
 
+// Capabilities specific to the inlay hint requests scoped to the
+// workspace.
+//
+// @since 3.17.0.
 func (w *WorkspaceClientCapabilities) GetInlayHint() *InlayHintWorkspaceClientCapabilities {
 	if w == nil {
 		var zero *InlayHintWorkspaceClientCapabilities
@@ -948,6 +1090,10 @@ func (w *WorkspaceClientCapabilities) GetInlayHint() *InlayHintWorkspaceClientCa
 	return w.InlayHint
 }
 
+// Capabilities specific to the diagnostic requests scoped to the
+// workspace.
+//
+// @since 3.17.0.
 func (w *WorkspaceClientCapabilities) GetDiagnostics() *DiagnosticWorkspaceClientCapabilities {
 	if w == nil {
 		var zero *DiagnosticWorkspaceClientCapabilities
@@ -956,6 +1102,10 @@ func (w *WorkspaceClientCapabilities) GetDiagnostics() *DiagnosticWorkspaceClien
 	return w.Diagnostics
 }
 
+// Capabilities specific to the folding range requests scoped to the workspace.
+//
+// @since 3.18.0
+// @proposed
 func (w *WorkspaceClientCapabilities) GetFoldingRange() *FoldingRangeWorkspaceClientCapabilities {
 	if w == nil {
 		var zero *FoldingRangeWorkspaceClientCapabilities
@@ -978,6 +1128,7 @@ type TextDocumentSyncClientCapabilities struct {
 	DidSave bool `json:"didSave,omitempty"`
 }
 
+// Whether text document synchronization supports dynamic registration.
 func (t *TextDocumentSyncClientCapabilities) GetDynamicRegistration() bool {
 	if t == nil {
 		var zero bool
@@ -986,6 +1137,7 @@ func (t *TextDocumentSyncClientCapabilities) GetDynamicRegistration() bool {
 	return t.DynamicRegistration
 }
 
+// The client supports sending will save notifications.
 func (t *TextDocumentSyncClientCapabilities) GetWillSave() bool {
 	if t == nil {
 		var zero bool
@@ -994,6 +1146,9 @@ func (t *TextDocumentSyncClientCapabilities) GetWillSave() bool {
 	return t.WillSave
 }
 
+// The client supports sending a will save request and
+// waits for a response providing text edits which will
+// be applied to the document before it is saved.
 func (t *TextDocumentSyncClientCapabilities) GetWillSaveWaitUntil() bool {
 	if t == nil {
 		var zero bool
@@ -1002,6 +1157,7 @@ func (t *TextDocumentSyncClientCapabilities) GetWillSaveWaitUntil() bool {
 	return t.WillSaveWaitUntil
 }
 
+// The client supports did save notifications.
 func (t *TextDocumentSyncClientCapabilities) GetDidSave() bool {
 	if t == nil {
 		var zero bool
@@ -1103,6 +1259,7 @@ type CompletionClientCapabilitiesCompletionItemTagSupport struct {
 	ValueSet []CompletionItemTag `json:"valueSet"`
 }
 
+// The tags supported by the client.
 func (c *CompletionClientCapabilitiesCompletionItemTagSupport) GetValueSet() []CompletionItemTag {
 	if c == nil {
 		return *new([]CompletionItemTag)
@@ -1115,6 +1272,7 @@ type CompletionClientCapabilitiesCompletionItemResolveSupport struct {
 	Properties []string `json:"properties"`
 }
 
+// The properties that a client can resolve lazily.
 func (c *CompletionClientCapabilitiesCompletionItemResolveSupport) GetProperties() []string {
 	if c == nil {
 		return *new([]string)
@@ -1236,6 +1394,12 @@ type CompletionClientCapabilitiesCompletionItem struct {
 	LabelDetailsSupport bool `json:"labelDetailsSupport,omitempty"`
 }
 
+// Client supports snippets as insert text.
+//
+// A snippet can define tab stops and placeholders with `$1`, `$2`
+// and `${3:foo}`. `$0` defines the final tab stop, it defaults to
+// the end of the snippet. Placeholders with equal identifiers are linked,
+// that is typing in one will update others too.
 func (c *CompletionClientCapabilitiesCompletionItem) GetSnippetSupport() bool {
 	if c == nil {
 		return *new(bool)
@@ -1243,6 +1407,7 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetSnippetSupport() bool {
 	return c.SnippetSupport
 }
 
+// Client supports commit characters on a completion item.
 func (c *CompletionClientCapabilitiesCompletionItem) GetCommitCharactersSupport() bool {
 	if c == nil {
 		return *new(bool)
@@ -1250,6 +1415,8 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetCommitCharactersSupport(
 	return c.CommitCharactersSupport
 }
 
+// Client supports the following content formats for the documentation
+// property. The order describes the preferred format of the client.
 func (c *CompletionClientCapabilitiesCompletionItem) GetDocumentationFormat() []MarkupKind {
 	if c == nil {
 		return *new([]MarkupKind)
@@ -1257,6 +1424,7 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetDocumentationFormat() []
 	return c.DocumentationFormat
 }
 
+// Client supports the deprecated property on a completion item.
 func (c *CompletionClientCapabilitiesCompletionItem) GetDeprecatedSupport() bool {
 	if c == nil {
 		return *new(bool)
@@ -1264,6 +1432,7 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetDeprecatedSupport() bool
 	return c.DeprecatedSupport
 }
 
+// Client supports the preselect property on a completion item.
 func (c *CompletionClientCapabilitiesCompletionItem) GetPreselectSupport() bool {
 	if c == nil {
 		return *new(bool)
@@ -1271,6 +1440,12 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetPreselectSupport() bool 
 	return c.PreselectSupport
 }
 
+// Client supports the tag property on a completion item. Clients supporting
+// tags have to handle unknown tags gracefully. Clients especially need to
+// preserve unknown tags when sending a completion item back to the server in
+// a resolve call.
+//
+// @since 3.15.0
 func (c *CompletionClientCapabilitiesCompletionItem) GetTagSupport() *CompletionClientCapabilitiesCompletionItemTagSupport {
 	if c == nil {
 		return *new(*CompletionClientCapabilitiesCompletionItemTagSupport)
@@ -1278,6 +1453,10 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetTagSupport() *Completion
 	return c.TagSupport
 }
 
+// Client support insert replace edit to control different behavior if a
+// completion item is inserted in the text or should replace text.
+//
+// @since 3.16.0
 func (c *CompletionClientCapabilitiesCompletionItem) GetInsertReplaceSupport() bool {
 	if c == nil {
 		return *new(bool)
@@ -1285,6 +1464,11 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetInsertReplaceSupport() b
 	return c.InsertReplaceSupport
 }
 
+// Indicates which properties a client can resolve lazily on a completion
+// item. Before version 3.16.0 only the predefined properties `documentation`
+// and `details` could be resolved lazily.
+//
+// @since 3.16.0
 func (c *CompletionClientCapabilitiesCompletionItem) GetResolveSupport() *CompletionClientCapabilitiesCompletionItemResolveSupport {
 	if c == nil {
 		return *new(*CompletionClientCapabilitiesCompletionItemResolveSupport)
@@ -1292,6 +1476,11 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetResolveSupport() *Comple
 	return c.ResolveSupport
 }
 
+// The client supports the `insertTextMode` property on
+// a completion item to override the whitespace handling mode
+// as defined by the client (see `insertTextMode`).
+//
+// @since 3.16.0
 func (c *CompletionClientCapabilitiesCompletionItem) GetInsertTextModeSupport() *CompletionClientCapabilitiesCompletionItemInsertTextModeSupport {
 	if c == nil {
 		return *new(*CompletionClientCapabilitiesCompletionItemInsertTextModeSupport)
@@ -1299,6 +1488,10 @@ func (c *CompletionClientCapabilitiesCompletionItem) GetInsertTextModeSupport() 
 	return c.InsertTextModeSupport
 }
 
+// The client has support for completion item label
+// details (see also `CompletionItemLabelDetails`).
+//
+// @since 3.17.0
 func (c *CompletionClientCapabilitiesCompletionItem) GetLabelDetailsSupport() bool {
 	if c == nil {
 		return *new(bool)
@@ -1404,6 +1597,14 @@ type CompletionClientCapabilitiesCompletionItemKind struct {
 	ValueSet []CompletionItemKind `json:"valueSet,omitempty"`
 }
 
+// The completion item kind values the client supports. When this
+// property exists the client also guarantees that it will
+// handle values outside its set gracefully and falls back
+// to a default value when unknown.
+//
+// If this property is not present the client only supports
+// the completion items kinds from `Text` to `Reference` as defined in
+// the initial version of the protocol.
 func (c *CompletionClientCapabilitiesCompletionItemKind) GetValueSet() []CompletionItemKind {
 	if c == nil {
 		return *new([]CompletionItemKind)
@@ -1423,6 +1624,14 @@ type CompletionClientCapabilitiesCompletionList struct {
 	ItemDefaults []string `json:"itemDefaults,omitempty"`
 }
 
+// The client supports the following itemDefaults on
+// a completion list.
+//
+// The value lists the supported property names of the
+// `CompletionList.itemDefaults` object. If omitted
+// no properties are supported.
+//
+// @since 3.17.0
 func (c *CompletionClientCapabilitiesCompletionList) GetItemDefaults() []string {
 	if c == nil {
 		return *new([]string)
@@ -1456,6 +1665,7 @@ type CompletionClientCapabilities struct {
 	CompletionList *CompletionClientCapabilitiesCompletionList `json:"completionList,omitempty"`
 }
 
+// Whether completion supports dynamic registration.
 func (c *CompletionClientCapabilities) GetDynamicRegistration() bool {
 	if c == nil {
 		var zero bool
@@ -1464,6 +1674,8 @@ func (c *CompletionClientCapabilities) GetDynamicRegistration() bool {
 	return c.DynamicRegistration
 }
 
+// The client supports the following `CompletionItem` specific
+// capabilities.
 func (c *CompletionClientCapabilities) GetCompletionItem() *CompletionClientCapabilitiesCompletionItem {
 	if c == nil {
 		var zero *CompletionClientCapabilitiesCompletionItem
@@ -1480,6 +1692,11 @@ func (c *CompletionClientCapabilities) GetCompletionItemKind() *CompletionClient
 	return c.CompletionItemKind
 }
 
+// Defines how the client handles whitespace and indentation
+// when accepting a completion item that uses multi line
+// text in either `insertText` or `textEdit`.
+//
+// @since 3.17.0
 func (c *CompletionClientCapabilities) GetInsertTextMode() InsertTextMode {
 	if c == nil {
 		var zero InsertTextMode
@@ -1488,6 +1705,8 @@ func (c *CompletionClientCapabilities) GetInsertTextMode() InsertTextMode {
 	return c.InsertTextMode
 }
 
+// The client supports to send additional context information for a
+// `textDocument/completion` request.
 func (c *CompletionClientCapabilities) GetContextSupport() bool {
 	if c == nil {
 		var zero bool
@@ -1496,6 +1715,10 @@ func (c *CompletionClientCapabilities) GetContextSupport() bool {
 	return c.ContextSupport
 }
 
+// The client supports the following `CompletionList` specific
+// capabilities.
+//
+// @since 3.17.0
 func (c *CompletionClientCapabilities) GetCompletionList() *CompletionClientCapabilitiesCompletionList {
 	if c == nil {
 		var zero *CompletionClientCapabilitiesCompletionList
@@ -1513,6 +1736,7 @@ type HoverClientCapabilities struct {
 	ContentFormat []MarkupKind `json:"contentFormat,omitempty"`
 }
 
+// Whether hover supports dynamic registration.
 func (h *HoverClientCapabilities) GetDynamicRegistration() bool {
 	if h == nil {
 		var zero bool
@@ -1521,6 +1745,8 @@ func (h *HoverClientCapabilities) GetDynamicRegistration() bool {
 	return h.DynamicRegistration
 }
 
+// Client supports the following content formats for the content
+// property. The order describes the preferred format of the client.
 func (h *HoverClientCapabilities) GetContentFormat() []MarkupKind {
 	if h == nil {
 		var zero []MarkupKind
@@ -1537,6 +1763,10 @@ type SignatureHelpClientCapabilitiesSignatureInformationParameterInformation str
 	LabelOffsetSupport bool `json:"labelOffsetSupport,omitempty"`
 }
 
+// The client supports processing label offsets instead of a
+// simple label string.
+//
+// @since 3.14.0
 func (s *SignatureHelpClientCapabilitiesSignatureInformationParameterInformation) GetLabelOffsetSupport() bool {
 	if s == nil {
 		return *new(bool)
@@ -1557,6 +1787,8 @@ type SignatureHelpClientCapabilitiesSignatureInformation struct {
 	ActiveParameterSupport bool `json:"activeParameterSupport,omitempty"`
 }
 
+// Client supports the following content formats for the documentation
+// property. The order describes the preferred format of the client.
 func (s *SignatureHelpClientCapabilitiesSignatureInformation) GetDocumentationFormat() []MarkupKind {
 	if s == nil {
 		return *new([]MarkupKind)
@@ -1564,6 +1796,7 @@ func (s *SignatureHelpClientCapabilitiesSignatureInformation) GetDocumentationFo
 	return s.DocumentationFormat
 }
 
+// Client capabilities specific to parameter information.
 func (s *SignatureHelpClientCapabilitiesSignatureInformation) GetParameterInformation() *SignatureHelpClientCapabilitiesSignatureInformationParameterInformation {
 	if s == nil {
 		return *new(*SignatureHelpClientCapabilitiesSignatureInformationParameterInformation)
@@ -1571,6 +1804,10 @@ func (s *SignatureHelpClientCapabilitiesSignatureInformation) GetParameterInform
 	return s.ParameterInformation
 }
 
+// The client supports the `activeParameter` property on `SignatureInformation`
+// literal.
+//
+// @since 3.16.0
 func (s *SignatureHelpClientCapabilitiesSignatureInformation) GetActiveParameterSupport() bool {
 	if s == nil {
 		return *new(bool)
@@ -1596,6 +1833,7 @@ type SignatureHelpClientCapabilities struct {
 	ContextSupport bool `json:"contextSupport,omitempty"`
 }
 
+// Whether signature help supports dynamic registration.
 func (s *SignatureHelpClientCapabilities) GetDynamicRegistration() bool {
 	if s == nil {
 		var zero bool
@@ -1604,6 +1842,8 @@ func (s *SignatureHelpClientCapabilities) GetDynamicRegistration() bool {
 	return s.DynamicRegistration
 }
 
+// The client supports the following `SignatureInformation`
+// specific properties.
 func (s *SignatureHelpClientCapabilities) GetSignatureInformation() *SignatureHelpClientCapabilitiesSignatureInformation {
 	if s == nil {
 		var zero *SignatureHelpClientCapabilitiesSignatureInformation
@@ -1612,6 +1852,12 @@ func (s *SignatureHelpClientCapabilities) GetSignatureInformation() *SignatureHe
 	return s.SignatureInformation
 }
 
+// The client supports to send additional context information for a
+// `textDocument/signatureHelp` request. A client that opts into
+// contextSupport will also support the `retriggerCharacters` on
+// `SignatureHelpOptions`.
+//
+// @since 3.15.0
 func (s *SignatureHelpClientCapabilities) GetContextSupport() bool {
 	if s == nil {
 		var zero bool
@@ -1632,6 +1878,9 @@ type DeclarationClientCapabilities struct {
 	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
+// Whether declaration supports dynamic registration. If this is set to `true`
+// the client supports the new `DeclarationRegistrationOptions` return value
+// for the corresponding server capability as well.
 func (d *DeclarationClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -1640,6 +1889,7 @@ func (d *DeclarationClientCapabilities) GetDynamicRegistration() bool {
 	return d.DynamicRegistration
 }
 
+// The client supports additional metadata in the form of declaration links.
 func (d *DeclarationClientCapabilities) GetLinkSupport() bool {
 	if d == nil {
 		var zero bool
@@ -1660,6 +1910,7 @@ type DefinitionClientCapabilities struct {
 	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
+// Whether definition supports dynamic registration.
 func (d *DefinitionClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -1668,6 +1919,9 @@ func (d *DefinitionClientCapabilities) GetDynamicRegistration() bool {
 	return d.DynamicRegistration
 }
 
+// The client supports additional metadata in the form of definition links.
+//
+// @since 3.14.0
 func (d *DefinitionClientCapabilities) GetLinkSupport() bool {
 	if d == nil {
 		var zero bool
@@ -1690,6 +1944,9 @@ type TypeDefinitionClientCapabilities struct {
 	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is set to `true`
+// the client supports the new `TypeDefinitionRegistrationOptions` return value
+// for the corresponding server capability as well.
 func (t *TypeDefinitionClientCapabilities) GetDynamicRegistration() bool {
 	if t == nil {
 		var zero bool
@@ -1698,6 +1955,9 @@ func (t *TypeDefinitionClientCapabilities) GetDynamicRegistration() bool {
 	return t.DynamicRegistration
 }
 
+// The client supports additional metadata in the form of definition links.
+//
+// Since 3.14.0
 func (t *TypeDefinitionClientCapabilities) GetLinkSupport() bool {
 	if t == nil {
 		var zero bool
@@ -1720,6 +1980,9 @@ type ImplementationClientCapabilities struct {
 	LinkSupport bool `json:"linkSupport,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is set to `true`
+// the client supports the new `ImplementationRegistrationOptions` return value
+// for the corresponding server capability as well.
 func (i *ImplementationClientCapabilities) GetDynamicRegistration() bool {
 	if i == nil {
 		var zero bool
@@ -1728,6 +1991,9 @@ func (i *ImplementationClientCapabilities) GetDynamicRegistration() bool {
 	return i.DynamicRegistration
 }
 
+// The client supports additional metadata in the form of definition links.
+//
+// @since 3.14.0
 func (i *ImplementationClientCapabilities) GetLinkSupport() bool {
 	if i == nil {
 		var zero bool
@@ -1744,6 +2010,7 @@ type ReferenceClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether references supports dynamic registration.
 func (r *ReferenceClientCapabilities) GetDynamicRegistration() bool {
 	if r == nil {
 		var zero bool
@@ -1760,6 +2027,7 @@ type DocumentHighlightClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether document highlight supports dynamic registration.
 func (d *DocumentHighlightClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -1780,6 +2048,14 @@ type DocumentSymbolClientCapabilitiesSymbolKind struct {
 	ValueSet []SymbolKind `json:"valueSet,omitempty"`
 }
 
+// The symbol kind values the client supports. When this
+// property exists the client also guarantees that it will
+// handle values outside its set gracefully and falls back
+// to a default value when unknown.
+//
+// If this property is not present the client only supports
+// the symbol kinds from `File` to `Array` as defined in
+// the initial version of the protocol.
 func (d *DocumentSymbolClientCapabilitiesSymbolKind) GetValueSet() []SymbolKind {
 	if d == nil {
 		return *new([]SymbolKind)
@@ -1792,6 +2068,7 @@ type DocumentSymbolClientCapabilitiesTagSupport struct {
 	ValueSet []SymbolTag `json:"valueSet"`
 }
 
+// The tags supported by the client.
 func (d *DocumentSymbolClientCapabilitiesTagSupport) GetValueSet() []SymbolTag {
 	if d == nil {
 		return *new([]SymbolTag)
@@ -1823,6 +2100,7 @@ type DocumentSymbolClientCapabilities struct {
 	LabelSupport bool `json:"labelSupport,omitempty"`
 }
 
+// Whether document symbol supports dynamic registration.
 func (d *DocumentSymbolClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -1831,6 +2109,8 @@ func (d *DocumentSymbolClientCapabilities) GetDynamicRegistration() bool {
 	return d.DynamicRegistration
 }
 
+// Specific capabilities for the `SymbolKind` in the
+// `textDocument/documentSymbol` request.
 func (d *DocumentSymbolClientCapabilities) GetSymbolKind() *DocumentSymbolClientCapabilitiesSymbolKind {
 	if d == nil {
 		var zero *DocumentSymbolClientCapabilitiesSymbolKind
@@ -1839,6 +2119,7 @@ func (d *DocumentSymbolClientCapabilities) GetSymbolKind() *DocumentSymbolClient
 	return d.SymbolKind
 }
 
+// The client supports hierarchical document symbols.
 func (d *DocumentSymbolClientCapabilities) GetHierarchicalDocumentSymbolSupport() bool {
 	if d == nil {
 		var zero bool
@@ -1847,6 +2128,11 @@ func (d *DocumentSymbolClientCapabilities) GetHierarchicalDocumentSymbolSupport(
 	return d.HierarchicalDocumentSymbolSupport
 }
 
+// The client supports tags on `SymbolInformation`. Tags are supported on
+// `DocumentSymbol` if `hierarchicalDocumentSymbolSupport` is set to true.
+// Clients supporting tags have to handle unknown tags gracefully.
+//
+// @since 3.16.0
 func (d *DocumentSymbolClientCapabilities) GetTagSupport() *DocumentSymbolClientCapabilitiesTagSupport {
 	if d == nil {
 		var zero *DocumentSymbolClientCapabilitiesTagSupport
@@ -1855,6 +2141,10 @@ func (d *DocumentSymbolClientCapabilities) GetTagSupport() *DocumentSymbolClient
 	return d.TagSupport
 }
 
+// The client supports an additional label presented in the UI when
+// registering a document symbol provider.
+//
+// @since 3.16.0
 func (d *DocumentSymbolClientCapabilities) GetLabelSupport() bool {
 	if d == nil {
 		var zero bool
@@ -1928,6 +2218,10 @@ type CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind struct {
 	ValueSet []CodeActionKind `json:"valueSet"`
 }
 
+// The code action kind values the client supports. When this
+// property exists the client also guarantees that it will
+// handle values outside its set gracefully and falls back
+// to a default value when unknown.
 func (c *CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind) GetValueSet() []CodeActionKind {
 	if c == nil {
 		return *new([]CodeActionKind)
@@ -1941,6 +2235,8 @@ type CodeActionClientCapabilitiesCodeActionLiteralSupport struct {
 	CodeActionKind *CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind `json:"codeActionKind"`
 }
 
+// The code action kind is support with the following value
+// set.
 func (c *CodeActionClientCapabilitiesCodeActionLiteralSupport) GetCodeActionKind() *CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind {
 	if c == nil {
 		return *new(*CodeActionClientCapabilitiesCodeActionLiteralSupportCodeActionKind)
@@ -1953,6 +2249,7 @@ type CodeActionClientCapabilitiesResolveSupport struct {
 	Properties []string `json:"properties"`
 }
 
+// The properties that a client can resolve lazily.
 func (c *CodeActionClientCapabilitiesResolveSupport) GetProperties() []string {
 	if c == nil {
 		return *new([]string)
@@ -2001,6 +2298,7 @@ type CodeActionClientCapabilities struct {
 	HonorsChangeAnnotations bool `json:"honorsChangeAnnotations,omitempty"`
 }
 
+// Whether code action supports dynamic registration.
 func (c *CodeActionClientCapabilities) GetDynamicRegistration() bool {
 	if c == nil {
 		var zero bool
@@ -2009,6 +2307,11 @@ func (c *CodeActionClientCapabilities) GetDynamicRegistration() bool {
 	return c.DynamicRegistration
 }
 
+// The client support code action literals of type `CodeAction` as a valid
+// response of the `textDocument/codeAction` request. If the property is not
+// set the request can only return `Command` literals.
+//
+// @since 3.8.0
 func (c *CodeActionClientCapabilities) GetCodeActionLiteralSupport() *CodeActionClientCapabilitiesCodeActionLiteralSupport {
 	if c == nil {
 		var zero *CodeActionClientCapabilitiesCodeActionLiteralSupport
@@ -2017,6 +2320,9 @@ func (c *CodeActionClientCapabilities) GetCodeActionLiteralSupport() *CodeAction
 	return c.CodeActionLiteralSupport
 }
 
+// Whether code action supports the `isPreferred` property.
+//
+// @since 3.15.0
 func (c *CodeActionClientCapabilities) GetIsPreferredSupport() bool {
 	if c == nil {
 		var zero bool
@@ -2025,6 +2331,9 @@ func (c *CodeActionClientCapabilities) GetIsPreferredSupport() bool {
 	return c.IsPreferredSupport
 }
 
+// Whether code action supports the `disabled` property.
+//
+// @since 3.16.0
 func (c *CodeActionClientCapabilities) GetDisabledSupport() bool {
 	if c == nil {
 		var zero bool
@@ -2033,6 +2342,11 @@ func (c *CodeActionClientCapabilities) GetDisabledSupport() bool {
 	return c.DisabledSupport
 }
 
+// Whether code action supports the `data` property which is
+// preserved between a `textDocument/codeAction` and a
+// `codeAction/resolve` request.
+//
+// @since 3.16.0
 func (c *CodeActionClientCapabilities) GetDataSupport() bool {
 	if c == nil {
 		var zero bool
@@ -2041,6 +2355,10 @@ func (c *CodeActionClientCapabilities) GetDataSupport() bool {
 	return c.DataSupport
 }
 
+// Whether the client supports resolving additional code action
+// properties via a separate `codeAction/resolve` request.
+//
+// @since 3.16.0
 func (c *CodeActionClientCapabilities) GetResolveSupport() *CodeActionClientCapabilitiesResolveSupport {
 	if c == nil {
 		var zero *CodeActionClientCapabilitiesResolveSupport
@@ -2049,6 +2367,13 @@ func (c *CodeActionClientCapabilities) GetResolveSupport() *CodeActionClientCapa
 	return c.ResolveSupport
 }
 
+// Whether the client honors the change annotations in
+// text edits and resource operations returned via the
+// `CodeAction#edit` property by for example presenting
+// the workspace edit in the user interface and asking
+// for confirmation.
+//
+// @since 3.16.0
 func (c *CodeActionClientCapabilities) GetHonorsChangeAnnotations() bool {
 	if c == nil {
 		var zero bool
@@ -2065,6 +2390,7 @@ type CodeLensClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether code lens supports dynamic registration.
 func (c *CodeLensClientCapabilities) GetDynamicRegistration() bool {
 	if c == nil {
 		var zero bool
@@ -2085,6 +2411,7 @@ type DocumentLinkClientCapabilities struct {
 	TooltipSupport bool `json:"tooltipSupport,omitempty"`
 }
 
+// Whether document link supports dynamic registration.
 func (d *DocumentLinkClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -2093,6 +2420,9 @@ func (d *DocumentLinkClientCapabilities) GetDynamicRegistration() bool {
 	return d.DynamicRegistration
 }
 
+// Whether the client supports the `tooltip` property on `DocumentLink`.
+//
+// @since 3.15.0
 func (d *DocumentLinkClientCapabilities) GetTooltipSupport() bool {
 	if d == nil {
 		var zero bool
@@ -2109,6 +2439,9 @@ type DocumentColorClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is set to `true`
+// the client supports the new `DocumentColorRegistrationOptions` return value
+// for the corresponding server capability as well.
 func (d *DocumentColorClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -2125,6 +2458,7 @@ type DocumentFormattingClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether formatting supports dynamic registration.
 func (d *DocumentFormattingClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -2146,6 +2480,7 @@ type DocumentRangeFormattingClientCapabilities struct {
 	RangesSupport bool `json:"rangesSupport,omitempty"`
 }
 
+// Whether range formatting supports dynamic registration.
 func (d *DocumentRangeFormattingClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -2154,6 +2489,10 @@ func (d *DocumentRangeFormattingClientCapabilities) GetDynamicRegistration() boo
 	return d.DynamicRegistration
 }
 
+// Whether the client supports formatting multiple ranges at once.
+//
+// @since 3.18.0
+// @proposed
 func (d *DocumentRangeFormattingClientCapabilities) GetRangesSupport() bool {
 	if d == nil {
 		var zero bool
@@ -2170,6 +2509,7 @@ type DocumentOnTypeFormattingClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether on type formatting supports dynamic registration.
 func (d *DocumentOnTypeFormattingClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -2242,6 +2582,7 @@ type RenameClientCapabilities struct {
 	HonorsChangeAnnotations bool `json:"honorsChangeAnnotations,omitempty"`
 }
 
+// Whether rename supports dynamic registration.
 func (r *RenameClientCapabilities) GetDynamicRegistration() bool {
 	if r == nil {
 		var zero bool
@@ -2250,6 +2591,10 @@ func (r *RenameClientCapabilities) GetDynamicRegistration() bool {
 	return r.DynamicRegistration
 }
 
+// Client supports testing for validity of rename operations
+// before execution.
+//
+// @since 3.12.0
 func (r *RenameClientCapabilities) GetPrepareSupport() bool {
 	if r == nil {
 		var zero bool
@@ -2258,6 +2603,12 @@ func (r *RenameClientCapabilities) GetPrepareSupport() bool {
 	return r.PrepareSupport
 }
 
+// Client supports the default behavior result.
+//
+// The value indicates the default behavior used by the
+// client.
+//
+// @since 3.16.0
 func (r *RenameClientCapabilities) GetPrepareSupportDefaultBehavior() PrepareSupportDefaultBehavior {
 	if r == nil {
 		var zero PrepareSupportDefaultBehavior
@@ -2266,6 +2617,13 @@ func (r *RenameClientCapabilities) GetPrepareSupportDefaultBehavior() PrepareSup
 	return r.PrepareSupportDefaultBehavior
 }
 
+// Whether the client honors the change annotations in
+// text edits and resource operations returned via the
+// rename request's workspace edit by for example presenting
+// the workspace edit in the user interface and asking
+// for confirmation.
+//
+// @since 3.16.0
 func (r *RenameClientCapabilities) GetHonorsChangeAnnotations() bool {
 	if r == nil {
 		var zero bool
@@ -2296,6 +2654,10 @@ type FoldingRangeClientCapabilitiesFoldingRangeKind struct {
 	ValueSet []FoldingRangeKind `json:"valueSet,omitempty"`
 }
 
+// The folding range kind values the client supports. When this
+// property exists the client also guarantees that it will
+// handle values outside its set gracefully and falls back
+// to a default value when unknown.
 func (f *FoldingRangeClientCapabilitiesFoldingRangeKind) GetValueSet() []FoldingRangeKind {
 	if f == nil {
 		return *new([]FoldingRangeKind)
@@ -2311,6 +2673,10 @@ type FoldingRangeClientCapabilitiesFoldingRange struct {
 	CollapsedText bool `json:"collapsedText,omitempty"`
 }
 
+// If set, the client signals that it supports setting collapsedText on
+// folding ranges to display custom labels instead of the default text.
+//
+// @since 3.17.0
 func (f *FoldingRangeClientCapabilitiesFoldingRange) GetCollapsedText() bool {
 	if f == nil {
 		return *new(bool)
@@ -2343,6 +2709,10 @@ type FoldingRangeClientCapabilities struct {
 	FoldingRange *FoldingRangeClientCapabilitiesFoldingRange `json:"foldingRange,omitempty"`
 }
 
+// Whether implementation supports dynamic registration for folding range
+// providers. If this is set to `true` the client supports the new
+// `FoldingRangeRegistrationOptions` return value for the corresponding
+// server capability as well.
 func (f *FoldingRangeClientCapabilities) GetDynamicRegistration() bool {
 	if f == nil {
 		var zero bool
@@ -2351,6 +2721,9 @@ func (f *FoldingRangeClientCapabilities) GetDynamicRegistration() bool {
 	return f.DynamicRegistration
 }
 
+// The maximum number of folding ranges that the client prefers to receive
+// per document. The value serves as a hint, servers are free to follow the
+// limit.
 func (f *FoldingRangeClientCapabilities) GetRangeLimit() int {
 	if f == nil {
 		var zero int
@@ -2359,6 +2732,9 @@ func (f *FoldingRangeClientCapabilities) GetRangeLimit() int {
 	return f.RangeLimit
 }
 
+// If set, the client signals that it only supports folding complete lines.
+// If set, client will ignore specified `startCharacter` and `endCharacter`
+// properties in a FoldingRange.
 func (f *FoldingRangeClientCapabilities) GetLineFoldingOnly() bool {
 	if f == nil {
 		var zero bool
@@ -2367,6 +2743,9 @@ func (f *FoldingRangeClientCapabilities) GetLineFoldingOnly() bool {
 	return f.LineFoldingOnly
 }
 
+// Specific options for the folding range kind.
+//
+// @since 3.17.0
 func (f *FoldingRangeClientCapabilities) GetFoldingRangeKind() *FoldingRangeClientCapabilitiesFoldingRangeKind {
 	if f == nil {
 		var zero *FoldingRangeClientCapabilitiesFoldingRangeKind
@@ -2375,6 +2754,9 @@ func (f *FoldingRangeClientCapabilities) GetFoldingRangeKind() *FoldingRangeClie
 	return f.FoldingRangeKind
 }
 
+// Specific options for the folding range.
+//
+// @since 3.17.0
 func (f *FoldingRangeClientCapabilities) GetFoldingRange() *FoldingRangeClientCapabilitiesFoldingRange {
 	if f == nil {
 		var zero *FoldingRangeClientCapabilitiesFoldingRange
@@ -2391,6 +2773,9 @@ type SelectionRangeClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
+// the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
+// capability as well.
 func (s *SelectionRangeClientCapabilities) GetDynamicRegistration() bool {
 	if s == nil {
 		var zero bool
@@ -2453,6 +2838,7 @@ type PublishDiagnosticsClientCapabilitiesTagSupport struct {
 	ValueSet []DiagnosticTag `json:"valueSet"`
 }
 
+// The tags supported by the client.
 func (p *PublishDiagnosticsClientCapabilitiesTagSupport) GetValueSet() []DiagnosticTag {
 	if p == nil {
 		return *new([]DiagnosticTag)
@@ -2488,6 +2874,7 @@ type PublishDiagnosticsClientCapabilities struct {
 	DataSupport bool `json:"dataSupport,omitempty"`
 }
 
+// Whether the clients accepts diagnostics with related information.
 func (p *PublishDiagnosticsClientCapabilities) GetRelatedInformation() bool {
 	if p == nil {
 		var zero bool
@@ -2496,6 +2883,10 @@ func (p *PublishDiagnosticsClientCapabilities) GetRelatedInformation() bool {
 	return p.RelatedInformation
 }
 
+// Client supports the tag property to provide meta data about a diagnostic.
+// Clients supporting tags have to handle unknown tags gracefully.
+//
+// @since 3.15.0
 func (p *PublishDiagnosticsClientCapabilities) GetTagSupport() *PublishDiagnosticsClientCapabilitiesTagSupport {
 	if p == nil {
 		var zero *PublishDiagnosticsClientCapabilitiesTagSupport
@@ -2504,6 +2895,10 @@ func (p *PublishDiagnosticsClientCapabilities) GetTagSupport() *PublishDiagnosti
 	return p.TagSupport
 }
 
+// Whether the client interprets the version property of the
+// `textDocument/publishDiagnostics` notification's parameter.
+//
+// @since 3.15.0
 func (p *PublishDiagnosticsClientCapabilities) GetVersionSupport() bool {
 	if p == nil {
 		var zero bool
@@ -2512,6 +2907,9 @@ func (p *PublishDiagnosticsClientCapabilities) GetVersionSupport() bool {
 	return p.VersionSupport
 }
 
+// Client supports a codeDescription property
+//
+// @since 3.16.0
 func (p *PublishDiagnosticsClientCapabilities) GetCodeDescriptionSupport() bool {
 	if p == nil {
 		var zero bool
@@ -2520,6 +2918,11 @@ func (p *PublishDiagnosticsClientCapabilities) GetCodeDescriptionSupport() bool 
 	return p.CodeDescriptionSupport
 }
 
+// Whether code action supports the `data` property which is
+// preserved between a `textDocument/publishDiagnostics` and
+// `textDocument/codeAction` request.
+//
+// @since 3.16.0
 func (p *PublishDiagnosticsClientCapabilities) GetDataSupport() bool {
 	if p == nil {
 		var zero bool
@@ -2538,6 +2941,9 @@ type CallHierarchyClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is set to `true`
+// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+// return value for the corresponding server capability as well.
 func (c *CallHierarchyClientCapabilities) GetDynamicRegistration() bool {
 	if c == nil {
 		var zero bool
@@ -2601,6 +3007,8 @@ type SemanticTokensClientCapabilitiesRequestsFullOr2 struct {
 	Delta bool `json:"delta,omitempty"`
 }
 
+// The client will send the `textDocument/semanticTokens/full/delta` request if
+// the server provides a corresponding handler.
 func (s *SemanticTokensClientCapabilitiesRequestsFullOr2) GetDelta() bool {
 	if s == nil {
 		return *new(bool)
@@ -2661,6 +3069,8 @@ type SemanticTokensClientCapabilitiesRequests struct {
 	Full *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 `json:"full,omitempty"`
 }
 
+// The client will send the `textDocument/semanticTokens/range` request if
+// the server provides a corresponding handler.
 func (s *SemanticTokensClientCapabilitiesRequests) GetRange() *BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2 {
 	if s == nil {
 		return *new(*BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2)
@@ -2668,6 +3078,8 @@ func (s *SemanticTokensClientCapabilitiesRequests) GetRange() *BooleanOrSemantic
 	return s.Range
 }
 
+// The client will send the `textDocument/semanticTokens/full` request if
+// the server provides a corresponding handler.
 func (s *SemanticTokensClientCapabilitiesRequests) GetFull() *BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 {
 	if s == nil {
 		return *new(*BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2)
@@ -2758,6 +3170,9 @@ type SemanticTokensClientCapabilities struct {
 	AugmentsSyntaxTokens bool `json:"augmentsSyntaxTokens,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is set to `true`
+// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+// return value for the corresponding server capability as well.
 func (s *SemanticTokensClientCapabilities) GetDynamicRegistration() bool {
 	if s == nil {
 		var zero bool
@@ -2766,6 +3181,14 @@ func (s *SemanticTokensClientCapabilities) GetDynamicRegistration() bool {
 	return s.DynamicRegistration
 }
 
+// Which requests the client supports and might send to the server
+// depending on the server's capability. Please note that clients might not
+// show semantic tokens or degrade some of the user experience if a range
+// or full request is advertised by the client but not provided by the
+// server. If for example the client capability `requests.full` and
+// `request.range` are both set to true but the server only provides a
+// range provider the client might not render a minimap correctly or might
+// even decide to not show any semantic tokens at all.
 func (s *SemanticTokensClientCapabilities) GetRequests() *SemanticTokensClientCapabilitiesRequests {
 	if s == nil {
 		var zero *SemanticTokensClientCapabilitiesRequests
@@ -2774,6 +3197,7 @@ func (s *SemanticTokensClientCapabilities) GetRequests() *SemanticTokensClientCa
 	return s.Requests
 }
 
+// The token types that the client supports.
 func (s *SemanticTokensClientCapabilities) GetTokenTypes() []string {
 	if s == nil {
 		var zero []string
@@ -2782,6 +3206,7 @@ func (s *SemanticTokensClientCapabilities) GetTokenTypes() []string {
 	return s.TokenTypes
 }
 
+// The token modifiers that the client supports.
 func (s *SemanticTokensClientCapabilities) GetTokenModifiers() []string {
 	if s == nil {
 		var zero []string
@@ -2790,6 +3215,7 @@ func (s *SemanticTokensClientCapabilities) GetTokenModifiers() []string {
 	return s.TokenModifiers
 }
 
+// The token formats the clients supports.
 func (s *SemanticTokensClientCapabilities) GetFormats() []TokenFormat {
 	if s == nil {
 		var zero []TokenFormat
@@ -2798,6 +3224,7 @@ func (s *SemanticTokensClientCapabilities) GetFormats() []TokenFormat {
 	return s.Formats
 }
 
+// Whether the client supports tokens that can overlap each other.
 func (s *SemanticTokensClientCapabilities) GetOverlappingTokenSupport() bool {
 	if s == nil {
 		var zero bool
@@ -2806,6 +3233,7 @@ func (s *SemanticTokensClientCapabilities) GetOverlappingTokenSupport() bool {
 	return s.OverlappingTokenSupport
 }
 
+// Whether the client supports tokens that can span multiple lines.
 func (s *SemanticTokensClientCapabilities) GetMultilineTokenSupport() bool {
 	if s == nil {
 		var zero bool
@@ -2814,6 +3242,12 @@ func (s *SemanticTokensClientCapabilities) GetMultilineTokenSupport() bool {
 	return s.MultilineTokenSupport
 }
 
+// Whether the client allows the server to actively cancel a
+// semantic token request, e.g. supports returning
+// LSPErrorCodes.ServerCancelled. If a server does the client
+// needs to retrigger the request.
+//
+// @since 3.17.0
 func (s *SemanticTokensClientCapabilities) GetServerCancelSupport() bool {
 	if s == nil {
 		var zero bool
@@ -2822,6 +3256,16 @@ func (s *SemanticTokensClientCapabilities) GetServerCancelSupport() bool {
 	return s.ServerCancelSupport
 }
 
+// Whether the client uses semantic tokens to augment existing
+// syntax tokens. If set to `true` client side created syntax
+// tokens and semantic tokens are both used for colorization. If
+// set to `false` the client only uses the returned semantic tokens
+// for colorization.
+//
+// If the value is `undefined` then the client behavior is not
+// specified.
+//
+// @since 3.17.0
 func (s *SemanticTokensClientCapabilities) GetAugmentsSyntaxTokens() bool {
 	if s == nil {
 		var zero bool
@@ -2842,6 +3286,9 @@ type LinkedEditingRangeClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is set to `true`
+// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+// return value for the corresponding server capability as well.
 func (l *LinkedEditingRangeClientCapabilities) GetDynamicRegistration() bool {
 	if l == nil {
 		var zero bool
@@ -2862,6 +3309,9 @@ type MonikerClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether moniker supports dynamic registration. If this is set to `true`
+// the client supports the new `MonikerRegistrationOptions` return value
+// for the corresponding server capability as well.
 func (m *MonikerClientCapabilities) GetDynamicRegistration() bool {
 	if m == nil {
 		var zero bool
@@ -2880,6 +3330,9 @@ type TypeHierarchyClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is set to `true`
+// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+// return value for the corresponding server capability as well.
 func (t *TypeHierarchyClientCapabilities) GetDynamicRegistration() bool {
 	if t == nil {
 		var zero bool
@@ -2898,6 +3351,7 @@ type InlineValueClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether implementation supports dynamic registration for inline value providers.
 func (i *InlineValueClientCapabilities) GetDynamicRegistration() bool {
 	if i == nil {
 		var zero bool
@@ -2911,6 +3365,7 @@ type InlayHintClientCapabilitiesResolveSupport struct {
 	Properties []string `json:"properties"`
 }
 
+// The properties that a client can resolve lazily.
 func (i *InlayHintClientCapabilitiesResolveSupport) GetProperties() []string {
 	if i == nil {
 		return *new([]string)
@@ -2931,6 +3386,7 @@ type InlayHintClientCapabilities struct {
 	ResolveSupport *InlayHintClientCapabilitiesResolveSupport `json:"resolveSupport,omitempty"`
 }
 
+// Whether inlay hints support dynamic registration.
 func (i *InlayHintClientCapabilities) GetDynamicRegistration() bool {
 	if i == nil {
 		var zero bool
@@ -2939,6 +3395,8 @@ func (i *InlayHintClientCapabilities) GetDynamicRegistration() bool {
 	return i.DynamicRegistration
 }
 
+// Indicates which properties a client can resolve lazily on an inlay
+// hint.
 func (i *InlayHintClientCapabilities) GetResolveSupport() *InlayHintClientCapabilitiesResolveSupport {
 	if i == nil {
 		var zero *InlayHintClientCapabilitiesResolveSupport
@@ -2961,6 +3419,9 @@ type DiagnosticClientCapabilities struct {
 	RelatedDocumentSupport bool `json:"relatedDocumentSupport,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is set to `true`
+// the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+// return value for the corresponding server capability as well.
 func (d *DiagnosticClientCapabilities) GetDynamicRegistration() bool {
 	if d == nil {
 		var zero bool
@@ -2969,6 +3430,7 @@ func (d *DiagnosticClientCapabilities) GetDynamicRegistration() bool {
 	return d.DynamicRegistration
 }
 
+// Whether the clients supports related documents for document diagnostic pulls.
 func (d *DiagnosticClientCapabilities) GetRelatedDocumentSupport() bool {
 	if d == nil {
 		var zero bool
@@ -2988,6 +3450,7 @@ type InlineCompletionClientCapabilities struct {
 	DynamicRegistration bool `json:"dynamicRegistration,omitempty"`
 }
 
+// Whether implementation supports dynamic registration for inline completion providers.
 func (i *InlineCompletionClientCapabilities) GetDynamicRegistration() bool {
 	if i == nil {
 		var zero bool
@@ -3096,6 +3559,7 @@ type TextDocumentClientCapabilities struct {
 	InlineCompletion *InlineCompletionClientCapabilities `json:"inlineCompletion,omitempty"`
 }
 
+// Defines which synchronization capabilities the client supports.
 func (t *TextDocumentClientCapabilities) GetSynchronization() *TextDocumentSyncClientCapabilities {
 	if t == nil {
 		var zero *TextDocumentSyncClientCapabilities
@@ -3104,6 +3568,7 @@ func (t *TextDocumentClientCapabilities) GetSynchronization() *TextDocumentSyncC
 	return t.Synchronization
 }
 
+// Capabilities specific to the `textDocument/completion` request.
 func (t *TextDocumentClientCapabilities) GetCompletion() *CompletionClientCapabilities {
 	if t == nil {
 		var zero *CompletionClientCapabilities
@@ -3112,6 +3577,7 @@ func (t *TextDocumentClientCapabilities) GetCompletion() *CompletionClientCapabi
 	return t.Completion
 }
 
+// Capabilities specific to the `textDocument/hover` request.
 func (t *TextDocumentClientCapabilities) GetHover() *HoverClientCapabilities {
 	if t == nil {
 		var zero *HoverClientCapabilities
@@ -3120,6 +3586,7 @@ func (t *TextDocumentClientCapabilities) GetHover() *HoverClientCapabilities {
 	return t.Hover
 }
 
+// Capabilities specific to the `textDocument/signatureHelp` request.
 func (t *TextDocumentClientCapabilities) GetSignatureHelp() *SignatureHelpClientCapabilities {
 	if t == nil {
 		var zero *SignatureHelpClientCapabilities
@@ -3128,6 +3595,9 @@ func (t *TextDocumentClientCapabilities) GetSignatureHelp() *SignatureHelpClient
 	return t.SignatureHelp
 }
 
+// Capabilities specific to the `textDocument/declaration` request.
+//
+// @since 3.14.0
 func (t *TextDocumentClientCapabilities) GetDeclaration() *DeclarationClientCapabilities {
 	if t == nil {
 		var zero *DeclarationClientCapabilities
@@ -3136,6 +3606,7 @@ func (t *TextDocumentClientCapabilities) GetDeclaration() *DeclarationClientCapa
 	return t.Declaration
 }
 
+// Capabilities specific to the `textDocument/definition` request.
 func (t *TextDocumentClientCapabilities) GetDefinition() *DefinitionClientCapabilities {
 	if t == nil {
 		var zero *DefinitionClientCapabilities
@@ -3144,6 +3615,9 @@ func (t *TextDocumentClientCapabilities) GetDefinition() *DefinitionClientCapabi
 	return t.Definition
 }
 
+// Capabilities specific to the `textDocument/typeDefinition` request.
+//
+// @since 3.6.0
 func (t *TextDocumentClientCapabilities) GetTypeDefinition() *TypeDefinitionClientCapabilities {
 	if t == nil {
 		var zero *TypeDefinitionClientCapabilities
@@ -3152,6 +3626,9 @@ func (t *TextDocumentClientCapabilities) GetTypeDefinition() *TypeDefinitionClie
 	return t.TypeDefinition
 }
 
+// Capabilities specific to the `textDocument/implementation` request.
+//
+// @since 3.6.0
 func (t *TextDocumentClientCapabilities) GetImplementation() *ImplementationClientCapabilities {
 	if t == nil {
 		var zero *ImplementationClientCapabilities
@@ -3160,6 +3637,7 @@ func (t *TextDocumentClientCapabilities) GetImplementation() *ImplementationClie
 	return t.Implementation
 }
 
+// Capabilities specific to the `textDocument/references` request.
 func (t *TextDocumentClientCapabilities) GetReferences() *ReferenceClientCapabilities {
 	if t == nil {
 		var zero *ReferenceClientCapabilities
@@ -3168,6 +3646,7 @@ func (t *TextDocumentClientCapabilities) GetReferences() *ReferenceClientCapabil
 	return t.References
 }
 
+// Capabilities specific to the `textDocument/documentHighlight` request.
 func (t *TextDocumentClientCapabilities) GetDocumentHighlight() *DocumentHighlightClientCapabilities {
 	if t == nil {
 		var zero *DocumentHighlightClientCapabilities
@@ -3176,6 +3655,7 @@ func (t *TextDocumentClientCapabilities) GetDocumentHighlight() *DocumentHighlig
 	return t.DocumentHighlight
 }
 
+// Capabilities specific to the `textDocument/documentSymbol` request.
 func (t *TextDocumentClientCapabilities) GetDocumentSymbol() *DocumentSymbolClientCapabilities {
 	if t == nil {
 		var zero *DocumentSymbolClientCapabilities
@@ -3184,6 +3664,7 @@ func (t *TextDocumentClientCapabilities) GetDocumentSymbol() *DocumentSymbolClie
 	return t.DocumentSymbol
 }
 
+// Capabilities specific to the `textDocument/codeAction` request.
 func (t *TextDocumentClientCapabilities) GetCodeAction() *CodeActionClientCapabilities {
 	if t == nil {
 		var zero *CodeActionClientCapabilities
@@ -3192,6 +3673,7 @@ func (t *TextDocumentClientCapabilities) GetCodeAction() *CodeActionClientCapabi
 	return t.CodeAction
 }
 
+// Capabilities specific to the `textDocument/codeLens` request.
 func (t *TextDocumentClientCapabilities) GetCodeLens() *CodeLensClientCapabilities {
 	if t == nil {
 		var zero *CodeLensClientCapabilities
@@ -3200,6 +3682,7 @@ func (t *TextDocumentClientCapabilities) GetCodeLens() *CodeLensClientCapabiliti
 	return t.CodeLens
 }
 
+// Capabilities specific to the `textDocument/documentLink` request.
 func (t *TextDocumentClientCapabilities) GetDocumentLink() *DocumentLinkClientCapabilities {
 	if t == nil {
 		var zero *DocumentLinkClientCapabilities
@@ -3208,6 +3691,10 @@ func (t *TextDocumentClientCapabilities) GetDocumentLink() *DocumentLinkClientCa
 	return t.DocumentLink
 }
 
+// Capabilities specific to the `textDocument/documentColor` and the
+// `textDocument/colorPresentation` request.
+//
+// @since 3.6.0
 func (t *TextDocumentClientCapabilities) GetColorProvider() *DocumentColorClientCapabilities {
 	if t == nil {
 		var zero *DocumentColorClientCapabilities
@@ -3216,6 +3703,7 @@ func (t *TextDocumentClientCapabilities) GetColorProvider() *DocumentColorClient
 	return t.ColorProvider
 }
 
+// Capabilities specific to the `textDocument/formatting` request.
 func (t *TextDocumentClientCapabilities) GetFormatting() *DocumentFormattingClientCapabilities {
 	if t == nil {
 		var zero *DocumentFormattingClientCapabilities
@@ -3224,6 +3712,7 @@ func (t *TextDocumentClientCapabilities) GetFormatting() *DocumentFormattingClie
 	return t.Formatting
 }
 
+// Capabilities specific to the `textDocument/rangeFormatting` request.
 func (t *TextDocumentClientCapabilities) GetRangeFormatting() *DocumentRangeFormattingClientCapabilities {
 	if t == nil {
 		var zero *DocumentRangeFormattingClientCapabilities
@@ -3232,6 +3721,7 @@ func (t *TextDocumentClientCapabilities) GetRangeFormatting() *DocumentRangeForm
 	return t.RangeFormatting
 }
 
+// Capabilities specific to the `textDocument/onTypeFormatting` request.
 func (t *TextDocumentClientCapabilities) GetOnTypeFormatting() *DocumentOnTypeFormattingClientCapabilities {
 	if t == nil {
 		var zero *DocumentOnTypeFormattingClientCapabilities
@@ -3240,6 +3730,7 @@ func (t *TextDocumentClientCapabilities) GetOnTypeFormatting() *DocumentOnTypeFo
 	return t.OnTypeFormatting
 }
 
+// Capabilities specific to the `textDocument/rename` request.
 func (t *TextDocumentClientCapabilities) GetRename() *RenameClientCapabilities {
 	if t == nil {
 		var zero *RenameClientCapabilities
@@ -3248,6 +3739,9 @@ func (t *TextDocumentClientCapabilities) GetRename() *RenameClientCapabilities {
 	return t.Rename
 }
 
+// Capabilities specific to the `textDocument/foldingRange` request.
+//
+// @since 3.10.0
 func (t *TextDocumentClientCapabilities) GetFoldingRange() *FoldingRangeClientCapabilities {
 	if t == nil {
 		var zero *FoldingRangeClientCapabilities
@@ -3256,6 +3750,9 @@ func (t *TextDocumentClientCapabilities) GetFoldingRange() *FoldingRangeClientCa
 	return t.FoldingRange
 }
 
+// Capabilities specific to the `textDocument/selectionRange` request.
+//
+// @since 3.15.0
 func (t *TextDocumentClientCapabilities) GetSelectionRange() *SelectionRangeClientCapabilities {
 	if t == nil {
 		var zero *SelectionRangeClientCapabilities
@@ -3264,6 +3761,7 @@ func (t *TextDocumentClientCapabilities) GetSelectionRange() *SelectionRangeClie
 	return t.SelectionRange
 }
 
+// Capabilities specific to the `textDocument/publishDiagnostics` notification.
 func (t *TextDocumentClientCapabilities) GetPublishDiagnostics() *PublishDiagnosticsClientCapabilities {
 	if t == nil {
 		var zero *PublishDiagnosticsClientCapabilities
@@ -3272,6 +3770,9 @@ func (t *TextDocumentClientCapabilities) GetPublishDiagnostics() *PublishDiagnos
 	return t.PublishDiagnostics
 }
 
+// Capabilities specific to the various call hierarchy requests.
+//
+// @since 3.16.0
 func (t *TextDocumentClientCapabilities) GetCallHierarchy() *CallHierarchyClientCapabilities {
 	if t == nil {
 		var zero *CallHierarchyClientCapabilities
@@ -3280,6 +3781,9 @@ func (t *TextDocumentClientCapabilities) GetCallHierarchy() *CallHierarchyClient
 	return t.CallHierarchy
 }
 
+// Capabilities specific to the various semantic token request.
+//
+// @since 3.16.0
 func (t *TextDocumentClientCapabilities) GetSemanticTokens() *SemanticTokensClientCapabilities {
 	if t == nil {
 		var zero *SemanticTokensClientCapabilities
@@ -3288,6 +3792,9 @@ func (t *TextDocumentClientCapabilities) GetSemanticTokens() *SemanticTokensClie
 	return t.SemanticTokens
 }
 
+// Capabilities specific to the `textDocument/linkedEditingRange` request.
+//
+// @since 3.16.0
 func (t *TextDocumentClientCapabilities) GetLinkedEditingRange() *LinkedEditingRangeClientCapabilities {
 	if t == nil {
 		var zero *LinkedEditingRangeClientCapabilities
@@ -3296,6 +3803,9 @@ func (t *TextDocumentClientCapabilities) GetLinkedEditingRange() *LinkedEditingR
 	return t.LinkedEditingRange
 }
 
+// Client capabilities specific to the `textDocument/moniker` request.
+//
+// @since 3.16.0
 func (t *TextDocumentClientCapabilities) GetMoniker() *MonikerClientCapabilities {
 	if t == nil {
 		var zero *MonikerClientCapabilities
@@ -3304,6 +3814,9 @@ func (t *TextDocumentClientCapabilities) GetMoniker() *MonikerClientCapabilities
 	return t.Moniker
 }
 
+// Capabilities specific to the various type hierarchy requests.
+//
+// @since 3.17.0
 func (t *TextDocumentClientCapabilities) GetTypeHierarchy() *TypeHierarchyClientCapabilities {
 	if t == nil {
 		var zero *TypeHierarchyClientCapabilities
@@ -3312,6 +3825,9 @@ func (t *TextDocumentClientCapabilities) GetTypeHierarchy() *TypeHierarchyClient
 	return t.TypeHierarchy
 }
 
+// Capabilities specific to the `textDocument/inlineValue` request.
+//
+// @since 3.17.0
 func (t *TextDocumentClientCapabilities) GetInlineValue() *InlineValueClientCapabilities {
 	if t == nil {
 		var zero *InlineValueClientCapabilities
@@ -3320,6 +3836,9 @@ func (t *TextDocumentClientCapabilities) GetInlineValue() *InlineValueClientCapa
 	return t.InlineValue
 }
 
+// Capabilities specific to the `textDocument/inlayHint` request.
+//
+// @since 3.17.0
 func (t *TextDocumentClientCapabilities) GetInlayHint() *InlayHintClientCapabilities {
 	if t == nil {
 		var zero *InlayHintClientCapabilities
@@ -3328,6 +3847,9 @@ func (t *TextDocumentClientCapabilities) GetInlayHint() *InlayHintClientCapabili
 	return t.InlayHint
 }
 
+// Capabilities specific to the diagnostic pull model.
+//
+// @since 3.17.0
 func (t *TextDocumentClientCapabilities) GetDiagnostic() *DiagnosticClientCapabilities {
 	if t == nil {
 		var zero *DiagnosticClientCapabilities
@@ -3336,6 +3858,10 @@ func (t *TextDocumentClientCapabilities) GetDiagnostic() *DiagnosticClientCapabi
 	return t.Diagnostic
 }
 
+// Client capabilities specific to inline completions.
+//
+// @since 3.18.0
+// @proposed
 func (t *TextDocumentClientCapabilities) GetInlineCompletion() *InlineCompletionClientCapabilities {
 	if t == nil {
 		var zero *InlineCompletionClientCapabilities
@@ -3359,6 +3885,10 @@ type NotebookDocumentSyncClientCapabilities struct {
 	ExecutionSummarySupport bool `json:"executionSummarySupport,omitempty"`
 }
 
+// Whether implementation supports dynamic registration. If this is
+// set to `true` the client supports the new
+// `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
+// return value for the corresponding server capability as well.
 func (n *NotebookDocumentSyncClientCapabilities) GetDynamicRegistration() bool {
 	if n == nil {
 		var zero bool
@@ -3367,6 +3897,7 @@ func (n *NotebookDocumentSyncClientCapabilities) GetDynamicRegistration() bool {
 	return n.DynamicRegistration
 }
 
+// The client supports sending execution summary data per cell.
 func (n *NotebookDocumentSyncClientCapabilities) GetExecutionSummarySupport() bool {
 	if n == nil {
 		var zero bool
@@ -3387,6 +3918,9 @@ type NotebookDocumentClientCapabilities struct {
 	Synchronization *NotebookDocumentSyncClientCapabilities `json:"synchronization"`
 }
 
+// Capabilities specific to notebook document synchronization
+//
+// @since 3.17.0
 func (n *NotebookDocumentClientCapabilities) GetSynchronization() *NotebookDocumentSyncClientCapabilities {
 	if n == nil {
 		var zero *NotebookDocumentSyncClientCapabilities
@@ -3402,6 +3936,9 @@ type ShowMessageRequestClientCapabilitiesMessageActionItem struct {
 	AdditionalPropertiesSupport bool `json:"additionalPropertiesSupport,omitempty"`
 }
 
+// Whether the client supports additional attributes which
+// are preserved and send back to the server in the
+// request's response.
 func (s *ShowMessageRequestClientCapabilitiesMessageActionItem) GetAdditionalPropertiesSupport() bool {
 	if s == nil {
 		return *new(bool)
@@ -3417,6 +3954,7 @@ type ShowMessageRequestClientCapabilities struct {
 	MessageActionItem *ShowMessageRequestClientCapabilitiesMessageActionItem `json:"messageActionItem,omitempty"`
 }
 
+// Capabilities specific to the `MessageActionItem` type.
 func (s *ShowMessageRequestClientCapabilities) GetMessageActionItem() *ShowMessageRequestClientCapabilitiesMessageActionItem {
 	if s == nil {
 		var zero *ShowMessageRequestClientCapabilitiesMessageActionItem
@@ -3436,6 +3974,8 @@ type ShowDocumentClientCapabilities struct {
 	Support bool `json:"support"`
 }
 
+// The client has support for the showDocument
+// request.
 func (s *ShowDocumentClientCapabilities) GetSupport() bool {
 	if s == nil {
 		var zero bool
@@ -3466,6 +4006,15 @@ type WindowClientCapabilities struct {
 	ShowDocument *ShowDocumentClientCapabilities `json:"showDocument,omitempty"`
 }
 
+// It indicates whether the client supports server initiated
+// progress using the `window/workDoneProgress/create` request.
+//
+// The capability also controls Whether client supports handling
+// of progress notifications. If set servers are allowed to report a
+// `workDoneProgress` property in the request specific server
+// capabilities.
+//
+// @since 3.15.0
 func (w *WindowClientCapabilities) GetWorkDoneProgress() bool {
 	if w == nil {
 		var zero bool
@@ -3474,6 +4023,9 @@ func (w *WindowClientCapabilities) GetWorkDoneProgress() bool {
 	return w.WorkDoneProgress
 }
 
+// Capabilities specific to the showMessage request.
+//
+// @since 3.16.0
 func (w *WindowClientCapabilities) GetShowMessage() *ShowMessageRequestClientCapabilities {
 	if w == nil {
 		var zero *ShowMessageRequestClientCapabilities
@@ -3482,6 +4034,9 @@ func (w *WindowClientCapabilities) GetShowMessage() *ShowMessageRequestClientCap
 	return w.ShowMessage
 }
 
+// Capabilities specific to the showDocument request.
+//
+// @since 3.16.0
 func (w *WindowClientCapabilities) GetShowDocument() *ShowDocumentClientCapabilities {
 	if w == nil {
 		var zero *ShowDocumentClientCapabilities
@@ -3499,6 +4054,7 @@ type GeneralClientCapabilitiesStaleRequestSupport struct {
 	RetryOnContentModified []string `json:"retryOnContentModified"`
 }
 
+// The client will actively cancel the request.
 func (g *GeneralClientCapabilitiesStaleRequestSupport) GetCancel() bool {
 	if g == nil {
 		return *new(bool)
@@ -3506,6 +4062,9 @@ func (g *GeneralClientCapabilitiesStaleRequestSupport) GetCancel() bool {
 	return g.Cancel
 }
 
+// The list of requests for which the client
+// will retry the request if it receives a
+// response with error code `ContentModified`
 func (g *GeneralClientCapabilitiesStaleRequestSupport) GetRetryOnContentModified() []string {
 	if g == nil {
 		return *new([]string)
@@ -3525,6 +4084,7 @@ type RegularExpressionsClientCapabilities struct {
 	Version string `json:"version,omitempty"`
 }
 
+// The engine's name.
 func (r *RegularExpressionsClientCapabilities) GetEngine() string {
 	if r == nil {
 		var zero string
@@ -3533,6 +4093,7 @@ func (r *RegularExpressionsClientCapabilities) GetEngine() string {
 	return r.Engine
 }
 
+// The engine's version.
 func (r *RegularExpressionsClientCapabilities) GetVersion() string {
 	if r == nil {
 		var zero string
@@ -3558,6 +4119,7 @@ type MarkdownClientCapabilities struct {
 	AllowedTags []string `json:"allowedTags,omitempty"`
 }
 
+// The name of the parser.
 func (m *MarkdownClientCapabilities) GetParser() string {
 	if m == nil {
 		var zero string
@@ -3566,6 +4128,7 @@ func (m *MarkdownClientCapabilities) GetParser() string {
 	return m.Parser
 }
 
+// The version of the parser.
 func (m *MarkdownClientCapabilities) GetVersion() string {
 	if m == nil {
 		var zero string
@@ -3574,6 +4137,10 @@ func (m *MarkdownClientCapabilities) GetVersion() string {
 	return m.Version
 }
 
+// A list of HTML tags that the client allows / supports in
+// Markdown.
+//
+// @since 3.17.0
 func (m *MarkdownClientCapabilities) GetAllowedTags() []string {
 	if m == nil {
 		var zero []string
@@ -3647,6 +4214,12 @@ type GeneralClientCapabilities struct {
 	PositionEncodings []PositionEncodingKind `json:"positionEncodings,omitempty"`
 }
 
+// Client capability that signals how the client
+// handles stale requests (e.g. a request
+// for which the client will not process the response
+// anymore since the information is outdated).
+//
+// @since 3.17.0
 func (g *GeneralClientCapabilities) GetStaleRequestSupport() *GeneralClientCapabilitiesStaleRequestSupport {
 	if g == nil {
 		var zero *GeneralClientCapabilitiesStaleRequestSupport
@@ -3655,6 +4228,9 @@ func (g *GeneralClientCapabilities) GetStaleRequestSupport() *GeneralClientCapab
 	return g.StaleRequestSupport
 }
 
+// Client capabilities specific to regular expressions.
+//
+// @since 3.16.0
 func (g *GeneralClientCapabilities) GetRegularExpressions() *RegularExpressionsClientCapabilities {
 	if g == nil {
 		var zero *RegularExpressionsClientCapabilities
@@ -3663,6 +4239,9 @@ func (g *GeneralClientCapabilities) GetRegularExpressions() *RegularExpressionsC
 	return g.RegularExpressions
 }
 
+// Client capabilities specific to the client's markdown parser.
+//
+// @since 3.16.0
 func (g *GeneralClientCapabilities) GetMarkdown() *MarkdownClientCapabilities {
 	if g == nil {
 		var zero *MarkdownClientCapabilities
@@ -3671,6 +4250,24 @@ func (g *GeneralClientCapabilities) GetMarkdown() *MarkdownClientCapabilities {
 	return g.Markdown
 }
 
+// The position encodings supported by the client. Client and server
+// have to agree on the same position encoding to ensure that offsets
+// (e.g. character position in a line) are interpreted the same on both
+// sides.
+//
+// To keep the protocol backwards compatible the following applies: if
+// the value 'utf-16' is missing from the array of position encodings
+// servers can assume that the client supports UTF-16. UTF-16 is
+// therefore a mandatory encoding.
+//
+// If omitted it defaults to ['utf-16'].
+//
+// Implementation considerations: since the conversion from one encoding
+// into another requires the content of the file / line the conversion
+// is best done where the file is read which is usually on the server
+// side.
+//
+// @since 3.17.0
 func (g *GeneralClientCapabilities) GetPositionEncodings() []PositionEncodingKind {
 	if g == nil {
 		var zero []PositionEncodingKind
@@ -3814,6 +4411,7 @@ type ClientCapabilities struct {
 	Experimental LSPAny `json:"experimental,omitempty"`
 }
 
+// Workspace specific client capabilities.
 func (c *ClientCapabilities) GetWorkspace() *WorkspaceClientCapabilities {
 	if c == nil {
 		var zero *WorkspaceClientCapabilities
@@ -3822,6 +4420,7 @@ func (c *ClientCapabilities) GetWorkspace() *WorkspaceClientCapabilities {
 	return c.Workspace
 }
 
+// Text document specific client capabilities.
 func (c *ClientCapabilities) GetTextDocument() *TextDocumentClientCapabilities {
 	if c == nil {
 		var zero *TextDocumentClientCapabilities
@@ -3830,6 +4429,9 @@ func (c *ClientCapabilities) GetTextDocument() *TextDocumentClientCapabilities {
 	return c.TextDocument
 }
 
+// Capabilities specific to the notebook document support.
+//
+// @since 3.17.0
 func (c *ClientCapabilities) GetNotebookDocument() *NotebookDocumentClientCapabilities {
 	if c == nil {
 		var zero *NotebookDocumentClientCapabilities
@@ -3838,6 +4440,7 @@ func (c *ClientCapabilities) GetNotebookDocument() *NotebookDocumentClientCapabi
 	return c.NotebookDocument
 }
 
+// Window specific client capabilities.
 func (c *ClientCapabilities) GetWindow() *WindowClientCapabilities {
 	if c == nil {
 		var zero *WindowClientCapabilities
@@ -3846,6 +4449,9 @@ func (c *ClientCapabilities) GetWindow() *WindowClientCapabilities {
 	return c.Window
 }
 
+// General client capabilities.
+//
+// @since 3.16.0
 func (c *ClientCapabilities) GetGeneral() *GeneralClientCapabilities {
 	if c == nil {
 		var zero *GeneralClientCapabilities
@@ -3854,6 +4460,7 @@ func (c *ClientCapabilities) GetGeneral() *GeneralClientCapabilities {
 	return c.General
 }
 
+// Experimental client capabilities.
 func (c *ClientCapabilities) GetExperimental() LSPAny {
 	if c == nil {
 		var zero LSPAny
@@ -3948,6 +4555,11 @@ type XInitializeParams[InitializationOptions any] struct {
 	Trace TraceValues `json:"trace,omitempty"`
 }
 
+// The process Id of the parent process that started
+// the server.
+//
+// Is `null` if the process has not been started by another process.
+// If the parent process is not alive then the server should exit.
 func (x *XInitializeParams[InitializationOptions]) GetProcessId() int {
 	if x == nil {
 		var zero int
@@ -3956,6 +4568,9 @@ func (x *XInitializeParams[InitializationOptions]) GetProcessId() int {
 	return x.ProcessId
 }
 
+// Information about the client
+//
+// @since 3.15.0
 func (x *XInitializeParams[InitializationOptions]) GetClientInfo() *XInitializeParamsClientInfo {
 	if x == nil {
 		var zero *XInitializeParamsClientInfo
@@ -3964,6 +4579,14 @@ func (x *XInitializeParams[InitializationOptions]) GetClientInfo() *XInitializeP
 	return x.ClientInfo
 }
 
+// The locale the client is currently showing the user interface
+// in. This must not necessarily be the locale of the operating
+// system.
+//
+// Uses IETF language tags as the value's syntax
+// (See https://en.wikipedia.org/wiki/IETF_language_tag)
+//
+// @since 3.16.0
 func (x *XInitializeParams[InitializationOptions]) GetLocale() string {
 	if x == nil {
 		var zero string
@@ -3972,6 +4595,10 @@ func (x *XInitializeParams[InitializationOptions]) GetLocale() string {
 	return x.Locale
 }
 
+// The rootPath of the workspace. Is null
+// if no folder is open.
+//
+// Deprecated: in favour of rootUri.
 func (x *XInitializeParams[InitializationOptions]) GetRootPath() string {
 	if x == nil {
 		var zero string
@@ -3980,6 +4607,11 @@ func (x *XInitializeParams[InitializationOptions]) GetRootPath() string {
 	return x.RootPath
 }
 
+// The rootUri of the workspace. Is null if no
+// folder is open. If both `rootPath` and `rootUri` are set
+// `rootUri` wins.
+//
+// Deprecated: in favour of workspaceFolders.
 func (x *XInitializeParams[InitializationOptions]) GetRootUri() string {
 	if x == nil {
 		var zero string
@@ -3988,6 +4620,7 @@ func (x *XInitializeParams[InitializationOptions]) GetRootUri() string {
 	return x.RootUri
 }
 
+// The capabilities provided by the client (editor or tool)
 func (x *XInitializeParams[InitializationOptions]) GetCapabilities() *ClientCapabilities {
 	if x == nil {
 		var zero *ClientCapabilities
@@ -3996,6 +4629,7 @@ func (x *XInitializeParams[InitializationOptions]) GetCapabilities() *ClientCapa
 	return x.Capabilities
 }
 
+// User provided initialization options.
 func (x *XInitializeParams[InitializationOptions]) GetInitializationOptions() InitializationOptions {
 	if x == nil {
 		var zero InitializationOptions
@@ -4004,6 +4638,7 @@ func (x *XInitializeParams[InitializationOptions]) GetInitializationOptions() In
 	return x.InitializationOptions
 }
 
+// The initial trace setting. If omitted trace is disabled ('off').
 func (x *XInitializeParams[InitializationOptions]) GetTrace() TraceValues {
 	if x == nil {
 		var zero TraceValues
@@ -4023,6 +4658,7 @@ type WorkspaceFolder struct {
 	Name string `json:"name"`
 }
 
+// The associated URI for this workspace folder.
 func (w *WorkspaceFolder) GetUri() string {
 	if w == nil {
 		var zero string
@@ -4031,6 +4667,8 @@ func (w *WorkspaceFolder) GetUri() string {
 	return w.Uri
 }
 
+// The name of the workspace folder. Used to refer to this
+// workspace folder in the user interface.
 func (w *WorkspaceFolder) GetName() string {
 	if w == nil {
 		var zero string
@@ -4051,6 +4689,13 @@ type WorkspaceFoldersInitializeParams struct {
 	WorkspaceFolders []*WorkspaceFolder `json:"workspaceFolders,omitempty"`
 }
 
+// The workspace folders configured in the client when the server starts.
+//
+// This property is only available if the client supports workspace folders.
+// It can be `null` if the client supports workspace folders but none are
+// configured.
+//
+// @since 3.6.0
 func (w *WorkspaceFoldersInitializeParams) GetWorkspaceFolders() []*WorkspaceFolder {
 	if w == nil {
 		var zero []*WorkspaceFolder
@@ -4122,6 +4767,7 @@ type SaveOptions struct {
 	IncludeText bool `json:"includeText,omitempty"`
 }
 
+// The client is supposed to include the content on save.
 func (s *SaveOptions) GetIncludeText() bool {
 	if s == nil {
 		var zero bool
@@ -4192,6 +4838,8 @@ type TextDocumentSyncOptions struct {
 	Save *BooleanOrSaveOptions `json:"save,omitempty"`
 }
 
+// Open and close notifications are sent to the server. If omitted open close notification should not
+// be sent.
 func (t *TextDocumentSyncOptions) GetOpenClose() bool {
 	if t == nil {
 		var zero bool
@@ -4200,6 +4848,8 @@ func (t *TextDocumentSyncOptions) GetOpenClose() bool {
 	return t.OpenClose
 }
 
+// Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
+// and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.
 func (t *TextDocumentSyncOptions) GetChange() TextDocumentSyncKind {
 	if t == nil {
 		var zero TextDocumentSyncKind
@@ -4208,6 +4858,8 @@ func (t *TextDocumentSyncOptions) GetChange() TextDocumentSyncKind {
 	return t.Change
 }
 
+// If present will save notifications are sent to the server. If omitted the notification should not be
+// sent.
 func (t *TextDocumentSyncOptions) GetWillSave() bool {
 	if t == nil {
 		var zero bool
@@ -4216,6 +4868,8 @@ func (t *TextDocumentSyncOptions) GetWillSave() bool {
 	return t.WillSave
 }
 
+// If present will save wait until requests are sent to the server. If omitted the request should not be
+// sent.
 func (t *TextDocumentSyncOptions) GetWillSaveWaitUntil() bool {
 	if t == nil {
 		var zero bool
@@ -4224,6 +4878,8 @@ func (t *TextDocumentSyncOptions) GetWillSaveWaitUntil() bool {
 	return t.WillSaveWaitUntil
 }
 
+// If present save notifications are sent to the server. If omitted the notification should not be
+// sent.
 func (t *TextDocumentSyncOptions) GetSave() *BooleanOrSaveOptions {
 	if t == nil {
 		var zero *BooleanOrSaveOptions
@@ -4284,6 +4940,7 @@ type NotebookDocumentFilterOr1 struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+// The type of the enclosing notebook.
 func (n *NotebookDocumentFilterOr1) GetNotebookType() string {
 	if n == nil {
 		return *new(string)
@@ -4291,6 +4948,7 @@ func (n *NotebookDocumentFilterOr1) GetNotebookType() string {
 	return n.NotebookType
 }
 
+// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 func (n *NotebookDocumentFilterOr1) GetScheme() string {
 	if n == nil {
 		return *new(string)
@@ -4298,6 +4956,7 @@ func (n *NotebookDocumentFilterOr1) GetScheme() string {
 	return n.Scheme
 }
 
+// A glob pattern.
 func (n *NotebookDocumentFilterOr1) GetPattern() string {
 	if n == nil {
 		return *new(string)
@@ -4314,6 +4973,7 @@ type NotebookDocumentFilterOr2 struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+// The type of the enclosing notebook.
 func (n *NotebookDocumentFilterOr2) GetNotebookType() string {
 	if n == nil {
 		return *new(string)
@@ -4321,6 +4981,7 @@ func (n *NotebookDocumentFilterOr2) GetNotebookType() string {
 	return n.NotebookType
 }
 
+// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 func (n *NotebookDocumentFilterOr2) GetScheme() string {
 	if n == nil {
 		return *new(string)
@@ -4328,6 +4989,7 @@ func (n *NotebookDocumentFilterOr2) GetScheme() string {
 	return n.Scheme
 }
 
+// A glob pattern.
 func (n *NotebookDocumentFilterOr2) GetPattern() string {
 	if n == nil {
 		return *new(string)
@@ -4344,6 +5006,7 @@ type NotebookDocumentFilterOr3 struct {
 	Pattern string `json:"pattern"`
 }
 
+// The type of the enclosing notebook.
 func (n *NotebookDocumentFilterOr3) GetNotebookType() string {
 	if n == nil {
 		return *new(string)
@@ -4351,6 +5014,7 @@ func (n *NotebookDocumentFilterOr3) GetNotebookType() string {
 	return n.NotebookType
 }
 
+// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 func (n *NotebookDocumentFilterOr3) GetScheme() string {
 	if n == nil {
 		return *new(string)
@@ -4358,6 +5022,7 @@ func (n *NotebookDocumentFilterOr3) GetScheme() string {
 	return n.Scheme
 }
 
+// A glob pattern.
 func (n *NotebookDocumentFilterOr3) GetPattern() string {
 	if n == nil {
 		return *new(string)
@@ -4491,6 +5156,9 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1 struct {
 	Cells []*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells `json:"cells,omitempty"`
 }
 
+// The notebook to be synced If a string
+// value is provided it matches against the
+// notebook type. '*' matches every notebook.
 func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1) GetNotebook() *StringOrNotebookDocumentFilter {
 	if n == nil {
 		return *new(*StringOrNotebookDocumentFilter)
@@ -4498,6 +5166,7 @@ func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1) GetNotebook() *StringOr
 	return n.Notebook
 }
 
+// The cells of the matching notebook to be synced.
 func (n *NotebookDocumentSyncOptionsNotebookSelectorOr1) GetCells() []*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells {
 	if n == nil {
 		return *new([]*NotebookDocumentSyncOptionsNotebookSelectorOr1Cells)
@@ -4525,6 +5194,9 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr2 struct {
 	Cells []*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells `json:"cells"`
 }
 
+// The notebook to be synced If a string
+// value is provided it matches against the
+// notebook type. '*' matches every notebook.
 func (n *NotebookDocumentSyncOptionsNotebookSelectorOr2) GetNotebook() *StringOrNotebookDocumentFilter {
 	if n == nil {
 		return *new(*StringOrNotebookDocumentFilter)
@@ -4532,6 +5204,7 @@ func (n *NotebookDocumentSyncOptionsNotebookSelectorOr2) GetNotebook() *StringOr
 	return n.Notebook
 }
 
+// The cells of the matching notebook to be synced.
 func (n *NotebookDocumentSyncOptionsNotebookSelectorOr2) GetCells() []*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells {
 	if n == nil {
 		return *new([]*NotebookDocumentSyncOptionsNotebookSelectorOr2Cells)
@@ -4607,6 +5280,7 @@ type NotebookDocumentSyncOptions struct {
 	Save bool `json:"save,omitempty"`
 }
 
+// The notebooks to be synced
 func (n *NotebookDocumentSyncOptions) GetNotebookSelector() []*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2 {
 	if n == nil {
 		var zero []*NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2
@@ -4615,6 +5289,8 @@ func (n *NotebookDocumentSyncOptions) GetNotebookSelector() []*NotebookDocumentS
 	return n.NotebookSelector
 }
 
+// Whether save notification should be forwarded to
+// the server. Will only be honored if mode === `notebook`.
 func (n *NotebookDocumentSyncOptions) GetSave() bool {
 	if n == nil {
 		var zero bool
@@ -4633,6 +5309,8 @@ type StaticRegistrationOptions struct {
 	Id string `json:"id,omitempty"`
 }
 
+// The id used to register the request. The id can be used to deregister
+// the request again. See also Registration#id.
 func (s *StaticRegistrationOptions) GetId() string {
 	if s == nil {
 		var zero string
@@ -4718,6 +5396,11 @@ type CompletionOptionsCompletionItem struct {
 	LabelDetailsSupport bool `json:"labelDetailsSupport,omitempty"`
 }
 
+// The server has support for completion item label
+// details (see also `CompletionItemLabelDetails`) when
+// receiving a completion item in a resolve call.
+//
+// @since 3.17.0
 func (c *CompletionOptionsCompletionItem) GetLabelDetailsSupport() bool {
 	if c == nil {
 		return *new(bool)
@@ -4758,6 +5441,14 @@ type CompletionOptions struct {
 	CompletionItem *CompletionOptionsCompletionItem `json:"completionItem,omitempty"`
 }
 
+// Most tools trigger completion request automatically without explicitly requesting
+// it using a keyboard shortcut (e.g. Ctrl+Space). Typically they do so when the user
+// starts to type an identifier. For example if the user types `c` in a JavaScript file
+// code complete will automatically pop up present `console` besides others as a
+// completion item. Characters that make up identifiers don't need to be listed here.
+//
+// If code complete should automatically be trigger on characters not being valid inside
+// an identifier (for example `.` in JavaScript) list them in `triggerCharacters`.
 func (c *CompletionOptions) GetTriggerCharacters() []string {
 	if c == nil {
 		var zero []string
@@ -4766,6 +5457,14 @@ func (c *CompletionOptions) GetTriggerCharacters() []string {
 	return c.TriggerCharacters
 }
 
+// The list of all possible characters that commit a completion. This field can be used
+// if clients don't support individual commit characters per completion item. See
+// `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`
+//
+// If a server provides both `allCommitCharacters` and commit characters on an individual
+// completion item the ones on the completion item win.
+//
+// @since 3.2.0
 func (c *CompletionOptions) GetAllCommitCharacters() []string {
 	if c == nil {
 		var zero []string
@@ -4774,6 +5473,8 @@ func (c *CompletionOptions) GetAllCommitCharacters() []string {
 	return c.AllCommitCharacters
 }
 
+// The server provides support to resolve additional
+// information for a completion item.
 func (c *CompletionOptions) GetResolveProvider() bool {
 	if c == nil {
 		var zero bool
@@ -4782,6 +5483,10 @@ func (c *CompletionOptions) GetResolveProvider() bool {
 	return c.ResolveProvider
 }
 
+// The server supports the following `CompletionItem` specific
+// capabilities.
+//
+// @since 3.17.0
 func (c *CompletionOptions) GetCompletionItem() *CompletionOptionsCompletionItem {
 	if c == nil {
 		var zero *CompletionOptionsCompletionItem
@@ -4856,6 +5561,7 @@ type SignatureHelpOptions struct {
 	RetriggerCharacters []string `json:"retriggerCharacters,omitempty"`
 }
 
+// List of characters that trigger signature help automatically.
 func (s *SignatureHelpOptions) GetTriggerCharacters() []string {
 	if s == nil {
 		var zero []string
@@ -4864,6 +5570,12 @@ func (s *SignatureHelpOptions) GetTriggerCharacters() []string {
 	return s.TriggerCharacters
 }
 
+// List of characters that re-trigger signature help.
+//
+// These trigger characters are only active when signature help is already showing. All trigger characters
+// are also counted as re-trigger characters.
+//
+// @since 3.15.0
 func (s *SignatureHelpOptions) GetRetriggerCharacters() []string {
 	if s == nil {
 		var zero []string
@@ -4886,6 +5598,7 @@ type TextDocumentFilterOr1 struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+// A language id, like `typescript`.
 func (t *TextDocumentFilterOr1) GetLanguage() string {
 	if t == nil {
 		return *new(string)
@@ -4893,6 +5606,7 @@ func (t *TextDocumentFilterOr1) GetLanguage() string {
 	return t.Language
 }
 
+// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 func (t *TextDocumentFilterOr1) GetScheme() string {
 	if t == nil {
 		return *new(string)
@@ -4900,6 +5614,7 @@ func (t *TextDocumentFilterOr1) GetScheme() string {
 	return t.Scheme
 }
 
+// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 func (t *TextDocumentFilterOr1) GetPattern() string {
 	if t == nil {
 		return *new(string)
@@ -4916,6 +5631,7 @@ type TextDocumentFilterOr2 struct {
 	Pattern string `json:"pattern,omitempty"`
 }
 
+// A language id, like `typescript`.
 func (t *TextDocumentFilterOr2) GetLanguage() string {
 	if t == nil {
 		return *new(string)
@@ -4923,6 +5639,7 @@ func (t *TextDocumentFilterOr2) GetLanguage() string {
 	return t.Language
 }
 
+// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 func (t *TextDocumentFilterOr2) GetScheme() string {
 	if t == nil {
 		return *new(string)
@@ -4930,6 +5647,7 @@ func (t *TextDocumentFilterOr2) GetScheme() string {
 	return t.Scheme
 }
 
+// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 func (t *TextDocumentFilterOr2) GetPattern() string {
 	if t == nil {
 		return *new(string)
@@ -4946,6 +5664,7 @@ type TextDocumentFilterOr3 struct {
 	Pattern string `json:"pattern"`
 }
 
+// A language id, like `typescript`.
 func (t *TextDocumentFilterOr3) GetLanguage() string {
 	if t == nil {
 		return *new(string)
@@ -4953,6 +5672,7 @@ func (t *TextDocumentFilterOr3) GetLanguage() string {
 	return t.Language
 }
 
+// A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.
 func (t *TextDocumentFilterOr3) GetScheme() string {
 	if t == nil {
 		return *new(string)
@@ -4960,6 +5680,7 @@ func (t *TextDocumentFilterOr3) GetScheme() string {
 	return t.Scheme
 }
 
+// A glob pattern, like **​/*.{ts,js}. See TextDocumentFilter for examples.
 func (t *TextDocumentFilterOr3) GetPattern() string {
 	if t == nil {
 		return *new(string)
@@ -5060,6 +5781,10 @@ type NotebookCellTextDocumentFilter struct {
 	Language string `json:"language,omitempty"`
 }
 
+// A filter that matches against the notebook
+// containing the notebook cell. If a string
+// value is provided it matches against the
+// notebook type. '*' matches every notebook.
 func (n *NotebookCellTextDocumentFilter) GetNotebook() *StringOrNotebookDocumentFilter {
 	if n == nil {
 		var zero *StringOrNotebookDocumentFilter
@@ -5068,6 +5793,10 @@ func (n *NotebookCellTextDocumentFilter) GetNotebook() *StringOrNotebookDocument
 	return n.Notebook
 }
 
+// A language id like `python`.
+//
+// Will be matched against the language id of the
+// notebook cell document. '*' matches every language.
 func (n *NotebookCellTextDocumentFilter) GetLanguage() string {
 	if n == nil {
 		var zero string
@@ -5145,6 +5874,8 @@ type TextDocumentRegistrationOptions struct {
 	DocumentSelector DocumentSelector `json:"documentSelector"`
 }
 
+// A document selector to identify the scope of the registration. If set to null
+// the document selector provided on the client side will be used.
 func (t *TextDocumentRegistrationOptions) GetDocumentSelector() DocumentSelector {
 	if t == nil {
 		var zero DocumentSelector
@@ -5504,6 +6235,10 @@ type DocumentSymbolOptions struct {
 	Label string `json:"label,omitempty"`
 }
 
+// A human-readable string that is shown when multiple outlines trees
+// are shown for the same document.
+//
+// @since 3.16.0
 func (d *DocumentSymbolOptions) GetLabel() string {
 	if d == nil {
 		var zero string
@@ -5572,6 +6307,10 @@ type CodeActionOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+// CodeActionKinds that this server may return.
+//
+// The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
+// may list out every specific kind they provide.
 func (c *CodeActionOptions) GetCodeActionKinds() []CodeActionKind {
 	if c == nil {
 		var zero []CodeActionKind
@@ -5580,6 +6319,10 @@ func (c *CodeActionOptions) GetCodeActionKinds() []CodeActionKind {
 	return c.CodeActionKinds
 }
 
+// The server provides support to resolve additional
+// information for a code action.
+//
+// @since 3.16.0
 func (c *CodeActionOptions) GetResolveProvider() bool {
 	if c == nil {
 		var zero bool
@@ -5640,6 +6383,7 @@ type CodeLensOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+// Code lens has a resolve provider as well.
 func (c *CodeLensOptions) GetResolveProvider() bool {
 	if c == nil {
 		var zero bool
@@ -5657,6 +6401,7 @@ type DocumentLinkOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+// Document links have a resolve provider as well.
 func (d *DocumentLinkOptions) GetResolveProvider() bool {
 	if d == nil {
 		var zero bool
@@ -5742,6 +6487,10 @@ type WorkspaceSymbolOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+// The server provides support to resolve additional
+// information for a workspace symbol.
+//
+// @since 3.17.0
 func (w *WorkspaceSymbolOptions) GetResolveProvider() bool {
 	if w == nil {
 		var zero bool
@@ -5855,6 +6604,10 @@ type DocumentRangeFormattingOptions struct {
 	RangesSupport bool `json:"rangesSupport,omitempty"`
 }
 
+// Whether the server supports formatting multiple ranges at once.
+//
+// @since 3.18.0
+// @proposed
 func (d *DocumentRangeFormattingOptions) GetRangesSupport() bool {
 	if d == nil {
 		var zero bool
@@ -5916,6 +6669,7 @@ type DocumentOnTypeFormattingOptions struct {
 	MoreTriggerCharacter []string `json:"moreTriggerCharacter,omitempty"`
 }
 
+// A character on which formatting should be triggered, like `{`.
 func (d *DocumentOnTypeFormattingOptions) GetFirstTriggerCharacter() string {
 	if d == nil {
 		var zero string
@@ -5924,6 +6678,7 @@ func (d *DocumentOnTypeFormattingOptions) GetFirstTriggerCharacter() string {
 	return d.FirstTriggerCharacter
 }
 
+// More trigger characters.
 func (d *DocumentOnTypeFormattingOptions) GetMoreTriggerCharacter() []string {
 	if d == nil {
 		var zero []string
@@ -5943,6 +6698,9 @@ type RenameOptions struct {
 	PrepareProvider bool `json:"prepareProvider,omitempty"`
 }
 
+// Renames should be checked and tested before being executed.
+//
+// @since version 3.12.0
 func (r *RenameOptions) GetPrepareProvider() bool {
 	if r == nil {
 		var zero bool
@@ -6132,6 +6890,7 @@ type ExecuteCommandOptions struct {
 	Commands []string `json:"commands"`
 }
 
+// The commands to be executed on the server
 func (e *ExecuteCommandOptions) GetCommands() []string {
 	if e == nil {
 		var zero []string
@@ -6288,6 +7047,7 @@ type SemanticTokensLegend struct {
 	TokenModifiers []string `json:"tokenModifiers"`
 }
 
+// The token types a server uses.
 func (s *SemanticTokensLegend) GetTokenTypes() []string {
 	if s == nil {
 		var zero []string
@@ -6296,6 +7056,7 @@ func (s *SemanticTokensLegend) GetTokenTypes() []string {
 	return s.TokenTypes
 }
 
+// The token modifiers a server uses.
 func (s *SemanticTokensLegend) GetTokenModifiers() []string {
 	if s == nil {
 		var zero []string
@@ -6355,6 +7116,7 @@ type SemanticTokensOptionsFullOr2 struct {
 	Delta bool `json:"delta,omitempty"`
 }
 
+// The server supports deltas for full documents.
 func (s *SemanticTokensOptionsFullOr2) GetDelta() bool {
 	if s == nil {
 		return *new(bool)
@@ -6419,6 +7181,7 @@ type SemanticTokensOptions struct {
 	Full *BooleanOrSemanticTokensOptionsFullOr2 `json:"full,omitempty"`
 }
 
+// The legend used by the server
 func (s *SemanticTokensOptions) GetLegend() *SemanticTokensLegend {
 	if s == nil {
 		var zero *SemanticTokensLegend
@@ -6427,6 +7190,8 @@ func (s *SemanticTokensOptions) GetLegend() *SemanticTokensLegend {
 	return s.Legend
 }
 
+// Server supports providing semantic tokens for a specific range
+// of a document.
 func (s *SemanticTokensOptions) GetRange() *BooleanOrSemanticTokensOptionsRangeOr2 {
 	if s == nil {
 		var zero *BooleanOrSemanticTokensOptionsRangeOr2
@@ -6435,6 +7200,7 @@ func (s *SemanticTokensOptions) GetRange() *BooleanOrSemanticTokensOptionsRangeO
 	return s.Range
 }
 
+// Server supports providing semantic tokens for a full document.
 func (s *SemanticTokensOptions) GetFull() *BooleanOrSemanticTokensOptionsFullOr2 {
 	if s == nil {
 		var zero *BooleanOrSemanticTokensOptionsFullOr2
@@ -6715,6 +7481,8 @@ type InlayHintOptions struct {
 	ResolveProvider bool `json:"resolveProvider,omitempty"`
 }
 
+// The server provides support to resolve additional
+// information for an inlay hint item.
 func (i *InlayHintOptions) GetResolveProvider() bool {
 	if i == nil {
 		var zero bool
@@ -6805,6 +7573,8 @@ type DiagnosticOptions struct {
 	WorkspaceDiagnostics bool `json:"workspaceDiagnostics"`
 }
 
+// An optional identifier under which the diagnostics are
+// managed by the client.
 func (d *DiagnosticOptions) GetIdentifier() string {
 	if d == nil {
 		var zero string
@@ -6813,6 +7583,10 @@ func (d *DiagnosticOptions) GetIdentifier() string {
 	return d.Identifier
 }
 
+// Whether the language has inter file dependencies meaning that
+// editing code in one file can result in a different diagnostic
+// set in another file. Inter file dependencies are common for
+// most programming languages and typically uncommon for linters.
 func (d *DiagnosticOptions) GetInterFileDependencies() bool {
 	if d == nil {
 		var zero bool
@@ -6821,6 +7595,7 @@ func (d *DiagnosticOptions) GetInterFileDependencies() bool {
 	return d.InterFileDependencies
 }
 
+// The server provides support for workspace diagnostics as well.
 func (d *DiagnosticOptions) GetWorkspaceDiagnostics() bool {
 	if d == nil {
 		var zero bool
@@ -6993,6 +7768,7 @@ type WorkspaceFoldersServerCapabilities struct {
 	ChangeNotifications *StringOrBoolean `json:"changeNotifications,omitempty"`
 }
 
+// The server has support for workspace folders
 func (w *WorkspaceFoldersServerCapabilities) GetSupported() bool {
 	if w == nil {
 		var zero bool
@@ -7001,6 +7777,13 @@ func (w *WorkspaceFoldersServerCapabilities) GetSupported() bool {
 	return w.Supported
 }
 
+// Whether the server wants to receive workspace folder
+// change notifications.
+//
+// If a string is provided the string is treated as an ID
+// under which the notification is registered on the client
+// side. The ID can be used to unregister for these events
+// using the `client/unregisterCapability` request.
 func (w *WorkspaceFoldersServerCapabilities) GetChangeNotifications() *StringOrBoolean {
 	if w == nil {
 		var zero *StringOrBoolean
@@ -7064,6 +7847,7 @@ type FileOperationPatternOptions struct {
 	IgnoreCase bool `json:"ignoreCase,omitempty"`
 }
 
+// The pattern should be matched ignoring casing.
 func (f *FileOperationPatternOptions) GetIgnoreCase() bool {
 	if f == nil {
 		var zero bool
@@ -7095,6 +7879,13 @@ type FileOperationPattern struct {
 	Options *FileOperationPatternOptions `json:"options,omitempty"`
 }
 
+// The glob pattern to match. Glob patterns can have the following syntax:
+// - `*` to match one or more characters in a path segment
+// - `?` to match on one character in a path segment
+// - `**` to match any number of path segments, including none
+// - `{}` to group sub patterns into an OR expression. (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+// - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+// - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
 func (f *FileOperationPattern) GetGlob() string {
 	if f == nil {
 		var zero string
@@ -7103,6 +7894,9 @@ func (f *FileOperationPattern) GetGlob() string {
 	return f.Glob
 }
 
+// Whether to match files or folders with this pattern.
+//
+// Matches both if undefined.
 func (f *FileOperationPattern) GetMatches() FileOperationPatternKind {
 	if f == nil {
 		var zero FileOperationPatternKind
@@ -7111,6 +7905,7 @@ func (f *FileOperationPattern) GetMatches() FileOperationPatternKind {
 	return f.Matches
 }
 
+// Additional options used during matching.
 func (f *FileOperationPattern) GetOptions() *FileOperationPatternOptions {
 	if f == nil {
 		var zero *FileOperationPatternOptions
@@ -7132,6 +7927,7 @@ type FileOperationFilter struct {
 	Pattern *FileOperationPattern `json:"pattern"`
 }
 
+// A Uri scheme like `file` or `untitled`.
 func (f *FileOperationFilter) GetScheme() string {
 	if f == nil {
 		var zero string
@@ -7140,6 +7936,7 @@ func (f *FileOperationFilter) GetScheme() string {
 	return f.Scheme
 }
 
+// The actual file operation pattern.
 func (f *FileOperationFilter) GetPattern() *FileOperationPattern {
 	if f == nil {
 		var zero *FileOperationPattern
@@ -7158,6 +7955,7 @@ type FileOperationRegistrationOptions struct {
 	Filters []*FileOperationFilter `json:"filters"`
 }
 
+// The actual filters.
 func (f *FileOperationRegistrationOptions) GetFilters() []*FileOperationFilter {
 	if f == nil {
 		var zero []*FileOperationFilter
@@ -7186,6 +7984,7 @@ type FileOperationOptions struct {
 	WillDelete *FileOperationRegistrationOptions `json:"willDelete,omitempty"`
 }
 
+// The server is interested in receiving didCreateFiles notifications.
 func (f *FileOperationOptions) GetDidCreate() *FileOperationRegistrationOptions {
 	if f == nil {
 		var zero *FileOperationRegistrationOptions
@@ -7194,6 +7993,7 @@ func (f *FileOperationOptions) GetDidCreate() *FileOperationRegistrationOptions 
 	return f.DidCreate
 }
 
+// The server is interested in receiving willCreateFiles requests.
 func (f *FileOperationOptions) GetWillCreate() *FileOperationRegistrationOptions {
 	if f == nil {
 		var zero *FileOperationRegistrationOptions
@@ -7202,6 +8002,7 @@ func (f *FileOperationOptions) GetWillCreate() *FileOperationRegistrationOptions
 	return f.WillCreate
 }
 
+// The server is interested in receiving didRenameFiles notifications.
 func (f *FileOperationOptions) GetDidRename() *FileOperationRegistrationOptions {
 	if f == nil {
 		var zero *FileOperationRegistrationOptions
@@ -7210,6 +8011,7 @@ func (f *FileOperationOptions) GetDidRename() *FileOperationRegistrationOptions 
 	return f.DidRename
 }
 
+// The server is interested in receiving willRenameFiles requests.
 func (f *FileOperationOptions) GetWillRename() *FileOperationRegistrationOptions {
 	if f == nil {
 		var zero *FileOperationRegistrationOptions
@@ -7218,6 +8020,7 @@ func (f *FileOperationOptions) GetWillRename() *FileOperationRegistrationOptions
 	return f.WillRename
 }
 
+// The server is interested in receiving didDeleteFiles file notifications.
 func (f *FileOperationOptions) GetDidDelete() *FileOperationRegistrationOptions {
 	if f == nil {
 		var zero *FileOperationRegistrationOptions
@@ -7226,6 +8029,7 @@ func (f *FileOperationOptions) GetDidDelete() *FileOperationRegistrationOptions 
 	return f.DidDelete
 }
 
+// The server is interested in receiving willDeleteFiles file requests.
 func (f *FileOperationOptions) GetWillDelete() *FileOperationRegistrationOptions {
 	if f == nil {
 		var zero *FileOperationRegistrationOptions
@@ -7245,6 +8049,9 @@ type ServerCapabilitiesWorkspace struct {
 	FileOperations *FileOperationOptions `json:"fileOperations,omitempty"`
 }
 
+// The server supports workspace folder.
+//
+// @since 3.6.0
 func (s *ServerCapabilitiesWorkspace) GetWorkspaceFolders() *WorkspaceFoldersServerCapabilities {
 	if s == nil {
 		return *new(*WorkspaceFoldersServerCapabilities)
@@ -7252,6 +8059,9 @@ func (s *ServerCapabilitiesWorkspace) GetWorkspaceFolders() *WorkspaceFoldersSer
 	return s.WorkspaceFolders
 }
 
+// The server is interested in notifications/requests for operations on files.
+//
+// @since 3.16.0
 func (s *ServerCapabilitiesWorkspace) GetFileOperations() *FileOperationOptions {
 	if s == nil {
 		return *new(*FileOperationOptions)
@@ -7373,6 +8183,15 @@ type ServerCapabilities struct {
 	Experimental LSPAny `json:"experimental,omitempty"`
 }
 
+// The position encoding the server picked from the encodings offered
+// by the client via the client capability `general.positionEncodings`.
+//
+// If the client didn't provide any position encodings the only valid
+// value that a server can return is 'utf-16'.
+//
+// If omitted it defaults to 'utf-16'.
+//
+// @since 3.17.0
 func (s *ServerCapabilities) GetPositionEncoding() PositionEncodingKind {
 	if s == nil {
 		var zero PositionEncodingKind
@@ -7381,6 +8200,9 @@ func (s *ServerCapabilities) GetPositionEncoding() PositionEncodingKind {
 	return s.PositionEncoding
 }
 
+// Defines how text documents are synced. Is either a detailed structure
+// defining each notification or for backwards compatibility the
+// TextDocumentSyncKind number.
 func (s *ServerCapabilities) GetTextDocumentSync() *TextDocumentSyncOptionsOrTextDocumentSyncKind {
 	if s == nil {
 		var zero *TextDocumentSyncOptionsOrTextDocumentSyncKind
@@ -7389,6 +8211,9 @@ func (s *ServerCapabilities) GetTextDocumentSync() *TextDocumentSyncOptionsOrTex
 	return s.TextDocumentSync
 }
 
+// Defines how notebook documents are synced.
+//
+// @since 3.17.0
 func (s *ServerCapabilities) GetNotebookDocumentSync() *NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions {
 	if s == nil {
 		var zero *NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions
@@ -7397,6 +8222,7 @@ func (s *ServerCapabilities) GetNotebookDocumentSync() *NotebookDocumentSyncOpti
 	return s.NotebookDocumentSync
 }
 
+// The server provides completion support.
 func (s *ServerCapabilities) GetCompletionProvider() *CompletionOptions {
 	if s == nil {
 		var zero *CompletionOptions
@@ -7405,6 +8231,7 @@ func (s *ServerCapabilities) GetCompletionProvider() *CompletionOptions {
 	return s.CompletionProvider
 }
 
+// The server provides hover support.
 func (s *ServerCapabilities) GetHoverProvider() *BooleanOrHoverOptions {
 	if s == nil {
 		var zero *BooleanOrHoverOptions
@@ -7413,6 +8240,7 @@ func (s *ServerCapabilities) GetHoverProvider() *BooleanOrHoverOptions {
 	return s.HoverProvider
 }
 
+// The server provides signature help support.
 func (s *ServerCapabilities) GetSignatureHelpProvider() *SignatureHelpOptions {
 	if s == nil {
 		var zero *SignatureHelpOptions
@@ -7421,6 +8249,7 @@ func (s *ServerCapabilities) GetSignatureHelpProvider() *SignatureHelpOptions {
 	return s.SignatureHelpProvider
 }
 
+// The server provides Goto Declaration support.
 func (s *ServerCapabilities) GetDeclarationProvider() *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions
@@ -7429,6 +8258,7 @@ func (s *ServerCapabilities) GetDeclarationProvider() *BooleanOrDeclarationOptio
 	return s.DeclarationProvider
 }
 
+// The server provides goto definition support.
 func (s *ServerCapabilities) GetDefinitionProvider() *BooleanOrDefinitionOptions {
 	if s == nil {
 		var zero *BooleanOrDefinitionOptions
@@ -7437,6 +8267,7 @@ func (s *ServerCapabilities) GetDefinitionProvider() *BooleanOrDefinitionOptions
 	return s.DefinitionProvider
 }
 
+// The server provides Goto Type Definition support.
 func (s *ServerCapabilities) GetTypeDefinitionProvider() *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions
@@ -7445,6 +8276,7 @@ func (s *ServerCapabilities) GetTypeDefinitionProvider() *BooleanOrTypeDefinitio
 	return s.TypeDefinitionProvider
 }
 
+// The server provides Goto Implementation support.
 func (s *ServerCapabilities) GetImplementationProvider() *BooleanOrImplementationOptionsOrImplementationRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrImplementationOptionsOrImplementationRegistrationOptions
@@ -7453,6 +8285,7 @@ func (s *ServerCapabilities) GetImplementationProvider() *BooleanOrImplementatio
 	return s.ImplementationProvider
 }
 
+// The server provides find references support.
 func (s *ServerCapabilities) GetReferencesProvider() *BooleanOrReferenceOptions {
 	if s == nil {
 		var zero *BooleanOrReferenceOptions
@@ -7461,6 +8294,7 @@ func (s *ServerCapabilities) GetReferencesProvider() *BooleanOrReferenceOptions 
 	return s.ReferencesProvider
 }
 
+// The server provides document highlight support.
 func (s *ServerCapabilities) GetDocumentHighlightProvider() *BooleanOrDocumentHighlightOptions {
 	if s == nil {
 		var zero *BooleanOrDocumentHighlightOptions
@@ -7469,6 +8303,7 @@ func (s *ServerCapabilities) GetDocumentHighlightProvider() *BooleanOrDocumentHi
 	return s.DocumentHighlightProvider
 }
 
+// The server provides document symbol support.
 func (s *ServerCapabilities) GetDocumentSymbolProvider() *BooleanOrDocumentSymbolOptions {
 	if s == nil {
 		var zero *BooleanOrDocumentSymbolOptions
@@ -7477,6 +8312,9 @@ func (s *ServerCapabilities) GetDocumentSymbolProvider() *BooleanOrDocumentSymbo
 	return s.DocumentSymbolProvider
 }
 
+// The server provides code actions. CodeActionOptions may only be
+// specified if the client states that it supports
+// `codeActionLiteralSupport` in its initial `initialize` request.
 func (s *ServerCapabilities) GetCodeActionProvider() *BooleanOrCodeActionOptions {
 	if s == nil {
 		var zero *BooleanOrCodeActionOptions
@@ -7485,6 +8323,7 @@ func (s *ServerCapabilities) GetCodeActionProvider() *BooleanOrCodeActionOptions
 	return s.CodeActionProvider
 }
 
+// The server provides code lens.
 func (s *ServerCapabilities) GetCodeLensProvider() *CodeLensOptions {
 	if s == nil {
 		var zero *CodeLensOptions
@@ -7493,6 +8332,7 @@ func (s *ServerCapabilities) GetCodeLensProvider() *CodeLensOptions {
 	return s.CodeLensProvider
 }
 
+// The server provides document link support.
 func (s *ServerCapabilities) GetDocumentLinkProvider() *DocumentLinkOptions {
 	if s == nil {
 		var zero *DocumentLinkOptions
@@ -7501,6 +8341,7 @@ func (s *ServerCapabilities) GetDocumentLinkProvider() *DocumentLinkOptions {
 	return s.DocumentLinkProvider
 }
 
+// The server provides color provider support.
 func (s *ServerCapabilities) GetColorProvider() *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions
@@ -7509,6 +8350,7 @@ func (s *ServerCapabilities) GetColorProvider() *BooleanOrDocumentColorOptionsOr
 	return s.ColorProvider
 }
 
+// The server provides workspace symbol support.
 func (s *ServerCapabilities) GetWorkspaceSymbolProvider() *BooleanOrWorkspaceSymbolOptions {
 	if s == nil {
 		var zero *BooleanOrWorkspaceSymbolOptions
@@ -7517,6 +8359,7 @@ func (s *ServerCapabilities) GetWorkspaceSymbolProvider() *BooleanOrWorkspaceSym
 	return s.WorkspaceSymbolProvider
 }
 
+// The server provides document formatting.
 func (s *ServerCapabilities) GetDocumentFormattingProvider() *BooleanOrDocumentFormattingOptions {
 	if s == nil {
 		var zero *BooleanOrDocumentFormattingOptions
@@ -7525,6 +8368,7 @@ func (s *ServerCapabilities) GetDocumentFormattingProvider() *BooleanOrDocumentF
 	return s.DocumentFormattingProvider
 }
 
+// The server provides document range formatting.
 func (s *ServerCapabilities) GetDocumentRangeFormattingProvider() *BooleanOrDocumentRangeFormattingOptions {
 	if s == nil {
 		var zero *BooleanOrDocumentRangeFormattingOptions
@@ -7533,6 +8377,7 @@ func (s *ServerCapabilities) GetDocumentRangeFormattingProvider() *BooleanOrDocu
 	return s.DocumentRangeFormattingProvider
 }
 
+// The server provides document formatting on typing.
 func (s *ServerCapabilities) GetDocumentOnTypeFormattingProvider() *DocumentOnTypeFormattingOptions {
 	if s == nil {
 		var zero *DocumentOnTypeFormattingOptions
@@ -7541,6 +8386,9 @@ func (s *ServerCapabilities) GetDocumentOnTypeFormattingProvider() *DocumentOnTy
 	return s.DocumentOnTypeFormattingProvider
 }
 
+// The server provides rename support. RenameOptions may only be
+// specified if the client states that it supports
+// `prepareSupport` in its initial `initialize` request.
 func (s *ServerCapabilities) GetRenameProvider() *BooleanOrRenameOptions {
 	if s == nil {
 		var zero *BooleanOrRenameOptions
@@ -7549,6 +8397,7 @@ func (s *ServerCapabilities) GetRenameProvider() *BooleanOrRenameOptions {
 	return s.RenameProvider
 }
 
+// The server provides folding provider support.
 func (s *ServerCapabilities) GetFoldingRangeProvider() *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions
@@ -7557,6 +8406,7 @@ func (s *ServerCapabilities) GetFoldingRangeProvider() *BooleanOrFoldingRangeOpt
 	return s.FoldingRangeProvider
 }
 
+// The server provides selection range support.
 func (s *ServerCapabilities) GetSelectionRangeProvider() *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions
@@ -7565,6 +8415,7 @@ func (s *ServerCapabilities) GetSelectionRangeProvider() *BooleanOrSelectionRang
 	return s.SelectionRangeProvider
 }
 
+// The server provides execute command support.
 func (s *ServerCapabilities) GetExecuteCommandProvider() *ExecuteCommandOptions {
 	if s == nil {
 		var zero *ExecuteCommandOptions
@@ -7573,6 +8424,9 @@ func (s *ServerCapabilities) GetExecuteCommandProvider() *ExecuteCommandOptions 
 	return s.ExecuteCommandProvider
 }
 
+// The server provides call hierarchy support.
+//
+// @since 3.16.0
 func (s *ServerCapabilities) GetCallHierarchyProvider() *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions
@@ -7581,6 +8435,9 @@ func (s *ServerCapabilities) GetCallHierarchyProvider() *BooleanOrCallHierarchyO
 	return s.CallHierarchyProvider
 }
 
+// The server provides linked editing range support.
+//
+// @since 3.16.0
 func (s *ServerCapabilities) GetLinkedEditingRangeProvider() *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions
@@ -7589,6 +8446,9 @@ func (s *ServerCapabilities) GetLinkedEditingRangeProvider() *BooleanOrLinkedEdi
 	return s.LinkedEditingRangeProvider
 }
 
+// The server provides semantic tokens support.
+//
+// @since 3.16.0
 func (s *ServerCapabilities) GetSemanticTokensProvider() *SemanticTokensOptionsOrSemanticTokensRegistrationOptions {
 	if s == nil {
 		var zero *SemanticTokensOptionsOrSemanticTokensRegistrationOptions
@@ -7597,6 +8457,9 @@ func (s *ServerCapabilities) GetSemanticTokensProvider() *SemanticTokensOptionsO
 	return s.SemanticTokensProvider
 }
 
+// The server provides moniker support.
+//
+// @since 3.16.0
 func (s *ServerCapabilities) GetMonikerProvider() *BooleanOrMonikerOptionsOrMonikerRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrMonikerOptionsOrMonikerRegistrationOptions
@@ -7605,6 +8468,9 @@ func (s *ServerCapabilities) GetMonikerProvider() *BooleanOrMonikerOptionsOrMoni
 	return s.MonikerProvider
 }
 
+// The server provides type hierarchy support.
+//
+// @since 3.17.0
 func (s *ServerCapabilities) GetTypeHierarchyProvider() *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions
@@ -7613,6 +8479,9 @@ func (s *ServerCapabilities) GetTypeHierarchyProvider() *BooleanOrTypeHierarchyO
 	return s.TypeHierarchyProvider
 }
 
+// The server provides inline values.
+//
+// @since 3.17.0
 func (s *ServerCapabilities) GetInlineValueProvider() *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions
@@ -7621,6 +8490,9 @@ func (s *ServerCapabilities) GetInlineValueProvider() *BooleanOrInlineValueOptio
 	return s.InlineValueProvider
 }
 
+// The server provides inlay hints.
+//
+// @since 3.17.0
 func (s *ServerCapabilities) GetInlayHintProvider() *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions {
 	if s == nil {
 		var zero *BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions
@@ -7629,6 +8501,9 @@ func (s *ServerCapabilities) GetInlayHintProvider() *BooleanOrInlayHintOptionsOr
 	return s.InlayHintProvider
 }
 
+// The server has support for pull model diagnostics.
+//
+// @since 3.17.0
 func (s *ServerCapabilities) GetDiagnosticProvider() *DiagnosticOptionsOrDiagnosticRegistrationOptions {
 	if s == nil {
 		var zero *DiagnosticOptionsOrDiagnosticRegistrationOptions
@@ -7637,6 +8512,10 @@ func (s *ServerCapabilities) GetDiagnosticProvider() *DiagnosticOptionsOrDiagnos
 	return s.DiagnosticProvider
 }
 
+// Inline completion options used during static registration.
+//
+// @since 3.18.0
+// @proposed
 func (s *ServerCapabilities) GetInlineCompletionProvider() *BooleanOrInlineCompletionOptions {
 	if s == nil {
 		var zero *BooleanOrInlineCompletionOptions
@@ -7645,6 +8524,7 @@ func (s *ServerCapabilities) GetInlineCompletionProvider() *BooleanOrInlineCompl
 	return s.InlineCompletionProvider
 }
 
+// Workspace specific server capabilities.
 func (s *ServerCapabilities) GetWorkspace() *ServerCapabilitiesWorkspace {
 	if s == nil {
 		var zero *ServerCapabilitiesWorkspace
@@ -7653,6 +8533,7 @@ func (s *ServerCapabilities) GetWorkspace() *ServerCapabilitiesWorkspace {
 	return s.Workspace
 }
 
+// Experimental server capabilities.
 func (s *ServerCapabilities) GetExperimental() LSPAny {
 	if s == nil {
 		var zero LSPAny
@@ -7668,6 +8549,7 @@ type InitializeResultServerInfo struct {
 	Version string `json:"version,omitempty"`
 }
 
+// The name of the server as defined by the server.
 func (i *InitializeResultServerInfo) GetName() string {
 	if i == nil {
 		return *new(string)
@@ -7675,6 +8557,7 @@ func (i *InitializeResultServerInfo) GetName() string {
 	return i.Name
 }
 
+// The server's version as defined by the server.
 func (i *InitializeResultServerInfo) GetVersion() string {
 	if i == nil {
 		return *new(string)
@@ -7694,6 +8577,7 @@ type InitializeResult struct {
 	ServerInfo *InitializeResultServerInfo `json:"serverInfo,omitempty"`
 }
 
+// The capabilities the language server provides.
 func (i *InitializeResult) GetCapabilities() *ServerCapabilities {
 	if i == nil {
 		var zero *ServerCapabilities
@@ -7702,6 +8586,9 @@ func (i *InitializeResult) GetCapabilities() *ServerCapabilities {
 	return i.Capabilities
 }
 
+// Information about the server.
+//
+// @since 3.15.0
 func (i *InitializeResult) GetServerInfo() *InitializeResultServerInfo {
 	if i == nil {
 		var zero *InitializeResultServerInfo
@@ -7722,6 +8609,10 @@ type InitializeError struct {
 	Retry bool `json:"retry"`
 }
 
+// Indicates whether the client execute the following retry logic:
+// (1) show the message provided by the ResponseError to the user
+// (2) user selects retry or cancel
+// (3) if user selected retry the initialize method is sent again.
 func (i *InitializeError) GetRetry() bool {
 	if i == nil {
 		var zero bool
@@ -7738,6 +8629,7 @@ type TextDocumentIdentifier struct {
 	Uri string `json:"uri"`
 }
 
+// The text document's uri.
 func (t *TextDocumentIdentifier) GetUri() string {
 	if t == nil {
 		var zero string
@@ -7791,6 +8683,10 @@ type Position struct {
 	Character int `json:"character"`
 }
 
+// Line position in a document (zero-based).
+//
+// If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
+// If a line number is negative, it defaults to 0.
 func (p *Position) GetLine() int {
 	if p == nil {
 		var zero int
@@ -7799,6 +8695,13 @@ func (p *Position) GetLine() int {
 	return p.Line
 }
 
+// Character offset on a line in a document (zero-based).
+//
+// The meaning of this offset is determined by the negotiated
+// `PositionEncodingKind`.
+//
+// If the character value is greater than the line length it defaults back to the
+// line length.
 func (p *Position) GetCharacter() int {
 	if p == nil {
 		var zero int
@@ -7818,6 +8721,7 @@ type TextDocumentPositionParams struct {
 	Position *Position `json:"position"`
 }
 
+// The text document.
 func (t *TextDocumentPositionParams) GetTextDocument() *TextDocumentIdentifier {
 	if t == nil {
 		var zero *TextDocumentIdentifier
@@ -7826,6 +8730,7 @@ func (t *TextDocumentPositionParams) GetTextDocument() *TextDocumentIdentifier {
 	return t.TextDocument
 }
 
+// The position inside the text document.
 func (t *TextDocumentPositionParams) GetPosition() *Position {
 	if t == nil {
 		var zero *Position
@@ -7841,6 +8746,8 @@ type PartialResultParams struct {
 	PartialResultToken ProgressToken `json:"partialResultToken,omitempty"`
 }
 
+// An optional token that a server can use to report partial results (e.g. streaming) to
+// the client.
 func (p *PartialResultParams) GetPartialResultToken() ProgressToken {
 	if p == nil {
 		var zero ProgressToken
@@ -7907,6 +8814,7 @@ type CompletionContext struct {
 	TriggerCharacter string `json:"triggerCharacter,omitempty"`
 }
 
+// How the completion was triggered.
 func (c *CompletionContext) GetTriggerKind() CompletionTriggerKind {
 	if c == nil {
 		var zero CompletionTriggerKind
@@ -7915,6 +8823,8 @@ func (c *CompletionContext) GetTriggerKind() CompletionTriggerKind {
 	return c.TriggerKind
 }
 
+// The trigger character (a single character) that has trigger code complete.
+// Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`
 func (c *CompletionContext) GetTriggerCharacter() string {
 	if c == nil {
 		var zero string
@@ -7935,6 +8845,8 @@ type CompletionParams struct {
 	Context *CompletionContext `json:"context,omitempty"`
 }
 
+// The completion context. This is only available if the client specifies
+// to send this using the client capability `textDocument.completion.contextSupport === true`
 func (c *CompletionParams) GetContext() *CompletionContext {
 	if c == nil {
 		var zero *CompletionContext
@@ -7957,6 +8869,8 @@ type CompletionItemLabelDetails struct {
 	Description string `json:"description,omitempty"`
 }
 
+// An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
+// without any spacing. Should be used for function signatures and type annotations.
 func (c *CompletionItemLabelDetails) GetDetail() string {
 	if c == nil {
 		var zero string
@@ -7965,6 +8879,8 @@ func (c *CompletionItemLabelDetails) GetDetail() string {
 	return c.Detail
 }
 
+// An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
+// for fully qualified names and file paths.
 func (c *CompletionItemLabelDetails) GetDescription() string {
 	if c == nil {
 		var zero string
@@ -8006,6 +8922,7 @@ type MarkupContent struct {
 	Value string `json:"value"`
 }
 
+// The type of the Markup
 func (m *MarkupContent) GetKind() MarkupKind {
 	if m == nil {
 		var zero MarkupKind
@@ -8014,6 +8931,7 @@ func (m *MarkupContent) GetKind() MarkupKind {
 	return m.Kind
 }
 
+// The content itself
 func (m *MarkupContent) GetValue() string {
 	if m == nil {
 		var zero string
@@ -8137,6 +9055,7 @@ type Range struct {
 	End *Position `json:"end"`
 }
 
+// The range's start position.
 func (r *Range) GetStart() *Position {
 	if r == nil {
 		var zero *Position
@@ -8145,6 +9064,7 @@ func (r *Range) GetStart() *Position {
 	return r.Start
 }
 
+// The range's end position.
 func (r *Range) GetEnd() *Position {
 	if r == nil {
 		var zero *Position
@@ -8165,6 +9085,8 @@ type TextEdit struct {
 	NewText string `json:"newText"`
 }
 
+// The range of the text document to be manipulated. To insert
+// text into a document create a range where start === end.
 func (t *TextEdit) GetRange() *Range {
 	if t == nil {
 		var zero *Range
@@ -8173,6 +9095,8 @@ func (t *TextEdit) GetRange() *Range {
 	return t.Range
 }
 
+// The string to be inserted. For delete operations use an
+// empty string.
 func (t *TextEdit) GetNewText() string {
 	if t == nil {
 		var zero string
@@ -8195,6 +9119,7 @@ type InsertReplaceEdit struct {
 	Replace *Range `json:"replace"`
 }
 
+// The string to be inserted.
 func (i *InsertReplaceEdit) GetNewText() string {
 	if i == nil {
 		var zero string
@@ -8203,6 +9128,7 @@ func (i *InsertReplaceEdit) GetNewText() string {
 	return i.NewText
 }
 
+// The range if the insert is requested
 func (i *InsertReplaceEdit) GetInsert() *Range {
 	if i == nil {
 		var zero *Range
@@ -8211,6 +9137,7 @@ func (i *InsertReplaceEdit) GetInsert() *Range {
 	return i.Insert
 }
 
+// The range if the replace is requested.
 func (i *InsertReplaceEdit) GetReplace() *Range {
 	if i == nil {
 		var zero *Range
@@ -8278,6 +9205,7 @@ type Command struct {
 	Arguments []LSPAny `json:"arguments,omitempty"`
 }
 
+// Title of the command, like `save`.
 func (c *Command) GetTitle() string {
 	if c == nil {
 		var zero string
@@ -8286,6 +9214,7 @@ func (c *Command) GetTitle() string {
 	return c.Title
 }
 
+// The identifier of the actual command handler.
 func (c *Command) GetCommand() string {
 	if c == nil {
 		var zero string
@@ -8294,6 +9223,8 @@ func (c *Command) GetCommand() string {
 	return c.Command
 }
 
+// Arguments that the command handler should be
+// invoked with.
 func (c *Command) GetArguments() []LSPAny {
 	if c == nil {
 		var zero []LSPAny
@@ -8426,6 +9357,13 @@ type CompletionItem struct {
 	Data LSPAny `json:"data,omitempty"`
 }
 
+// The label of this completion item.
+//
+// The label property is also by default the text that
+// is inserted when selecting this completion.
+//
+// If label details are provided the label itself should
+// be an unqualified name of the completion item.
 func (c *CompletionItem) GetLabel() string {
 	if c == nil {
 		var zero string
@@ -8434,6 +9372,9 @@ func (c *CompletionItem) GetLabel() string {
 	return c.Label
 }
 
+// Additional details for the label
+//
+// @since 3.17.0
 func (c *CompletionItem) GetLabelDetails() *CompletionItemLabelDetails {
 	if c == nil {
 		var zero *CompletionItemLabelDetails
@@ -8442,6 +9383,8 @@ func (c *CompletionItem) GetLabelDetails() *CompletionItemLabelDetails {
 	return c.LabelDetails
 }
 
+// The kind of this completion item. Based of the kind
+// an icon is chosen by the editor.
 func (c *CompletionItem) GetKind() CompletionItemKind {
 	if c == nil {
 		var zero CompletionItemKind
@@ -8450,6 +9393,9 @@ func (c *CompletionItem) GetKind() CompletionItemKind {
 	return c.Kind
 }
 
+// Tags for this completion item.
+//
+// @since 3.15.0
 func (c *CompletionItem) GetTags() []CompletionItemTag {
 	if c == nil {
 		var zero []CompletionItemTag
@@ -8458,6 +9404,8 @@ func (c *CompletionItem) GetTags() []CompletionItemTag {
 	return c.Tags
 }
 
+// A human-readable string with additional information
+// about this item, like type or symbol information.
 func (c *CompletionItem) GetDetail() string {
 	if c == nil {
 		var zero string
@@ -8466,6 +9414,7 @@ func (c *CompletionItem) GetDetail() string {
 	return c.Detail
 }
 
+// A human-readable string that represents a doc-comment.
 func (c *CompletionItem) GetDocumentation() *StringOrMarkupContent {
 	if c == nil {
 		var zero *StringOrMarkupContent
@@ -8474,6 +9423,8 @@ func (c *CompletionItem) GetDocumentation() *StringOrMarkupContent {
 	return c.Documentation
 }
 
+// Indicates if this item is deprecated.
+// Deprecated: Use `tags` instead.
 func (c *CompletionItem) GetDeprecated() bool {
 	if c == nil {
 		var zero bool
@@ -8482,6 +9433,11 @@ func (c *CompletionItem) GetDeprecated() bool {
 	return c.Deprecated
 }
 
+// Select this item when showing.
+//
+// *Note* that only one completion item can be selected and that the
+// tool / client decides which item that is. The rule is that the *first*
+// item of those that match best is selected.
 func (c *CompletionItem) GetPreselect() bool {
 	if c == nil {
 		var zero bool
@@ -8490,6 +9446,9 @@ func (c *CompletionItem) GetPreselect() bool {
 	return c.Preselect
 }
 
+// A string that should be used when comparing this item
+// with other items. When `falsy` the {@link CompletionItem.label label}
+// is used.
 func (c *CompletionItem) GetSortText() string {
 	if c == nil {
 		var zero string
@@ -8498,6 +9457,9 @@ func (c *CompletionItem) GetSortText() string {
 	return c.SortText
 }
 
+// A string that should be used when filtering a set of
+// completion items. When `falsy` the {@link CompletionItem.label label}
+// is used.
 func (c *CompletionItem) GetFilterText() string {
 	if c == nil {
 		var zero string
@@ -8506,6 +9468,17 @@ func (c *CompletionItem) GetFilterText() string {
 	return c.FilterText
 }
 
+// A string that should be inserted into a document when selecting
+// this completion. When `falsy` the {@link CompletionItem.label label}
+// is used.
+//
+// The `insertText` is subject to interpretation by the client side.
+// Some tools might not take the string literally. For example
+// VS Code when code complete is requested in this example
+// `con<cursor position>` and a completion item with an `insertText` of
+// `console` is provided it will only insert `sole`. Therefore it is
+// recommended to use `textEdit` instead since it avoids additional client
+// side interpretation.
 func (c *CompletionItem) GetInsertText() string {
 	if c == nil {
 		var zero string
@@ -8514,6 +9487,12 @@ func (c *CompletionItem) GetInsertText() string {
 	return c.InsertText
 }
 
+// The format of the insert text. The format applies to both the
+// `insertText` property and the `newText` property of a provided
+// `textEdit`. If omitted defaults to `InsertTextFormat.PlainText`.
+//
+// Please note that the insertTextFormat doesn't apply to
+// `additionalTextEdits`.
 func (c *CompletionItem) GetInsertTextFormat() InsertTextFormat {
 	if c == nil {
 		var zero InsertTextFormat
@@ -8522,6 +9501,11 @@ func (c *CompletionItem) GetInsertTextFormat() InsertTextFormat {
 	return c.InsertTextFormat
 }
 
+// How whitespace and indentation is handled during completion
+// item insertion. If not provided the clients default value depends on
+// the `textDocument.completion.insertTextMode` client capability.
+//
+// @since 3.16.0
 func (c *CompletionItem) GetInsertTextMode() InsertTextMode {
 	if c == nil {
 		var zero InsertTextMode
@@ -8530,6 +9514,26 @@ func (c *CompletionItem) GetInsertTextMode() InsertTextMode {
 	return c.InsertTextMode
 }
 
+// An {@link TextEdit edit} which is applied to a document when selecting
+// this completion. When an edit is provided the value of
+// {@link CompletionItem.insertText insertText} is ignored.
+//
+// Most editors support two different operations when accepting a completion
+// item. One is to insert a completion text and the other is to replace an
+// existing text with a completion text. Since this can usually not be
+// predetermined by a server it can report both ranges. Clients need to
+// signal support for `InsertReplaceEdits` via the
+// `textDocument.completion.insertReplaceSupport` client capability
+// property.
+//
+// *Note 1:* The text edit's range as well as both ranges from an insert
+// replace edit must be a [single line] and they must contain the position
+// at which completion has been requested.
+// *Note 2:* If an `InsertReplaceEdit` is returned the edit's insert range
+// must be a prefix of the edit's replace range, that means it must be
+// contained and starting at the same position.
+//
+// @since 3.16.0 additional type `InsertReplaceEdit`
 func (c *CompletionItem) GetTextEdit() *TextEditOrInsertReplaceEdit {
 	if c == nil {
 		var zero *TextEditOrInsertReplaceEdit
@@ -8538,6 +9542,16 @@ func (c *CompletionItem) GetTextEdit() *TextEditOrInsertReplaceEdit {
 	return c.TextEdit
 }
 
+// The edit text used if the completion item is part of a CompletionList and
+// CompletionList defines an item default for the text edit range.
+//
+// Clients will only honor this property if they opt into completion list
+// item defaults using the capability `completionList.itemDefaults`.
+//
+// If not provided and a list's default range is provided the label
+// property is used as a text.
+//
+// @since 3.17.0
 func (c *CompletionItem) GetTextEditText() string {
 	if c == nil {
 		var zero string
@@ -8546,6 +9560,13 @@ func (c *CompletionItem) GetTextEditText() string {
 	return c.TextEditText
 }
 
+// An optional array of additional {@link TextEdit text edits} that are applied when
+// selecting this completion. Edits must not overlap (including the same insert position)
+// with the main {@link CompletionItem.textEdit edit} nor with themselves.
+//
+// Additional text edits should be used to change text unrelated to the current cursor position
+// (for example adding an import statement at the top of the file if the completion item will
+// insert an unqualified type).
 func (c *CompletionItem) GetAdditionalTextEdits() []*TextEdit {
 	if c == nil {
 		var zero []*TextEdit
@@ -8554,6 +9575,9 @@ func (c *CompletionItem) GetAdditionalTextEdits() []*TextEdit {
 	return c.AdditionalTextEdits
 }
 
+// An optional set of characters that when pressed while this completion is active will accept it first and
+// then type that character. *Note* that all commit characters should have `length=1` and that superfluous
+// characters will be ignored.
 func (c *CompletionItem) GetCommitCharacters() []string {
 	if c == nil {
 		var zero []string
@@ -8562,6 +9586,9 @@ func (c *CompletionItem) GetCommitCharacters() []string {
 	return c.CommitCharacters
 }
 
+// An optional {@link Command command} that is executed *after* inserting this completion. *Note* that
+// additional modifications to the current document should be described with the
+// {@link CompletionItem.additionalTextEdits additionalTextEdits}-property.
 func (c *CompletionItem) GetCommand() *Command {
 	if c == nil {
 		var zero *Command
@@ -8570,6 +9597,8 @@ func (c *CompletionItem) GetCommand() *Command {
 	return c.Command
 }
 
+// A data entry field that is preserved on a completion item between a
+// {@link CompletionRequest} and a {@link CompletionResolveRequest}.
 func (c *CompletionItem) GetData() LSPAny {
 	if c == nil {
 		var zero LSPAny
@@ -8665,6 +9694,9 @@ type CompletionListItemDefaults struct {
 	Data LSPAny `json:"data,omitempty"`
 }
 
+// A default commit character set.
+//
+// @since 3.17.0
 func (c *CompletionListItemDefaults) GetCommitCharacters() []string {
 	if c == nil {
 		return *new([]string)
@@ -8672,6 +9704,9 @@ func (c *CompletionListItemDefaults) GetCommitCharacters() []string {
 	return c.CommitCharacters
 }
 
+// A default edit range.
+//
+// @since 3.17.0
 func (c *CompletionListItemDefaults) GetEditRange() *RangeOrInsertReplaceRange {
 	if c == nil {
 		return *new(*RangeOrInsertReplaceRange)
@@ -8679,6 +9714,9 @@ func (c *CompletionListItemDefaults) GetEditRange() *RangeOrInsertReplaceRange {
 	return c.EditRange
 }
 
+// A default insert text format.
+//
+// @since 3.17.0
 func (c *CompletionListItemDefaults) GetInsertTextFormat() InsertTextFormat {
 	if c == nil {
 		return *new(InsertTextFormat)
@@ -8686,6 +9724,9 @@ func (c *CompletionListItemDefaults) GetInsertTextFormat() InsertTextFormat {
 	return c.InsertTextFormat
 }
 
+// A default insert text mode.
+//
+// @since 3.17.0
 func (c *CompletionListItemDefaults) GetInsertTextMode() InsertTextMode {
 	if c == nil {
 		return *new(InsertTextMode)
@@ -8693,6 +9734,9 @@ func (c *CompletionListItemDefaults) GetInsertTextMode() InsertTextMode {
 	return c.InsertTextMode
 }
 
+// A default data value.
+//
+// @since 3.17.0
 func (c *CompletionListItemDefaults) GetData() LSPAny {
 	if c == nil {
 		return *new(LSPAny)
@@ -8728,6 +9772,10 @@ type CompletionList struct {
 	Items []*CompletionItem `json:"items"`
 }
 
+// This list it not complete. Further typing results in recomputing this list.
+//
+// Recomputed lists have all their items replaced (not appended) in the
+// incomplete completion sessions.
 func (c *CompletionList) GetIsIncomplete() bool {
 	if c == nil {
 		var zero bool
@@ -8736,6 +9784,19 @@ func (c *CompletionList) GetIsIncomplete() bool {
 	return c.IsIncomplete
 }
 
+// In many cases the items of an actual completion result share the same
+// value for properties like `commitCharacters` or the range of a text
+// edit. A completion list can therefore define item defaults which will
+// be used if a completion item itself doesn't specify the value.
+//
+// If a completion list specifies a default value and a completion item
+// also specifies a corresponding value the one from the item is used.
+//
+// Servers are only allowed to return default values if the client
+// signals support for this via the `completionList.itemDefaults`
+// capability.
+//
+// @since 3.17.0
 func (c *CompletionList) GetItemDefaults() *CompletionListItemDefaults {
 	if c == nil {
 		var zero *CompletionListItemDefaults
@@ -8744,6 +9805,7 @@ func (c *CompletionList) GetItemDefaults() *CompletionListItemDefaults {
 	return c.ItemDefaults
 }
 
+// The completion items.
 func (c *CompletionList) GetItems() []*CompletionItem {
 	if c == nil {
 		var zero []*CompletionItem
@@ -8945,6 +10007,7 @@ type Hover struct {
 	Range *Range `json:"range,omitempty"`
 }
 
+// The hover's content
 func (h *Hover) GetContents() *MarkupContentOrMarkedStringOrMarkedStringSlice {
 	if h == nil {
 		var zero *MarkupContentOrMarkedStringOrMarkedStringSlice
@@ -8953,6 +10016,8 @@ func (h *Hover) GetContents() *MarkupContentOrMarkedStringOrMarkedStringSlice {
 	return h.Contents
 }
 
+// An optional range inside the text document that is used to
+// visualize the hover, e.g. by changing the background color.
 func (h *Hover) GetRange() *Range {
 	if h == nil {
 		var zero *Range
@@ -9116,6 +10181,14 @@ type ParameterInformation struct {
 	Documentation *StringOrMarkupContent `json:"documentation,omitempty"`
 }
 
+// The label of this parameter information.
+//
+// Either a string or an inclusive start and exclusive end offsets within its containing
+// signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
+// string representation as `Position` and `Range` does.
+//
+// *Note*: a label of type string should be a substring of its containing signature label.
+// Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
 func (p *ParameterInformation) GetLabel() *StringOrParameterInformationLabelRange {
 	if p == nil {
 		var zero *StringOrParameterInformationLabelRange
@@ -9124,6 +10197,8 @@ func (p *ParameterInformation) GetLabel() *StringOrParameterInformationLabelRang
 	return p.Label
 }
 
+// The human-readable doc-comment of this parameter. Will be shown
+// in the UI but can be omitted.
 func (p *ParameterInformation) GetDocumentation() *StringOrMarkupContent {
 	if p == nil {
 		var zero *StringOrMarkupContent
@@ -9154,6 +10229,8 @@ type SignatureInformation struct {
 	ActiveParameter int `json:"activeParameter,omitempty"`
 }
 
+// The label of this signature. Will be shown in
+// the UI.
 func (s *SignatureInformation) GetLabel() string {
 	if s == nil {
 		var zero string
@@ -9162,6 +10239,8 @@ func (s *SignatureInformation) GetLabel() string {
 	return s.Label
 }
 
+// The human-readable doc-comment of this signature. Will be shown
+// in the UI but can be omitted.
 func (s *SignatureInformation) GetDocumentation() *StringOrMarkupContent {
 	if s == nil {
 		var zero *StringOrMarkupContent
@@ -9170,6 +10249,7 @@ func (s *SignatureInformation) GetDocumentation() *StringOrMarkupContent {
 	return s.Documentation
 }
 
+// The parameters of this signature.
 func (s *SignatureInformation) GetParameters() []*ParameterInformation {
 	if s == nil {
 		var zero []*ParameterInformation
@@ -9178,6 +10258,11 @@ func (s *SignatureInformation) GetParameters() []*ParameterInformation {
 	return s.Parameters
 }
 
+// The index of the active parameter.
+//
+// If provided, this is used in place of `SignatureHelp.activeParameter`.
+//
+// @since 3.16.0
 func (s *SignatureInformation) GetActiveParameter() int {
 	if s == nil {
 		var zero int
@@ -9214,6 +10299,7 @@ type SignatureHelp struct {
 	ActiveParameter int `json:"activeParameter,omitempty"`
 }
 
+// One or more signatures.
 func (s *SignatureHelp) GetSignatures() []*SignatureInformation {
 	if s == nil {
 		var zero []*SignatureInformation
@@ -9222,6 +10308,15 @@ func (s *SignatureHelp) GetSignatures() []*SignatureInformation {
 	return s.Signatures
 }
 
+// The active signature. If omitted or the value lies outside the
+// range of `signatures` the value defaults to zero or is ignored if
+// the `SignatureHelp` has no signatures.
+//
+// Whenever possible implementors should make an active decision about
+// the active signature and shouldn't rely on a default value.
+//
+// In future version of the protocol this property might become
+// mandatory to better express this.
 func (s *SignatureHelp) GetActiveSignature() int {
 	if s == nil {
 		var zero int
@@ -9230,6 +10325,13 @@ func (s *SignatureHelp) GetActiveSignature() int {
 	return s.ActiveSignature
 }
 
+// The active parameter of the active signature. If omitted or the value
+// lies outside the range of `signatures[activeSignature].parameters`
+// defaults to 0 if the active signature has parameters. If
+// the active signature has no parameters it is ignored.
+// In future version of the protocol this property might become
+// mandatory to better express the active parameter if the
+// active signature does have any.
 func (s *SignatureHelp) GetActiveParameter() int {
 	if s == nil {
 		var zero int
@@ -9262,6 +10364,7 @@ type SignatureHelpContext struct {
 	ActiveSignatureHelp *SignatureHelp `json:"activeSignatureHelp,omitempty"`
 }
 
+// Action that caused signature help to be triggered.
 func (s *SignatureHelpContext) GetTriggerKind() SignatureHelpTriggerKind {
 	if s == nil {
 		var zero SignatureHelpTriggerKind
@@ -9270,6 +10373,9 @@ func (s *SignatureHelpContext) GetTriggerKind() SignatureHelpTriggerKind {
 	return s.TriggerKind
 }
 
+// Character that caused signature help to be triggered.
+//
+// This is undefined when `triggerKind !== SignatureHelpTriggerKind.TriggerCharacter`
 func (s *SignatureHelpContext) GetTriggerCharacter() string {
 	if s == nil {
 		var zero string
@@ -9278,6 +10384,10 @@ func (s *SignatureHelpContext) GetTriggerCharacter() string {
 	return s.TriggerCharacter
 }
 
+// `true` if signature help was already showing when it was triggered.
+//
+// Retriggers occurs when the signature help is already active and can be caused by actions such as
+// typing a trigger character, a cursor move, or document content changes.
 func (s *SignatureHelpContext) GetIsRetrigger() bool {
 	if s == nil {
 		var zero bool
@@ -9286,6 +10396,10 @@ func (s *SignatureHelpContext) GetIsRetrigger() bool {
 	return s.IsRetrigger
 }
 
+// The currently active `SignatureHelp`.
+//
+// The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field updated based on
+// the user navigating through available signatures.
 func (s *SignatureHelpContext) GetActiveSignatureHelp() *SignatureHelp {
 	if s == nil {
 		var zero *SignatureHelp
@@ -9307,6 +10421,10 @@ type SignatureHelpParams struct {
 	Context *SignatureHelpContext `json:"context,omitempty"`
 }
 
+// The signature help context. This is only available if the client specifies
+// to send this using the client capability `textDocument.signatureHelp.contextSupport === true`
+//
+// @since 3.15.0
 func (s *SignatureHelpParams) GetContext() *SignatureHelpContext {
 	if s == nil {
 		var zero *SignatureHelpContext
@@ -9425,6 +10543,10 @@ type LocationLink struct {
 	TargetSelectionRange *Range `json:"targetSelectionRange"`
 }
 
+// Span of the origin of this link.
+//
+// Used as the underlined span for mouse interaction. Defaults to the word range at
+// the definition position.
 func (l *LocationLink) GetOriginSelectionRange() *Range {
 	if l == nil {
 		var zero *Range
@@ -9433,6 +10555,7 @@ func (l *LocationLink) GetOriginSelectionRange() *Range {
 	return l.OriginSelectionRange
 }
 
+// The target resource identifier of this link.
 func (l *LocationLink) GetTargetUri() string {
 	if l == nil {
 		var zero string
@@ -9441,6 +10564,9 @@ func (l *LocationLink) GetTargetUri() string {
 	return l.TargetUri
 }
 
+// The full target range of this link. If the target for example is a symbol then target range is the
+// range enclosing this symbol not including leading/trailing whitespace but everything else
+// like comments. This information is typically used to highlight the range in the editor.
 func (l *LocationLink) GetTargetRange() *Range {
 	if l == nil {
 		var zero *Range
@@ -9449,6 +10575,8 @@ func (l *LocationLink) GetTargetRange() *Range {
 	return l.TargetRange
 }
 
+// The range that should be selected and revealed when this link is being followed, e.g the name of a function.
+// Must be contained by the `targetRange`. See also `DocumentSymbol#range`
 func (l *LocationLink) GetTargetSelectionRange() *Range {
 	if l == nil {
 		var zero *Range
@@ -9519,6 +10647,7 @@ type ReferenceContext struct {
 	IncludeDeclaration bool `json:"includeDeclaration"`
 }
 
+// Include the declaration of the current symbol.
 func (r *ReferenceContext) GetIncludeDeclaration() bool {
 	if r == nil {
 		var zero bool
@@ -9555,6 +10684,7 @@ type DocumentSymbolParams struct {
 	TextDocument *TextDocumentIdentifier `json:"textDocument"`
 }
 
+// The text document.
 func (d *DocumentSymbolParams) GetTextDocument() *TextDocumentIdentifier {
 	if d == nil {
 		var zero *TextDocumentIdentifier
@@ -9582,6 +10712,7 @@ type BaseSymbolInformation struct {
 	ContainerName string `json:"containerName,omitempty"`
 }
 
+// The name of this symbol.
 func (b *BaseSymbolInformation) GetName() string {
 	if b == nil {
 		var zero string
@@ -9590,6 +10721,7 @@ func (b *BaseSymbolInformation) GetName() string {
 	return b.Name
 }
 
+// The kind of this symbol.
 func (b *BaseSymbolInformation) GetKind() SymbolKind {
 	if b == nil {
 		var zero SymbolKind
@@ -9598,6 +10730,9 @@ func (b *BaseSymbolInformation) GetKind() SymbolKind {
 	return b.Kind
 }
 
+// Tags for this symbol.
+//
+// @since 3.16.0
 func (b *BaseSymbolInformation) GetTags() []SymbolTag {
 	if b == nil {
 		var zero []SymbolTag
@@ -9606,6 +10741,10 @@ func (b *BaseSymbolInformation) GetTags() []SymbolTag {
 	return b.Tags
 }
 
+// The name of the symbol containing this symbol. This information is for
+// user interface purposes (e.g. to render a qualifier in the user interface
+// if necessary). It can't be used to re-infer a hierarchy for the document
+// symbols.
 func (b *BaseSymbolInformation) GetContainerName() string {
 	if b == nil {
 		var zero string
@@ -9636,6 +10775,9 @@ type SymbolInformation struct {
 	Location *Location `json:"location"`
 }
 
+// Indicates if this symbol is deprecated.
+//
+// Deprecated: Use tags instead
 func (s *SymbolInformation) GetDeprecated() bool {
 	if s == nil {
 		var zero bool
@@ -9644,6 +10786,15 @@ func (s *SymbolInformation) GetDeprecated() bool {
 	return s.Deprecated
 }
 
+// The location of this symbol. The location's range is used by a tool
+// to reveal the location in the editor. If the symbol is selected in the
+// tool the range's start information is used to position the cursor. So
+// the range usually spans more than the actual symbol's name and does
+// normally include things like visibility modifiers.
+//
+// The range doesn't have to denote a node range in the sense of an abstract
+// syntax tree. It can therefore not be used to re-construct a hierarchy of
+// the symbols.
 func (s *SymbolInformation) GetLocation() *Location {
 	if s == nil {
 		var zero *Location
@@ -9687,6 +10838,8 @@ type DocumentSymbol struct {
 	Children []*DocumentSymbol `json:"children,omitempty"`
 }
 
+// The name of this symbol. Will be displayed in the user interface and therefore must not be
+// an empty string or a string only consisting of white spaces.
 func (d *DocumentSymbol) GetName() string {
 	if d == nil {
 		var zero string
@@ -9695,6 +10848,7 @@ func (d *DocumentSymbol) GetName() string {
 	return d.Name
 }
 
+// More detail for this symbol, e.g the signature of a function.
 func (d *DocumentSymbol) GetDetail() string {
 	if d == nil {
 		var zero string
@@ -9703,6 +10857,7 @@ func (d *DocumentSymbol) GetDetail() string {
 	return d.Detail
 }
 
+// The kind of this symbol.
 func (d *DocumentSymbol) GetKind() SymbolKind {
 	if d == nil {
 		var zero SymbolKind
@@ -9711,6 +10866,9 @@ func (d *DocumentSymbol) GetKind() SymbolKind {
 	return d.Kind
 }
 
+// Tags for this document symbol.
+//
+// @since 3.16.0
 func (d *DocumentSymbol) GetTags() []SymbolTag {
 	if d == nil {
 		var zero []SymbolTag
@@ -9719,6 +10877,9 @@ func (d *DocumentSymbol) GetTags() []SymbolTag {
 	return d.Tags
 }
 
+// Indicates if this symbol is deprecated.
+//
+// Deprecated: Use tags instead
 func (d *DocumentSymbol) GetDeprecated() bool {
 	if d == nil {
 		var zero bool
@@ -9727,6 +10888,9 @@ func (d *DocumentSymbol) GetDeprecated() bool {
 	return d.Deprecated
 }
 
+// The range enclosing this symbol not including leading/trailing whitespace but everything else
+// like comments. This information is typically used to determine if the clients cursor is
+// inside the symbol to reveal in the symbol in the UI.
 func (d *DocumentSymbol) GetRange() *Range {
 	if d == nil {
 		var zero *Range
@@ -9735,6 +10899,8 @@ func (d *DocumentSymbol) GetRange() *Range {
 	return d.Range
 }
 
+// The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
+// Must be contained by the `range`.
 func (d *DocumentSymbol) GetSelectionRange() *Range {
 	if d == nil {
 		var zero *Range
@@ -9743,6 +10909,7 @@ func (d *DocumentSymbol) GetSelectionRange() *Range {
 	return d.SelectionRange
 }
 
+// Children of this symbol, e.g. properties of a class.
 func (d *DocumentSymbol) GetChildren() []*DocumentSymbol {
 	if d == nil {
 		var zero []*DocumentSymbol
@@ -9818,6 +10985,7 @@ type FormattingOptions struct {
 	TrimFinalNewlines bool `json:"trimFinalNewlines,omitempty"`
 }
 
+// Size of a tab in spaces.
 func (f *FormattingOptions) GetTabSize() int {
 	if f == nil {
 		var zero int
@@ -9826,6 +10994,7 @@ func (f *FormattingOptions) GetTabSize() int {
 	return f.TabSize
 }
 
+// Prefer spaces over tabs.
 func (f *FormattingOptions) GetInsertSpaces() bool {
 	if f == nil {
 		var zero bool
@@ -9834,6 +11003,9 @@ func (f *FormattingOptions) GetInsertSpaces() bool {
 	return f.InsertSpaces
 }
 
+// Trim trailing whitespace on a line.
+//
+// @since 3.15.0
 func (f *FormattingOptions) GetTrimTrailingWhitespace() bool {
 	if f == nil {
 		var zero bool
@@ -9842,6 +11014,9 @@ func (f *FormattingOptions) GetTrimTrailingWhitespace() bool {
 	return f.TrimTrailingWhitespace
 }
 
+// Insert a newline character at the end of the file if one does not exist.
+//
+// @since 3.15.0
 func (f *FormattingOptions) GetInsertFinalNewline() bool {
 	if f == nil {
 		var zero bool
@@ -9850,6 +11025,9 @@ func (f *FormattingOptions) GetInsertFinalNewline() bool {
 	return f.InsertFinalNewline
 }
 
+// Trim all newlines after the final newline at the end of the file.
+//
+// @since 3.15.0
 func (f *FormattingOptions) GetTrimFinalNewlines() bool {
 	if f == nil {
 		var zero bool
@@ -9869,6 +11047,7 @@ type DocumentFormattingParams struct {
 	Options *FormattingOptions `json:"options"`
 }
 
+// The document to format.
 func (d *DocumentFormattingParams) GetTextDocument() *TextDocumentIdentifier {
 	if d == nil {
 		var zero *TextDocumentIdentifier
@@ -9877,6 +11056,7 @@ func (d *DocumentFormattingParams) GetTextDocument() *TextDocumentIdentifier {
 	return d.TextDocument
 }
 
+// The format options.
 func (d *DocumentFormattingParams) GetOptions() *FormattingOptions {
 	if d == nil {
 		var zero *FormattingOptions
@@ -9900,6 +11080,7 @@ type RenameParams struct {
 	NewName string `json:"newName"`
 }
 
+// The document to rename.
 func (r *RenameParams) GetTextDocument() *TextDocumentIdentifier {
 	if r == nil {
 		var zero *TextDocumentIdentifier
@@ -9908,6 +11089,7 @@ func (r *RenameParams) GetTextDocument() *TextDocumentIdentifier {
 	return r.TextDocument
 }
 
+// The position at which this request was sent.
 func (r *RenameParams) GetPosition() *Position {
 	if r == nil {
 		var zero *Position
@@ -9916,6 +11098,9 @@ func (r *RenameParams) GetPosition() *Position {
 	return r.Position
 }
 
+// The new name of the symbol. If the given name is not valid the
+// request must return a {@link ResponseError} with an
+// appropriate message set.
 func (r *RenameParams) GetNewName() string {
 	if r == nil {
 		var zero string
@@ -9937,6 +11122,11 @@ type OptionalVersionedTextDocumentIdentifier struct {
 	Version int `json:"version"`
 }
 
+// The version number of this document. If a versioned text document identifier
+// is sent from the server to the client and the file is not open in the editor
+// (the server has not received an open notification before) the server can send
+// `null` to indicate that the version is unknown and the content on disk is the
+// truth (as specified with document content ownership).
 func (o *OptionalVersionedTextDocumentIdentifier) GetVersion() int {
 	if o == nil {
 		var zero int
@@ -9961,6 +11151,7 @@ type AnnotatedTextEdit struct {
 	AnnotationId ChangeAnnotationIdentifier `json:"annotationId"`
 }
 
+// The actual identifier of the change annotation
 func (a *AnnotatedTextEdit) GetAnnotationId() ChangeAnnotationIdentifier {
 	if a == nil {
 		var zero ChangeAnnotationIdentifier
@@ -10028,6 +11219,7 @@ type TextDocumentEdit struct {
 	Edits []*TextEditOrAnnotatedTextEdit `json:"edits"`
 }
 
+// The text document to change.
 func (t *TextDocumentEdit) GetTextDocument() *OptionalVersionedTextDocumentIdentifier {
 	if t == nil {
 		var zero *OptionalVersionedTextDocumentIdentifier
@@ -10036,6 +11228,10 @@ func (t *TextDocumentEdit) GetTextDocument() *OptionalVersionedTextDocumentIdent
 	return t.TextDocument
 }
 
+// The edits to be applied.
+//
+// @since 3.16.0 - support for AnnotatedTextEdit. This is guarded using a
+// client capability.
 func (t *TextDocumentEdit) GetEdits() []*TextEditOrAnnotatedTextEdit {
 	if t == nil {
 		var zero []*TextEditOrAnnotatedTextEdit
@@ -10056,6 +11252,7 @@ type ResourceOperation struct {
 	AnnotationId ChangeAnnotationIdentifier `json:"annotationId,omitempty"`
 }
 
+// The resource operation kind.
 func (r *ResourceOperation) GetKind() string {
 	if r == nil {
 		var zero string
@@ -10064,6 +11261,9 @@ func (r *ResourceOperation) GetKind() string {
 	return r.Kind
 }
 
+// An optional annotation identifier describing the operation.
+//
+// @since 3.16.0
 func (r *ResourceOperation) GetAnnotationId() ChangeAnnotationIdentifier {
 	if r == nil {
 		var zero ChangeAnnotationIdentifier
@@ -10103,6 +11303,7 @@ type CreateFileOptions struct {
 	IgnoreIfExists bool `json:"ignoreIfExists,omitempty"`
 }
 
+// Overwrite existing file. Overwrite wins over `ignoreIfExists`
 func (c *CreateFileOptions) GetOverwrite() bool {
 	if c == nil {
 		var zero bool
@@ -10111,6 +11312,7 @@ func (c *CreateFileOptions) GetOverwrite() bool {
 	return c.Overwrite
 }
 
+// Ignore if exists.
 func (c *CreateFileOptions) GetIgnoreIfExists() bool {
 	if c == nil {
 		var zero bool
@@ -10132,6 +11334,7 @@ type CreateFile struct {
 	Options *CreateFileOptions `json:"options,omitempty"`
 }
 
+// A create
 func (c *CreateFile) GetKind() CreateFileKind {
 	if c == nil {
 		var zero CreateFileKind
@@ -10140,6 +11343,7 @@ func (c *CreateFile) GetKind() CreateFileKind {
 	return c.Kind
 }
 
+// The resource to create.
 func (c *CreateFile) GetUri() string {
 	if c == nil {
 		var zero string
@@ -10148,6 +11352,7 @@ func (c *CreateFile) GetUri() string {
 	return c.Uri
 }
 
+// Additional options
 func (c *CreateFile) GetOptions() *CreateFileOptions {
 	if c == nil {
 		var zero *CreateFileOptions
@@ -10187,6 +11392,7 @@ type RenameFileOptions struct {
 	IgnoreIfExists bool `json:"ignoreIfExists,omitempty"`
 }
 
+// Overwrite target if existing. Overwrite wins over `ignoreIfExists`
 func (r *RenameFileOptions) GetOverwrite() bool {
 	if r == nil {
 		var zero bool
@@ -10195,6 +11401,7 @@ func (r *RenameFileOptions) GetOverwrite() bool {
 	return r.Overwrite
 }
 
+// Ignores if target exists.
 func (r *RenameFileOptions) GetIgnoreIfExists() bool {
 	if r == nil {
 		var zero bool
@@ -10218,6 +11425,7 @@ type RenameFile struct {
 	Options *RenameFileOptions `json:"options,omitempty"`
 }
 
+// A rename
 func (r *RenameFile) GetKind() RenameFileKind {
 	if r == nil {
 		var zero RenameFileKind
@@ -10226,6 +11434,7 @@ func (r *RenameFile) GetKind() RenameFileKind {
 	return r.Kind
 }
 
+// The old (existing) location.
 func (r *RenameFile) GetOldUri() string {
 	if r == nil {
 		var zero string
@@ -10234,6 +11443,7 @@ func (r *RenameFile) GetOldUri() string {
 	return r.OldUri
 }
 
+// The new location.
 func (r *RenameFile) GetNewUri() string {
 	if r == nil {
 		var zero string
@@ -10242,6 +11452,7 @@ func (r *RenameFile) GetNewUri() string {
 	return r.NewUri
 }
 
+// Rename options.
 func (r *RenameFile) GetOptions() *RenameFileOptions {
 	if r == nil {
 		var zero *RenameFileOptions
@@ -10281,6 +11492,7 @@ type DeleteFileOptions struct {
 	IgnoreIfNotExists bool `json:"ignoreIfNotExists,omitempty"`
 }
 
+// Delete the content recursively if a folder is denoted.
 func (d *DeleteFileOptions) GetRecursive() bool {
 	if d == nil {
 		var zero bool
@@ -10289,6 +11501,7 @@ func (d *DeleteFileOptions) GetRecursive() bool {
 	return d.Recursive
 }
 
+// Ignore the operation if the file doesn't exist.
 func (d *DeleteFileOptions) GetIgnoreIfNotExists() bool {
 	if d == nil {
 		var zero bool
@@ -10310,6 +11523,7 @@ type DeleteFile struct {
 	Options *DeleteFileOptions `json:"options,omitempty"`
 }
 
+// A delete
 func (d *DeleteFile) GetKind() DeleteFileKind {
 	if d == nil {
 		var zero DeleteFileKind
@@ -10318,6 +11532,7 @@ func (d *DeleteFile) GetKind() DeleteFileKind {
 	return d.Kind
 }
 
+// The file to delete.
 func (d *DeleteFile) GetUri() string {
 	if d == nil {
 		var zero string
@@ -10326,6 +11541,7 @@ func (d *DeleteFile) GetUri() string {
 	return d.Uri
 }
 
+// Delete options.
 func (d *DeleteFile) GetOptions() *DeleteFileOptions {
 	if d == nil {
 		var zero *DeleteFileOptions
@@ -10410,6 +11626,8 @@ type ChangeAnnotation struct {
 	Description string `json:"description,omitempty"`
 }
 
+// A human-readable string describing the actual change. The string
+// is rendered prominent in the user interface.
 func (c *ChangeAnnotation) GetLabel() string {
 	if c == nil {
 		var zero string
@@ -10418,6 +11636,8 @@ func (c *ChangeAnnotation) GetLabel() string {
 	return c.Label
 }
 
+// A flag which indicates that user confirmation is needed
+// before applying the change.
 func (c *ChangeAnnotation) GetNeedsConfirmation() bool {
 	if c == nil {
 		var zero bool
@@ -10426,6 +11646,8 @@ func (c *ChangeAnnotation) GetNeedsConfirmation() bool {
 	return c.NeedsConfirmation
 }
 
+// A human-readable string which is rendered less prominent in
+// the user interface.
 func (c *ChangeAnnotation) GetDescription() string {
 	if c == nil {
 		var zero string
@@ -10471,6 +11693,7 @@ type WorkspaceEdit struct {
 	ChangeAnnotations map[ChangeAnnotationIdentifier]*ChangeAnnotation `json:"changeAnnotations,omitempty"`
 }
 
+// Holds changes to existing resources.
 func (w *WorkspaceEdit) GetChanges() map[string][]*TextEdit {
 	if w == nil {
 		var zero map[string][]*TextEdit
@@ -10479,6 +11702,16 @@ func (w *WorkspaceEdit) GetChanges() map[string][]*TextEdit {
 	return w.Changes
 }
 
+// Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
+// are either an array of `TextDocumentEdit`s to express changes to n different text documents
+// where each text document edit addresses a specific version of a text document. Or it can contain
+// above `TextDocumentEdit`s mixed with create, rename and delete file / folder operations.
+//
+// Whether a client supports versioned document edits is expressed via
+// `workspace.workspaceEdit.documentChanges` client capability.
+//
+// If a client neither supports `documentChanges` nor `workspace.workspaceEdit.resourceOperations` then
+// only plain `TextEdit`s using the `changes` property are supported.
 func (w *WorkspaceEdit) GetDocumentChanges() []*TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile {
 	if w == nil {
 		var zero []*TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile
@@ -10487,6 +11720,12 @@ func (w *WorkspaceEdit) GetDocumentChanges() []*TextDocumentEditOrCreateFileOrRe
 	return w.DocumentChanges
 }
 
+// A map of change annotations that can be referenced in `AnnotatedTextEdit`s or create, rename and
+// delete file / folder operations.
+//
+// Whether clients honor this property depends on the client capability `workspace.changeAnnotationSupport`.
+//
+// @since 3.16.0
 func (w *WorkspaceEdit) GetChangeAnnotations() map[ChangeAnnotationIdentifier]*ChangeAnnotation {
 	if w == nil {
 		var zero map[ChangeAnnotationIdentifier]*ChangeAnnotation
@@ -10562,6 +11801,7 @@ type LogMessageParams struct {
 	Message string `json:"message"`
 }
 
+// The message type. See {@link MessageType}
 func (l *LogMessageParams) GetType() MessageType {
 	if l == nil {
 		var zero MessageType
@@ -10570,6 +11810,7 @@ func (l *LogMessageParams) GetType() MessageType {
 	return l.Type
 }
 
+// The actual message.
 func (l *LogMessageParams) GetMessage() string {
 	if l == nil {
 		var zero string
@@ -10594,6 +11835,7 @@ type TextDocumentItem struct {
 	Text string `json:"text"`
 }
 
+// The text document's uri.
 func (t *TextDocumentItem) GetUri() string {
 	if t == nil {
 		var zero string
@@ -10602,6 +11844,7 @@ func (t *TextDocumentItem) GetUri() string {
 	return t.Uri
 }
 
+// The text document's language identifier.
 func (t *TextDocumentItem) GetLanguageId() string {
 	if t == nil {
 		var zero string
@@ -10610,6 +11853,8 @@ func (t *TextDocumentItem) GetLanguageId() string {
 	return t.LanguageId
 }
 
+// The version number of this document (it will increase after each
+// change, including undo/redo).
 func (t *TextDocumentItem) GetVersion() int {
 	if t == nil {
 		var zero int
@@ -10618,6 +11863,7 @@ func (t *TextDocumentItem) GetVersion() int {
 	return t.Version
 }
 
+// The content of the opened text document.
 func (t *TextDocumentItem) GetText() string {
 	if t == nil {
 		var zero string
@@ -10634,6 +11880,7 @@ type DidOpenTextDocumentParams struct {
 	TextDocument *TextDocumentItem `json:"textDocument"`
 }
 
+// The document that was opened.
 func (d *DidOpenTextDocumentParams) GetTextDocument() *TextDocumentItem {
 	if d == nil {
 		var zero *TextDocumentItem
@@ -10651,6 +11898,7 @@ type VersionedTextDocumentIdentifier struct {
 	Version int `json:"version"`
 }
 
+// The version number of this document.
 func (v *VersionedTextDocumentIdentifier) GetVersion() int {
 	if v == nil {
 		var zero int
@@ -10670,6 +11918,7 @@ type IncrementalTextDocumentContentChangeEvent struct {
 	Text string `json:"text"`
 }
 
+// The range of the document that changed.
 func (i *IncrementalTextDocumentContentChangeEvent) GetRange() *Range {
 	if i == nil {
 		return *new(*Range)
@@ -10677,6 +11926,9 @@ func (i *IncrementalTextDocumentContentChangeEvent) GetRange() *Range {
 	return i.Range
 }
 
+// The optional length of the range that got replaced.
+//
+// @deprecated use range instead.
 func (i *IncrementalTextDocumentContentChangeEvent) GetRangeLength() int {
 	if i == nil {
 		return *new(int)
@@ -10684,6 +11936,7 @@ func (i *IncrementalTextDocumentContentChangeEvent) GetRangeLength() int {
 	return i.RangeLength
 }
 
+// The new text for the provided range.
 func (i *IncrementalTextDocumentContentChangeEvent) GetText() string {
 	if i == nil {
 		return *new(string)
@@ -10696,6 +11949,7 @@ type FullTextDocumentContentChangeEvent struct {
 	Text string `json:"text"`
 }
 
+// The new text of the whole document.
 func (f *FullTextDocumentContentChangeEvent) GetText() string {
 	if f == nil {
 		return *new(string)
@@ -10784,6 +12038,9 @@ type DidChangeTextDocumentParams struct {
 	ContentChanges []TextDocumentContentChangeEvent `json:"contentChanges"`
 }
 
+// The document that did change. The version number points
+// to the version after all provided content changes have
+// been applied.
 func (d *DidChangeTextDocumentParams) GetTextDocument() *VersionedTextDocumentIdentifier {
 	if d == nil {
 		var zero *VersionedTextDocumentIdentifier
@@ -10792,6 +12049,17 @@ func (d *DidChangeTextDocumentParams) GetTextDocument() *VersionedTextDocumentId
 	return d.TextDocument
 }
 
+// The actual content changes. The content changes describe single state changes
+// to the document. So if there are two content changes c1 (at array index 0) and
+// c2 (at array index 1) for a document in state S then c1 moves the document from
+// S to S' and c2 from S' to S”. So c1 is computed on the state S and c2 is computed
+// on the state S'.
+//
+// To mirror the content of a document using change events use the following approach:
+//   - start with the same initial content
+//   - apply the 'textDocument/didChange' notifications in the order you receive them.
+//   - apply the `TextDocumentContentChangeEvent`s in a single notification in the order
+//     you receive them.
 func (d *DidChangeTextDocumentParams) GetContentChanges() []TextDocumentContentChangeEvent {
 	if d == nil {
 		var zero []TextDocumentContentChangeEvent
@@ -10808,6 +12076,7 @@ type DidCloseTextDocumentParams struct {
 	TextDocument *TextDocumentIdentifier `json:"textDocument"`
 }
 
+// The document that was closed.
 func (d *DidCloseTextDocumentParams) GetTextDocument() *TextDocumentIdentifier {
 	if d == nil {
 		var zero *TextDocumentIdentifier
@@ -10874,6 +12143,7 @@ type CodeDescription struct {
 	Href string `json:"href"`
 }
 
+// An URI to open with more information about the diagnostic error.
 func (c *CodeDescription) GetHref() string {
 	if c == nil {
 		var zero string
@@ -10894,6 +12164,7 @@ type DiagnosticRelatedInformation struct {
 	Message string `json:"message"`
 }
 
+// The location of this related diagnostic information.
 func (d *DiagnosticRelatedInformation) GetLocation() *Location {
 	if d == nil {
 		var zero *Location
@@ -10902,6 +12173,7 @@ func (d *DiagnosticRelatedInformation) GetLocation() *Location {
 	return d.Location
 }
 
+// The message of this related diagnostic information.
 func (d *DiagnosticRelatedInformation) GetMessage() string {
 	if d == nil {
 		var zero string
@@ -10947,6 +12219,7 @@ type Diagnostic struct {
 	Data LSPAny `json:"data,omitempty"`
 }
 
+// The range at which the message applies
 func (d *Diagnostic) GetRange() *Range {
 	if d == nil {
 		var zero *Range
@@ -10955,6 +12228,8 @@ func (d *Diagnostic) GetRange() *Range {
 	return d.Range
 }
 
+// The diagnostic's severity. Can be omitted. If omitted it is up to the
+// client to interpret diagnostics as error, warning, info or hint.
 func (d *Diagnostic) GetSeverity() DiagnosticSeverity {
 	if d == nil {
 		var zero DiagnosticSeverity
@@ -10963,6 +12238,7 @@ func (d *Diagnostic) GetSeverity() DiagnosticSeverity {
 	return d.Severity
 }
 
+// The diagnostic's code, which usually appear in the user interface.
 func (d *Diagnostic) GetCode() *IntegerOrString {
 	if d == nil {
 		var zero *IntegerOrString
@@ -10971,6 +12247,10 @@ func (d *Diagnostic) GetCode() *IntegerOrString {
 	return d.Code
 }
 
+// An optional property to describe the error code.
+// Requires the code field (above) to be present/not null.
+//
+// @since 3.16.0
 func (d *Diagnostic) GetCodeDescription() *CodeDescription {
 	if d == nil {
 		var zero *CodeDescription
@@ -10979,6 +12259,9 @@ func (d *Diagnostic) GetCodeDescription() *CodeDescription {
 	return d.CodeDescription
 }
 
+// A human-readable string describing the source of this
+// diagnostic, e.g. 'typescript' or 'super lint'. It usually
+// appears in the user interface.
 func (d *Diagnostic) GetSource() string {
 	if d == nil {
 		var zero string
@@ -10987,6 +12270,7 @@ func (d *Diagnostic) GetSource() string {
 	return d.Source
 }
 
+// The diagnostic's message. It usually appears in the user interface
 func (d *Diagnostic) GetMessage() string {
 	if d == nil {
 		var zero string
@@ -10995,6 +12279,9 @@ func (d *Diagnostic) GetMessage() string {
 	return d.Message
 }
 
+// Additional metadata about the diagnostic.
+//
+// @since 3.15.0
 func (d *Diagnostic) GetTags() []DiagnosticTag {
 	if d == nil {
 		var zero []DiagnosticTag
@@ -11003,6 +12290,8 @@ func (d *Diagnostic) GetTags() []DiagnosticTag {
 	return d.Tags
 }
 
+// An array of related diagnostic information, e.g. when symbol-names within
+// a scope collide all definitions can be marked via this property.
 func (d *Diagnostic) GetRelatedInformation() []*DiagnosticRelatedInformation {
 	if d == nil {
 		var zero []*DiagnosticRelatedInformation
@@ -11011,6 +12300,10 @@ func (d *Diagnostic) GetRelatedInformation() []*DiagnosticRelatedInformation {
 	return d.RelatedInformation
 }
 
+// A data entry field that is preserved between a `textDocument/publishDiagnostics`
+// notification and `textDocument/codeAction` request.
+//
+// @since 3.16.0
 func (d *Diagnostic) GetData() LSPAny {
 	if d == nil {
 		var zero LSPAny
@@ -11033,6 +12326,7 @@ type PublishDiagnosticsParams struct {
 	Diagnostics []*Diagnostic `json:"diagnostics"`
 }
 
+// The URI for which diagnostic information is reported.
 func (p *PublishDiagnosticsParams) GetUri() string {
 	if p == nil {
 		var zero string
@@ -11041,6 +12335,9 @@ func (p *PublishDiagnosticsParams) GetUri() string {
 	return p.Uri
 }
 
+// Optional the version number of the document the diagnostics are published for.
+//
+// @since 3.15.0
 func (p *PublishDiagnosticsParams) GetVersion() int {
 	if p == nil {
 		var zero int
@@ -11049,6 +12346,7 @@ func (p *PublishDiagnosticsParams) GetVersion() int {
 	return p.Version
 }
 
+// An array of diagnostic information items.
 func (p *PublishDiagnosticsParams) GetDiagnostics() []*Diagnostic {
 	if p == nil {
 		var zero []*Diagnostic
