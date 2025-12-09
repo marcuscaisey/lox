@@ -1,10 +1,12 @@
 package lsp
 
+// This file contains handlers for the methods described under
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#languageFeatures.
+
 import (
 	"fmt"
 	"slices"
 	"strings"
-	"unicode/utf16"
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/format"
@@ -563,90 +565,6 @@ func declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
 	return decl, ok
 }
 
-func commentsText(doc []*ast.Comment) string {
-	lines := make([]string, len(doc))
-	for i, comment := range doc {
-		lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
-	}
-	return strings.Join(lines, "\n")
-}
-
-func funDetail(fun *ast.Function) string {
-	if fun == nil {
-		return "fun()"
-	}
-	params := make([]string, 0, len(fun.Params))
-	for _, paramDecl := range fun.Params {
-		if paramDecl.Name.IsValid() {
-			params = append(params, paramDecl.Name.String())
-		}
-	}
-	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
-}
-
-func classDetail(decl *ast.ClassDecl) string {
-	if !decl.Name.IsValid() {
-		return ""
-	}
-	return fmt.Sprintf("class %s", decl.Name.String())
-}
-
 func filenameToURI(filename string) string {
 	return fmt.Sprintf("file://%s", filename)
-}
-
-// containingIdentRange returns the range of the identifier containing the given position and whether one exists.
-func containingIdentRange(program *ast.Program, pos *protocol.Position) (*protocol.Range, bool) {
-	file := program.Start().File
-	line := []rune(string(file.Line(pos.Line + 1)))
-	posIdx := len(utf16.Decode(utf16.Encode(line)[:pos.Character]))
-
-	startIdx := posIdx
-startIdxLoop:
-	for startIdx > 0 {
-		switch {
-		case isAlpha(line[startIdx-1]):
-			startIdx--
-		// Identifiers can't start with a digit so if the previous character is a digit, we need to find an alphabetic
-		// character which proceeds it before we can accept the digit.
-		case isDigit(line[startIdx-1]):
-			for i := startIdx - 2; i >= 0 && isAlphaNumeric(line[i]); i-- {
-				if isAlpha(line[i]) {
-					startIdx = i
-					continue startIdxLoop
-				}
-			}
-			break startIdxLoop
-		default:
-			break startIdxLoop
-		}
-	}
-	startChar := len(utf16.Encode(line[:startIdx]))
-
-	if startChar == pos.Character {
-		return nil, false
-	}
-
-	endIdx := posIdx
-	for endIdx < len(line) && isAlphaNumeric(line[endIdx]) {
-		endIdx++
-	}
-	endChar := len(utf16.Encode(line[:endIdx]))
-
-	return &protocol.Range{
-		Start: &protocol.Position{Line: pos.Line, Character: startChar},
-		End:   &protocol.Position{Line: pos.Line, Character: endChar},
-	}, true
-}
-
-func isDigit(r rune) bool {
-	return '0' <= r && r <= '9'
-}
-
-func isAlpha(r rune) bool {
-	return ('a' <= r && r <= 'z') || ('A' <= r && r <= 'Z') || r == '_'
-}
-
-func isAlphaNumeric(r rune) bool {
-	return isAlpha(r) || isDigit(r)
 }

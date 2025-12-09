@@ -3,7 +3,6 @@ package lsp
 import (
 	"unicode/utf16"
 
-	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
@@ -52,28 +51,6 @@ func inRangePositions(pos *protocol.Position, start token.Position, end token.Po
 	} else {
 		return line > start.Line && line < end.Line
 	}
-}
-
-// outermostNodeAt returns the outermost node of a [*ast.Program] which has type T and contains a [*protocol.Position].
-func outermostNodeAt[T ast.Node](program *ast.Program, pos *protocol.Position) (T, bool) {
-	return ast.Find(program, func(node T) bool {
-		return inRange(pos, node)
-	})
-}
-
-// outermostNodeAtOrBefore returns the outermost node of a [*ast.Program] which has type T and contains or precedes a
-// [*protocol.Position].
-func outermostNodeAtOrBefore[T ast.Node](node ast.Node, pos *protocol.Position) (T, bool) {
-	return ast.Find(node, func(node T) bool {
-		return inRangeOrFollows(pos, node)
-	})
-}
-
-// innermostNodeAt returns the innermost node of a [*ast.Program] which has type T and contains a [*protocol.Position].
-func innermostNodeAt[T ast.Node](node ast.Node, pos *protocol.Position) (T, bool) {
-	return ast.FindLast(node, func(node T) bool {
-		return inRange(pos, node)
-	})
 }
 
 func columnUTF16(p token.Position) int {

@@ -1,4 +1,3 @@
-// Package lsp implements a JSON-RPC 2.0 server handler which implements the Language Server Protocol.
 package lsp
 
 import (
@@ -10,8 +9,6 @@ import (
 	"github.com/marcuscaisey/lox/loxls/jsonrpc"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
-
-var log *logger
 
 // Handler handles JSON-RPC requests and notifications.
 type Handler struct {

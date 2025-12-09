@@ -1,5 +1,8 @@
 package lsp
 
+// This file contains handlers for the methods described under
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#lifeCycleMessages.
+
 import (
 	"bytes"
 	"fmt"
