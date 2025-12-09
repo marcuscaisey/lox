@@ -262,7 +262,7 @@ func (c *keywordCompletor) previousCharacterEnd(pos *protocol.Position) (*protoc
 		}
 		for i, rune := range slices.Backward(line[:commentIdx]) {
 			if !unicode.IsSpace(rune) {
-				return utf16Len(line[:i+1]), true
+				return utf16RunesLen(line[:i+1]), true
 			}
 		}
 		return 0, false

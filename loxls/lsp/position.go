@@ -53,5 +53,5 @@ func inRangePositions(pos *protocol.Position, start token.Position, end token.Po
 
 func columnUTF16(p token.Position) int {
 	line := p.File.Line(p.Line)
-	return utf16Len([]rune(string(line[:p.Column])))
+	return utf16BytesLen(line[:p.Column])
 }

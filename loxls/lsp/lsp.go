@@ -66,7 +66,7 @@ startIdxLoop:
 			break startIdxLoop
 		}
 	}
-	startChar := utf16Len(line[:startIdx])
+	startChar := utf16RunesLen(line[:startIdx])
 
 	if startChar == pos.Character {
 		return nil, false
@@ -76,7 +76,7 @@ startIdxLoop:
 	for endIdx < len(line) && isAlphaNumeric(line[endIdx]) {
 		endIdx++
 	}
-	endChar := utf16Len(line[:endIdx])
+	endChar := utf16RunesLen(line[:endIdx])
 
 	return &protocol.Range{
 		Start: &protocol.Position{Line: pos.Line, Character: startChar},
@@ -118,6 +118,14 @@ func innermostNodeAt[T ast.Node](node ast.Node, pos *protocol.Position) (T, bool
 	})
 }
 
-func utf16Len(s []rune) int {
+func utf16RunesLen(s []rune) int {
 	return len(utf16.Encode(s))
+}
+
+func utf16StringLen(s string) int {
+	return utf16RunesLen([]rune(s))
+}
+
+func utf16BytesLen(b []byte) int {
+	return utf16StringLen(string(b))
 }
