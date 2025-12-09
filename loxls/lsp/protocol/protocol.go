@@ -10226,7 +10226,7 @@ type SignatureInformation struct {
 	// If provided, this is used in place of `SignatureHelp.activeParameter`.
 	//
 	// @since 3.16.0
-	ActiveParameter int `json:"activeParameter,omitempty"`
+	ActiveParameter int `json:"activeParameter"`
 }
 
 // The label of this signature. Will be shown in
@@ -10288,7 +10288,7 @@ type SignatureHelp struct {
 	//
 	// In future version of the protocol this property might become
 	// mandatory to better express this.
-	ActiveSignature int `json:"activeSignature,omitempty"`
+	ActiveSignature int `json:"activeSignature"`
 	// The active parameter of the active signature. If omitted or the value
 	// lies outside the range of `signatures[activeSignature].parameters`
 	// defaults to 0 if the active signature has parameters. If
