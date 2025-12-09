@@ -24,11 +24,6 @@ var tupleTypeFieldNameOverrides = map[string][]string{
 	"ParameterInformationLabelRange": {"Start", "End"},
 }
 
-var structRequiredFieldOverrides = map[string][]string{
-	"SignatureInformation": {"ActiveParameter"},
-	"SignatureHelp":        {"ActiveSignature"},
-}
-
 var sumTypeVariantDiscriminators = map[string]map[string]string{
 	"IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEvent": {
 		"*IncrementalTextDocumentContentChangeEvent": "range",
@@ -234,13 +229,9 @@ func (g *generator) structField(structName string, prop *metamodel.Property) *st
 	} else {
 		typ = g.genTypeDecl(structName+name, prop.Type)
 	}
-	optional := prop.Optional
-	if overrides, ok := structRequiredFieldOverrides[structName]; ok && slices.Contains(overrides, name) {
-		optional = false
-	}
 	return &structField{
 		Comment:  g.comment(prop.Documentation, prop.Deprecated),
-		Optional: optional,
+		Optional: prop.Optional,
 		Name:     name,
 		Type:     typ,
 		JSONName: prop.Name,
