@@ -229,6 +229,9 @@ func (g *generator) structField(structName string, prop *metamodel.Property) *st
 	} else {
 		typ = g.genTypeDecl(structName+name, prop.Type)
 	}
+	if prop.Optional && (typ == "int" || typ == "float64") {
+		typ = g.genOptionalTypeDecl(typ)
+	}
 	return &structField{
 		Comment:  g.comment(prop.Documentation, prop.Deprecated),
 		Optional: prop.Optional,
@@ -236,6 +239,53 @@ func (g *generator) structField(structName string, prop *metamodel.Property) *st
 		Type:     typ,
 		JSONName: prop.Name,
 	}
+}
+
+func (g *generator) genOptionalTypeDecl(wrappedType string) string {
+	decl := `
+		// Optional is a JSON value which is either present or not.
+		type Optional[T any] []T
+
+		// NewOptional returns an [Optional] which is present.
+		func NewOptional[T any](value T) Optional[T] {
+			return Optional[T]([]T{value})
+		}
+
+		func (o Optional[T]) IsPresent() bool {
+			return o != nil
+		}
+
+		func (o Optional[T]) Get() T {
+			if !o.IsPresent() {
+				panic("get of an absent value")
+			}
+			return o[0]
+		}
+
+		func (o *Optional[T]) UnmarshalJSON(data []byte) error {
+			if bytes.Equal(data, []byte("null")) {
+				return nil
+			}
+			var v T
+			if err := json.Unmarshal(data, &v); err != nil {
+				return err
+			}
+			*o = Optional[T]{v}
+			return nil
+		}
+
+		func (o Optional[T]) MarshalJSON() ([]byte, error) {
+			if o.IsPresent() {
+				return json.Marshal(o[0])
+			}
+			return []byte("null"), nil
+		}
+	`
+	if !g.gennedTypes["Optional"] {
+		g.gennedTypes["Optional"] = true
+		g.typeDecls = append(g.typeDecls, decl)
+	}
+	return fmt.Sprintf("Optional[%s]", wrappedType)
 }
 
 func (f *structField) String() string {

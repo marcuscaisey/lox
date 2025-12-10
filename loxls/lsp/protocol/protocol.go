@@ -2632,6 +2632,44 @@ func (r *RenameClientCapabilities) GetHonorsChangeAnnotations() bool {
 	return r.HonorsChangeAnnotations
 }
 
+// Optional is a JSON value which is either present or not.
+type Optional[T any] []T
+
+// NewOptional returns an [Optional] which is present.
+func NewOptional[T any](value T) Optional[T] {
+	return Optional[T]([]T{value})
+}
+
+func (o Optional[T]) IsPresent() bool {
+	return o != nil
+}
+
+func (o Optional[T]) Get() T {
+	if !o.IsPresent() {
+		panic("get of an absent value")
+	}
+	return o[0]
+}
+
+func (o *Optional[T]) UnmarshalJSON(data []byte) error {
+	if bytes.Equal(data, []byte("null")) {
+		return nil
+	}
+	var v T
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	*o = Optional[T]{v}
+	return nil
+}
+
+func (o Optional[T]) MarshalJSON() ([]byte, error) {
+	if o.IsPresent() {
+		return json.Marshal(o[0])
+	}
+	return []byte("null"), nil
+}
+
 // A set of predefined range kinds.
 //
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#foldingRangeKind
@@ -2694,7 +2732,7 @@ type FoldingRangeClientCapabilities struct {
 	// The maximum number of folding ranges that the client prefers to receive
 	// per document. The value serves as a hint, servers are free to follow the
 	// limit.
-	RangeLimit int `json:"rangeLimit,omitempty"`
+	RangeLimit Optional[int] `json:"rangeLimit,omitempty"`
 	// If set, the client signals that it only supports folding complete lines.
 	// If set, client will ignore specified `startCharacter` and `endCharacter`
 	// properties in a FoldingRange.
@@ -2724,9 +2762,9 @@ func (f *FoldingRangeClientCapabilities) GetDynamicRegistration() bool {
 // The maximum number of folding ranges that the client prefers to receive
 // per document. The value serves as a hint, servers are free to follow the
 // limit.
-func (f *FoldingRangeClientCapabilities) GetRangeLimit() int {
+func (f *FoldingRangeClientCapabilities) GetRangeLimit() Optional[int] {
 	if f == nil {
-		var zero int
+		var zero Optional[int]
 		return zero
 	}
 	return f.RangeLimit
@@ -10226,7 +10264,7 @@ type SignatureInformation struct {
 	// If provided, this is used in place of `SignatureHelp.activeParameter`.
 	//
 	// @since 3.16.0
-	ActiveParameter int `json:"activeParameter,omitempty"`
+	ActiveParameter Optional[int] `json:"activeParameter,omitempty"`
 }
 
 // The label of this signature. Will be shown in
@@ -10263,9 +10301,9 @@ func (s *SignatureInformation) GetParameters() []*ParameterInformation {
 // If provided, this is used in place of `SignatureHelp.activeParameter`.
 //
 // @since 3.16.0
-func (s *SignatureInformation) GetActiveParameter() int {
+func (s *SignatureInformation) GetActiveParameter() Optional[int] {
 	if s == nil {
-		var zero int
+		var zero Optional[int]
 		return zero
 	}
 	return s.ActiveParameter
@@ -10288,7 +10326,7 @@ type SignatureHelp struct {
 	//
 	// In future version of the protocol this property might become
 	// mandatory to better express this.
-	ActiveSignature int `json:"activeSignature,omitempty"`
+	ActiveSignature Optional[int] `json:"activeSignature,omitempty"`
 	// The active parameter of the active signature. If omitted or the value
 	// lies outside the range of `signatures[activeSignature].parameters`
 	// defaults to 0 if the active signature has parameters. If
@@ -10296,7 +10334,7 @@ type SignatureHelp struct {
 	// In future version of the protocol this property might become
 	// mandatory to better express the active parameter if the
 	// active signature does have any.
-	ActiveParameter int `json:"activeParameter,omitempty"`
+	ActiveParameter Optional[int] `json:"activeParameter,omitempty"`
 }
 
 // One or more signatures.
@@ -10317,9 +10355,9 @@ func (s *SignatureHelp) GetSignatures() []*SignatureInformation {
 //
 // In future version of the protocol this property might become
 // mandatory to better express this.
-func (s *SignatureHelp) GetActiveSignature() int {
+func (s *SignatureHelp) GetActiveSignature() Optional[int] {
 	if s == nil {
-		var zero int
+		var zero Optional[int]
 		return zero
 	}
 	return s.ActiveSignature
@@ -10332,9 +10370,9 @@ func (s *SignatureHelp) GetActiveSignature() int {
 // In future version of the protocol this property might become
 // mandatory to better express the active parameter if the
 // active signature does have any.
-func (s *SignatureHelp) GetActiveParameter() int {
+func (s *SignatureHelp) GetActiveParameter() Optional[int] {
 	if s == nil {
-		var zero int
+		var zero Optional[int]
 		return zero
 	}
 	return s.ActiveParameter
@@ -11913,7 +11951,7 @@ type IncrementalTextDocumentContentChangeEvent struct {
 	// The optional length of the range that got replaced.
 	//
 	// @deprecated use range instead.
-	RangeLength int `json:"rangeLength,omitempty"`
+	RangeLength Optional[int] `json:"rangeLength,omitempty"`
 	// The new text for the provided range.
 	Text string `json:"text"`
 }
@@ -11929,9 +11967,9 @@ func (i *IncrementalTextDocumentContentChangeEvent) GetRange() *Range {
 // The optional length of the range that got replaced.
 //
 // @deprecated use range instead.
-func (i *IncrementalTextDocumentContentChangeEvent) GetRangeLength() int {
+func (i *IncrementalTextDocumentContentChangeEvent) GetRangeLength() Optional[int] {
 	if i == nil {
-		return *new(int)
+		return *new(Optional[int])
 	}
 	return i.RangeLength
 }
@@ -12321,7 +12359,7 @@ type PublishDiagnosticsParams struct {
 	// Optional the version number of the document the diagnostics are published for.
 	//
 	// @since 3.15.0
-	Version int `json:"version,omitempty"`
+	Version Optional[int] `json:"version,omitempty"`
 	// An array of diagnostic information items.
 	Diagnostics []*Diagnostic `json:"diagnostics"`
 }
@@ -12338,9 +12376,9 @@ func (p *PublishDiagnosticsParams) GetUri() string {
 // Optional the version number of the document the diagnostics are published for.
 //
 // @since 3.15.0
-func (p *PublishDiagnosticsParams) GetVersion() int {
+func (p *PublishDiagnosticsParams) GetVersion() Optional[int] {
 	if p == nil {
-		var zero int
+		var zero Optional[int]
 		return zero
 	}
 	return p.Version

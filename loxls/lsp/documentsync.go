@@ -197,7 +197,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 
 	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
 		Uri:         uri,
-		Version:     version,
+		Version:     protocol.NewOptional(version),
 		Diagnostics: diagnostics,
 	})
 }
