@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	program   = flag.String("program", "", "Program passed in as string")
-	printAST  = flag.Bool("ast", false, "Print the AST")
-	printHelp = flag.Bool("help", false, "Print this message")
+	program     = flag.String("program", "", "Program passed in as string")
+	printAST    = flag.Bool("ast", false, "Print the AST")
+	printTokens = flag.Bool("tokens", false, "Print the lexical tokens")
+	printHelp   = flag.Bool("help", false, "Print this message")
 )
 
 func usage() {
@@ -48,6 +49,10 @@ func main() {
 		os.Exit(0)
 	}
 
+	if *printAST && *printTokens {
+		exitWithUsageErr("-ast and -tokens cannot be provided together")
+	}
+
 	if *program != "" {
 		if err := run("", strings.NewReader(*program), interpreter.New()); err != nil {
 			log.Fatal(err)
@@ -70,7 +75,10 @@ func main() {
 }
 
 func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) error {
-	program, err := parser.Parse(r, filename)
+	program, err := parser.Parse(r, filename, parser.WithPrintTokens(*printTokens))
+	if *printTokens {
+		return err
+	}
 	if *printAST {
 		ast.Print(program)
 		return err

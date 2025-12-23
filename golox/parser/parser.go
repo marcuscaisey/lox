@@ -21,6 +21,13 @@ func WithComments(enabled bool) Option {
 	}
 }
 
+// WithPrintTokens enables the printing of tokens.
+func WithPrintTokens(enabled bool) Option {
+	return func(p *parser) {
+		p.printTokens = enabled
+	}
+}
+
 // WithExtraFeatures enables extra features that https://github.com/marcuscaisey/lox implements but the base Lox
 // language does not.
 // Extra features are enabled by default.
@@ -58,6 +65,7 @@ func Parse(r io.Reader, filename string, opts ...Option) (*ast.Program, error) {
 
 type parser struct {
 	parseComments bool
+	printTokens   bool
 	extraFeatures bool
 
 	lexer   *lexer
@@ -832,6 +840,10 @@ func (p *parser) next() {
 	p.prevTok = p.tok
 	p.tok = p.nextTok
 	p.nextTok = p.lexer.Next()
+	// next may be called after EOF has been reached but we don't want to print it out multiple times
+	if p.printTokens && p.tok.Type != token.EOF {
+		fmt.Println(p.nextTok)
+	}
 	if p.tok.Type == token.Comment && !p.parseComments {
 		p.next()
 	}
