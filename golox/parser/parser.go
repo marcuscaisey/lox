@@ -667,10 +667,10 @@ func (p *parser) parseCallExpr() (ast.Expr, bool) {
 	for {
 		switch tok := p.tok; {
 		case p.match(token.LeftParen):
-			callExpr := &ast.CallExpr{Callee: expr}
+			callExpr := &ast.CallExpr{LeftParen: tok, Callee: expr}
 			expr = callExpr
 			if callExpr.RightParen, ok = p.match2(token.RightParen); !ok {
-				if callExpr.Args, ok = p.parseArgs(); !ok {
+				if callExpr.Args, callExpr.Commas, ok = p.parseArgs(); !ok {
 					return expr, false
 				}
 				if callExpr.RightParen, ok = p.expect2(token.RightParen); !ok {
@@ -689,21 +689,24 @@ func (p *parser) parseCallExpr() (ast.Expr, bool) {
 	}
 }
 
-func (p *parser) parseArgs() ([]ast.Expr, bool) {
+func (p *parser) parseArgs() ([]ast.Expr, []token.Token, bool) {
 	var args []ast.Expr
+	var commas []token.Token
 	for {
 		arg, ok := p.parseAssignmentExpr()
 		if arg != nil {
 			args = append(args, arg)
 		}
 		if !ok {
-			return args, false
+			return args, commas, false
 		}
-		if !p.match(token.Comma) {
+		comma, ok := p.match2(token.Comma)
+		if !ok {
 			break
 		}
+		commas = append(commas, comma)
 	}
-	return args, true
+	return args, commas, true
 }
 
 func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {

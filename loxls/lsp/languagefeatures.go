@@ -10,6 +10,7 @@ import (
 
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/format"
+	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
@@ -493,6 +494,157 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 			Items:        items,
 		},
 	}, nil
+}
+
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_signatureHelp
+func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams) (*protocol.SignatureHelp, error) {
+	doc, err := h.document(params.TextDocument.Uri)
+	if err != nil {
+		return nil, err
+	}
+
+	callExpr, ok := ast.FindLast(doc.Program, func(callExpr *ast.CallExpr) bool {
+		if callExpr.LeftParen.IsZero() {
+			return false
+		}
+		start := callExpr.LeftParen.End()
+		if callExpr.RightParen.IsZero() {
+			return inRangeOrFollowsPositions(params.Position, start, doc.Program.End())
+		}
+		return inRangePositions(params.Position, start, callExpr.RightParen.End())
+	})
+	if !ok {
+		return nil, nil
+	}
+
+	var signatures []*protocol.SignatureInformation
+	switch callee := callExpr.Callee.(type) {
+	case *ast.IdentExpr:
+		switch decl := doc.IdentDecls[callee.Ident].(type) {
+		case *ast.FunDecl:
+			var params []*ast.ParamDecl
+			if decl.Function != nil {
+				params = decl.Function.Params
+			}
+			signatures = append(signatures, h.signature(decl.Name.String(), params, decl.Doc))
+
+		case *ast.ClassDecl:
+			name := decl.Name.String()
+			var params []*ast.ParamDecl
+			doc := decl.Doc
+			for _, methodDecl := range decl.Methods() {
+				if methodDecl.IsConstructor() {
+					name = fmt.Sprint(name, ".", methodDecl.Name)
+					if methodDecl.Function != nil {
+						params = methodDecl.Function.Params
+					}
+					if len(methodDecl.Doc) > 0 {
+						doc = methodDecl.Doc
+					}
+				}
+			}
+			signatures = append(signatures, h.signature(name, params, doc))
+
+		default:
+		}
+
+	case *ast.GetExpr:
+		ast.Walk(doc.Program, func(classDecl *ast.ClassDecl) bool {
+			for _, methodDecl := range classDecl.Methods() {
+				if methodDecl.Name.String() == callee.Name.String() && !methodDecl.HasModifier(token.Get, token.Set) {
+					name := fmt.Sprint(classDecl.Name, ".", methodDecl.Name)
+					var params []*ast.ParamDecl
+					if methodDecl.Function != nil {
+						params = methodDecl.Function.Params
+					}
+					signatures = append(signatures, h.signature(name, params, methodDecl.Doc))
+				}
+			}
+			return true
+		})
+
+	default:
+	}
+	if len(signatures) == 0 {
+		return nil, nil
+	}
+
+	activeSignature := protocol.NewOptional(0)
+	contextSupport := h.capabilities.GetTextDocument().GetSignatureHelp().GetContextSupport()
+	contextActiveSignature := params.GetContext().GetActiveSignatureHelp().GetActiveSignature()
+	if contextSupport && contextActiveSignature != nil {
+		activeSignature = contextActiveSignature
+	}
+
+	activeParameter := protocol.NewOptional(0)
+	for i := range callExpr.Commas {
+		start := callExpr.Commas[i].End()
+		var end token.Position
+		if i+1 < len(callExpr.Commas) {
+			end = callExpr.Commas[i+1].End()
+		} else if !callExpr.RightParen.IsZero() {
+			end = callExpr.RightParen.End()
+		} else {
+			if inRangeOrFollowsPositions(params.Position, start, doc.Program.End()) {
+				activeParameter = protocol.NewOptional(i + 1)
+				break
+			}
+			continue
+		}
+		if inRangePositions(params.Position, start, end) {
+			activeParameter = protocol.NewOptional(i + 1)
+			break
+		}
+	}
+
+	return &protocol.SignatureHelp{
+		Signatures:      signatures,
+		ActiveSignature: activeSignature,
+		ActiveParameter: activeParameter,
+	}, nil
+}
+
+func (h *Handler) signature(name string, params []*ast.ParamDecl, doc []*ast.Comment) *protocol.SignatureInformation {
+	parameters := make([]*protocol.ParameterInformation, len(params))
+	labelBuilder := new(strings.Builder)
+	fmt.Fprint(labelBuilder, name, "(")
+	labelOffsetSupport := h.capabilities.GetTextDocument().GetSignatureHelp().GetSignatureInformation().GetParameterInformation().GetLabelOffsetSupport()
+	for i, paramDecl := range params {
+		parameters[i] = &protocol.ParameterInformation{Label: &protocol.StringOrParameterInformationLabelRange{}}
+		if labelOffsetSupport {
+			parameters[i].Label.Value = &protocol.ParameterInformationLabelRange{
+				Start: utf16StringLen(labelBuilder.String()),
+				End:   utf16StringLen(labelBuilder.String() + paramDecl.Name.String()),
+			}
+		} else {
+			parameters[i].Label.Value = protocol.String(paramDecl.Name.String())
+		}
+		fmt.Fprint(labelBuilder, paramDecl.Name)
+		if i < len(params)-1 {
+			fmt.Fprint(labelBuilder, ", ")
+		}
+	}
+	fmt.Fprint(labelBuilder, ")")
+
+	var documentation *protocol.StringOrMarkupContent
+	if text := commentsText(doc); text != "" {
+		kind := protocol.MarkupKindPlainText
+		if format := h.capabilities.GetTextDocument().GetSignatureHelp().GetSignatureInformation().GetDocumentationFormat(); len(format) > 0 {
+			kind = format[0]
+		}
+		documentation = &protocol.StringOrMarkupContent{
+			Value: &protocol.MarkupContent{
+				Kind:  kind,
+				Value: text,
+			},
+		}
+	}
+
+	return &protocol.SignatureInformation{
+		Label:         labelBuilder.String(),
+		Documentation: documentation,
+		Parameters:    parameters,
+	}
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_formatting

@@ -463,14 +463,18 @@ func (t *ThisExpr) IsValid() bool         { return t != nil && !t.This.IsZero() 
 
 // CallExpr is a call expression, such as add(x, 1).
 type CallExpr struct {
-	Callee     Expr   `print:"named"`
+	Callee     Expr `print:"named"`
+	LeftParen  token.Token
 	Args       []Expr `print:"named"`
+	Commas     []token.Token
 	RightParen token.Token
 	expr
 }
 
 func (c *CallExpr) Start() token.Position { return c.Callee.Start() }
-func (c *CallExpr) End() token.Position   { return last(c.Callee, lastSlice(c.Args), c.RightParen).End() }
+func (c *CallExpr) End() token.Position {
+	return last(c.Callee, c.LeftParen, lastSlice(c.Args), lastSlice(c.Commas), c.RightParen).End()
+}
 func (c *CallExpr) IsValid() bool {
 	return c != nil && isValid(c.Callee) && isValidSlice(c.Args) && !c.RightParen.IsZero()
 }

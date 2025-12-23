@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Suggest method snippets inside class bodies.
 - Allow renaming methods and object properties.
 - Suggest keywords where applicable.
+- Signature help for functions, methods, and classes.
 
 ### Fixed
 

@@ -56,6 +56,8 @@ func (h *Handler) HandleRequest(method string, jsonParams *json.RawMessage) (any
 		return handleRequest(h.textDocumentDocumentSymbol, jsonParams)
 	case "textDocument/completion":
 		return handleRequest(h.textDocumentCompletion, jsonParams)
+	case "textDocument/signatureHelp":
+		return handleRequest(h.textDocumentSignatureHelp, jsonParams)
 	case "textDocument/formatting":
 		return handleRequest(h.textDocumentFormatting, jsonParams)
 	case "textDocument/rename":
