@@ -317,7 +317,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
 				Name:           n.Name.String(),
-				Detail:         funDetail(n.Function),
+				Detail:         funDetail(n.Name, n.Function),
 				Kind:           protocol.SymbolKindFunction,
 				Range:          newRange(n),
 				SelectionRange: newRange(n.Name),
@@ -358,7 +358,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
 					Name:           fmt.Sprintf("%s.%s%s", class.Name, method.Name.String(), modifiers),
-					Detail:         funDetail(method.Function),
+					Detail:         funDetail(method.Name, method.Function),
 					Kind:           kind,
 					Range:          newRange(method),
 					SelectionRange: newRange(method.Name),

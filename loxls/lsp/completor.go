@@ -687,7 +687,7 @@ func funCompletion(decl *ast.FunDecl) (*completion, bool) {
 	return &completion{
 		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindFunction,
-		Detail:        funDetail(decl.Function),
+		Detail:        funDetail(decl.Name, decl.Function),
 		Documentation: commentsText(decl.Doc),
 	}, true
 }
@@ -725,7 +725,7 @@ func methodCompletion(decl *ast.MethodDecl) (*completion, bool) {
 		kind = protocol.CompletionItemKindProperty
 	} else {
 		kind = protocol.CompletionItemKindMethod
-		detail = funDetail(decl.Function)
+		detail = funDetail(decl.Name, decl.Function)
 		documentation = commentsText(decl.Doc)
 	}
 	return &completion{

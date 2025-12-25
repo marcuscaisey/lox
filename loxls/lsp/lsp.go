@@ -20,9 +20,9 @@ func commentsText(doc []*ast.Comment) string {
 	return strings.Join(lines, "\n")
 }
 
-func funDetail(fun *ast.Function) string {
+func funDetail(name *ast.Ident, fun *ast.Function) string {
 	if fun == nil {
-		return "fun()"
+		return fmt.Sprint(name, "()")
 	}
 	params := make([]string, 0, len(fun.Params))
 	for _, paramDecl := range fun.Params {
@@ -30,7 +30,7 @@ func funDetail(fun *ast.Function) string {
 			params = append(params, paramDecl.Name.String())
 		}
 	}
-	return fmt.Sprintf("fun(%s)", strings.Join(params, ", "))
+	return fmt.Sprintf("%s(%s)", name, strings.Join(params, ", "))
 }
 
 func classDetail(decl *ast.ClassDecl) string {
