@@ -429,8 +429,8 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 	completions, isIncomplete := doc.Completor.Complete(params.Position)
 
 	padding := len(fmt.Sprint(len(completions)))
-	items := make([]*protocol.CompletionItem, len(completions))
-	for i, completion := range completions {
+	items := make([]*protocol.CompletionItem, 0, len(completions))
+	for _, completion := range completions {
 		var documentation *protocol.StringOrMarkupContent
 		if completion.Documentation != "" {
 			kind := protocol.MarkupKindPlainText
@@ -448,7 +448,10 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 		var insertTextFormat protocol.InsertTextFormat
 		var snippet string
 		var textEditText string
-		if completion.Snippet != "" && h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetSnippetSupport() {
+		if completion.Snippet != "" {
+			if !h.capabilities.GetTextDocument().GetCompletion().GetCompletionItem().GetSnippetSupport() {
+				continue
+			}
 			insertTextFormat = protocol.InsertTextFormatSnippet
 			snippet = completion.Snippet
 			if itemDefaults != nil {
@@ -470,7 +473,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 			}
 		}
 
-		items[i] = &protocol.CompletionItem{
+		items = append(items, &protocol.CompletionItem{
 			Label:            completion.Label,
 			Kind:             completion.Kind,
 			Detail:           completion.Detail,
@@ -478,8 +481,8 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 			InsertTextFormat: insertTextFormat,
 			TextEdit:         textEdit,
 			TextEditText:     textEditText,
-			SortText:         fmt.Sprintf("%0*d", padding, i),
-		}
+			SortText:         fmt.Sprintf("%0*d", padding, len(items)),
+		})
 	}
 
 	return &protocol.CompletionItemSliceOrCompletionList{
