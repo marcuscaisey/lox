@@ -159,6 +159,8 @@ type snippet struct {
 type completion struct {
 	// Label is the same as [protocol.CompletionItem] Label.
 	Label string
+	// LabelDetails is the same as [protocol.CompletionItem] LabelDetails.
+	LabelDetails *protocol.CompletionItemLabelDetails
 	// Kind is the same as [protocol.CompletionItem] Kind.
 	Kind protocol.CompletionItemKind
 	// Detail is the same as [protocol.CompletionItem] Detail.
@@ -533,19 +535,10 @@ func (g *identCompletionGenerator) globalCompletionsAfter(pos token.Position) []
 
 // genPropertyCompletions generates completions for all properties of all classes in the given program.
 func genPropertyCompletions(program *ast.Program) []*completion {
-	complsByClassDecl := genClassPropertyCompletions(program)
+	complsByClassDecl := genClassPropertyCompletions(program, true)
 	var compls []*completion
-	for classDecl, classCompls := range complsByClassDecl {
-		for _, compl := range classCompls {
-			b := &strings.Builder{}
-			fmt.Fprintf(b, "_From class: %s_", classDecl.Name.String())
-			if compl.Documentation != "" {
-				fmt.Fprintf(b, "\n\n%s", compl.Documentation)
-			}
-			compl.Documentation = b.String()
-			compls = append(compls, compl)
-		}
-		_ = classDecl
+	for _, classCompls := range complsByClassDecl {
+		compls = append(compls, classCompls...)
 	}
 	return compls
 }
@@ -558,7 +551,7 @@ type thisPropertyCompletor struct {
 }
 
 func newThisPropertyCompletor(program *ast.Program) *thisPropertyCompletor {
-	complsByClassDecl := genClassPropertyCompletions(program)
+	complsByClassDecl := genClassPropertyCompletions(program, false)
 	return &thisPropertyCompletor{program: program, complsByClassDecl: complsByClassDecl}
 }
 
@@ -570,13 +563,17 @@ func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
 	return c.complsByClassDecl[classDecl]
 }
 
-func genClassPropertyCompletions(program *ast.Program) map[*ast.ClassDecl][]*completion {
-	g := &propertyCompletionGenerator{complsByLabelByKindByClassDecl: map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion{}}
+func genClassPropertyCompletions(program *ast.Program, includeClassName bool) map[*ast.ClassDecl][]*completion {
+	g := &propertyCompletionGenerator{
+		complsByLabelByKindByClassDecl: map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion{},
+		includeClassName:               includeClassName,
+	}
 	return g.Generate(program)
 }
 
 type propertyCompletionGenerator struct {
-	curClassDecl *ast.ClassDecl
+	curClassDecl     *ast.ClassDecl
+	includeClassName bool
 
 	complsByLabelByKindByClassDecl map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion
 }
@@ -635,11 +632,36 @@ func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 }
 
 func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
-	compl, ok := methodCompletion(decl)
-	if !ok {
+	if !decl.Name.IsValid() {
 		return
 	}
-	g.add(g.curClassDecl, compl)
+	label := decl.Name.String()
+	var labelDetails *protocol.CompletionItemLabelDetails
+	var kind protocol.CompletionItemKind
+	var detail string
+	var documentation string
+	if decl.HasModifier(token.Get, token.Set) {
+		kind = protocol.CompletionItemKindProperty
+	} else {
+		kind = protocol.CompletionItemKindMethod
+		detail = funDetail(decl.Name, decl.Function)
+		if g.includeClassName {
+			detail = fmt.Sprint(g.curClassDecl.Name, ".", detail)
+		}
+		documentation = commentsText(decl.Doc)
+	}
+	if g.includeClassName {
+		labelDetails = &protocol.CompletionItemLabelDetails{
+			Detail: fmt.Sprint(" ", g.curClassDecl.Name),
+		}
+	}
+	g.add(g.curClassDecl, &completion{
+		Label:         label,
+		LabelDetails:  labelDetails,
+		Kind:          kind,
+		Detail:        detail,
+		Documentation: documentation,
+	})
 }
 
 func (g *propertyCompletionGenerator) walkSetExpr(expr *ast.SetExpr) {
@@ -649,11 +671,21 @@ func (g *propertyCompletionGenerator) walkSetExpr(expr *ast.SetExpr) {
 	if _, ok := expr.Object.(*ast.ThisExpr); !ok {
 		return
 	}
-	compl, ok := fieldCompletion(expr.Name)
-	if !ok {
+	if !expr.Name.IsValid() {
 		return
 	}
-	g.add(g.curClassDecl, compl)
+	label := expr.Name.String()
+	var labelDetails *protocol.CompletionItemLabelDetails
+	if g.includeClassName {
+		labelDetails = &protocol.CompletionItemLabelDetails{
+			Detail: fmt.Sprint(" ", g.curClassDecl.Name),
+		}
+	}
+	g.add(g.curClassDecl, &completion{
+		Label:        label,
+		LabelDetails: labelDetails,
+		Kind:         protocol.CompletionItemKindField,
+	})
 }
 
 func (g *propertyCompletionGenerator) add(classDecl *ast.ClassDecl, compl *completion) {
@@ -701,38 +733,6 @@ func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
 		Kind:          protocol.CompletionItemKindClass,
 		Detail:        classDetail(decl),
 		Documentation: commentsText(decl.Doc),
-	}, true
-}
-
-func fieldCompletion(ident *ast.Ident) (*completion, bool) {
-	if !ident.IsValid() {
-		return nil, false
-	}
-	return &completion{
-		Label: ident.String(),
-		Kind:  protocol.CompletionItemKindField,
-	}, true
-}
-
-func methodCompletion(decl *ast.MethodDecl) (*completion, bool) {
-	if !decl.Name.IsValid() {
-		return nil, false
-	}
-	var kind protocol.CompletionItemKind
-	var detail string
-	var documentation string
-	if decl.HasModifier(token.Get, token.Set) {
-		kind = protocol.CompletionItemKindProperty
-	} else {
-		kind = protocol.CompletionItemKindMethod
-		detail = funDetail(decl.Name, decl.Function)
-		documentation = commentsText(decl.Doc)
-	}
-	return &completion{
-		Label:         decl.Name.String(),
-		Kind:          kind,
-		Detail:        detail,
-		Documentation: documentation,
 	}, true
 }
 

@@ -475,6 +475,7 @@ func (h *Handler) textDocumentCompletion(params *protocol.CompletionParams) (*pr
 
 		items = append(items, &protocol.CompletionItem{
 			Label:            completion.Label,
+			LabelDetails:     completion.LabelDetails,
 			Kind:             completion.Kind,
 			Detail:           completion.Detail,
 			Documentation:    documentation,

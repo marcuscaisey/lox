@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change class snippet detail from "class declaration" to "class".
 - Add placeholders to all snippets where appropriate.
 - Add function name to detail of completion and outline items
+- Add class name to completions of class methods and fields
 
 ### Removed
 
