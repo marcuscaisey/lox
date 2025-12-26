@@ -9,7 +9,7 @@ Interpreters](https://craftinginterpreters.com). This repository contains:
 - A formatter: [loxfmt](loxfmt)
 - A language server: [loxls](loxls)
 - A linter: [loxlint](loxlint)
-- A VS Code plugin: [vscode-lox](vscode-lox)
+- A VS Code extension: [vscode-lox](vscode-lox)
 
 Working Lox code examples can be found under [test/testdata](test/testdata).
 
