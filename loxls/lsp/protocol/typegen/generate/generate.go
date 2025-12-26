@@ -114,8 +114,8 @@ func (g *generator) genTypeDecl(namespace string, typ *metamodel.Type) string {
 	case metamodel.MapType:
 		return g.mapType(namespace, typ.Key, typ.Value)
 	default:
-		panic(fmt.Sprintf("unhandled type for namespace %q: %T", namespace, typ))
 	}
+	panic(fmt.Sprintf("unhandled type for namespace %q: %T", namespace, typ))
 }
 
 func (g *generator) genTypeDeclForSumType(namespace string, typ *metamodel.Type) string {
