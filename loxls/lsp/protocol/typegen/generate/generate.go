@@ -481,7 +481,7 @@ type {{$.name}} struct {
 //   - [{{.}}]
 {{- end}}
 //
-//gosumtype:decl ` + /* Directive split up so that it doesn't get picked up as an actual declaration. */ `{{$interface}}
+//sumtype:decl
 type {{$interface}} interface {
 	{{$interfaceMethod}}()
 }

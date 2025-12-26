@@ -80,5 +80,5 @@ jobs:
         uses: golangci/golangci-lint-action@v7
         with:
           version: latest
-      - name: go-sumtype
-        run: make lint_go_sumtype
+      - name: go-check-sumtype
+        run: make lint_go_check_sumtype

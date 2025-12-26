@@ -11,7 +11,7 @@ import (
 
 const validJSONRPC = "2.0"
 
-//gosumtype:decl message
+//sumtype:decl
 type message interface {
 	isMessage()
 }

@@ -79,7 +79,7 @@ func (i *Interpreter) interpretProgram(node *ast.Program) (err error) {
 	return nil
 }
 
-//gosumtype:decl stmtResult
+//sumtype:decl
 type stmtResult interface {
 	isStmtResult()
 }

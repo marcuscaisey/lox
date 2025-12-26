@@ -120,7 +120,7 @@ type MapKeyType struct {
 //   - [BaseMapKeyType]
 //   - [ReferenceType]
 //
-//gosumtype:decl MapKeyTypeValue
+//sumtype:decl
 type MapKeyTypeValue interface {
 	isMapKeyTypeValue()
 }
@@ -349,7 +349,7 @@ func (t *TypeOrTypeSlice) Flatten() []*Type {
 //   - [*Type]
 //   - [TypeSlice]
 //
-//gosumtype:decl TypeOrTypeSliceValue
+//sumtype:decl
 type TypeOrTypeSliceValue interface {
 	isParamsValue()
 }
@@ -516,7 +516,7 @@ type Type struct {
 //   - [StructureLiteralType]
 //   - [TupleType]
 //
-//gosumtype:decl TypeValue
+//sumtype:decl
 type TypeValue interface {
 	isTypeValue()
 }
@@ -679,7 +679,7 @@ type IntOrString struct {
 //   - [Int]
 //   - [String]
 //
-//gosumtype:decl IntOrStringValue
+//sumtype:decl
 type IntOrStringValue interface {
 	isIntOrStringValue()
 }

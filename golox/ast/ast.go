@@ -10,7 +10,7 @@ import (
 
 // Node is the interface which all AST nodes implement.
 //
-//gosumtype:decl Node
+//sumtype:decl
 type Node interface {
 	token.Range
 	// IsValid reports whether the node represents a syntactically valid piece of code.
@@ -48,7 +48,7 @@ func (i *Ident) String() string        { return i.Token.Lexeme }
 
 // Stmt is the interface which all statement nodes implement.
 //
-//gosumtype:decl Stmt
+//sumtype:decl
 type Stmt interface {
 	Node
 	isStmt()
@@ -100,7 +100,7 @@ func (i *CommentedStmt) IsValid() bool {
 
 // Decl is the interface which all declaration nodes implement.
 //
-//gosumtype:decl Decl
+//sumtype:decl
 type Decl interface {
 	Stmt
 	// Ident returns the identifier being declared.
@@ -394,7 +394,7 @@ func (r *ReturnStmt) IsValid() bool {
 
 // Expr is the interface which all expression nodes implement.
 //
-//gosumtype:decl Expr
+//sumtype:decl
 type Expr interface {
 	Node
 	isExpr()

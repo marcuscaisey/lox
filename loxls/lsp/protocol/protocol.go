@@ -25,7 +25,7 @@ type IntegerOrString struct {
 //   - [Integer]
 //   - [String]
 //
-//gosumtype:decl IntegerOrStringValue
+//sumtype:decl
 type IntegerOrStringValue interface {
 	isIntegerOrStringValue()
 }
@@ -3006,7 +3006,7 @@ type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2 struct {
 //   - [Boolean]
 //   - [*SemanticTokensClientCapabilitiesRequestsRangeOr2]
 //
-//gosumtype:decl BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value
+//sumtype:decl
 type BooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value interface {
 	isBooleanOrSemanticTokensClientCapabilitiesRequestsRangeOr2Value()
 }
@@ -3065,7 +3065,7 @@ type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2 struct {
 //   - [Boolean]
 //   - [*SemanticTokensClientCapabilitiesRequestsFullOr2]
 //
-//gosumtype:decl BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value
+//sumtype:decl
 type BooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value interface {
 	isBooleanOrSemanticTokensClientCapabilitiesRequestsFullOr2Value()
 }
@@ -4355,7 +4355,7 @@ type LSPObjectOrLSPArrayOrStringOrIntegerOrUintegerOrDecimalOrBoolean struct {
 //   - [Decimal]
 //   - [Boolean]
 //
-//gosumtype:decl LSPObjectOrLSPArrayOrStringOrIntegerOrUintegerOrDecimalOrBooleanValue
+//sumtype:decl
 type LSPObjectOrLSPArrayOrStringOrIntegerOrUintegerOrDecimalOrBooleanValue interface {
 	isLSPObjectOrLSPArrayOrStringOrIntegerOrUintegerOrDecimalOrBooleanValue()
 }
@@ -4825,7 +4825,7 @@ type BooleanOrSaveOptions struct {
 //   - [Boolean]
 //   - [*SaveOptions]
 //
-//gosumtype:decl BooleanOrSaveOptionsValue
+//sumtype:decl
 type BooleanOrSaveOptionsValue interface {
 	isBooleanOrSaveOptionsValue()
 }
@@ -4937,7 +4937,7 @@ type TextDocumentSyncOptionsOrTextDocumentSyncKind struct {
 //   - [*TextDocumentSyncOptions]
 //   - [TextDocumentSyncKind]
 //
-//gosumtype:decl TextDocumentSyncOptionsOrTextDocumentSyncKindValue
+//sumtype:decl
 type TextDocumentSyncOptionsOrTextDocumentSyncKindValue interface {
 	isTextDocumentSyncOptionsOrTextDocumentSyncKindValue()
 }
@@ -5081,7 +5081,7 @@ type NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilte
 //   - [*NotebookDocumentFilterOr2]
 //   - [*NotebookDocumentFilterOr3]
 //
-//gosumtype:decl NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value
+//sumtype:decl
 type NotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value interface {
 	isNotebookDocumentFilterOr1OrNotebookDocumentFilterOr2OrNotebookDocumentFilterOr3Value()
 }
@@ -5142,7 +5142,7 @@ type StringOrNotebookDocumentFilter struct {
 //   - [String]
 //   - [NotebookDocumentFilter]
 //
-//gosumtype:decl StringOrNotebookDocumentFilterValue
+//sumtype:decl
 type StringOrNotebookDocumentFilterValue interface {
 	isStringOrNotebookDocumentFilterValue()
 }
@@ -5261,7 +5261,7 @@ type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptions
 //   - [*NotebookDocumentSyncOptionsNotebookSelectorOr1]
 //   - [*NotebookDocumentSyncOptionsNotebookSelectorOr2]
 //
-//gosumtype:decl NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value
+//sumtype:decl
 type NotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value interface {
 	isNotebookDocumentSyncOptionsNotebookSelectorOr1OrNotebookDocumentSyncOptionsNotebookSelectorOr2Value()
 }
@@ -5378,7 +5378,7 @@ type NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptions struct
 //   - [*NotebookDocumentSyncOptions]
 //   - [*NotebookDocumentSyncRegistrationOptions]
 //
-//gosumtype:decl NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue
+//sumtype:decl
 type NotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue interface {
 	isNotebookDocumentSyncOptionsOrNotebookDocumentSyncRegistrationOptionsValue()
 }
@@ -5551,7 +5551,7 @@ type BooleanOrHoverOptions struct {
 //   - [Boolean]
 //   - [*HoverOptions]
 //
-//gosumtype:decl BooleanOrHoverOptionsValue
+//sumtype:decl
 type BooleanOrHoverOptionsValue interface {
 	isBooleanOrHoverOptionsValue()
 }
@@ -5739,7 +5739,7 @@ type TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3 struct 
 //   - [*TextDocumentFilterOr2]
 //   - [*TextDocumentFilterOr3]
 //
-//gosumtype:decl TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value
+//sumtype:decl
 type TextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value interface {
 	isTextDocumentFilterOr1OrTextDocumentFilterOr2OrTextDocumentFilterOr3Value()
 }
@@ -5854,7 +5854,7 @@ type TextDocumentFilterOrNotebookCellTextDocumentFilter struct {
 //   - [TextDocumentFilter]
 //   - [*NotebookCellTextDocumentFilter]
 //
-//gosumtype:decl TextDocumentFilterOrNotebookCellTextDocumentFilterValue
+//sumtype:decl
 type TextDocumentFilterOrNotebookCellTextDocumentFilterValue interface {
 	isTextDocumentFilterOrNotebookCellTextDocumentFilterValue()
 }
@@ -5942,7 +5942,7 @@ type BooleanOrDeclarationOptionsOrDeclarationRegistrationOptions struct {
 //   - [*DeclarationOptions]
 //   - [*DeclarationRegistrationOptions]
 //
-//gosumtype:decl BooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue interface {
 	isBooleanOrDeclarationOptionsOrDeclarationRegistrationOptionsValue()
 }
@@ -5999,7 +5999,7 @@ type BooleanOrDefinitionOptions struct {
 //   - [Boolean]
 //   - [*DefinitionOptions]
 //
-//gosumtype:decl BooleanOrDefinitionOptionsValue
+//sumtype:decl
 type BooleanOrDefinitionOptionsValue interface {
 	isBooleanOrDefinitionOptionsValue()
 }
@@ -6056,7 +6056,7 @@ type BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptions struct {
 //   - [*TypeDefinitionOptions]
 //   - [*TypeDefinitionRegistrationOptions]
 //
-//gosumtype:decl BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue interface {
 	isBooleanOrTypeDefinitionOptionsOrTypeDefinitionRegistrationOptionsValue()
 }
@@ -6121,7 +6121,7 @@ type BooleanOrImplementationOptionsOrImplementationRegistrationOptions struct {
 //   - [*ImplementationOptions]
 //   - [*ImplementationRegistrationOptions]
 //
-//gosumtype:decl BooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue interface {
 	isBooleanOrImplementationOptionsOrImplementationRegistrationOptionsValue()
 }
@@ -6179,7 +6179,7 @@ type BooleanOrReferenceOptions struct {
 //   - [Boolean]
 //   - [*ReferenceOptions]
 //
-//gosumtype:decl BooleanOrReferenceOptionsValue
+//sumtype:decl
 type BooleanOrReferenceOptionsValue interface {
 	isBooleanOrReferenceOptionsValue()
 }
@@ -6229,7 +6229,7 @@ type BooleanOrDocumentHighlightOptions struct {
 //   - [Boolean]
 //   - [*DocumentHighlightOptions]
 //
-//gosumtype:decl BooleanOrDocumentHighlightOptionsValue
+//sumtype:decl
 type BooleanOrDocumentHighlightOptionsValue interface {
 	isBooleanOrDocumentHighlightOptionsValue()
 }
@@ -6296,7 +6296,7 @@ type BooleanOrDocumentSymbolOptions struct {
 //   - [Boolean]
 //   - [*DocumentSymbolOptions]
 //
-//gosumtype:decl BooleanOrDocumentSymbolOptionsValue
+//sumtype:decl
 type BooleanOrDocumentSymbolOptionsValue interface {
 	isBooleanOrDocumentSymbolOptionsValue()
 }
@@ -6380,7 +6380,7 @@ type BooleanOrCodeActionOptions struct {
 //   - [Boolean]
 //   - [*CodeActionOptions]
 //
-//gosumtype:decl BooleanOrCodeActionOptionsValue
+//sumtype:decl
 type BooleanOrCodeActionOptionsValue interface {
 	isBooleanOrCodeActionOptionsValue()
 }
@@ -6473,7 +6473,7 @@ type BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptions struct {
 //   - [*DocumentColorOptions]
 //   - [*DocumentColorRegistrationOptions]
 //
-//gosumtype:decl BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue interface {
 	isBooleanOrDocumentColorOptionsOrDocumentColorRegistrationOptionsValue()
 }
@@ -6548,7 +6548,7 @@ type BooleanOrWorkspaceSymbolOptions struct {
 //   - [Boolean]
 //   - [*WorkspaceSymbolOptions]
 //
-//gosumtype:decl BooleanOrWorkspaceSymbolOptionsValue
+//sumtype:decl
 type BooleanOrWorkspaceSymbolOptionsValue interface {
 	isBooleanOrWorkspaceSymbolOptionsValue()
 }
@@ -6598,7 +6598,7 @@ type BooleanOrDocumentFormattingOptions struct {
 //   - [Boolean]
 //   - [*DocumentFormattingOptions]
 //
-//gosumtype:decl BooleanOrDocumentFormattingOptionsValue
+//sumtype:decl
 type BooleanOrDocumentFormattingOptionsValue interface {
 	isBooleanOrDocumentFormattingOptionsValue()
 }
@@ -6665,7 +6665,7 @@ type BooleanOrDocumentRangeFormattingOptions struct {
 //   - [Boolean]
 //   - [*DocumentRangeFormattingOptions]
 //
-//gosumtype:decl BooleanOrDocumentRangeFormattingOptionsValue
+//sumtype:decl
 type BooleanOrDocumentRangeFormattingOptionsValue interface {
 	isBooleanOrDocumentRangeFormattingOptionsValue()
 }
@@ -6758,7 +6758,7 @@ type BooleanOrRenameOptions struct {
 //   - [Boolean]
 //   - [*RenameOptions]
 //
-//gosumtype:decl BooleanOrRenameOptionsValue
+//sumtype:decl
 type BooleanOrRenameOptionsValue interface {
 	isBooleanOrRenameOptionsValue()
 }
@@ -6815,7 +6815,7 @@ type BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptions struct {
 //   - [*FoldingRangeOptions]
 //   - [*FoldingRangeRegistrationOptions]
 //
-//gosumtype:decl BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue interface {
 	isBooleanOrFoldingRangeOptionsOrFoldingRangeRegistrationOptionsValue()
 }
@@ -6879,7 +6879,7 @@ type BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptions struct {
 //   - [*SelectionRangeOptions]
 //   - [*SelectionRangeRegistrationOptions]
 //
-//gosumtype:decl BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue interface {
 	isBooleanOrSelectionRangeOptionsOrSelectionRangeRegistrationOptionsValue()
 }
@@ -6970,7 +6970,7 @@ type BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptions struct {
 //   - [*CallHierarchyOptions]
 //   - [*CallHierarchyRegistrationOptions]
 //
-//gosumtype:decl BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue interface {
 	isBooleanOrCallHierarchyOptionsOrCallHierarchyRegistrationOptionsValue()
 }
@@ -7035,7 +7035,7 @@ type BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptions s
 //   - [*LinkedEditingRangeOptions]
 //   - [*LinkedEditingRangeRegistrationOptions]
 //
-//gosumtype:decl BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue interface {
 	isBooleanOrLinkedEditingRangeOptionsOrLinkedEditingRangeRegistrationOptionsValue()
 }
@@ -7117,7 +7117,7 @@ type BooleanOrSemanticTokensOptionsRangeOr2 struct {
 //   - [Boolean]
 //   - [*SemanticTokensOptionsRangeOr2]
 //
-//gosumtype:decl BooleanOrSemanticTokensOptionsRangeOr2Value
+//sumtype:decl
 type BooleanOrSemanticTokensOptionsRangeOr2Value interface {
 	isBooleanOrSemanticTokensOptionsRangeOr2Value()
 }
@@ -7173,7 +7173,7 @@ type BooleanOrSemanticTokensOptionsFullOr2 struct {
 //   - [Boolean]
 //   - [*SemanticTokensOptionsFullOr2]
 //
-//gosumtype:decl BooleanOrSemanticTokensOptionsFullOr2Value
+//sumtype:decl
 type BooleanOrSemanticTokensOptionsFullOr2Value interface {
 	isBooleanOrSemanticTokensOptionsFullOr2Value()
 }
@@ -7267,7 +7267,7 @@ type SemanticTokensOptionsOrSemanticTokensRegistrationOptions struct {
 //   - [*SemanticTokensOptions]
 //   - [*SemanticTokensRegistrationOptions]
 //
-//gosumtype:decl SemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue
+//sumtype:decl
 type SemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue interface {
 	isSemanticTokensOptionsOrSemanticTokensRegistrationOptionsValue()
 }
@@ -7324,7 +7324,7 @@ type BooleanOrMonikerOptionsOrMonikerRegistrationOptions struct {
 //   - [*MonikerOptions]
 //   - [*MonikerRegistrationOptions]
 //
-//gosumtype:decl BooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue interface {
 	isBooleanOrMonikerOptionsOrMonikerRegistrationOptionsValue()
 }
@@ -7395,7 +7395,7 @@ type BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptions struct {
 //   - [*TypeHierarchyOptions]
 //   - [*TypeHierarchyRegistrationOptions]
 //
-//gosumtype:decl BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue interface {
 	isBooleanOrTypeHierarchyOptionsOrTypeHierarchyRegistrationOptionsValue()
 }
@@ -7468,7 +7468,7 @@ type BooleanOrInlineValueOptionsOrInlineValueRegistrationOptions struct {
 //   - [*InlineValueOptions]
 //   - [*InlineValueRegistrationOptions]
 //
-//gosumtype:decl BooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue interface {
 	isBooleanOrInlineValueOptionsOrInlineValueRegistrationOptionsValue()
 }
@@ -7553,7 +7553,7 @@ type BooleanOrInlayHintOptionsOrInlayHintRegistrationOptions struct {
 //   - [*InlayHintOptions]
 //   - [*InlayHintRegistrationOptions]
 //
-//gosumtype:decl BooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue
+//sumtype:decl
 type BooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue interface {
 	isBooleanOrInlayHintOptionsOrInlayHintRegistrationOptionsValue()
 }
@@ -7664,7 +7664,7 @@ type DiagnosticOptionsOrDiagnosticRegistrationOptions struct {
 //   - [*DiagnosticOptions]
 //   - [*DiagnosticRegistrationOptions]
 //
-//gosumtype:decl DiagnosticOptionsOrDiagnosticRegistrationOptionsValue
+//sumtype:decl
 type DiagnosticOptionsOrDiagnosticRegistrationOptionsValue interface {
 	isDiagnosticOptionsOrDiagnosticRegistrationOptionsValue()
 }
@@ -7717,7 +7717,7 @@ type BooleanOrInlineCompletionOptions struct {
 //   - [Boolean]
 //   - [*InlineCompletionOptions]
 //
-//gosumtype:decl BooleanOrInlineCompletionOptionsValue
+//sumtype:decl
 type BooleanOrInlineCompletionOptionsValue interface {
 	isBooleanOrInlineCompletionOptionsValue()
 }
@@ -7760,7 +7760,7 @@ type StringOrBoolean struct {
 //   - [String]
 //   - [Boolean]
 //
-//gosumtype:decl StringOrBooleanValue
+//sumtype:decl
 type StringOrBooleanValue interface {
 	isStringOrBooleanValue()
 }
@@ -8989,7 +8989,7 @@ type StringOrMarkupContent struct {
 //   - [String]
 //   - [*MarkupContent]
 //
-//gosumtype:decl StringOrMarkupContentValue
+//sumtype:decl
 type StringOrMarkupContentValue interface {
 	isStringOrMarkupContentValue()
 }
@@ -9195,7 +9195,7 @@ type TextEditOrInsertReplaceEdit struct {
 //   - [*TextEdit]
 //   - [*InsertReplaceEdit]
 //
-//gosumtype:decl TextEditOrInsertReplaceEditValue
+//sumtype:decl
 type TextEditOrInsertReplaceEditValue interface {
 	isTextEditOrInsertReplaceEditValue()
 }
@@ -9677,7 +9677,7 @@ type RangeOrInsertReplaceRange struct {
 //   - [*Range]
 //   - [*InsertReplaceRange]
 //
-//gosumtype:decl RangeOrInsertReplaceRangeValue
+//sumtype:decl
 type RangeOrInsertReplaceRangeValue interface {
 	isRangeOrInsertReplaceRangeValue()
 }
@@ -9863,7 +9863,7 @@ type CompletionItemSliceOrCompletionList struct {
 //   - [CompletionItemSlice]
 //   - [*CompletionList]
 //
-//gosumtype:decl CompletionItemSliceOrCompletionListValue
+//sumtype:decl
 type CompletionItemSliceOrCompletionListValue interface {
 	isCompletionItemSliceOrCompletionListValue()
 }
@@ -9933,7 +9933,7 @@ type StringOrMarkedStringOr2 struct {
 //   - [String]
 //   - [*MarkedStringOr2]
 //
-//gosumtype:decl StringOrMarkedStringOr2Value
+//sumtype:decl
 type StringOrMarkedStringOr2Value interface {
 	isStringOrMarkedStringOr2Value()
 }
@@ -9996,7 +9996,7 @@ type MarkupContentOrMarkedStringOrMarkedStringSlice struct {
 //   - [MarkedString]
 //   - [MarkedStringSlice]
 //
-//gosumtype:decl MarkupContentOrMarkedStringOrMarkedStringSliceValue
+//sumtype:decl
 type MarkupContentOrMarkedStringOrMarkedStringSliceValue interface {
 	isMarkupContentOrMarkedStringOrMarkedStringSliceValue()
 }
@@ -10168,7 +10168,7 @@ type StringOrParameterInformationLabelRange struct {
 //   - [String]
 //   - [*ParameterInformationLabelRange]
 //
-//gosumtype:decl StringOrParameterInformationLabelRangeValue
+//sumtype:decl
 type StringOrParameterInformationLabelRangeValue interface {
 	isStringOrParameterInformationLabelRangeValue()
 }
@@ -10518,7 +10518,7 @@ type LocationOrLocationSlice struct {
 //   - [*Location]
 //   - [LocationSlice]
 //
-//gosumtype:decl LocationOrLocationSliceValue
+//sumtype:decl
 type LocationOrLocationSliceValue interface {
 	isLocationOrLocationSliceValue()
 }
@@ -10644,7 +10644,7 @@ type DefinitionOrDefinitionLinkSlice struct {
 //   - [Definition]
 //   - [DefinitionLinkSlice]
 //
-//gosumtype:decl DefinitionOrDefinitionLinkSliceValue
+//sumtype:decl
 type DefinitionOrDefinitionLinkSliceValue interface {
 	isDefinitionOrDefinitionLinkSliceValue()
 }
@@ -10969,7 +10969,7 @@ type SymbolInformationSliceOrDocumentSymbolSlice struct {
 //   - [SymbolInformationSlice]
 //   - [DocumentSymbolSlice]
 //
-//gosumtype:decl SymbolInformationSliceOrDocumentSymbolSliceValue
+//sumtype:decl
 type SymbolInformationSliceOrDocumentSymbolSliceValue interface {
 	isSymbolInformationSliceOrDocumentSymbolSliceValue()
 }
@@ -11209,7 +11209,7 @@ type TextEditOrAnnotatedTextEdit struct {
 //   - [*TextEdit]
 //   - [*AnnotatedTextEdit]
 //
-//gosumtype:decl TextEditOrAnnotatedTextEditValue
+//sumtype:decl
 type TextEditOrAnnotatedTextEditValue interface {
 	isTextEditOrAnnotatedTextEditValue()
 }
@@ -11603,7 +11603,7 @@ type TextDocumentEditOrCreateFileOrRenameFileOrDeleteFile struct {
 //   - [*RenameFile]
 //   - [*DeleteFile]
 //
-//gosumtype:decl TextDocumentEditOrCreateFileOrRenameFileOrDeleteFileValue
+//sumtype:decl
 type TextDocumentEditOrCreateFileOrRenameFileOrDeleteFileValue interface {
 	isTextDocumentEditOrCreateFileOrRenameFileOrDeleteFileValue()
 }
@@ -12006,7 +12006,7 @@ type IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEve
 //   - [*IncrementalTextDocumentContentChangeEvent]
 //   - [*FullTextDocumentContentChangeEvent]
 //
-//gosumtype:decl IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue
+//sumtype:decl
 type IncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue interface {
 	isIncrementalTextDocumentContentChangeEventOrFullTextDocumentContentChangeEventValue()
 }

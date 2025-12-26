@@ -12,7 +12,7 @@ require (
 require github.com/hexops/gotextdiff v1.0.3
 
 require (
-	github.com/marcuscaisey/go-sumtype v0.0.0-20241208122212-4c96c503b8ce // indirect
+	github.com/alecthomas/go-check-sumtype v0.3.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
@@ -21,6 +21,6 @@ require (
 )
 
 tool (
-	github.com/marcuscaisey/go-sumtype
+	github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype
 	golang.org/x/tools/cmd/stringer
 )
