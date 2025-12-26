@@ -566,9 +566,9 @@ func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
 
 func genClassPropertyCompletions(program *ast.Program, includeClassName bool) map[*ast.ClassDecl][]*completion {
 	g := &propertyCompletionGenerator{
-		includeClassName:  includeClassName,
-		propsByClassDecl:  map[*ast.ClassDecl]map[string]bool{},
-		complsByClassDecl: map[*ast.ClassDecl][]*completion{},
+		includeClassName:       includeClassName,
+		complLabelsByClassDecl: map[*ast.ClassDecl]map[string]bool{},
+		complsByClassDecl:      map[*ast.ClassDecl][]*completion{},
 	}
 	return g.Generate(program)
 }
@@ -576,8 +576,8 @@ func genClassPropertyCompletions(program *ast.Program, includeClassName bool) ma
 type propertyCompletionGenerator struct {
 	includeClassName bool
 
-	curClassDecl     *ast.ClassDecl
-	propsByClassDecl map[*ast.ClassDecl]map[string]bool
+	curClassDecl           *ast.ClassDecl
+	complLabelsByClassDecl map[*ast.ClassDecl]map[string]bool
 
 	complsByClassDecl map[*ast.ClassDecl][]*completion
 }
@@ -604,7 +604,7 @@ func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 	prevCurClassDecl := g.curClassDecl
 	defer func() { g.curClassDecl = prevCurClassDecl }()
 	g.curClassDecl = decl
-	g.propsByClassDecl[decl] = map[string]bool{}
+	g.complLabelsByClassDecl[decl] = map[string]bool{}
 	// Add completions for all methods before walking any of their bodies so that we can skip adding completions for
 	// fields which already have a property completion.
 	for _, methodDecl := range decl.Methods() {
@@ -624,7 +624,7 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 	var documentation string
 	if decl.HasModifier(token.Get, token.Set) {
 		kind = protocol.CompletionItemKindProperty
-		g.propsByClassDecl[g.curClassDecl][label] = true
+		g.complLabelsByClassDecl[g.curClassDecl][label] = true
 	} else {
 		kind = protocol.CompletionItemKindMethod
 		detail = funDetail(decl.Name, decl.Function)
@@ -658,9 +658,10 @@ func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.SetExpr) {
 		return
 	}
 	label := expr.Name.String()
-	if g.propsByClassDecl[g.curClassDecl][label] {
+	if g.complLabelsByClassDecl[g.curClassDecl][label] {
 		return
 	}
+	g.complLabelsByClassDecl[g.curClassDecl][label] = true
 	var labelDetails *protocol.CompletionItemLabelDetails
 	if g.includeClassName {
 		labelDetails = &protocol.CompletionItemLabelDetails{
