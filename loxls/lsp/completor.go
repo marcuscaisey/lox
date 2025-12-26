@@ -112,16 +112,10 @@ func (c *classBodyCompletor) Complete(pos *protocol.Position) (compls []*complet
 	compls = make([]*completion, 0, len(classBodySnippets))
 	ident, inIdent := outermostNodeAtOrBefore[*ast.Ident](classDecl, pos)
 	for _, snippet := range classBodySnippets {
-		if snippet.Label == "init" && initDefined {
+		if snippet.label == "init" && initDefined {
 			continue
 		}
-		compl := &completion{
-			Label:         snippet.Label,
-			Kind:          protocol.CompletionItemKindSnippet,
-			Detail:        snippet.ShortDoc,
-			Snippet:       snippet.Content,
-			Documentation: snippet.Doc,
-		}
+		compl := snippet.ToCompletion()
 		if compl.Label == "method" && inIdent {
 			compl.Label = ident.String()
 			compl.Snippet = strings.ReplaceAll(compl.Snippet, "${1:name}", ident.String())
@@ -148,10 +142,20 @@ func (c *classBodyCompletor) inClassBody(pos *protocol.Position) (*ast.ClassDecl
 }
 
 type snippet struct {
-	Label    string
-	Content  string
-	ShortDoc string
-	Doc      string
+	label    string
+	content  string
+	shortDoc string
+	doc      string
+}
+
+func (s snippet) ToCompletion() *completion {
+	return &completion{
+		Label:         s.label,
+		Kind:          protocol.CompletionItemKindSnippet,
+		Detail:        s.shortDoc,
+		Snippet:       s.content,
+		Documentation: s.doc,
+	}
 }
 
 // completion contains a subset of [protocol.CompletionItem] fields plus some others which can be used to populate a
@@ -188,13 +192,7 @@ func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
 
 	if c.validStatementPosition(pos) {
 		for _, snippet := range statementSnippets {
-			compls = append(compls, &completion{
-				Label:         snippet.Label,
-				Kind:          protocol.CompletionItemKindSnippet,
-				Detail:        snippet.ShortDoc,
-				Snippet:       snippet.Content,
-				Documentation: snippet.Doc,
-			})
+			compls = append(compls, snippet.ToCompletion())
 		}
 		for _, keyword := range statementKeywords {
 			compls = append(compls, &completion{
