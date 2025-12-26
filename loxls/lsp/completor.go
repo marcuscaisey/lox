@@ -614,7 +614,7 @@ func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 }
 
 func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDecl) {
-	if !decl.Name.IsValid() {
+	if !decl.Name.IsValid() || decl.IsConstructor() {
 		return
 	}
 	label := decl.Name.String()

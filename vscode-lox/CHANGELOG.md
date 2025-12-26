@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improve sorting of class property completions
 
+### Removed
+
+- Omit "init" from class property completions
+
 ## [3.0.0] - 2025-12-26
 
 ### Added
