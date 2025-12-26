@@ -109,11 +109,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- IntelliSense - Results appear for symbols as you type.
-- Code navigation - Jump to or peek at a symbol's declaration.
-- Code editing - Support for formatting.
-- Diagnostics - Build and lint errors shown as you type.
-- Syntax highlighting.
+- Syntax highlighting
+- Go to definition
+- Go to references
+- Hover information
+- Outline view
+- Code completion
+- Diagnostics
+- Formatting
+- Renaming
 
 [Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v4.0.0...HEAD
 [4.0.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.0.0/vscode-lox

@@ -6,11 +6,16 @@ Interpreters book](https://craftinginterpreters.com).
 
 ## Features
 
-- IntelliSense - Results appear for symbols as you type.
-- Code navigation - Jump to or peek at a symbol's declaration.
-- Code editing - Support for formatting.
-- Diagnostics - Build and lint errors shown as you type.
-- Syntax highlighting.
+- Syntax highlighting
+- [Go to definition](#go-to-definition)
+- [Go to references](#go-to-references)
+- [Hover information](#hover-information)
+- [Outline view](#outline-view)
+- [Code completion](#code-completion)
+- [Diagnostics](#diagnostics)
+- [Signature help](#signature-help)
+- [Formatting](#formatting)
+- [Renaming](#renaming)
 
 ## Requirements
 
@@ -44,6 +49,44 @@ go install github.com/marcuscaisey/lox/loxls@latest
 
 and then set `lox.loxlsPath` to its path. To disable language features, set `lox.useLanguageServer:
 false`.
+
+## Feature Demos
+
+### Go to Definition
+
+![Go to Definition demo](demos/go-to-definition.gif)
+
+### Go to References
+
+![Go to References demo](demos/go-to-references.gif)
+
+### Hover Information
+
+![Hover Information demo](demos/hover-information.gif)
+
+### Outline View
+
+![Outline View demo](demos/outline-view.gif)
+
+### Code Completion
+
+![Code Completion demo](demos/code-completion.gif)
+
+### Diagnostics
+
+![Diagnostics demo](demos/diagnostics.gif)
+
+### Signature Help
+
+![Signature Help demo](demos/signature-help.gif)
+
+### Formatting
+
+![Formatting demo](demos/formatting.gif)
+
+### Renaming
+
+![Renaming demo](demos/renaming.gif)
 
 ## Attribution
 
