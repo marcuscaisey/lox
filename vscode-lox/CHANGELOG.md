@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]
 
+### Changed
+
+- Improve sorting of class property completions
+
 ## [3.0.0] - 2025-12-26
 
 ### Added

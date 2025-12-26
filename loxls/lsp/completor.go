@@ -3,7 +3,6 @@ package lsp
 import (
 	"cmp"
 	"fmt"
-	"maps"
 	"slices"
 	"strings"
 	"unicode"
@@ -538,6 +537,7 @@ func genPropertyCompletions(program *ast.Program) []*completion {
 	for _, classCompls := range complsByClassDecl {
 		compls = append(compls, classCompls...)
 	}
+	sortPropertyCompletions(compls)
 	return compls
 }
 
@@ -550,6 +550,9 @@ type thisPropertyCompletor struct {
 
 func newThisPropertyCompletor(program *ast.Program) *thisPropertyCompletor {
 	complsByClassDecl := genClassPropertyCompletions(program, false)
+	for _, compls := range complsByClassDecl {
+		sortPropertyCompletions(compls)
+	}
 	return &thisPropertyCompletor{program: program, complsByClassDecl: complsByClassDecl}
 }
 
@@ -563,49 +566,25 @@ func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
 
 func genClassPropertyCompletions(program *ast.Program, includeClassName bool) map[*ast.ClassDecl][]*completion {
 	g := &propertyCompletionGenerator{
-		complsByLabelByKindByClassDecl: map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion{},
-		includeClassName:               includeClassName,
+		includeClassName:  includeClassName,
+		propsByClassDecl:  map[*ast.ClassDecl]map[string]bool{},
+		complsByClassDecl: map[*ast.ClassDecl][]*completion{},
 	}
 	return g.Generate(program)
 }
 
 type propertyCompletionGenerator struct {
-	curClassDecl     *ast.ClassDecl
 	includeClassName bool
 
-	complsByLabelByKindByClassDecl map[*ast.ClassDecl]map[protocol.CompletionItemKind]map[string]*completion
+	curClassDecl     *ast.ClassDecl
+	propsByClassDecl map[*ast.ClassDecl]map[string]bool
+
+	complsByClassDecl map[*ast.ClassDecl][]*completion
 }
 
 func (g *propertyCompletionGenerator) Generate(program *ast.Program) map[*ast.ClassDecl][]*completion {
 	ast.Walk(program, g.walk)
-
-	kindOrder := []protocol.CompletionItemKind{
-		protocol.CompletionItemKindField,
-		protocol.CompletionItemKindProperty,
-		protocol.CompletionItemKindMethod,
-	}
-	complsByClassDecl := map[*ast.ClassDecl][]*completion{}
-	for classDecl, complsByLabelByKind := range g.complsByLabelByKindByClassDecl {
-		for label := range complsByLabelByKind[protocol.CompletionItemKindProperty] {
-			delete(complsByLabelByKind[protocol.CompletionItemKindField], label)
-		}
-		for _, kind := range kindOrder {
-			sortedCompls := slices.SortedFunc(maps.Values(complsByLabelByKind[kind]), func(x, y *completion) int {
-				xUnderscore := strings.HasPrefix(x.Label, "_")
-				yUnderscore := strings.HasPrefix(y.Label, "_")
-				if xUnderscore && !yUnderscore {
-					return 1
-				} else if !xUnderscore && yUnderscore {
-					return -1
-				} else {
-					return cmp.Compare(x.Label, y.Label)
-				}
-			})
-			complsByClassDecl[classDecl] = append(complsByClassDecl[classDecl], sortedCompls...)
-		}
-	}
-
-	return complsByClassDecl
+	return g.complsByClassDecl
 }
 
 func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
@@ -613,23 +592,28 @@ func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
 	case *ast.ClassDecl:
 		g.walkClassDecl(node)
 		return false
-	case *ast.MethodDecl:
-		g.walkMethodDecl(node)
 	case *ast.SetExpr:
-		g.walkSetExpr(node)
+		g.addFieldCompletion(node)
+		return false
 	default:
+		return true
 	}
-	return true
 }
 
 func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 	prevCurClassDecl := g.curClassDecl
 	defer func() { g.curClassDecl = prevCurClassDecl }()
 	g.curClassDecl = decl
+	g.propsByClassDecl[decl] = map[string]bool{}
+	// Add completions for all methods before walking any of their bodies so that we can skip adding completions for
+	// fields which already have a property completion.
+	for _, methodDecl := range decl.Methods() {
+		g.addCompletionForMethod(methodDecl)
+	}
 	ast.Walk(decl.Body, g.walk)
 }
 
-func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
+func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDecl) {
 	if !decl.Name.IsValid() {
 		return
 	}
@@ -640,6 +624,7 @@ func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
 	var documentation string
 	if decl.HasModifier(token.Get, token.Set) {
 		kind = protocol.CompletionItemKindProperty
+		g.propsByClassDecl[g.curClassDecl][label] = true
 	} else {
 		kind = protocol.CompletionItemKindMethod
 		detail = funDetail(decl.Name, decl.Function)
@@ -653,7 +638,7 @@ func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
 			Detail: fmt.Sprint(" ", g.curClassDecl.Name),
 		}
 	}
-	g.add(g.curClassDecl, &completion{
+	g.complsByClassDecl[g.curClassDecl] = append(g.complsByClassDecl[g.curClassDecl], &completion{
 		Label:         label,
 		LabelDetails:  labelDetails,
 		Kind:          kind,
@@ -662,7 +647,7 @@ func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
 	})
 }
 
-func (g *propertyCompletionGenerator) walkSetExpr(expr *ast.SetExpr) {
+func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.SetExpr) {
 	if g.curClassDecl == nil || expr.Object == nil {
 		return
 	}
@@ -673,31 +658,54 @@ func (g *propertyCompletionGenerator) walkSetExpr(expr *ast.SetExpr) {
 		return
 	}
 	label := expr.Name.String()
+	if g.propsByClassDecl[g.curClassDecl][label] {
+		return
+	}
 	var labelDetails *protocol.CompletionItemLabelDetails
 	if g.includeClassName {
 		labelDetails = &protocol.CompletionItemLabelDetails{
 			Detail: fmt.Sprint(" ", g.curClassDecl.Name),
 		}
 	}
-	g.add(g.curClassDecl, &completion{
+	g.complsByClassDecl[g.curClassDecl] = append(g.complsByClassDecl[g.curClassDecl], &completion{
 		Label:        label,
 		LabelDetails: labelDetails,
 		Kind:         protocol.CompletionItemKindField,
 	})
 }
 
-func (g *propertyCompletionGenerator) add(classDecl *ast.ClassDecl, compl *completion) {
-	complsByLabelByKind, ok := g.complsByLabelByKindByClassDecl[classDecl]
-	if !ok {
-		complsByLabelByKind = map[protocol.CompletionItemKind]map[string]*completion{}
-		g.complsByLabelByKindByClassDecl[classDecl] = complsByLabelByKind
+func sortPropertyCompletions(compls []*completion) {
+	orders := []func(c *completion) string{
+		func(c *completion) string {
+			if strings.HasPrefix(c.Label, "_") {
+				return "1"
+			}
+			return "0"
+		},
+		func(c *completion) string {
+			if c.Kind == protocol.CompletionItemKindMethod {
+				return "0"
+			}
+			return "1"
+		},
+		func(c *completion) string {
+			return c.Label
+		},
+		func(c *completion) string {
+			if c.LabelDetails != nil {
+				return c.LabelDetails.Detail
+			}
+			return ""
+		},
 	}
-	complsByLabel, ok := complsByLabelByKind[compl.Kind]
-	if !ok {
-		complsByLabel = map[string]*completion{}
-		complsByLabelByKind[compl.Kind] = complsByLabel
-	}
-	complsByLabel[compl.Label] = compl
+	slices.SortFunc(compls, func(x, y *completion) int {
+		for _, order := range orders {
+			if c := cmp.Compare(order(x), order(y)); c != 0 {
+				return c
+			}
+		}
+		return 0
+	})
 }
 
 func varCompletion(decl *ast.VarDecl) (*completion, bool) {
