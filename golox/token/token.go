@@ -208,6 +208,9 @@ func (t Token) IsZero() bool {
 }
 
 func (t Token) String() string {
+	if t.Type == EOF {
+		return fmt.Sprintf("%s: [%s]", t.StartPos, t.Type)
+	}
 	return fmt.Sprintf("%s: %s [%s]", t.StartPos, t.Lexeme, t.Type)
 }
 
