@@ -9,25 +9,12 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-// ResolveIdents resolves the identifiers in a program to their declarations.
-// It returns a map from identifier to its declaration. If an error is returned then a possibly incomplete map will
-// still be returned along with it.
+// ResolveIdents resolves the identifiers in a program to their bindings.
+// It returns a map from identifier to its bindings. There will be multiple bindings associated with a single identifier
+// if it's not possible to determine which binding the identifier refers to.
+// If an error is returned then a possibly incomplete map will still be returned along with it. The error will be of
+// type [loxerr.Errors].
 // builtins is a list of builtin declarations to add to the global scope.
-//
-// For example, given the following code:
-//
-//	1| var a = 1;
-//	2|
-//	3| print a;
-//	4| print a + 1;
-//
-// The returned map is:
-//
-//	{
-//	  1:5: a => 1:5: var a = 1;,
-//	  3:7: a => 1:5: var a = 1;,
-//	  4:7: a => 1:5: var a = 1;,
-//	}
 //
 // This function also checks that identifiers are not:
 //   - declared and never used
@@ -46,16 +33,54 @@ import (
 //	var x = 1;
 //	printX();
 //
-// If there is an error, it will be of type [loxerr.Errors].
-func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (map[*ast.Ident]ast.Decl, error) {
+// # Example
+//
+// Given the following code:
+//
+//	1 | class Foo {
+//	2 |   method() {}
+//	3 |
+//	4 |   otherMethod() {
+//	5 |     this.method();
+//	6 |   }
+//	7 | }
+//	8 |
+//	9 | class Bar {
+//	10|   method() {}
+//	11| }
+//	12|
+//	13| var foo = Foo();
+//	14| print foo;
+//	15| foo.method();
+//
+// The returned map is:
+//
+//	{
+//	  1:7: Foo => [ 1:1: class Foo { ... } ],
+//	  2:3: method => [ 2:3: method() {} ],
+//	  4:3: otherMethod => [ 4:3: otherMethod() { ... } ],
+//	  5:10: method => [ 2:3: method() {} ],
+//	  9:7: Bar => [ 9:7: class Bar { ... } ],
+//	  10:3: method => [ 10:3: method() {} ],
+//	  13:5: foo => [ 13:1: var foo = Foo(); ],
+//	  13:11: Foo => [ 1:1: class Foo { ... } ],
+//	  14:7: foo => [ 13:1: var foo = Foo(); ],
+//	  15:1: foo => [ 13:1: var foo = Foo(); ],
+//	  15:5: method => [ 2:3: method() {}, 10:3: method() {} ],
+//	}
+func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (map[*ast.Ident][]ast.Binding, error) {
 	cfg := newConfig(opts)
 	r := &identResolver{
-		fatalOnly:              cfg.fatalOnly,
-		extraFeatures:          cfg.extraFeatures,
-		builtins:               builtins,
-		scopes:                 stack.New[*scope](),
-		forwardDeclaredGlobals: map[string]bool{},
-		identDecls:             map[*ast.Ident]ast.Decl{},
+		fatalOnly:                             cfg.fatalOnly,
+		extraFeatures:                         cfg.extraFeatures,
+		builtins:                              builtins,
+		scopes:                                stack.New[*scope](),
+		forwardDeclaredGlobals:                map[string]bool{},
+		unresolvedPropIdentsByNameByClassDecl: map[*ast.ClassDecl]map[string][]*ast.Ident{},
+		unresolvedPropIdentsByName:            map[string][]*ast.Ident{},
+		bindingsByNameByClassDecl:             map[*ast.ClassDecl]map[string][]ast.Binding{},
+		bindingsByName:                        map[string][]ast.Binding{},
+		identBindings:                         map[*ast.Ident][]ast.Binding{},
 	}
 	return r.Resolve(program)
 }
@@ -64,22 +89,27 @@ type identResolver struct {
 	fatalOnly     bool
 	extraFeatures bool
 
-	builtins               []ast.Decl
-	scopes                 *stack.Stack[*scope]
-	globalScope            *scope
-	globalDecls            map[string]ast.Decl
-	forwardDeclaredGlobals map[string]bool
-	inFun                  bool
-	inGlobalFun            bool
-	funScopeLevel          int
+	builtins                              []ast.Decl
+	scopes                                *stack.Stack[*scope]
+	globalScope                           *scope
+	globalDecls                           map[string]ast.Decl
+	forwardDeclaredGlobals                map[string]bool
+	inFun                                 bool
+	inGlobalFun                           bool
+	funScopeLevel                         int
+	curClassDecl                          *ast.ClassDecl
+	unresolvedPropIdentsByNameByClassDecl map[*ast.ClassDecl]map[string][]*ast.Ident
+	unresolvedPropIdentsByName            map[string][]*ast.Ident
+	bindingsByNameByClassDecl             map[*ast.ClassDecl]map[string][]ast.Binding
+	bindingsByName                        map[string][]ast.Binding
 
-	identDecls map[*ast.Ident]ast.Decl
-	errs       loxerr.Errors
+	identBindings map[*ast.Ident][]ast.Binding
+	errs          loxerr.Errors
 }
 
-func (r *identResolver) Resolve(program *ast.Program) (map[*ast.Ident]ast.Decl, error) {
+func (r *identResolver) Resolve(program *ast.Program) (map[*ast.Ident][]ast.Binding, error) {
 	ast.Walk(program, r.walk)
-	return r.identDecls, r.errs.Err()
+	return r.identBindings, r.errs.Err()
 }
 
 func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Decl {
@@ -89,7 +119,7 @@ func (r *identResolver) readGlobalDecls(program *ast.Program) map[string]ast.Dec
 			stmt = commentedStmt.Stmt
 		}
 		if decl, ok := stmt.(ast.Decl); ok {
-			ident := decl.Ident()
+			ident := decl.BoundIdent()
 			if !ident.IsValid() {
 				continue
 			}
@@ -147,7 +177,7 @@ func (s *scope) DeclareName(name string) {
 // Declare marks an identifier as declared by a statement in the scope.
 func (s *scope) Declare(stmt ast.Decl) {
 	decl := &decl{Stmt: stmt}
-	name := stmt.Ident().String()
+	name := stmt.BoundIdent().String()
 	if _, ok := s.undeclaredUsages[name]; ok {
 		decl.Status |= declStatusUsed
 	}
@@ -235,7 +265,7 @@ func (r *identResolver) beginScope() func() {
 	return func() {
 		scope := r.scopes.Pop()
 		for decl := range scope.UnusedDeclarations() {
-			r.addErrorf(decl.Ident(), loxerr.Hint, "%s has been declared but is never used", decl.Ident().String())
+			r.addErrorf(decl.BoundIdent(), loxerr.Hint, "%s has been declared but is never used", decl.BoundIdent().String())
 		}
 		for ident := range scope.UndeclaredUsages() {
 			if scope.IsDeclared(ident.String()) {
@@ -252,7 +282,7 @@ func (r *identResolver) inGlobalScope() bool {
 }
 
 func (r *identResolver) declareIdent(stmt ast.Decl) {
-	ident := stmt.Ident()
+	ident := stmt.BoundIdent()
 	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.PlaceholderIdent) {
 		return
 	}
@@ -270,7 +300,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 		r.addErrorf(ident, typ, "%s has already been declared", ident.String())
 	} else {
 		scope.Declare(stmt)
-		r.identDecls[ident] = stmt
+		r.identBindings[ident] = append(r.identBindings[ident], stmt)
 	}
 }
 
@@ -324,7 +354,7 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 	for level, scope := range r.scopes.Backward() {
 		if scope.IsDeclared(ident.String()) {
 			scope.Use(ident.String())
-			r.identDecls[ident] = scope.Declaration(ident.String())
+			r.identBindings[ident] = append(r.identBindings[ident], scope.Declaration(ident.String()))
 			// If we're in a function which was declared in the same or a deeper scope than the identifier was declared
 			// in, then we can't definitely say that the identifier has been defined yet. It might be defined later
 			// before the function is called.
@@ -336,10 +366,10 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 	}
 	if decl, ok := r.globalDecls[ident.String()]; ok && r.inGlobalFun {
 		r.globalScope.Declare(decl)
-		r.identDecls[decl.Ident()] = decl
+		r.identBindings[decl.BoundIdent()] = append(r.identBindings[decl.BoundIdent()], decl)
 		r.globalScope.Use(ident.String())
 		r.forwardDeclaredGlobals[ident.String()] = true
-		r.identDecls[ident] = decl
+		r.identBindings[ident] = append(r.identBindings[ident], decl)
 		return
 	}
 	r.scopes.Peek().UseUndeclared(ident)
@@ -368,8 +398,15 @@ func (r *identResolver) walk(node ast.Node) bool {
 		r.walkFunExpr(node)
 	case *ast.IdentExpr:
 		r.walkIdentExpr(node)
+	case *ast.GetExpr:
+		r.resolveGetExpr(node)
+		return true
 	case *ast.AssignmentExpr:
-		r.walkAssignmentExpr(node)
+		r.resolveAssignmentExpr(node)
+		return true
+	case *ast.SetExpr:
+		r.resolveSetExpr(node)
+		return true
 	default:
 		return true
 	}
@@ -382,7 +419,7 @@ func (r *identResolver) walkProgram(program *ast.Program) {
 
 	r.globalScope = r.scopes.Peek()
 	for _, decl := range r.builtins {
-		name := decl.Ident().String()
+		name := decl.BoundIdent().String()
 		r.globalScope.Declare(decl)
 		r.globalScope.Define(name)
 		r.globalScope.Use(name)
@@ -390,6 +427,12 @@ func (r *identResolver) walkProgram(program *ast.Program) {
 	r.globalDecls = r.readGlobalDecls(program)
 
 	ast.WalkChildren(program, r.walk)
+
+	for name, bindings := range r.bindingsByName {
+		for _, ident := range r.unresolvedPropIdentsByName[name] {
+			r.identBindings[ident] = bindings
+		}
+	}
 }
 
 func (r *identResolver) walkVarDecl(decl *ast.VarDecl) {
@@ -440,6 +483,12 @@ func (r *identResolver) walkFun(fun *ast.Function) {
 }
 
 func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
+	prevCurClassDecl := r.curClassDecl
+	defer func() { r.curClassDecl = prevCurClassDecl }()
+	r.curClassDecl = decl
+	r.unresolvedPropIdentsByNameByClassDecl[decl] = map[string][]*ast.Ident{}
+	r.bindingsByNameByClassDecl[decl] = map[string][]ast.Binding{}
+
 	r.declareIdent(decl)
 	r.defineIdent(decl.Name)
 
@@ -461,11 +510,23 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	scope.Use(token.CurrentInstanceIdent)
 
 	ast.WalkChildren(decl, r.walk)
+
+	for name, bindings := range r.bindingsByNameByClassDecl[decl] {
+		for _, ident := range r.unresolvedPropIdentsByNameByClassDecl[decl][name] {
+			r.identBindings[ident] = bindings
+		}
+	}
 }
 
 func (r *identResolver) resolveMethodDecl(decl *ast.MethodDecl) {
 	if decl.Name.IsValid() {
-		r.identDecls[decl.Name] = decl
+		r.identBindings[decl.Name] = append(r.identBindings[decl.Name], decl)
+		if _, ok := r.bindingsByNameByClassDecl[r.curClassDecl]; !ok {
+			r.bindingsByNameByClassDecl[r.curClassDecl] = map[string][]ast.Binding{}
+		}
+		name := decl.Name.String()
+		r.bindingsByNameByClassDecl[r.curClassDecl][name] = append(r.bindingsByNameByClassDecl[r.curClassDecl][name], decl)
+		r.bindingsByName[name] = append(r.bindingsByName[name], decl)
 	}
 }
 
@@ -496,8 +557,33 @@ func (r *identResolver) walkIdentExpr(expr *ast.IdentExpr) {
 	r.resolveIdent(expr.Ident, identOpRead)
 }
 
-func (r *identResolver) walkAssignmentExpr(expr *ast.AssignmentExpr) {
-	ast.WalkChildren(expr, r.walk)
+func (r *identResolver) resolveGetExpr(expr *ast.GetExpr) {
+	if !expr.Name.IsValid() {
+		return
+	}
+	name := expr.Name.String()
+	if _, ok := expr.Object.(*ast.ThisExpr); ok && r.curClassDecl != nil {
+		r.unresolvedPropIdentsByNameByClassDecl[r.curClassDecl][name] = append(r.unresolvedPropIdentsByNameByClassDecl[r.curClassDecl][name], expr.Name)
+	} else {
+		r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
+	}
+}
+
+func (r *identResolver) resolveAssignmentExpr(expr *ast.AssignmentExpr) {
 	r.resolveIdent(expr.Left, identOpWrite)
 	r.defineIdent(expr.Left)
+}
+
+func (r *identResolver) resolveSetExpr(expr *ast.SetExpr) {
+	if !expr.Name.IsValid() {
+		return
+	}
+	name := expr.Name.String()
+	if _, ok := expr.Object.(*ast.ThisExpr); ok && r.curClassDecl != nil {
+		r.unresolvedPropIdentsByNameByClassDecl[r.curClassDecl][name] = append(r.unresolvedPropIdentsByNameByClassDecl[r.curClassDecl][name], expr.Name)
+		r.bindingsByNameByClassDecl[r.curClassDecl][name] = append(r.bindingsByNameByClassDecl[r.curClassDecl][name], expr)
+	} else {
+		r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
+	}
+	r.bindingsByName[name] = append(r.bindingsByName[name], expr)
 }

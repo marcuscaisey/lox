@@ -21,69 +21,30 @@ func (h *Handler) textDocumentDefinition(params *protocol.DefinitionParams) (*pr
 		return nil, err
 	}
 
-	var defs []ast.Node
-	if propertyDefs, ok := propertyDefinitions(doc, params.Position); ok {
-		defs = propertyDefs
-	} else if decl, ok := declaration(doc, params.Position); ok {
-		defs = append(defs, decl.Ident())
-	} else {
+	defs, ok := definitions(doc, params.Position)
+	if !ok {
 		return nil, nil
 	}
 
-	slices.SortFunc(defs, func(a, b ast.Node) int { return a.Start().Compare(b.Start()) })
+	slices.SortFunc(defs, func(a, b ast.Binding) int { return a.Start().Compare(b.Start()) })
 	locs := make(protocol.LocationSlice, len(defs))
 	for i, def := range defs {
 		locs[i] = &protocol.Location{
 			Uri:   filenameToURI(def.Start().File.Name),
-			Range: newRange(def),
+			Range: newRange(def.BoundIdent()),
 		}
 	}
 
 	return &protocol.LocationOrLocationSlice{Value: locs}, nil
 }
 
-func propertyDefinitions(doc *document, pos *protocol.Position) ([]ast.Node, bool) {
-	var name string
-	ast.Walk(doc.Program, func(n ast.Node) bool {
-		var ident *ast.Ident
-		switch n := n.(type) {
-		case *ast.MethodDecl:
-			ident = n.Name
-		case *ast.GetExpr:
-			ident = n.Name
-		case *ast.SetExpr:
-			ident = n.Name
-		default:
-			return true
-		}
-		if ident.IsValid() && inRange(pos, ident) {
-			name = ident.String()
-			return false
-		} else {
-			return true
-		}
-	})
-	if name == "" {
+func definitions(doc *document, pos *protocol.Position) ([]ast.Binding, bool) {
+	ident, ok := outermostNodeAt[*ast.Ident](doc.Program, pos)
+	if !ok {
 		return nil, false
 	}
-
-	var defs []ast.Node
-	ast.Walk(doc.Program, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.MethodDecl:
-			if n.Name.IsValid() && n.Name.String() == name {
-				defs = append(defs, n.Name)
-			}
-		case *ast.SetExpr:
-			if n.Name.IsValid() && n.Name.String() == name {
-				defs = append(defs, n.Name)
-			}
-		default:
-		}
-		return true
-	})
-
-	return defs, true
+	bindings, ok := doc.IdentBindings[ident]
+	return bindings, ok
 }
 
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_references
@@ -111,62 +72,27 @@ func (h *Handler) textDocumentReferences(params *protocol.ReferenceParams) (prot
 }
 
 func references(doc *document, pos *protocol.Position, includeDecl bool) (references []ast.Node, ok bool) {
-	if propertyRefs, ok := propertyReferences(doc, pos, includeDecl); ok {
-		return propertyRefs, true
-	}
 	if thisRefs, ok := thisReferences(doc, pos); ok {
 		return thisRefs, true
 	}
-	if declRefs, ok := declarationReferences(doc, pos, includeDecl); ok {
-		return declRefs, true
-	}
-	return nil, false
-}
 
-func propertyReferences(doc *document, pos *protocol.Position, includeDecl bool) ([]ast.Node, bool) {
-	var name string
-	ast.Walk(doc.Program, func(n ast.Node) bool {
-		var ident *ast.Ident
-		switch n := n.(type) {
-		case *ast.MethodDecl:
-			ident = n.Name
-		case *ast.GetExpr:
-			ident = n.Name
-		case *ast.SetExpr:
-			ident = n.Name
-		default:
-			return true
-		}
-		if ident.IsValid() && inRange(pos, ident) {
-			name = ident.String()
-			return false
-		} else {
-			return true
-		}
-	})
-	if name == "" {
+	defs, ok := definitions(doc, pos)
+	if !ok {
 		return nil, false
 	}
 
 	var refs []ast.Node
-	ast.Walk(doc.Program, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.MethodDecl:
-			if n.Name.IsValid() && n.Name.String() == name && includeDecl {
-				refs = append(refs, n.Name)
+identBindings:
+	for ident, bindings := range doc.IdentBindings {
+		for _, binding := range bindings {
+			for _, def := range defs {
+				if def == binding && (includeDecl || ident != def.BoundIdent()) {
+					refs = append(refs, ident)
+					continue identBindings
+				}
 			}
-		case *ast.GetExpr:
-			if n.Name.IsValid() && n.Name.String() == name {
-				refs = append(refs, n.Name)
-			}
-		case *ast.SetExpr:
-			if n.Name.IsValid() && n.Name.String() == name {
-				refs = append(refs, n.Name)
-			}
-		default:
 		}
-		return true
-	})
+	}
 
 	return refs, true
 }
@@ -196,22 +122,6 @@ func thisReferences(doc *document, pos *protocol.Position) ([]ast.Node, bool) {
 	return refs, true
 }
 
-func declarationReferences(doc *document, pos *protocol.Position, includeDecl bool) ([]ast.Node, bool) {
-	decl, ok := declaration(doc, pos)
-	if !ok {
-		return nil, false
-	}
-
-	var refs []ast.Node
-	for ident, identDecl := range doc.IdentDecls {
-		if identDecl == decl && (includeDecl || ident != decl.Ident()) {
-			refs = append(refs, ident)
-		}
-	}
-
-	return refs, true
-}
-
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_hover
 func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hover, error) {
 	doc, err := h.document(params.TextDocument.Uri)
@@ -219,39 +129,63 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		return nil, err
 	}
 
-	decl, ok := declaration(doc, params.Position)
+	defs, ok := definitions(doc, params.Position)
 	if !ok {
 		return nil, nil
 	}
 
-	var header string
+	var headers []string
 	var body string
-	switch decl := decl.(type) {
-	case *ast.VarDecl, *ast.ParamDecl:
-		header = fmt.Sprintf("var %s", decl.Ident().String())
-	case *ast.FunDecl:
-		header = fmt.Sprintf("fun %s(%s)", decl.Name.String(), formatParams(decl.Function.Params))
-		body = commentsText(decl.Doc)
-	case *ast.ClassDecl:
-		var b strings.Builder
-		fmt.Fprintf(&b, "class %s", decl.Name.String())
-		if methods := decl.Methods(); len(methods) > 0 {
-			fmt.Fprint(&b, " {\n")
-			for _, methodDecl := range methods {
-				fmt.Fprintf(&b, "    %s\n", hoverMethodDeclHeader(methodDecl))
-			}
-			fmt.Fprint(&b, "}")
+	for _, def := range defs {
+		decl, ok := def.(ast.Decl)
+		if !ok {
+			continue
 		}
-		header = b.String()
-		body = commentsText(decl.Doc)
-	case *ast.MethodDecl:
-		header = hoverMethodDeclHeader(decl)
-		body = commentsText(decl.Doc)
+		switch decl := decl.(type) {
+		case *ast.VarDecl, *ast.ParamDecl:
+			headers = append(headers, fmt.Sprintf("var %s", decl.BoundIdent()))
+		case *ast.FunDecl:
+			headers = append(headers, fmt.Sprintf("fun %s(%s)", decl.Name, formatParams(decl.Function.Params)))
+			body = commentsText(decl.Doc)
+		case *ast.ClassDecl:
+			var b strings.Builder
+			fmt.Fprintf(&b, "class %s", decl.Name)
+			if methods := decl.Methods(); len(methods) > 0 {
+				fmt.Fprint(&b, " {\n")
+				for _, methodDecl := range methods {
+					var params []*ast.ParamDecl
+					if methodDecl.Function != nil {
+						params = methodDecl.Function.Params
+					}
+					fmt.Fprintf(&b, "  %s\n", hoverMethodDeclHeader(methodDecl.Name.String(), methodDecl.Modifiers, params))
+				}
+				fmt.Fprint(&b, "}")
+			}
+			headers = append(headers, b.String())
+			body = commentsText(decl.Doc)
+		case *ast.MethodDecl:
+			classDecl, _ := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
+			name := fmt.Sprint(classDecl.Name, ".", decl.Name)
+			var params []*ast.ParamDecl
+			if decl.Function != nil {
+				params = decl.Function.Params
+			}
+			headers = append(headers, hoverMethodDeclHeader(name, decl.Modifiers, params))
+			body = commentsText(decl.Doc)
+		}
+	}
+	if len(headers) == 0 {
+		return nil, nil
 	}
 
 	contentFormat := protocol.MarkupKindPlainText
 	if len(h.capabilities.GetTextDocument().GetHover().GetContentFormat()) > 0 {
 		contentFormat = h.capabilities.GetTextDocument().GetHover().GetContentFormat()[0]
+	}
+
+	header := strings.Join(headers, "\n")
+	if len(headers) > 1 {
+		body = fmt.Sprintf("%d implementations", len(headers))
 	}
 
 	var contents string
@@ -277,12 +211,12 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 	}, nil
 }
 
-func hoverMethodDeclHeader(decl *ast.MethodDecl) string {
+func hoverMethodDeclHeader(name string, modifiers []token.Token, params []*ast.ParamDecl) string {
 	var b strings.Builder
-	for _, modifier := range decl.Modifiers {
+	for _, modifier := range modifiers {
 		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
 	}
-	fmt.Fprintf(&b, "%s(%s)", decl.Name.String(), formatParams(decl.Function.Params))
+	fmt.Fprintf(&b, "%s(%s)", name, formatParams(params))
 	return b.String()
 }
 
@@ -526,10 +460,19 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 		return nil, nil
 	}
 
-	var signatures []*protocol.SignatureInformation
+	var calleeIdent *ast.Ident
 	switch callee := callExpr.Callee.(type) {
 	case *ast.IdentExpr:
-		switch decl := doc.IdentDecls[callee.Ident].(type) {
+		calleeIdent = callee.Ident
+	case *ast.GetExpr:
+		calleeIdent = callee.Name
+	default:
+		return nil, nil
+	}
+
+	var signatures []*protocol.SignatureInformation
+	for _, binding := range doc.IdentBindings[calleeIdent] {
+		switch decl := binding.(type) {
 		case *ast.FunDecl:
 			var params []*ast.ParamDecl
 			if decl.Function != nil {
@@ -554,25 +497,20 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			}
 			signatures = append(signatures, h.signature(name, params, doc))
 
+		case *ast.MethodDecl:
+			if decl.HasModifier(token.Get, token.Set) {
+				continue
+			}
+			classDecl, _ := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
+			name := fmt.Sprint(classDecl.Name, ".", decl.Name)
+			var params []*ast.ParamDecl
+			if decl.Function != nil {
+				params = decl.Function.Params
+			}
+			signatures = append(signatures, h.signature(name, params, decl.Doc))
+
 		default:
 		}
-
-	case *ast.GetExpr:
-		ast.Walk(doc.Program, func(classDecl *ast.ClassDecl) bool {
-			for _, methodDecl := range classDecl.Methods() {
-				if methodDecl.Name.String() == callee.Name.String() && !methodDecl.HasModifier(token.Get, token.Set) {
-					name := fmt.Sprint(classDecl.Name, ".", methodDecl.Name)
-					var params []*ast.ParamDecl
-					if methodDecl.Function != nil {
-						params = methodDecl.Function.Params
-					}
-					signatures = append(signatures, h.signature(name, params, methodDecl.Doc))
-				}
-			}
-			return true
-		})
-
-	default:
 	}
 	if len(signatures) == 0 {
 		return nil, nil
@@ -719,15 +657,6 @@ func (h *Handler) textDocumentRename(params *protocol.RenameParams) (*protocol.W
 			},
 		},
 	}, nil
-}
-
-func declaration(doc *document, pos *protocol.Position) (ast.Decl, bool) {
-	ident, ok := outermostNodeAt[*ast.Ident](doc.Program, pos)
-	if !ok {
-		return nil, false
-	}
-	decl, ok := doc.IdentDecls[ident]
-	return decl, ok
 }
 
 func filenameToURI(filename string) string {

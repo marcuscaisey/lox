@@ -29,7 +29,7 @@ type document struct {
 	Filename       string
 	Program        *ast.Program
 	HasParseErrors bool
-	IdentDecls     map[*ast.Ident]ast.Decl
+	IdentBindings  map[*ast.Ident][]ast.Binding
 	Completor      *completor
 }
 
@@ -154,7 +154,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	if filename != h.stubBuiltinsFilename {
 		builtins = h.stubBuiltins
 	}
-	identDecls, resolveErr := analyse.ResolveIdents(program, builtins, analyse.WithExtraFeatures(h.extraFeatures))
+	identBindings, resolveErr := analyse.ResolveIdents(program, builtins, analyse.WithExtraFeatures(h.extraFeatures))
 
 	h.docs[uri] = &document{
 		URI:            uri,
@@ -163,7 +163,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		Filename:       filename,
 		Program:        program,
 		HasParseErrors: len(parseLoxErrs) > 0,
-		IdentDecls:     identDecls,
+		IdentBindings:  identBindings,
 		Completor:      newCompletor(program, h.stubBuiltins),
 	}
 

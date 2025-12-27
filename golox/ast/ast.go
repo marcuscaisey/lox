@@ -35,6 +35,14 @@ func (p *Program) Start() token.Position { return p.StartPos }
 func (p *Program) End() token.Position   { return p.EndPos }
 func (p *Program) IsValid() bool         { return p != nil && isValidSlice(p.Stmts) }
 
+// Binding is the interface implemented by all nodes which may bind a name to a value in a namespace. Examples of
+// namespaces are a lexical scope or an object's properties.
+type Binding interface {
+	Node
+	// BoundIdent returns the identifier that the value is being bound to.
+	BoundIdent() *Ident
+}
+
 // Ident is an identifier, such as a variable name.
 type Ident struct {
 	Token token.Token
@@ -103,8 +111,7 @@ func (i *CommentedStmt) IsValid() bool {
 //sumtype:decl
 type Decl interface {
 	Stmt
-	// Ident returns the identifier being declared.
-	Ident() *Ident
+	Binding
 	isDecl()
 }
 
@@ -128,7 +135,7 @@ func (v *VarDecl) End() token.Position   { return last(v.Var, v.Name, v.Initiali
 func (v *VarDecl) IsValid() bool {
 	return v != nil && !v.Var.IsZero() && isValidOptional(v.Initialiser) && isValid(v.Name) && !v.Semicolon.IsZero()
 }
-func (v *VarDecl) Ident() *Ident { return v.Name }
+func (v *VarDecl) BoundIdent() *Ident { return v.Name }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {
@@ -144,7 +151,7 @@ func (f *FunDecl) End() token.Position   { return last(f.Fun, f.Name, f.Function
 func (f *FunDecl) IsValid() bool {
 	return f != nil && isValidSlice(f.Doc) && !f.Fun.IsZero() && isValid(f.Name) && isValid(f.Function)
 }
-func (f *FunDecl) Ident() *Ident { return f.Name }
+func (f *FunDecl) BoundIdent() *Ident { return f.Name }
 
 // Function is a function's parameters and body.
 type Function struct {
@@ -169,7 +176,7 @@ type ParamDecl struct {
 func (p *ParamDecl) Start() token.Position { return p.Name.Start() }
 func (p *ParamDecl) End() token.Position   { return p.Name.End() }
 func (p *ParamDecl) IsValid() bool         { return p != nil && isValid(p.Name) }
-func (p *ParamDecl) Ident() *Ident         { return p.Name }
+func (p *ParamDecl) BoundIdent() *Ident    { return p.Name }
 
 // ClassDecl is a class declaration, such as
 //
@@ -191,7 +198,7 @@ func (c *ClassDecl) End() token.Position   { return last(c.Class, c.Name, c.Body
 func (c *ClassDecl) IsValid() bool {
 	return c != nil && isValidSlice(c.Doc) && !c.Class.IsZero() && isValid(c.Name) && isValid(c.Body)
 }
-func (c *ClassDecl) Ident() *Ident { return c.Name }
+func (c *ClassDecl) BoundIdent() *Ident { return c.Name }
 
 // Methods returns the methods of the class.
 func (c *ClassDecl) Methods() []*MethodDecl {
@@ -227,7 +234,7 @@ func (m *MethodDecl) End() token.Position {
 func (m *MethodDecl) IsValid() bool {
 	return m != nil && isValidSlice(m.Doc) && isValid(m.Name) && isValid(m.Function)
 }
-func (m *MethodDecl) Ident() *Ident { return m.Name }
+func (m *MethodDecl) BoundIdent() *Ident { return m.Name }
 
 // HasModifier reports whether the declaration has a modifier with one of the target types.
 func (m *MethodDecl) HasModifier(types ...token.Type) bool {
@@ -556,6 +563,7 @@ func (s *SetExpr) End() token.Position   { return last(s.Object, s.Name, s.Value
 func (s *SetExpr) IsValid() bool {
 	return s != nil && isValid(s.Object) && isValid(s.Name) && isValid(s.Value)
 }
+func (s *SetExpr) BoundIdent() *Ident { return s.Name }
 
 func first(ranges ...token.Range) token.Range {
 	for _, rang := range ranges {
