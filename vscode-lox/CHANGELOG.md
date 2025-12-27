@@ -11,23 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fix README demo GIF URLs
+- Fix README demo GIF URLs.
 
 ## [4.0.1] - 2025-12-26
 
 ### Fixed
 
-- Deduplicate class property completions
+- Deduplicate class property completions.
 
 ## [4.0.0] - 2025-12-26
 
 ### Changed
 
-- Improve sorting of class property completions
+- Improve sorting of class property completions.
 
 ### Removed
 
-- Omit "init" from class property completions
+- Omit "init" from class property completions.
 
 ## [3.0.0] - 2025-12-26
 

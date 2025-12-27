@@ -180,9 +180,18 @@ func thisReferences(doc *document, pos *protocol.Position) ([]ast.Node, bool) {
 		return nil, false
 	}
 	var refs []ast.Node
-	ast.Walk(classDecl, func(thisExpr *ast.ThisExpr) bool {
-		refs = append(refs, thisExpr)
-		return false
+	ast.Walk(classDecl, func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.ClassDecl:
+			if n != classDecl {
+				return false
+			}
+		case *ast.ThisExpr:
+			refs = append(refs, n)
+			return false
+		default:
+		}
+		return true
 	})
 	return refs, true
 }
