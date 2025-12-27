@@ -603,52 +603,53 @@ Lox has the following built-in functions.
 ## Grammar
 
 Below is the grammar of Lox defined using the flavour of [Extended Backus–Naur
-form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) described in [Extensible
-Markup Language (XML) 1.0 (Fifth Edition)](https://www.w3.org/TR/xml/#sec-notation).
+form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) as described by the [ISO/IEC
+14977:1996 standard](https://www.iso.org/standard/26153.html).
 
 ```ebnf
-program =  decl* EOF ;
+program = { decl } , EOF ;
 
 decl       = var_decl | fun_decl | class_decl | stmt ;
-var_decl   = "var" IDENT ( "=" expr )? ";" ;
-fun_decl   = "fun" function ;
-function   = IDENT "(" parameters? ")" block ;
-parameters = IDENT ( "," IDENT )* ;
-class_decl = "class" IDENT "{" method* "}" ;
-method     = "static"? ( "get" | "set" )? function ;
+var_decl   = 'var' , IDENT , [ '=' , expr ] , ';' ;
+fun_decl   = 'fun' , function ;
+function   = IDENT , '(' , [ parameters ] , ')' , block ;
+parameters = IDENT , { ',' , IDENT } ;
+class_decl = 'class' , IDENT , '{' , { method } , '}' , ;
+method     = [ 'static' ] , [ 'get' | 'set' ] , function ;
 
 stmt          = expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | break_stmt
               | continue_stmt ;
-expr_stmt     = expr ";" ;
-print_stmt    = "print" expr ";" ;
-block         = "{" decl* "}" ;
-if_stmt       = "if" "(" expr ")" stmt ( "else" stmt )? ;
-while_stmt    = "while" "(" expr ")" stmt ;
-for_stmt      = "for" "(" ( var_decl | expr_stmt | ";" ) expr? ";" expr? ")" stmt ;
-break_stmt    = "break" ";" ;
-continue_stmt = "continue" ";" ;
-return_stmt   = "return" expression? ";" ;
+expr_stmt     = expr , ';' ;
+print_stmt    = 'print' , expr , ';' ;
+block         = '{' , { decl } , '}' ;
+if_stmt       = 'if' , '(' , expr , ')' , stmt , [ 'else' , stmt ] ;
+while_stmt    = 'while' , '(' , expr , ')' , stmt ;
+for_stmt      = 'for' , '(' , ( var_decl | expr_stmt | ';' ) , [ expr ] , ';' , [ expr ] , ')'
+              , stmt ;
+break_stmt    = 'break' , ';' ;
+continue_stmt = 'continue' , ';' ;
+return_stmt   = 'return' , [ expression ] , ';' ;
 
 expr                = comma_expr ;
-comma_expr          = assignment_expr ( "," assignment_expr )* ;
-assignment_expr     = ( postfix_expr "." )? IDENT "=" assignment_expr | ternary_expr ;
-ternary_expr        = logical_or_expr ( "?" expr ":" ternary_expr )? ;
-logical_or_expr     = logical_and_expr ( "or" logical_and_expr )* ;
-logical_and_expr    = equality_expr ( "and" equality_expr )* ;
-equality_expr       = relational_expr ( ( "==" | "!=" ) relational_expr )* ;
-relational_expr     = additive_expr ( ( "<" | "<=" | ">" | ">=" ) additive_expr )* ;
-additive_expr       = multiplicative_expr ( ( "+" | "-" ) multiplicative_expr )* ;
-multiplicative_expr = unary_expr ( ( "*" | "/" | "%" ) unary_expr )* ;
-unary_expr          = ( "!" | "-" ) unary_expr | postfix_expr ;
-postfix_expr        = primary_expr ( "(" arguments? ")" | "." IDENT )* ;
-arguments           = assignment_expr ( "," assignment_expr )* ;
-primary_expr        = NUMBER | STRING | "true" | "false" | "nil" | IDENT | "this" | group_expr
+comma_expr          = assignment_expr , { ',' , assignment_expr } ;
+assignment_expr     = { postfix_expr , '.' } , IDENT , '=' , assignment_expr | ternary_expr ;
+ternary_expr        = logical_or_expr , [ '?' , expr , ':' , ternary_expr ] ;
+logical_or_expr     = logical_and_expr , { 'or' , logical_and_expr } ;
+logical_and_expr    = equality_expr , { 'and' , equality_expr } ;
+equality_expr       = relational_expr , { ( '==' | '!=' ) , relational_expr } ;
+relational_expr     = additive_expr , { ( '<' | '<=' | '>' | '>=' ) , additive_expr } ;
+additive_expr       = multiplicative_expr , { ( '+' | '-' ) , multiplicative_expr } ;
+multiplicative_expr = unary_expr , { ( '*' | '/' | '%' ) , unary_expr } ;
+unary_expr          = ( '!' | '-' ) , unary_expr | postfix_expr ;
+postfix_expr        = primary_expr , { '(' , [ arguments ] , ')' | '.' , IDENT } ;
+arguments           = assignment_expr , { ',' , assignment_expr } ;
+primary_expr        = NUMBER | STRING | 'true' | 'false' | 'nil' | IDENT | 'this' | group_expr
                     | fun_expr
-                    /* Error productions */
-                    | ( "==" | "!=" ) relational_expr
-                    | ( "<" | "<=" | ">" | ">=" ) additive_expr
-                    | "+" multiplicative_expr
-                    | ( "*" | "/" ) unary_expr ;
-group_expr          = "(" expr ")" ;
-fun_expr            = "fun" "(" parameters? ")" block ;
+                    (* Error productions *)
+                    | ( '==' | '!=' ) , relational_expr
+                    | ( '<' | '<=' | '>' | '>=' ) , additive_expr
+                    | '+' , multiplicative_expr
+                    | ( '*' | '/' ) , unary_expr ;
+group_expr          = '(' , expr , ')' ;
+fun_expr            = 'fun' , '(' , [ parameters ] , ')' , block ;
 ```
