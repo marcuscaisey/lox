@@ -384,7 +384,8 @@ greet(); // prints: Hello, World!
 
 ## Declarations
 
-Declarations are constructs that bind an identifier (name) to a value. It is not valid to:
+Declarations are constructs that bind an identifier (name) to a value in a lexical scope. It is not
+valid to:
 
 - declare a [non-blank](#blank-identifier) identifier more than once in the same local scope.
 - use a [non-blank](#blank-identifier) identifier before it has been declared.
