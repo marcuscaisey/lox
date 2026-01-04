@@ -110,7 +110,7 @@ func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
 		defer func() { c.inMethod = prevInMethod }()
 	}
 
-	ast.Walk(fun.Body, c.walk)
+	ast.WalkChildren(fun, c.walk)
 }
 
 func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {

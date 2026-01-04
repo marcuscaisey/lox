@@ -464,10 +464,8 @@ func (g *identCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 
 func (g *identCompletionGenerator) walkBlock(block *ast.Block) {
 	_, endScope := g.beginScope(block)
-	for _, stmt := range block.Stmts {
-		ast.Walk(stmt, g.walk)
-	}
-	endScope()
+	defer endScope()
+	ast.WalkChildren(block, g.walk)
 }
 
 func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*completion) {
@@ -483,14 +481,12 @@ func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*co
 	}
 
 	bodyScope, endBodyScope := g.beginScope(fun.Body)
+	defer endBodyScope()
 	bodyScope.complLocs = append(bodyScope.complLocs, &completionLocation{
 		Position:    bodyScope.start,
 		Completions: slices.Concat(paramCompls, extraCompls),
 	})
-	for _, stmt := range fun.Body.Stmts {
-		ast.Walk(stmt, g.walk)
-	}
-	endBodyScope()
+	ast.WalkChildren(fun, g.walk)
 }
 
 func (g *identCompletionGenerator) beginScope(block *ast.Block) (*completionScope, func()) {

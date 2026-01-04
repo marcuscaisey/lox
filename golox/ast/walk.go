@@ -1,10 +1,21 @@
 package ast
 
-// Walk traverses an AST in depth-first order. If node is nil, Walk returns immediately. Otherwise, it starts by calling
-// f(node). If f returns true or node is not of type T, Walk invokes f recursively for each of the non-nil children of
-// node.
+// Walk traverses an AST in depth-first order. If node is nil, Walk returns immediately. If node is of type T and
+// f(node) returns false, Walk returns immediately. Otherwise, Walk is called with f for each non-nil child of node.
+// For more control over when node's children are traversed, call [WalkChildren] from f and return false.
 func Walk[T Node](node Node, f func(T) bool) {
-	if nodeT, ok := node.(T); isNil(node) || (ok && !f(nodeT)) {
+	if isNil(node) {
+		return
+	}
+	if nodeT, ok := node.(T); ok && !f(nodeT) {
+		return
+	}
+	WalkChildren(node, f)
+}
+
+// WalkChildren is like [Walk] except that f is only called for children of node.
+func WalkChildren[T Node](node Node, f func(T) bool) {
+	if isNil(node) {
 		return
 	}
 	switch node := node.(type) {
@@ -25,7 +36,7 @@ func Walk[T Node](node Node, f func(T) bool) {
 		Walk(node.Function, f)
 	case *Function:
 		walkSlice(node.Params, f)
-		Walk(Node(node.Body), f)
+		Walk(node.Body, f)
 	case *ParamDecl:
 		Walk(node.Name, f)
 	case *ClassDecl:

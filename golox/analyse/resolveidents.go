@@ -52,17 +52,19 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 	r := &identResolver{
 		fatalOnly:              cfg.fatalOnly,
 		extraFeatures:          cfg.extraFeatures,
+		builtins:               builtins,
 		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
 		identDecls:             map[*ast.Ident]ast.Decl{},
 	}
-	return r.Resolve(program, builtins)
+	return r.Resolve(program)
 }
 
 type identResolver struct {
 	fatalOnly     bool
 	extraFeatures bool
 
+	builtins               []ast.Decl
 	scopes                 *stack.Stack[*scope]
 	globalScope            *scope
 	globalDecls            map[string]ast.Decl
@@ -75,21 +77,8 @@ type identResolver struct {
 	errs       loxerr.Errors
 }
 
-func (r *identResolver) Resolve(program *ast.Program, builtins []ast.Decl) (map[*ast.Ident]ast.Decl, error) {
-	endScope := r.beginScope()
-
-	r.globalScope = r.scopes.Peek()
-	for _, decl := range builtins {
-		name := decl.Ident().String()
-		r.globalScope.Declare(decl)
-		r.globalScope.Define(name)
-		r.globalScope.Use(name)
-	}
-	r.globalDecls = r.readGlobalDecls(program)
-
+func (r *identResolver) Resolve(program *ast.Program) (map[*ast.Ident]ast.Decl, error) {
 	ast.Walk(program, r.walk)
-	endScope()
-
 	return r.identDecls, r.errs.Err()
 }
 
@@ -358,12 +347,19 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 
 func (r *identResolver) walk(node ast.Node) bool {
 	switch node := node.(type) {
+	case *ast.Program:
+		r.walkProgram(node)
 	case *ast.VarDecl:
 		r.walkVarDecl(node)
 	case *ast.FunDecl:
 		r.walkFunDecl(node)
+	case *ast.Function:
+		r.walkFun(node)
 	case *ast.ClassDecl:
 		r.walkClassDecl(node)
+	case *ast.MethodDecl:
+		r.resolveMethodDecl(node)
+		return true
 	case *ast.Block:
 		r.walkBlock(node)
 	case *ast.ForStmt:
@@ -378,6 +374,22 @@ func (r *identResolver) walk(node ast.Node) bool {
 		return true
 	}
 	return false
+}
+
+func (r *identResolver) walkProgram(program *ast.Program) {
+	endScope := r.beginScope()
+	defer endScope()
+
+	r.globalScope = r.scopes.Peek()
+	for _, decl := range r.builtins {
+		name := decl.Ident().String()
+		r.globalScope.Declare(decl)
+		r.globalScope.Define(name)
+		r.globalScope.Use(name)
+	}
+	r.globalDecls = r.readGlobalDecls(program)
+
+	ast.WalkChildren(program, r.walk)
 }
 
 func (r *identResolver) walkVarDecl(decl *ast.VarDecl) {
@@ -403,14 +415,10 @@ func (r *identResolver) walkFunDecl(decl *ast.FunDecl) {
 	prevFunScopeLevel := r.funScopeLevel
 	r.funScopeLevel = r.scopes.Len() - 1
 	defer func() { r.funScopeLevel = prevFunScopeLevel }()
-	r.walkFun(decl.Function)
+	ast.WalkChildren(decl, r.walk)
 }
 
 func (r *identResolver) walkFun(fun *ast.Function) {
-	if fun == nil {
-		return
-	}
-
 	endScope := r.beginScope()
 	defer endScope()
 
@@ -426,13 +434,9 @@ func (r *identResolver) walkFun(fun *ast.Function) {
 		r.declareIdent(param)
 		r.defineIdent(param.Name)
 	}
-	if fun.Body != nil {
-		// We don't walk over the statements using ast.Walk(fun.Body, r.walk) because this would introduce another scope
-		// which would allow redeclaration of the parameters.
-		for _, stmt := range fun.Body.Stmts {
-			ast.Walk(stmt, r.walk)
-		}
-	}
+	// We don't walk over the body using ast.Walk(fun.Body, r.walk) because this would introduce another scope which
+	// would allow redeclaration of the parameters.
+	ast.WalkChildren(fun.Body, r.walk)
 }
 
 func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
@@ -455,40 +459,33 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	scope.DeclareName(token.CurrentInstanceIdent)
 	scope.Define(token.CurrentInstanceIdent)
 	scope.Use(token.CurrentInstanceIdent)
-	for _, methodDecl := range decl.Methods() {
-		r.walkMethodDecl(methodDecl)
-	}
+
+	ast.WalkChildren(decl, r.walk)
 }
 
-func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
+func (r *identResolver) resolveMethodDecl(decl *ast.MethodDecl) {
 	if decl.Name.IsValid() {
 		r.identDecls[decl.Name] = decl
 	}
-	r.walkFun(decl.Function)
 }
 
 func (r *identResolver) walkBlock(block *ast.Block) {
 	exitScope := r.beginScope()
 	defer exitScope()
-	for _, stmt := range block.Stmts {
-		ast.Walk(stmt, r.walk)
-	}
+	ast.WalkChildren(block, r.walk)
 }
 
 func (r *identResolver) walkForStmt(stmt *ast.ForStmt) {
 	endScope := r.beginScope()
 	defer endScope()
-	ast.Walk(stmt.Initialise, r.walk)
-	ast.Walk(stmt.Condition, r.walk)
-	ast.Walk(stmt.Update, r.walk)
-	ast.Walk(stmt.Body, r.walk)
+	ast.WalkChildren(stmt, r.walk)
 }
 
 func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
 	prevFunScopeLevel := r.funScopeLevel
 	r.funScopeLevel = r.scopes.Len() - 1
 	defer func() { r.funScopeLevel = prevFunScopeLevel }()
-	r.walkFun(expr.Function)
+	ast.WalkChildren(expr, r.walk)
 }
 
 func (r *identResolver) walkIdentExpr(expr *ast.IdentExpr) {
@@ -500,7 +497,7 @@ func (r *identResolver) walkIdentExpr(expr *ast.IdentExpr) {
 }
 
 func (r *identResolver) walkAssignmentExpr(expr *ast.AssignmentExpr) {
-	ast.Walk(expr.Right, r.walk)
+	ast.WalkChildren(expr, r.walk)
 	r.resolveIdent(expr.Left, identOpWrite)
 	r.defineIdent(expr.Left)
 }
