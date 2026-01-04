@@ -145,7 +145,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		case *ast.VarDecl, *ast.ParamDecl:
 			headers = append(headers, fmt.Sprintf("var %s", decl.BoundIdent()))
 		case *ast.FunDecl:
-			headers = append(headers, fmt.Sprintf("fun %s(%s)", decl.Name, formatParams(decl.Function.Params)))
+			headers = append(headers, fmt.Sprintf("fun %s(%s)", decl.Name, formatParams(decl.GetParams())))
 			body = commentsText(decl.Doc)
 		case *ast.ClassDecl:
 			var b strings.Builder
@@ -153,11 +153,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			if methods := decl.Methods(); len(methods) > 0 {
 				fmt.Fprint(&b, " {\n")
 				for _, methodDecl := range methods {
-					var params []*ast.ParamDecl
-					if methodDecl.Function != nil {
-						params = methodDecl.Function.Params
-					}
-					fmt.Fprintf(&b, "  %s\n", hoverMethodDeclHeader(methodDecl.Name.String(), methodDecl.Modifiers, params))
+					fmt.Fprintf(&b, "  %s\n", hoverMethodDeclHeader(methodDecl.Name.String(), methodDecl.Modifiers, methodDecl.GetParams()))
 				}
 				fmt.Fprint(&b, "}")
 			}
@@ -166,11 +162,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		case *ast.MethodDecl:
 			classDecl, _ := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
 			name := fmt.Sprint(classDecl.Name, ".", decl.Name)
-			var params []*ast.ParamDecl
-			if decl.Function != nil {
-				params = decl.Function.Params
-			}
-			headers = append(headers, hoverMethodDeclHeader(name, decl.Modifiers, params))
+			headers = append(headers, hoverMethodDeclHeader(name, decl.Modifiers, decl.GetParams()))
 			body = commentsText(decl.Doc)
 		}
 	}
@@ -474,11 +466,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 	for _, binding := range doc.IdentBindings[calleeIdent] {
 		switch decl := binding.(type) {
 		case *ast.FunDecl:
-			var params []*ast.ParamDecl
-			if decl.Function != nil {
-				params = decl.Function.Params
-			}
-			signatures = append(signatures, h.signature(decl.Name.String(), params, decl.Doc))
+			signatures = append(signatures, h.signature(decl.Name.String(), decl.GetParams(), decl.Doc))
 
 		case *ast.ClassDecl:
 			name := decl.Name.String()
@@ -487,9 +475,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			for _, methodDecl := range decl.Methods() {
 				if methodDecl.IsConstructor() {
 					name = fmt.Sprint(name, ".", methodDecl.Name)
-					if methodDecl.Function != nil {
-						params = methodDecl.Function.Params
-					}
+					params = methodDecl.GetParams()
 					if len(methodDecl.Doc) > 0 {
 						doc = methodDecl.Doc
 					}
@@ -503,11 +489,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			}
 			classDecl, _ := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
 			name := fmt.Sprint(classDecl.Name, ".", decl.Name)
-			var params []*ast.ParamDecl
-			if decl.Function != nil {
-				params = decl.Function.Params
-			}
-			signatures = append(signatures, h.signature(name, params, decl.Doc))
+			signatures = append(signatures, h.signature(name, decl.GetParams(), decl.Doc))
 
 		default:
 		}

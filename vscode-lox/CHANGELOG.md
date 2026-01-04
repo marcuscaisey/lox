@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Stop showing "this" from nested classes when finding references of "this".
+- Fix crashes when hovering over partially complete function definitions.
 
 ### Changed
 

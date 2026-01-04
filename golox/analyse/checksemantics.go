@@ -164,17 +164,15 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) 
 }
 
 func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
-	if decl.Function == nil {
-		return
-	}
+	params := decl.GetParams()
 	switch {
-	case decl.HasModifier(token.Get) && len(decl.Function.Params) > 0:
-		c.errs.AddSpanningRangesf(decl.Function.Params[0], decl.Function.Params[len(decl.Function.Params)-1], loxerr.Fatal, "property getter cannot have parameters")
+	case decl.HasModifier(token.Get) && len(params) > 0:
+		c.errs.AddSpanningRangesf(params[0], params[len(params)-1], loxerr.Fatal, "property getter cannot have parameters")
 	case decl.HasModifier(token.Set):
-		if len(decl.Function.Params) == 0 {
+		if len(params) == 0 {
 			c.errs.Addf(decl.Name, loxerr.Fatal, "property setter must have a parameter")
-		} else if len(decl.Function.Params) > 1 {
-			c.errs.AddSpanningRangesf(decl.Function.Params[1], decl.Function.Params[len(decl.Function.Params)-1], loxerr.Fatal, "property setter can only have one parameter")
+		} else if len(params) > 1 {
+			c.errs.AddSpanningRangesf(params[1], params[len(params)-1], loxerr.Fatal, "property setter can only have one parameter")
 		}
 	}
 

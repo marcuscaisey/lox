@@ -153,6 +153,14 @@ func (f *FunDecl) IsValid() bool {
 }
 func (f *FunDecl) BoundIdent() *Ident { return f.Name }
 
+// GetParams returns Function.Params or nil if Function is nil.
+func (f *FunDecl) GetParams() []*ParamDecl {
+	if f.Function == nil {
+		return nil
+	}
+	return f.Function.Params
+}
+
 // Function is a function's parameters and body.
 type Function struct {
 	LeftParen token.Token
@@ -235,6 +243,14 @@ func (m *MethodDecl) IsValid() bool {
 	return m != nil && isValidSlice(m.Doc) && isValid(m.Name) && isValid(m.Function)
 }
 func (m *MethodDecl) BoundIdent() *Ident { return m.Name }
+
+// GetParams returns Function.Params or nil if Function is nil.
+func (m *MethodDecl) GetParams() []*ParamDecl {
+	if m.Function == nil {
+		return nil
+	}
+	return m.Function.Params
+}
 
 // HasModifier reports whether the declaration has a modifier with one of the target types.
 func (m *MethodDecl) HasModifier(types ...token.Type) bool {
@@ -423,6 +439,14 @@ type FunExpr struct {
 func (f *FunExpr) Start() token.Position { return f.Fun.Start() }
 func (f *FunExpr) End() token.Position   { return last(f.Fun, f.Function).End() }
 func (f *FunExpr) IsValid() bool         { return f != nil && !f.Fun.IsZero() && isValid(f.Function) }
+
+// GetParams returns Function.Params or nil if Function is nil.
+func (f *FunExpr) GetParams() []*ParamDecl {
+	if f.Function == nil {
+		return nil
+	}
+	return f.Function.Params
+}
 
 // GroupExpr is a group expression, such as (a + b).
 type GroupExpr struct {
