@@ -69,7 +69,7 @@ func (c *completor) Complete(pos *protocol.Position) (compls []*completion, isIn
 	if getExpr, ok := outermostNodeAtOrBefore[*ast.GetExpr](c.program, pos); ok {
 		getSetExprObject = getExpr.Object
 	} else if setExpr, ok := ast.Find(c.program, func(setExpr *ast.SetExpr) bool {
-		return inRangeOrFollows(pos, setExpr) && inRangeOrFollows(pos, setExpr.Name)
+		return inRangeOrFollows(pos, setExpr.Name)
 	}); ok {
 		getSetExprObject = setExpr.Object
 	}
