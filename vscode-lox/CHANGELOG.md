@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Improve resolving of object properties to their definitions.
+- Always include class name in method completions.
+- Include modifiers in method completions.
+- Improve handling of static methods.
 
 ## [4.0.2] - 2025-12-26
 

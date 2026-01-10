@@ -37,26 +37,24 @@ var (
 
 // completor provides completions of text that is being typed in a program.
 type completor struct {
-	program               *ast.Program
-	classBodyCompletor    *classBodyCompletor
-	identCompletor        *identCompletor
-	keywordCompletor      *keywordCompletor
-	builtinCompls         []*completion
-	thisPropertyCompletor *thisPropertyCompletor
-	propertyCompls        []*completion
+	program            *ast.Program
+	classBodyCompletor *classBodyCompletor
+	identCompletor     *identCompletor
+	keywordCompletor   *keywordCompletor
+	builtinCompls      []*completion
+	propertyCompletor  *propertyCompletor
 }
 
 // newCompletor returns a [completor] which provides completions inside the given program.
 // builtins is a list of built-in declarations which are available in the global scope.
-func newCompletor(program *ast.Program, builtins []ast.Decl) *completor {
+func newCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtins []ast.Decl) *completor {
 	return &completor{
-		program:               program,
-		classBodyCompletor:    newClassBodyCompletor(program),
-		identCompletor:        newIdentCompletor(program),
-		keywordCompletor:      newKeywordCompletor(program),
-		builtinCompls:         declCompletions(builtins),
-		thisPropertyCompletor: newThisPropertyCompletor(program),
-		propertyCompls:        genPropertyCompletions(program),
+		program:            program,
+		classBodyCompletor: newClassBodyCompletor(program),
+		identCompletor:     newIdentCompletor(program),
+		keywordCompletor:   newKeywordCompletor(program),
+		builtinCompls:      declCompletions(builtins),
+		propertyCompletor:  newPropertyCompletor(program, identBindings),
 	}
 }
 
@@ -65,27 +63,14 @@ func (c *completor) Complete(pos *protocol.Position) (compls []*completion, isIn
 	if compls, isIncomplete, ok := c.classBodyCompletor.Complete(pos); ok {
 		return compls, isIncomplete
 	}
-	var getSetExprObject ast.Expr
-	if getExpr, ok := outermostNodeAtOrBefore[*ast.GetExpr](c.program, pos); ok {
-		getSetExprObject = getExpr.Object
-	} else if setExpr, ok := ast.Find(c.program, func(setExpr *ast.SetExpr) bool {
-		return inRangeOrFollows(pos, setExpr.Name)
-	}); ok {
-		getSetExprObject = setExpr.Object
+	if compls, ok := c.propertyCompletor.Complete(pos); ok {
+		return compls, false
 	}
-	if getSetExprObject != nil {
-		if _, ok := getSetExprObject.(*ast.ThisExpr); ok {
-			return c.thisPropertyCompletor.Complete(pos), false
-		} else {
-			return c.propertyCompls, false
-		}
-	} else {
-		return slices.Concat(
-			c.identCompletor.Complete(pos),
-			c.keywordCompletor.Complete(pos),
-			c.builtinCompls,
-		), false
-	}
+	return slices.Concat(
+		c.identCompletor.Complete(pos),
+		c.keywordCompletor.Complete(pos),
+		c.builtinCompls,
+	), false
 }
 
 type classBodyCompletor struct {
@@ -526,61 +511,96 @@ func (g *identCompletionGenerator) globalCompletionsAfter(pos token.Position) []
 	return compls
 }
 
-// genPropertyCompletions generates completions for all properties of all classes in the given program.
-func genPropertyCompletions(program *ast.Program) []*completion {
-	complsByClassDecl := genClassPropertyCompletions(program, true)
+type propertyType int
+
+const (
+	propertyTypeInstance propertyType = iota
+	propertyTypeStatic
+)
+
+// propertyCompletor provides completions of properties for get and set expressions.
+type propertyCompletor struct {
+	program                         *ast.Program
+	identBindings                   map[*ast.Ident][]ast.Binding
+	compls                          []*completion
+	complsByPropertyTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
+}
+
+func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding) *propertyCompletor {
+	complsByPropertyTypeByClassDecl := genClassPropertyCompletions(program)
 	var compls []*completion
-	for _, classCompls := range complsByClassDecl {
-		compls = append(compls, classCompls...)
+	for _, complsByPropertyType := range complsByPropertyTypeByClassDecl {
+		for _, classCompls := range complsByPropertyType {
+			sortPropertyCompletions(classCompls)
+			compls = append(compls, classCompls...)
+		}
 	}
 	sortPropertyCompletions(compls)
-	return compls
-}
-
-// thisPropertyCompletor provides completions of properties for get and set expressions where the object is a this
-// expression.
-type thisPropertyCompletor struct {
-	program           *ast.Program
-	complsByClassDecl map[*ast.ClassDecl][]*completion
-}
-
-func newThisPropertyCompletor(program *ast.Program) *thisPropertyCompletor {
-	complsByClassDecl := genClassPropertyCompletions(program, false)
-	for _, compls := range complsByClassDecl {
-		sortPropertyCompletions(compls)
+	return &propertyCompletor{
+		program:                         program,
+		identBindings:                   identBindings,
+		compls:                          compls,
+		complsByPropertyTypeByClassDecl: complsByPropertyTypeByClassDecl,
 	}
-	return &thisPropertyCompletor{program: program, complsByClassDecl: complsByClassDecl}
 }
 
-func (c *thisPropertyCompletor) Complete(pos *protocol.Position) []*completion {
-	classDecl, ok := innermostNodeAt[*ast.ClassDecl](c.program, pos)
-	if !ok {
-		return nil
+func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, bool) {
+	var object ast.Expr
+	inRangeOrFollowsName := func(setExpr *ast.SetExpr) bool { return inRangeOrFollows(pos, setExpr.Name) }
+	if getExpr, ok := outermostNodeAtOrBefore[*ast.GetExpr](c.program, pos); ok {
+		object = getExpr.Object
+	} else if setExpr, ok := ast.Find(c.program, inRangeOrFollowsName); ok {
+		object = setExpr.Object
+	} else {
+		return nil, false
 	}
-	return c.complsByClassDecl[classDecl]
+
+	if _, ok := object.(*ast.ThisExpr); ok {
+		classDecl, ok := innermostNodeAt[*ast.ClassDecl](c.program, pos)
+		if !ok {
+			return nil, true
+		}
+		methodDecl, ok := innermostNodeAt[*ast.MethodDecl](classDecl, pos)
+		if !ok {
+			return nil, true
+		}
+		propertyType := propertyTypeInstance
+		if methodDecl.HasModifier(token.Static) {
+			propertyType = propertyTypeStatic
+		}
+		return c.complsByPropertyTypeByClassDecl[classDecl][propertyType], true
+	}
+
+	if identExpr, ok := object.(*ast.IdentExpr); ok {
+		if bindings, ok := c.identBindings[identExpr.Ident]; ok {
+			if classDecl, ok := bindings[0].(*ast.ClassDecl); ok {
+				return c.complsByPropertyTypeByClassDecl[classDecl][propertyTypeStatic], true
+			}
+		}
+	}
+
+	return c.compls, true
 }
 
-func genClassPropertyCompletions(program *ast.Program, includeClassName bool) map[*ast.ClassDecl][]*completion {
+func genClassPropertyCompletions(program *ast.Program) map[*ast.ClassDecl]map[propertyType][]*completion {
 	g := &propertyCompletionGenerator{
-		includeClassName:       includeClassName,
-		complLabelsByClassDecl: map[*ast.ClassDecl]map[string]bool{},
-		complsByClassDecl:      map[*ast.ClassDecl][]*completion{},
+		complLabelsByClassDecl:          map[*ast.ClassDecl]map[string]bool{},
+		complsByPropertyTypeByClassDecl: map[*ast.ClassDecl]map[propertyType][]*completion{},
 	}
 	return g.Generate(program)
 }
 
 type propertyCompletionGenerator struct {
-	includeClassName bool
-
 	curClassDecl           *ast.ClassDecl
+	curMethodDecl          *ast.MethodDecl
 	complLabelsByClassDecl map[*ast.ClassDecl]map[string]bool
 
-	complsByClassDecl map[*ast.ClassDecl][]*completion
+	complsByPropertyTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
 }
 
-func (g *propertyCompletionGenerator) Generate(program *ast.Program) map[*ast.ClassDecl][]*completion {
+func (g *propertyCompletionGenerator) Generate(program *ast.Program) map[*ast.ClassDecl]map[propertyType][]*completion {
 	ast.Walk(program, g.walk)
-	return g.complsByClassDecl
+	return g.complsByPropertyTypeByClassDecl
 }
 
 func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
@@ -588,9 +608,12 @@ func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
 	case *ast.ClassDecl:
 		g.walkClassDecl(node)
 		return false
+	case *ast.MethodDecl:
+		g.walkMethodDecl(node)
+		return false
 	case *ast.SetExpr:
 		g.addFieldCompletion(node)
-		return false
+		return true
 	default:
 		return true
 	}
@@ -600,21 +623,35 @@ func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 	prevCurClassDecl := g.curClassDecl
 	defer func() { g.curClassDecl = prevCurClassDecl }()
 	g.curClassDecl = decl
+
 	g.complLabelsByClassDecl[decl] = map[string]bool{}
+	g.complsByPropertyTypeByClassDecl[decl] = map[propertyType][]*completion{
+		propertyTypeInstance: nil,
+		propertyTypeStatic:   nil,
+	}
+
 	// Add completions for all methods before walking any of their bodies so that we can skip adding completions for
 	// fields which already have a property completion.
 	for _, methodDecl := range decl.Methods() {
 		g.addCompletionForMethod(methodDecl)
 	}
-	ast.Walk(decl.Body, g.walk)
+
+	ast.WalkChildren(decl, g.walk)
+}
+
+func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
+	prevCurMethodDecl := g.curMethodDecl
+	defer func() { g.curMethodDecl = prevCurMethodDecl }()
+	g.curMethodDecl = decl
+	ast.WalkChildren(decl, g.walk)
 }
 
 func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDecl) {
 	if !decl.Name.IsValid() || decl.IsConstructor() {
 		return
 	}
+
 	label := decl.Name.String()
-	var labelDetails *protocol.CompletionItemLabelDetails
 	var kind protocol.CompletionItemKind
 	var detail string
 	var documentation string
@@ -623,20 +660,17 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 		g.complLabelsByClassDecl[g.curClassDecl][label] = true
 	} else {
 		kind = protocol.CompletionItemKindMethod
-		detail = funDetail(decl.Name, decl.Function)
-		if g.includeClassName {
-			detail = fmt.Sprint(g.curClassDecl.Name, ".", detail)
-		}
+		name := fmt.Sprint(g.curClassDecl.Name, ".", decl.Name)
+		detail = hoverMethodDeclHeader(name, decl.Modifiers, decl.GetParams())
 		documentation = commentsText(decl.Doc)
 	}
-	if g.includeClassName {
-		labelDetails = &protocol.CompletionItemLabelDetails{
-			Detail: fmt.Sprint(" ", g.curClassDecl.Name),
-		}
+	propertyType := propertyTypeInstance
+	if decl.HasModifier(token.Static) {
+		propertyType = propertyTypeStatic
 	}
-	g.complsByClassDecl[g.curClassDecl] = append(g.complsByClassDecl[g.curClassDecl], &completion{
+	g.complsByPropertyTypeByClassDecl[g.curClassDecl][propertyType] = append(g.complsByPropertyTypeByClassDecl[g.curClassDecl][propertyType], &completion{
 		Label:         label,
-		LabelDetails:  labelDetails,
+		LabelDetails:  &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curClassDecl.Name)},
 		Kind:          kind,
 		Detail:        detail,
 		Documentation: documentation,
@@ -653,20 +687,19 @@ func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.SetExpr) {
 	if !expr.Name.IsValid() {
 		return
 	}
+
 	label := expr.Name.String()
 	if g.complLabelsByClassDecl[g.curClassDecl][label] {
 		return
 	}
 	g.complLabelsByClassDecl[g.curClassDecl][label] = true
-	var labelDetails *protocol.CompletionItemLabelDetails
-	if g.includeClassName {
-		labelDetails = &protocol.CompletionItemLabelDetails{
-			Detail: fmt.Sprint(" ", g.curClassDecl.Name),
-		}
+	propertyType := propertyTypeInstance
+	if g.curMethodDecl.HasModifier(token.Static) {
+		propertyType = propertyTypeStatic
 	}
-	g.complsByClassDecl[g.curClassDecl] = append(g.complsByClassDecl[g.curClassDecl], &completion{
+	g.complsByPropertyTypeByClassDecl[g.curClassDecl][propertyType] = append(g.complsByPropertyTypeByClassDecl[g.curClassDecl][propertyType], &completion{
 		Label:        label,
-		LabelDetails: labelDetails,
+		LabelDetails: &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curClassDecl.Name)},
 		Kind:         protocol.CompletionItemKindField,
 	})
 }
@@ -722,7 +755,7 @@ func funCompletion(decl *ast.FunDecl) (*completion, bool) {
 	return &completion{
 		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindFunction,
-		Detail:        funDetail(decl.Name, decl.Function),
+		Detail:        funDetail(decl.Name.String(), decl.Function),
 		Documentation: commentsText(decl.Doc),
 	}, true
 }

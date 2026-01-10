@@ -254,6 +254,9 @@ func (m *MethodDecl) GetParams() []*ParamDecl {
 
 // HasModifier reports whether the declaration has a modifier with one of the target types.
 func (m *MethodDecl) HasModifier(types ...token.Type) bool {
+	if m == nil {
+		return false
+	}
 	for _, modifier := range m.Modifiers {
 		if slices.Contains(types, modifier.Type) {
 			return true

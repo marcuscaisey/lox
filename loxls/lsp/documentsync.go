@@ -164,7 +164,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		Program:        program,
 		HasParseErrors: len(parseLoxErrs) > 0,
 		IdentBindings:  identBindings,
-		Completor:      newCompletor(program, h.stubBuiltins),
+		Completor:      newCompletor(program, identBindings, h.stubBuiltins),
 	}
 
 	semanticsErr := analyse.CheckSemantics(program, analyse.WithExtraFeatures(h.extraFeatures))

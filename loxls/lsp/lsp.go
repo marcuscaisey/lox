@@ -20,7 +20,7 @@ func commentsText(doc []*ast.Comment) string {
 	return strings.Join(lines, "\n")
 }
 
-func funDetail(name *ast.Ident, fun *ast.Function) string {
+func funDetail(name string, fun *ast.Function) string {
 	if fun == nil {
 		return fmt.Sprint(name, "()")
 	}

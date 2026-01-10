@@ -160,7 +160,10 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			headers = append(headers, b.String())
 			body = commentsText(decl.Doc)
 		case *ast.MethodDecl:
-			classDecl, _ := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
+			classDecl, ok := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
+			if !ok {
+				continue
+			}
 			name := fmt.Sprint(classDecl.Name, ".", decl.Name)
 			headers = append(headers, hoverMethodDeclHeader(name, decl.Modifiers, decl.GetParams()))
 			body = commentsText(decl.Doc)
@@ -253,7 +256,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
 				Name:           n.Name.String(),
-				Detail:         funDetail(n.Name, n.Function),
+				Detail:         funDetail(n.Name.String(), n.Function),
 				Kind:           protocol.SymbolKindFunction,
 				Range:          newRange(n),
 				SelectionRange: newRange(n.Name),
@@ -282,7 +285,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 					for i, modifier := range method.Modifiers {
 						lexemes[i] = modifier.Lexeme
 					}
-					modifiers = fmt.Sprintf(" [%s]", strings.Join(lexemes, " "))
+					modifiers = fmt.Sprint(strings.Join(lexemes, " "), " ")
 				}
 				var kind protocol.SymbolKind
 				switch {
@@ -293,8 +296,8 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				}
 
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
-					Name:           fmt.Sprintf("%s.%s%s", class.Name, method.Name.String(), modifiers),
-					Detail:         funDetail(method.Name, method.Function),
+					Name:           fmt.Sprintf("%s%s.%s", modifiers, class.Name, method.Name.String()),
+					Detail:         funDetail(method.Name.String(), method.Function),
 					Kind:           kind,
 					Range:          newRange(method),
 					SelectionRange: newRange(method.Name),
@@ -487,7 +490,10 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			if decl.HasModifier(token.Get, token.Set) {
 				continue
 			}
-			classDecl, _ := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
+			classDecl, ok := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
+			if !ok {
+				continue
+			}
 			name := fmt.Sprint(classDecl.Name, ".", decl.Name)
 			signatures = append(signatures, h.signature(name, decl.GetParams(), decl.Doc))
 

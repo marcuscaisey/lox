@@ -71,16 +71,16 @@ import (
 func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (map[*ast.Ident][]ast.Binding, error) {
 	cfg := newConfig(opts)
 	r := &identResolver{
-		fatalOnly:                             cfg.fatalOnly,
-		extraFeatures:                         cfg.extraFeatures,
-		builtins:                              builtins,
-		scopes:                                stack.New[*scope](),
-		forwardDeclaredGlobals:                map[string]bool{},
-		unresolvedPropIdentsByNameByClassDecl: map[*ast.ClassDecl]map[string][]*ast.Ident{},
-		unresolvedPropIdentsByName:            map[string][]*ast.Ident{},
-		bindingsByNameByClassDecl:             map[*ast.ClassDecl]map[string][]ast.Binding{},
-		bindingsByName:                        map[string][]ast.Binding{},
-		identBindings:                         map[*ast.Ident][]ast.Binding{},
+		fatalOnly:              cfg.fatalOnly,
+		extraFeatures:          cfg.extraFeatures,
+		builtins:               builtins,
+		scopes:                 stack.New[*scope](),
+		forwardDeclaredGlobals: map[string]bool{},
+		unresolvedPropIdentsByNameByMethodTypeByClassDecl: map[*ast.ClassDecl]map[methodType]map[string][]*ast.Ident{},
+		unresolvedPropIdentsByName:                        map[string][]*ast.Ident{},
+		bindingsByNameByMethodTypeByClassDecl:             map[*ast.ClassDecl]map[methodType]map[string][]ast.Binding{},
+		bindingsByName:                                    map[string][]ast.Binding{},
+		identBindings:                                     map[*ast.Ident][]ast.Binding{},
 	}
 	return r.Resolve(program)
 }
@@ -89,19 +89,20 @@ type identResolver struct {
 	fatalOnly     bool
 	extraFeatures bool
 
-	builtins                              []ast.Decl
-	scopes                                *stack.Stack[*scope]
-	globalScope                           *scope
-	globalDecls                           map[string]ast.Decl
-	forwardDeclaredGlobals                map[string]bool
-	inFun                                 bool
-	inGlobalFun                           bool
-	funScopeLevel                         int
-	curClassDecl                          *ast.ClassDecl
-	unresolvedPropIdentsByNameByClassDecl map[*ast.ClassDecl]map[string][]*ast.Ident
-	unresolvedPropIdentsByName            map[string][]*ast.Ident
-	bindingsByNameByClassDecl             map[*ast.ClassDecl]map[string][]ast.Binding
-	bindingsByName                        map[string][]ast.Binding
+	builtins                                          []ast.Decl
+	scopes                                            *stack.Stack[*scope]
+	globalScope                                       *scope
+	globalDecls                                       map[string]ast.Decl
+	forwardDeclaredGlobals                            map[string]bool
+	inFun                                             bool
+	inGlobalFun                                       bool
+	funScopeLevel                                     int
+	curClassDecl                                      *ast.ClassDecl
+	curMethodType                                     methodType
+	unresolvedPropIdentsByNameByMethodTypeByClassDecl map[*ast.ClassDecl]map[methodType]map[string][]*ast.Ident
+	unresolvedPropIdentsByName                        map[string][]*ast.Ident
+	bindingsByNameByMethodTypeByClassDecl             map[*ast.ClassDecl]map[methodType]map[string][]ast.Binding
+	bindingsByName                                    map[string][]ast.Binding
 
 	identBindings map[*ast.Ident][]ast.Binding
 	errs          loxerr.Errors
@@ -388,8 +389,7 @@ func (r *identResolver) walk(node ast.Node) bool {
 	case *ast.ClassDecl:
 		r.walkClassDecl(node)
 	case *ast.MethodDecl:
-		r.resolveMethodDecl(node)
-		return true
+		r.walkMethodDecl(node)
 	case *ast.Block:
 		r.walkBlock(node)
 	case *ast.ForStmt:
@@ -397,16 +397,15 @@ func (r *identResolver) walk(node ast.Node) bool {
 	case *ast.FunExpr:
 		r.walkFunExpr(node)
 	case *ast.IdentExpr:
-		r.walkIdentExpr(node)
-	case *ast.GetExpr:
-		r.resolveGetExpr(node)
+		r.resolveIdentExpr(node)
 		return true
+	case *ast.GetExpr:
+		r.walkGetExpr(node)
 	case *ast.AssignmentExpr:
 		r.resolveAssignmentExpr(node)
 		return true
 	case *ast.SetExpr:
-		r.resolveSetExpr(node)
-		return true
+		r.walkSetExpr(node)
 	default:
 		return true
 	}
@@ -431,6 +430,13 @@ func (r *identResolver) walkProgram(program *ast.Program) {
 	for name, bindings := range r.bindingsByName {
 		for _, ident := range r.unresolvedPropIdentsByName[name] {
 			r.identBindings[ident] = bindings
+		}
+	}
+	for classDecl, bindingsByNameByMethodType := range r.bindingsByNameByMethodTypeByClassDecl {
+		for name, bindings := range bindingsByNameByMethodType[methodTypeStatic] {
+			for _, ident := range r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[classDecl][methodTypeStatic][name] {
+				r.identBindings[ident] = bindings
+			}
 		}
 	}
 }
@@ -486,8 +492,16 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	prevCurClassDecl := r.curClassDecl
 	defer func() { r.curClassDecl = prevCurClassDecl }()
 	r.curClassDecl = decl
-	r.unresolvedPropIdentsByNameByClassDecl[decl] = map[string][]*ast.Ident{}
-	r.bindingsByNameByClassDecl[decl] = map[string][]ast.Binding{}
+	//nolint:exhaustive
+	r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[decl] = map[methodType]map[string][]*ast.Ident{
+		methodTypeInstance: {},
+		methodTypeStatic:   {},
+	}
+	//nolint:exhaustive
+	r.bindingsByNameByMethodTypeByClassDecl[decl] = map[methodType]map[string][]ast.Binding{
+		methodTypeInstance: {},
+		methodTypeStatic:   {},
+	}
 
 	r.declareIdent(decl)
 	r.defineIdent(decl.Name)
@@ -511,23 +525,39 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 
 	ast.WalkChildren(decl, r.walk)
 
-	for name, bindings := range r.bindingsByNameByClassDecl[decl] {
-		for _, ident := range r.unresolvedPropIdentsByNameByClassDecl[decl][name] {
+	for name, bindings := range r.bindingsByNameByMethodTypeByClassDecl[decl][methodTypeInstance] {
+		for _, ident := range r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[decl][methodTypeInstance][name] {
 			r.identBindings[ident] = bindings
 		}
 	}
 }
 
-func (r *identResolver) resolveMethodDecl(decl *ast.MethodDecl) {
+type methodType int
+
+const (
+	methodTypeNone methodType = iota
+	methodTypeInstance
+	methodTypeStatic
+)
+
+func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
+	prevCurMethodType := r.curMethodType
+	if decl.HasModifier(token.Static) {
+		r.curMethodType = methodTypeStatic
+	} else {
+		r.curMethodType = methodTypeInstance
+	}
+	defer func() { r.curMethodType = prevCurMethodType }()
+
 	if decl.Name.IsValid() {
 		r.identBindings[decl.Name] = append(r.identBindings[decl.Name], decl)
-		if _, ok := r.bindingsByNameByClassDecl[r.curClassDecl]; !ok {
-			r.bindingsByNameByClassDecl[r.curClassDecl] = map[string][]ast.Binding{}
-		}
 		name := decl.Name.String()
-		r.bindingsByNameByClassDecl[r.curClassDecl][name] = append(r.bindingsByNameByClassDecl[r.curClassDecl][name], decl)
+		r.bindingsByNameByMethodTypeByClassDecl[r.curClassDecl][r.curMethodType][name] = append(
+			r.bindingsByNameByMethodTypeByClassDecl[r.curClassDecl][r.curMethodType][name], decl)
 		r.bindingsByName[name] = append(r.bindingsByName[name], decl)
 	}
+
+	ast.WalkChildren(decl, r.walk)
 }
 
 func (r *identResolver) walkBlock(block *ast.Block) {
@@ -549,7 +579,7 @@ func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
 	ast.WalkChildren(expr, r.walk)
 }
 
-func (r *identResolver) walkIdentExpr(expr *ast.IdentExpr) {
+func (r *identResolver) resolveIdentExpr(expr *ast.IdentExpr) {
 	if !r.inGlobalScope() && r.scopes.Peek().IsInitialising(expr.Ident.String()) {
 		r.addErrorf(expr, loxerr.Fatal, "%s read in its own initialiser", expr.Ident.String())
 		return
@@ -557,16 +587,31 @@ func (r *identResolver) walkIdentExpr(expr *ast.IdentExpr) {
 	r.resolveIdent(expr.Ident, identOpRead)
 }
 
-func (r *identResolver) resolveGetExpr(expr *ast.GetExpr) {
+func (r *identResolver) walkGetExpr(expr *ast.GetExpr) {
+	ast.WalkChildren(expr, r.walk)
+
 	if !expr.Name.IsValid() {
 		return
 	}
 	name := expr.Name.String()
-	if _, ok := expr.Object.(*ast.ThisExpr); ok && r.curClassDecl != nil {
-		r.unresolvedPropIdentsByNameByClassDecl[r.curClassDecl][name] = append(r.unresolvedPropIdentsByNameByClassDecl[r.curClassDecl][name], expr.Name)
-	} else {
-		r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
+
+	if _, ok := expr.Object.(*ast.ThisExpr); ok && r.curClassDecl != nil && r.curMethodType != methodTypeNone {
+		r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[r.curClassDecl][r.curMethodType][name] = append(
+			r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[r.curClassDecl][r.curMethodType][name], expr.Name)
+		return
 	}
+
+	if identExpr, ok := expr.Object.(*ast.IdentExpr); ok {
+		if bindings, ok := r.identBindings[identExpr.Ident]; ok {
+			if classDecl, ok := bindings[0].(*ast.ClassDecl); ok {
+				r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[classDecl][methodTypeStatic][name] = append(
+					r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[classDecl][methodTypeStatic][name], expr.Name)
+				return
+			}
+		}
+	}
+
+	r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
 }
 
 func (r *identResolver) resolveAssignmentExpr(expr *ast.AssignmentExpr) {
@@ -574,16 +619,35 @@ func (r *identResolver) resolveAssignmentExpr(expr *ast.AssignmentExpr) {
 	r.defineIdent(expr.Left)
 }
 
-func (r *identResolver) resolveSetExpr(expr *ast.SetExpr) {
+func (r *identResolver) walkSetExpr(expr *ast.SetExpr) {
+	ast.WalkChildren(expr, r.walk)
+
 	if !expr.Name.IsValid() {
 		return
 	}
 	name := expr.Name.String()
-	if _, ok := expr.Object.(*ast.ThisExpr); ok && r.curClassDecl != nil {
-		r.unresolvedPropIdentsByNameByClassDecl[r.curClassDecl][name] = append(r.unresolvedPropIdentsByNameByClassDecl[r.curClassDecl][name], expr.Name)
-		r.bindingsByNameByClassDecl[r.curClassDecl][name] = append(r.bindingsByNameByClassDecl[r.curClassDecl][name], expr)
-	} else {
-		r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
-	}
+
 	r.bindingsByName[name] = append(r.bindingsByName[name], expr)
+
+	if _, ok := expr.Object.(*ast.ThisExpr); ok && r.curClassDecl != nil && r.curMethodType != methodTypeNone {
+		r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[r.curClassDecl][r.curMethodType][name] = append(
+			r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[r.curClassDecl][r.curMethodType][name], expr.Name)
+		r.bindingsByNameByMethodTypeByClassDecl[r.curClassDecl][r.curMethodType][name] = append(
+			r.bindingsByNameByMethodTypeByClassDecl[r.curClassDecl][r.curMethodType][name], expr)
+		return
+	}
+
+	if identExpr, ok := expr.Object.(*ast.IdentExpr); ok {
+		if bindings, ok := r.identBindings[identExpr.Ident]; ok {
+			if classDecl, ok := bindings[0].(*ast.ClassDecl); ok {
+				r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[classDecl][methodTypeStatic][name] = append(
+					r.unresolvedPropIdentsByNameByMethodTypeByClassDecl[classDecl][methodTypeStatic][name], expr.Name)
+				r.bindingsByNameByMethodTypeByClassDecl[classDecl][methodTypeStatic][name] = append(
+					r.bindingsByNameByMethodTypeByClassDecl[classDecl][methodTypeStatic][name], expr)
+				return
+			}
+		}
+	}
+
+	r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
 }
