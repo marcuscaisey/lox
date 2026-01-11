@@ -17,21 +17,21 @@ var (
 	expressionKeywords = []string{"true", "false", "nil"}
 	statementKeywords  = []string{"print", "var", "if", "else", "while", "for", "break", "continue", "fun", "return", "class"}
 	statementSnippets  = []snippet{
-		{"var", "var ${1:name} = ${2:value};$0", "variable", "Snippet for a variable"},
-		{"if", "if ($1) {\n  $0\n}", "if statement", "Snippet for an if statement"},
-		{"while", "while ($1) {\n  $0\n}", "while loop", "Snippet for a while loop"},
-		{"for", "for (var ${1:i} = ${2:0}; $1 < ${3:n}; $1 = $1 + 1) {\n  $0\n}", "for loop", "Snippet for a for loop"},
-		{"fun", "fun ${1:name}($2) {\n  $0\n}", "function", "Snippet for a function"},
-		{"class", "class ${1:name} {\n  $0\n}", "class", "Snippet for a class"},
+		{"var", "var ${1:name} = ${2:value};$0", "Snippet for a variable"},
+		{"if", "if ($1) {\n  $0\n}", "Snippet for an if statement"},
+		{"while", "while ($1) {\n  $0\n}", "Snippet for a while loop"},
+		{"for", "for (var ${1:i} = ${2:0}; $1 < ${3:n}; $1 = $1 + 1) {\n  $0\n}", "Snippet for a for loop"},
+		{"fun", "fun ${1:name}($2) {\n  $0\n}", "Snippet for a function"},
+		{"class", "class ${1:name} {\n  $0\n}", "Snippet for a class"},
 	}
 	classBodySnippets = []snippet{
-		{"init", "init($1) {\n  $0\n}", "constructor", "Snippet for a constructor"},
-		{"method", "${1:name}($2) {\n  $0\n}", "method", "Snippet for a method"},
-		{"get", "get ${1:name}() {\n  $0\n}", "property getter", "Snippet for a property getter"},
-		{"set", "set ${1:name}(${2:value}) {\n  $0\n}", "property setter", "Snippet for a property setter"},
-		{"static", "static ${1:name}($2) {\n  $0\n}", "class method", "Snippet for a class method"},
-		{"staticget", "static get ${1:name}() {\n  $0\n}", "class property getter", "Snippet for a class property getter"},
-		{"staticset", "static set ${1:name}(${2:value}) {\n  $0\n}", "class property setter", "Snippet for a class property setter"},
+		{"init", "init($1) {\n  $0\n}", "Snippet for a constructor"},
+		{"method", "${1:name}($2) {\n  $0\n}", "Snippet for a method"},
+		{"get", "get ${1:name}() {\n  $0\n}", "Snippet for a property getter"},
+		{"set", "set ${1:name}(${2:value}) {\n  $0\n}", "Snippet for a property setter"},
+		{"static", "static ${1:name}($2) {\n  $0\n}", "Snippet for a class method"},
+		{"staticget", "static get ${1:name}() {\n  $0\n}", "Snippet for a class property getter"},
+		{"staticset", "static set ${1:name}(${2:value}) {\n  $0\n}", "Snippet for a class property setter"},
 	}
 )
 
@@ -126,17 +126,15 @@ func (c *classBodyCompletor) inClassBody(pos *protocol.Position) (*ast.ClassDecl
 }
 
 type snippet struct {
-	label    string
-	content  string
-	shortDoc string
-	doc      string
+	label   string
+	content string
+	doc     string
 }
 
 func (s snippet) ToCompletion() *completion {
 	return &completion{
 		Label:         s.label,
 		Kind:          protocol.CompletionItemKindSnippet,
-		Detail:        s.shortDoc,
 		Snippet:       s.content,
 		Documentation: s.doc,
 	}
