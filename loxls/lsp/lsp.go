@@ -7,6 +7,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
@@ -20,24 +21,57 @@ func commentsText(doc []*ast.Comment) string {
 	return strings.Join(lines, "\n")
 }
 
-func funDetail(name string, fun *ast.Function) string {
-	if fun == nil {
-		return fmt.Sprint(name, "()")
+func varDetail(name *ast.Ident) string {
+	return fmt.Sprintf("var %s", name)
+}
+
+func funDetail(decl *ast.FunDecl) string {
+	if !decl.Name.IsValid() {
+		return ""
 	}
-	params := make([]string, 0, len(fun.Params))
-	for _, paramDecl := range fun.Params {
-		if paramDecl.Name.IsValid() {
-			params = append(params, paramDecl.Name.String())
-		}
-	}
-	return fmt.Sprintf("%s(%s)", name, strings.Join(params, ", "))
+	return fmt.Sprintf("%s(%s)", formatFunName(decl), formatParams(decl.GetParams()))
+}
+
+func formatFunName(decl *ast.FunDecl) string {
+	return fmt.Sprintf("fun %s", decl.Name)
+}
+
+func funSignature(params []*ast.ParamDecl) string {
+	return fmt.Sprintf("fun(%s)", formatParams(params))
 }
 
 func classDetail(decl *ast.ClassDecl) string {
 	if !decl.Name.IsValid() {
 		return ""
 	}
-	return fmt.Sprintf("class %s", decl.Name.String())
+	return fmt.Sprintf("class %s", decl.Name)
+}
+
+func methodDetail(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) string {
+	return fmt.Sprintf("%s(%s)", formatMethodName(methodDecl, classDecl), formatParams(methodDecl.GetParams()))
+}
+
+func formatMethodName(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) string {
+	return fmt.Sprintf("%s%s.%s", formatMethodModifiers(methodDecl.Modifiers), classDecl.Name, methodDecl.Name)
+}
+
+func formatMethodModifiers(modifiers []token.Token) string {
+	b := &strings.Builder{}
+	for _, modifier := range modifiers {
+		fmt.Fprintf(b, "%s ", modifier.Lexeme)
+	}
+	return b.String()
+}
+
+func formatParams(params []*ast.ParamDecl) string {
+	b := &strings.Builder{}
+	for i, param := range params {
+		fmt.Fprint(b, param.Name.String())
+		if i < len(params)-1 {
+			fmt.Fprint(b, ", ")
+		}
+	}
+	return b.String()
 }
 
 // containingIdentRange returns the range of the identifier containing the given position and whether one exists.

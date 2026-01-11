@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Include modifiers in method completions.
 - Improve handling of static methods.
 - Remove needless details from snippet completions.
+- Make declaration details shown by various language features consistent with each other.
 
 ## [4.0.2] - 2025-12-26
 

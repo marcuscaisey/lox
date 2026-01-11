@@ -143,19 +143,19 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		}
 		switch decl := decl.(type) {
 		case *ast.VarDecl, *ast.ParamDecl:
-			headers = append(headers, fmt.Sprintf("var %s", decl.BoundIdent()))
+			headers = append(headers, varDetail(decl.BoundIdent()))
 		case *ast.FunDecl:
-			headers = append(headers, fmt.Sprintf("fun %s(%s)", decl.Name, formatParams(decl.GetParams())))
+			headers = append(headers, funDetail(decl))
 			body = commentsText(decl.Doc)
 		case *ast.ClassDecl:
-			var b strings.Builder
-			fmt.Fprintf(&b, "class %s", decl.Name)
+			b := &strings.Builder{}
+			fmt.Fprintf(b, "class %s", decl.Name)
 			if methods := decl.Methods(); len(methods) > 0 {
-				fmt.Fprint(&b, " {\n")
+				fmt.Fprint(b, " {\n")
 				for _, methodDecl := range methods {
-					fmt.Fprintf(&b, "  %s\n", hoverMethodDeclHeader(methodDecl.Name.String(), methodDecl.Modifiers, methodDecl.GetParams()))
+					fmt.Fprintf(b, "  %s%s(%s)\n", formatMethodModifiers(methodDecl.Modifiers), methodDecl.Name, formatParams(methodDecl.GetParams()))
 				}
-				fmt.Fprint(&b, "}")
+				fmt.Fprint(b, "}")
 			}
 			headers = append(headers, b.String())
 			body = commentsText(decl.Doc)
@@ -164,8 +164,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			if !ok {
 				continue
 			}
-			name := fmt.Sprint(classDecl.Name, ".", decl.Name)
-			headers = append(headers, hoverMethodDeclHeader(name, decl.Modifiers, decl.GetParams()))
+			headers = append(headers, methodDetail(decl, classDecl))
 			body = commentsText(decl.Doc)
 		}
 	}
@@ -206,29 +205,6 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 	}, nil
 }
 
-func hoverMethodDeclHeader(name string, modifiers []token.Token, params []*ast.ParamDecl) string {
-	var b strings.Builder
-	for _, modifier := range modifiers {
-		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
-	}
-	fmt.Fprintf(&b, "%s(%s)", name, formatParams(params))
-	return b.String()
-}
-
-func formatParams(params []*ast.ParamDecl) string {
-	if len(params) == 0 {
-		return ""
-	}
-	var b strings.Builder
-	for i, param := range params {
-		fmt.Fprint(&b, param.Name.String())
-		if i < len(params)-1 {
-			fmt.Fprint(&b, ", ")
-		}
-	}
-	return b.String()
-}
-
 // https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentSymbol
 func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolParams) (*protocol.SymbolInformationSliceOrDocumentSymbolSlice, error) {
 	doc, err := h.document(params.TextDocument.Uri)
@@ -238,69 +214,59 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 
 	var docSymbols protocol.DocumentSymbolSlice
 	ast.Walk(doc.Program, func(n ast.Node) bool {
-		switch n := n.(type) {
+		switch decl := n.(type) {
 		case *ast.VarDecl:
-			if !n.Name.IsValid() {
+			if !decl.Name.IsValid() {
 				return false
 			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
-				Name:           n.Name.String(),
+				Name:           decl.Name.String(),
 				Kind:           protocol.SymbolKindVariable,
-				Range:          newRange(n),
-				SelectionRange: newRange(n.Name),
+				Range:          newRange(decl),
+				SelectionRange: newRange(decl.Name),
 			})
 			return false
 		case *ast.FunDecl:
-			if !n.Name.IsValid() {
+			if !decl.Name.IsValid() {
 				return false
 			}
 			docSymbols = append(docSymbols, &protocol.DocumentSymbol{
-				Name:           n.Name.String(),
-				Detail:         funDetail(n.Name.String(), n.Function),
+				Name:           decl.Name.String(),
+				Detail:         funSignature(decl.GetParams()),
 				Kind:           protocol.SymbolKindFunction,
-				Range:          newRange(n),
-				SelectionRange: newRange(n.Name),
+				Range:          newRange(decl),
+				SelectionRange: newRange(decl.Name),
 			})
 			return false
 		case *ast.ClassDecl:
-			if !n.Name.IsValid() {
+			if !decl.Name.IsValid() {
 				return false
 			}
 			class := &protocol.DocumentSymbol{
-				Name:           n.Name.String(),
-				Detail:         classDetail(n),
+				Name:           decl.Name.String(),
 				Kind:           protocol.SymbolKindClass,
-				Range:          newRange(n),
-				SelectionRange: newRange(n.Name),
+				Range:          newRange(decl),
+				SelectionRange: newRange(decl.Name),
 			}
 			docSymbols = append(docSymbols, class)
 
-			for _, method := range n.Methods() {
-				if !method.Name.IsValid() {
+			for _, methodDecl := range decl.Methods() {
+				if !methodDecl.Name.IsValid() {
 					continue
-				}
-				modifiers := ""
-				if len(method.Modifiers) > 0 {
-					lexemes := make([]string, len(method.Modifiers))
-					for i, modifier := range method.Modifiers {
-						lexemes[i] = modifier.Lexeme
-					}
-					modifiers = fmt.Sprint(strings.Join(lexemes, " "), " ")
 				}
 				var kind protocol.SymbolKind
 				switch {
-				case method.IsConstructor():
+				case methodDecl.IsConstructor():
 					kind = protocol.SymbolKindConstructor
 				default:
 					kind = protocol.SymbolKindMethod
 				}
-
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
-					Name:           fmt.Sprintf("%s%s.%s", modifiers, class.Name, method.Name.String()),
-					Detail:         funDetail(method.Name.String(), method.Function),
+					Name:           formatMethodName(methodDecl, decl),
+					Detail:         funSignature(methodDecl.GetParams()),
 					Kind:           kind,
-					Range:          newRange(method),
-					SelectionRange: newRange(method.Name),
+					Range:          newRange(methodDecl),
+					SelectionRange: newRange(methodDecl.Name),
 				})
 			}
 			return false
@@ -469,22 +435,24 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 	for _, binding := range doc.IdentBindings[calleeIdent] {
 		switch decl := binding.(type) {
 		case *ast.FunDecl:
-			signatures = append(signatures, h.signature(decl.Name.String(), decl.GetParams(), decl.Doc))
+			prefix := formatFunName(decl)
+			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Doc))
 
 		case *ast.ClassDecl:
-			name := decl.Name.String()
+			prefix := decl.Name.String()
 			var params []*ast.ParamDecl
 			doc := decl.Doc
 			for _, methodDecl := range decl.Methods() {
 				if methodDecl.IsConstructor() {
-					name = fmt.Sprint(name, ".", methodDecl.Name)
+					prefix = formatMethodName(methodDecl, decl)
 					params = methodDecl.GetParams()
 					if len(methodDecl.Doc) > 0 {
 						doc = methodDecl.Doc
 					}
+					break
 				}
 			}
-			signatures = append(signatures, h.signature(name, params, doc))
+			signatures = append(signatures, h.signature(prefix, params, doc))
 
 		case *ast.MethodDecl:
 			if decl.HasModifier(token.Get, token.Set) {
@@ -494,8 +462,8 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			if !ok {
 				continue
 			}
-			name := fmt.Sprint(classDecl.Name, ".", decl.Name)
-			signatures = append(signatures, h.signature(name, decl.GetParams(), decl.Doc))
+			prefix := formatMethodName(decl, classDecl)
+			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Doc))
 
 		default:
 		}
@@ -539,10 +507,10 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 	}, nil
 }
 
-func (h *Handler) signature(name string, params []*ast.ParamDecl, doc []*ast.Comment) *protocol.SignatureInformation {
+func (h *Handler) signature(prefix string, params []*ast.ParamDecl, doc []*ast.Comment) *protocol.SignatureInformation {
 	parameters := make([]*protocol.ParameterInformation, len(params))
 	labelBuilder := new(strings.Builder)
-	fmt.Fprint(labelBuilder, name, "(")
+	fmt.Fprint(labelBuilder, prefix, "(")
 	labelOffsetSupport := h.capabilities.GetTextDocument().GetSignatureHelp().GetSignatureInformation().GetParameterInformation().GetLabelOffsetSupport()
 	for i, paramDecl := range params {
 		parameters[i] = &protocol.ParameterInformation{Label: &protocol.StringOrParameterInformationLabelRange{}}

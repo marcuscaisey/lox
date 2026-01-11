@@ -383,7 +383,7 @@ func (g *identCompletionGenerator) walk(node ast.Node) bool {
 
 func (g *identCompletionGenerator) walkVarDecl(decl *ast.VarDecl) {
 	ast.Walk(decl.Initialiser, g.walk)
-	compl, ok := varCompletion(decl)
+	compl, ok := varCompletion(decl.Name)
 	if !ok {
 		return
 	}
@@ -458,9 +458,11 @@ func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*co
 
 	paramCompls := make([]*completion, 0, len(fun.Params))
 	for _, paramDecl := range fun.Params {
-		if paramDecl.Name.IsValid() {
-			paramCompls = append(paramCompls, &completion{Label: paramDecl.Name.String(), Kind: protocol.CompletionItemKindVariable})
+		compl, ok := varCompletion(paramDecl.Name)
+		if !ok {
+			break
 		}
+		paramCompls = append(paramCompls, compl)
 	}
 
 	bodyScope, endBodyScope := g.beginScope(fun.Body)
@@ -658,8 +660,7 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 		g.complLabelsByClassDecl[g.curClassDecl][label] = true
 	} else {
 		kind = protocol.CompletionItemKindMethod
-		name := fmt.Sprint(g.curClassDecl.Name, ".", decl.Name)
-		detail = hoverMethodDeclHeader(name, decl.Modifiers, decl.GetParams())
+		detail = methodDetail(decl, g.curClassDecl)
 		documentation = commentsText(decl.Doc)
 	}
 	propertyType := propertyTypeInstance
@@ -736,13 +737,14 @@ func sortPropertyCompletions(compls []*completion) {
 	})
 }
 
-func varCompletion(decl *ast.VarDecl) (*completion, bool) {
-	if !decl.Name.IsValid() {
+func varCompletion(name *ast.Ident) (*completion, bool) {
+	if !name.IsValid() {
 		return nil, false
 	}
 	return &completion{
-		Label: decl.Name.String(),
-		Kind:  protocol.CompletionItemKindVariable,
+		Label:  name.String(),
+		Detail: varDetail(name),
+		Kind:   protocol.CompletionItemKindVariable,
 	}, true
 }
 
@@ -753,7 +755,7 @@ func funCompletion(decl *ast.FunDecl) (*completion, bool) {
 	return &completion{
 		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindFunction,
-		Detail:        funDetail(decl.Name.String(), decl.Function),
+		Detail:        funDetail(decl),
 		Documentation: commentsText(decl.Doc),
 	}, true
 }
@@ -773,7 +775,7 @@ func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
 func declCompletion(decl ast.Decl) (*completion, bool) {
 	switch decl := decl.(type) {
 	case *ast.VarDecl:
-		return varCompletion(decl)
+		return varCompletion(decl.Name)
 	case *ast.FunDecl:
 		return funCompletion(decl)
 	case *ast.ClassDecl:
