@@ -652,6 +652,9 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 	}
 
 	label := decl.Name.String()
+	if g.complLabelsByClassDecl[g.curClassDecl][label] {
+		return
+	}
 	var kind protocol.CompletionItemKind
 	var detail string
 	var documentation string
