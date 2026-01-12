@@ -435,7 +435,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 	for _, binding := range doc.IdentBindings[calleeIdent] {
 		switch decl := binding.(type) {
 		case *ast.FunDecl:
-			prefix := formatFunName(decl)
+			prefix := funDetailPrefix(decl)
 			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Doc))
 
 		case *ast.ClassDecl:
@@ -444,7 +444,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			doc := decl.Doc
 			for _, methodDecl := range decl.Methods() {
 				if methodDecl.IsConstructor() {
-					prefix = formatMethodName(methodDecl, decl)
+					prefix = methodDetailPrefix(methodDecl, decl)
 					params = methodDecl.GetParams()
 					if len(methodDecl.Doc) > 0 {
 						doc = methodDecl.Doc
@@ -462,7 +462,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			if !ok {
 				continue
 			}
-			prefix := formatMethodName(decl, classDecl)
+			prefix := methodDetailPrefix(decl, classDecl)
 			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Doc))
 
 		default:

@@ -76,3 +76,41 @@ class Foo {
 //         ^ keyword.modifier
 //             ^ function.method
 }
+
+// Method Signature
+(method) Point.init(x, y)
+//       ^ type
+//            ^ punctuation.delimiter
+//             ^ constructor
+//                 ^ punctuation.bracket
+//                  ^ variable.parameter
+//                   ^ punctuation.delimiter
+//                     ^ variable.parameter
+//                      ^ punctuation.bracket
+
+(method) static Math.square(x)
+//       ^ keyword.modifier
+//              ^ type
+//                   ^ function.method
+
+(method) set Circle.radius(value)
+//       ^ keyword.modifier
+//           ^ type
+//                  ^ function.method
+
+(method) get Circle.radius(value)
+//       ^ keyword.modifier
+//           ^ type
+//                  ^ function.method
+
+(method) static get Foo.bar()
+//       ^ keyword.modifier
+//              ^ keyword.modifier
+//                  ^ type
+//                      ^ function.method
+
+(method) static set Foo.baz(value)
+//       ^ keyword.modifier
+//              ^ keyword.modifier
+//                  ^ type
+//                      ^ function.method

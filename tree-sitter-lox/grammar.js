@@ -34,6 +34,7 @@ module.exports = grammar({
         $.variable_declaration,
         $.function_declaration,
         $.class_declaration,
+        $.method_signature,
       ),
 
     variable_declaration: ($) =>
@@ -52,6 +53,16 @@ module.exports = grammar({
     class_body: ($) => seq("{", repeat($.method_declaration), "}"),
 
     method_declaration: ($) => seq(optional($.modifiers), $._function),
+
+    method_signature: ($) =>
+      seq(
+        "(method)",
+        optional($.modifiers),
+        field("class", $.identifier),
+        ".",
+        field("method", $.identifier),
+        field("parameters", $.parameter_list),
+      ),
 
     modifiers: () => repeat1(choice("static", "get", "set")),
 
@@ -89,8 +100,7 @@ module.exports = grammar({
 
     print_statement: ($) => seq("print", $._expression, ";"),
 
-    block: ($) =>
-      seq("{", repeat(choice($._declaration, $._statement)), "}"),
+    block: ($) => seq("{", repeat(choice($._declaration, $._statement)), "}"),
 
     if_statement: ($) =>
       prec.right(
@@ -161,11 +171,7 @@ module.exports = grammar({
     nil: (_) => "nil",
 
     function_expression: ($) =>
-      seq(
-        "fun",
-        field("parameters", $.parameter_list),
-        field("body", $.block),
-      ),
+      seq("fun", field("parameters", $.parameter_list), field("body", $.block)),
 
     group_expression: ($) => seq("(", field("expression", $._expression), ")"),
 
@@ -176,7 +182,10 @@ module.exports = grammar({
     call_expression: ($) =>
       prec(
         "postfix",
-        seq(field("callee", $._expression), field("arguments", $.argument_list)),
+        seq(
+          field("callee", $._expression),
+          field("arguments", $.argument_list),
+        ),
       ),
 
     get_expression: ($) =>

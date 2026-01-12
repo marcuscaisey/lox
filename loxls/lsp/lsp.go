@@ -29,10 +29,10 @@ func funDetail(decl *ast.FunDecl) string {
 	if !decl.Name.IsValid() {
 		return ""
 	}
-	return fmt.Sprintf("%s(%s)", formatFunName(decl), formatParams(decl.GetParams()))
+	return fmt.Sprintf("%s(%s)", funDetailPrefix(decl), formatParams(decl.GetParams()))
 }
 
-func formatFunName(decl *ast.FunDecl) string {
+func funDetailPrefix(decl *ast.FunDecl) string {
 	return fmt.Sprintf("fun %s", decl.Name)
 }
 
@@ -48,7 +48,11 @@ func classDetail(decl *ast.ClassDecl) string {
 }
 
 func methodDetail(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) string {
-	return fmt.Sprintf("%s(%s)", formatMethodName(methodDecl, classDecl), formatParams(methodDecl.GetParams()))
+	return fmt.Sprintf("%s(%s)", methodDetailPrefix(methodDecl, classDecl), formatParams(methodDecl.GetParams()))
+}
+
+func methodDetailPrefix(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) string {
+	return fmt.Sprintf("(method) %s", formatMethodName(methodDecl, classDecl))
 }
 
 func formatMethodName(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) string {

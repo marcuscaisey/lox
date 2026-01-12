@@ -36,12 +36,19 @@
 (method_declaration
   name: (identifier) @function.method)
 
+(method_signature
+  class: (identifier) @type
+  method: (identifier) @function.method)
+
 (call_expression
   callee: (get_expression
     name: (identifier) @function.method.call))
 
 (method_declaration
   name: (identifier) @constructor (#eq? @constructor "init"))
+
+(method_signature
+  method: (identifier) @constructor (#eq? @constructor "init"))
 
 (call_expression
   callee: (identifier) @constructor (#match? @constructor "^[A-Z]"))

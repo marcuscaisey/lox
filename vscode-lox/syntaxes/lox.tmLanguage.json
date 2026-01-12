@@ -104,6 +104,9 @@
         },
         {
           "include": "#method-declaration"
+        },
+        {
+          "include": "#block"
         }
       ]
     },
@@ -129,7 +132,7 @@
           ]
         }
       },
-      "end": "(?<=\\})",
+      "end": "(?<=}|\\))(?!\\s*\\{)",
       "patterns": [
         {
           "include": "#parameter-list"

@@ -319,6 +319,10 @@
           "named": true
         },
         {
+          "type": "method_signature",
+          "named": true
+        },
+        {
           "type": "print_statement",
           "named": true
         },
@@ -665,6 +669,10 @@
           },
           {
             "type": "function_declaration",
+            "named": true
+          },
+          {
+            "type": "method_signature",
             "named": true
           },
           {
@@ -1144,6 +1152,52 @@
     }
   },
   {
+    "type": "method_signature",
+    "named": true,
+    "fields": {
+      "class": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "method": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "parameters": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "parameter_list",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "modifiers",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "modifiers",
     "named": true,
     "fields": {}
@@ -1336,6 +1390,10 @@
         },
         {
           "type": "if_statement",
+          "named": true
+        },
+        {
+          "type": "method_signature",
           "named": true
         },
         {
@@ -1819,6 +1877,10 @@
   },
   {
     "type": "(",
+    "named": false
+  },
+  {
+    "type": "(method)",
     "named": false
   },
   {

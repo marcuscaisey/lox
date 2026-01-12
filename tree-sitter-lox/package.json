@@ -2,6 +2,12 @@
   "name": "tree-sitter-lox",
   "version": "0.1.0",
   "description": "Lox grammar for tree-sitter",
+  "keywords": [
+    "incremental",
+    "parsing",
+    "tree-sitter",
+    "lox"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/marcuscaisey/lox",
@@ -14,12 +20,6 @@
   },
   "main": "bindings/node",
   "types": "bindings/node",
-  "keywords": [
-    "incremental",
-    "parsing",
-    "tree-sitter",
-    "lox"
-  ],
   "files": [
     "grammar.js",
     "binding.gyp",
@@ -28,13 +28,21 @@
     "queries/*",
     "src/**"
   ],
+  "scripts": {
+    "build": "tree-sitter generate",
+    "install": "node-gyp-build",
+    "parse": "tree-sitter parse",
+    "prebuildify": "prebuildify --napi --strip",
+    "pretest": "tree-sitter generate",
+    "test": "tree-sitter test"
+  },
   "dependencies": {
     "node-addon-api": "8.x",
     "node-gyp-build": "^4.8.0"
   },
   "devDependencies": {
-    "tree-sitter-cli": "0.25.x",
-    "prebuildify": "^6.0.0"
+    "prebuildify": "^6.0.0",
+    "tree-sitter-cli": "0.25.x"
   },
   "peerDependencies": {
     "tree-sitter": "0.22.x"
@@ -43,13 +51,5 @@
     "tree_sitter": {
       "optional": true
     }
-  },
-  "scripts": {
-    "pretest": "tree-sitter generate",
-    "test": "tree-sitter test",
-    "build": "tree-sitter generate",
-    "parse": "tree-sitter parse",
-    "install": "node-gyp-build",
-    "prebuildify": "prebuildify --napi --strip"
   }
 }
