@@ -21,42 +21,60 @@ func commentsText(doc []*ast.Comment) string {
 	return strings.Join(lines, "\n")
 }
 
-func varDetail(name *ast.Ident) string {
-	return fmt.Sprintf("var %s", name)
-}
-
-func funDetail(decl *ast.FunDecl) string {
-	if !decl.Name.IsValid() {
-		return ""
+func varDetail(name *ast.Ident) (string, bool) {
+	if !name.IsValid() {
+		return "", false
 	}
-	return fmt.Sprintf("%s(%s)", funDetailPrefix(decl), formatParams(decl.GetParams()))
+	return fmt.Sprintf("var %s", name), true
 }
 
-func funDetailPrefix(decl *ast.FunDecl) string {
-	return fmt.Sprintf("fun %s", decl.Name)
+func funDetail(decl *ast.FunDecl) (string, bool) {
+	prefix, ok := funDetailPrefix(decl)
+	if !ok {
+		return "", false
+	}
+	return fmt.Sprintf("%s(%s)", prefix, formatParams(decl.GetParams())), true
+}
+
+func funDetailPrefix(decl *ast.FunDecl) (string, bool) {
+	if !decl.Name.IsValid() {
+		return "", false
+	}
+	return fmt.Sprintf("fun %s", decl.Name), true
 }
 
 func funSignature(params []*ast.ParamDecl) string {
 	return fmt.Sprintf("fun(%s)", formatParams(params))
 }
 
-func classDetail(decl *ast.ClassDecl) string {
+func classDetail(decl *ast.ClassDecl) (string, bool) {
 	if !decl.Name.IsValid() {
-		return ""
+		return "", false
 	}
-	return fmt.Sprintf("class %s", decl.Name)
+	return fmt.Sprintf("class %s", decl.Name), true
 }
 
-func methodDetail(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) string {
-	return fmt.Sprintf("%s(%s)", methodDetailPrefix(methodDecl, classDecl), formatParams(methodDecl.GetParams()))
+func methodDetail(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) (string, bool) {
+	prefix, ok := methodDetailPrefix(methodDecl, classDecl)
+	if !ok {
+		return "", false
+	}
+	return fmt.Sprintf("%s(%s)", prefix, formatParams(methodDecl.GetParams())), true
 }
 
-func methodDetailPrefix(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) string {
-	return fmt.Sprintf("(method) %s", formatMethodName(methodDecl, classDecl))
+func methodDetailPrefix(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) (string, bool) {
+	name, ok := formatMethodName(methodDecl, classDecl)
+	if !ok {
+		return "", false
+	}
+	return fmt.Sprintf("(method) %s", name), true
 }
 
-func formatMethodName(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) string {
-	return fmt.Sprintf("%s%s.%s", formatMethodModifiers(methodDecl.Modifiers), classDecl.Name, methodDecl.Name)
+func formatMethodName(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) (string, bool) {
+	if !methodDecl.Name.IsValid() || !classDecl.Name.IsValid() {
+		return "", false
+	}
+	return fmt.Sprintf("%s%s.%s", formatMethodModifiers(methodDecl.Modifiers), classDecl.Name, methodDecl.Name), true
 }
 
 func formatMethodModifiers(modifiers []token.Token) string {

@@ -169,7 +169,7 @@ func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
 	case decl.HasModifier(token.Get) && len(params) > 0:
 		c.errs.AddSpanningRangesf(params[0], params[len(params)-1], loxerr.Fatal, "property getter cannot have parameters")
 	case decl.HasModifier(token.Set):
-		if len(params) == 0 {
+		if len(params) == 0 && decl.Name.IsValid() {
 			c.errs.Addf(decl.Name, loxerr.Fatal, "property setter must have a parameter")
 		} else if len(params) > 1 {
 			c.errs.AddSpanningRangesf(params[1], params[len(params)-1], loxerr.Fatal, "property setter can only have one parameter")
@@ -203,7 +203,7 @@ func (c *semanticChecker) checkNoConstructorReturn(stmt *ast.ReturnStmt) {
 }
 
 func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
-	if c.extraFeatures && expr.Ident.String() == token.PlaceholderIdent {
+	if c.extraFeatures && expr.Ident.IsValid() && expr.Ident.String() == token.PlaceholderIdent {
 		c.errs.Addf(expr.Ident, loxerr.Fatal, "%s cannot be used as a value", token.PlaceholderIdent)
 	}
 }

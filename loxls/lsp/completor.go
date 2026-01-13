@@ -452,7 +452,7 @@ func (g *identCompletionGenerator) walkBlock(block *ast.Block) {
 }
 
 func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*completion) {
-	if fun == nil || fun.Body == nil {
+	if fun == nil {
 		return
 	}
 
@@ -479,11 +479,13 @@ func (g *identCompletionGenerator) beginScope(block *ast.Block) (*completionScop
 		start: g.curScope.start,
 		end:   g.curScope.end,
 	}
-	if !block.LeftBrace.IsZero() {
-		childScope.start = block.LeftBrace.End()
-	}
-	if !block.RightBrace.IsZero() {
-		childScope.end = block.RightBrace.End()
+	if block != nil {
+		if !block.LeftBrace.IsZero() {
+			childScope.start = block.LeftBrace.End()
+		}
+		if !block.RightBrace.IsZero() {
+			childScope.end = block.RightBrace.End()
+		}
 	}
 	g.curScope.children = append(g.curScope.children, childScope)
 
@@ -546,7 +548,7 @@ func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]a
 
 func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, bool) {
 	var object ast.Expr
-	inRangeOrFollowsName := func(setExpr *ast.SetExpr) bool { return inRangeOrFollows(pos, setExpr.Name) }
+	inRangeOrFollowsName := func(setExpr *ast.SetExpr) bool { return setExpr.Name.IsValid() && inRangeOrFollows(pos, setExpr.Name) }
 	if getExpr, ok := outermostNodeAtOrBefore[*ast.GetExpr](c.program, pos); ok {
 		object = getExpr.Object
 	} else if setExpr, ok := ast.Find(c.program, inRangeOrFollowsName); ok {
@@ -647,7 +649,7 @@ func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
 }
 
 func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDecl) {
-	if !decl.Name.IsValid() || decl.IsConstructor() {
+	if !decl.Name.IsValid() || decl.IsConstructor() || g.curClassDecl == nil || !g.curClassDecl.Name.IsValid() {
 		return
 	}
 
@@ -663,7 +665,11 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 		g.complLabelsByClassDecl[g.curClassDecl][label] = true
 	} else {
 		kind = protocol.CompletionItemKindMethod
-		detail = methodDetail(decl, g.curClassDecl)
+		var ok bool
+		detail, ok = methodDetail(decl, g.curClassDecl)
+		if !ok {
+			return
+		}
 		documentation = commentsText(decl.Doc)
 	}
 	propertyType := propertyTypeInstance
@@ -680,7 +686,7 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 }
 
 func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.SetExpr) {
-	if g.curClassDecl == nil || expr.Object == nil {
+	if expr.Object == nil || g.curClassDecl == nil || !g.curClassDecl.Name.IsValid() {
 		return
 	}
 	if _, ok := expr.Object.(*ast.ThisExpr); !ok {
@@ -744,9 +750,13 @@ func varCompletion(name *ast.Ident) (*completion, bool) {
 	if !name.IsValid() {
 		return nil, false
 	}
+	detail, ok := varDetail(name)
+	if !ok {
+		return nil, false
+	}
 	return &completion{
 		Label:  name.String(),
-		Detail: varDetail(name),
+		Detail: detail,
 		Kind:   protocol.CompletionItemKindVariable,
 	}, true
 }
@@ -755,10 +765,14 @@ func funCompletion(decl *ast.FunDecl) (*completion, bool) {
 	if !decl.Name.IsValid() {
 		return nil, false
 	}
+	detail, ok := funDetail(decl)
+	if !ok {
+		return nil, false
+	}
 	return &completion{
 		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindFunction,
-		Detail:        funDetail(decl),
+		Detail:        detail,
 		Documentation: commentsText(decl.Doc),
 	}, true
 }
@@ -767,10 +781,14 @@ func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
 	if !decl.Name.IsValid() {
 		return nil, false
 	}
+	detail, ok := classDetail(decl)
+	if !ok {
+		return nil, false
+	}
 	return &completion{
 		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindClass,
-		Detail:        classDetail(decl),
+		Detail:        detail,
 		Documentation: commentsText(decl.Doc),
 	}, true
 }

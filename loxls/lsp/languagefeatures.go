@@ -143,16 +143,30 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		}
 		switch decl := decl.(type) {
 		case *ast.VarDecl, *ast.ParamDecl:
-			headers = append(headers, varDetail(decl.BoundIdent()))
+			header, ok := varDetail(decl.BoundIdent())
+			if !ok {
+				continue
+			}
+			headers = append(headers, header)
 		case *ast.FunDecl:
-			headers = append(headers, funDetail(decl))
+			header, ok := funDetail(decl)
+			if !ok {
+				continue
+			}
+			headers = append(headers, header)
 			body = commentsText(decl.Doc)
 		case *ast.ClassDecl:
+			if !decl.Name.IsValid() {
+				continue
+			}
 			b := &strings.Builder{}
 			fmt.Fprintf(b, "class %s", decl.Name)
 			if methods := decl.Methods(); len(methods) > 0 {
 				fmt.Fprint(b, " {\n")
 				for _, methodDecl := range methods {
+					if !methodDecl.Name.IsValid() {
+						continue
+					}
 					fmt.Fprintf(b, "  %s%s(%s)\n", formatMethodModifiers(methodDecl.Modifiers), methodDecl.Name, formatParams(methodDecl.GetParams()))
 				}
 				fmt.Fprint(b, "}")
@@ -164,7 +178,11 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			if !ok {
 				continue
 			}
-			headers = append(headers, methodDetail(decl, classDecl))
+			header, ok := methodDetail(decl, classDecl)
+			if !ok {
+				continue
+			}
+			headers = append(headers, header)
 			body = commentsText(decl.Doc)
 		}
 	}
@@ -261,8 +279,12 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				default:
 					kind = protocol.SymbolKindMethod
 				}
+				name, ok := formatMethodName(methodDecl, decl)
+				if !ok {
+					continue
+				}
 				class.Children = append(class.Children, &protocol.DocumentSymbol{
-					Name:           formatMethodName(methodDecl, decl),
+					Name:           name,
 					Detail:         funSignature(methodDecl.GetParams()),
 					Kind:           kind,
 					Range:          newRange(methodDecl),
@@ -435,16 +457,26 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 	for _, binding := range doc.IdentBindings[calleeIdent] {
 		switch decl := binding.(type) {
 		case *ast.FunDecl:
-			prefix := funDetailPrefix(decl)
+			prefix, ok := funDetailPrefix(decl)
+			if !ok {
+				continue
+			}
 			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Doc))
 
 		case *ast.ClassDecl:
+			if !decl.Name.IsValid() {
+				continue
+			}
 			prefix := decl.Name.String()
 			var params []*ast.ParamDecl
 			doc := decl.Doc
 			for _, methodDecl := range decl.Methods() {
 				if methodDecl.IsConstructor() {
-					prefix = methodDetailPrefix(methodDecl, decl)
+					prefixInner, ok := methodDetailPrefix(methodDecl, decl)
+					if !ok {
+						break
+					}
+					prefix = prefixInner
 					params = methodDecl.GetParams()
 					if len(methodDecl.Doc) > 0 {
 						doc = methodDecl.Doc
@@ -462,7 +494,10 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			if !ok {
 				continue
 			}
-			prefix := methodDetailPrefix(decl, classDecl)
+			prefix, ok := methodDetailPrefix(decl, classDecl)
+			if !ok {
+				continue
+			}
 			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Doc))
 
 		default:

@@ -580,7 +580,7 @@ func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
 }
 
 func (r *identResolver) resolveIdentExpr(expr *ast.IdentExpr) {
-	if !r.inGlobalScope() && r.scopes.Peek().IsInitialising(expr.Ident.String()) {
+	if !r.inGlobalScope() && expr.Ident.IsValid() && r.scopes.Peek().IsInitialising(expr.Ident.String()) {
 		r.addErrorf(expr, loxerr.Fatal, "%s read in its own initialiser", expr.Ident.String())
 		return
 	}
