@@ -22,7 +22,8 @@ import (
 )
 
 var (
-	update = flag.Bool("update", false, "updates the expected output of each test")
+	update     = flag.Bool("update", false, "updates the expected output of each test")
+	sequential = flag.Bool("sequential", false, "runs the tests sequentially instead of in parallel")
 
 	syntaxErrorComment = "// syntaxerror"
 )
@@ -94,7 +95,9 @@ func run(t *testing.T, runner Runner, path string, cfg *config) {
 
 			testName = strings.TrimSuffix(testName, ".lox")
 			t.Run(testName, func(t *testing.T) {
-				t.Parallel()
+				if !*sequential {
+					t.Parallel()
+				}
 				if *update {
 					runner.Update(t, path)
 				} else {
@@ -104,7 +107,9 @@ func run(t *testing.T, runner Runner, path string, cfg *config) {
 
 		} else {
 			t.Run(testName, func(t *testing.T) {
-				t.Parallel()
+				if !*sequential {
+					t.Parallel()
+				}
 				run(t, runner, path, cfg)
 			})
 		}
