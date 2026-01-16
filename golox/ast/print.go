@@ -105,6 +105,8 @@ func formatValue(value reflect.Value, depth int) (string, bool) {
 		child = value.Lexeme
 	case *Ident:
 		child = value.String()
+	case *ThisExpr:
+		child = value.This.Lexeme
 	case Node:
 		child = sprint(value, depth)
 	case bool:
