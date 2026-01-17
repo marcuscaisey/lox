@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix crashes when hovering over partially complete function definitions.
 - Deduplicate completions of property getters and setters.
 - Highlight class hover text properly.
+- Stop suggesting class body completions outside of body.
 
 ### Changed
 

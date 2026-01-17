@@ -114,7 +114,10 @@ func (c *classBodyCompletor) inClassBody(pos *protocol.Position) (*ast.ClassDecl
 	if !ok {
 		return nil, false
 	}
-	if classDecl.Body == nil || !inRange(pos, classDecl.Body) {
+	if classDecl.Body == nil || classDecl.Body.LeftBrace.IsZero() || classDecl.Body.RightBrace.IsZero() {
+		return nil, false
+	}
+	if !inRangePositions(pos, classDecl.Body.LeftBrace.End(), classDecl.Body.RightBrace.End()) {
 		return nil, false
 	}
 	for _, methodDecl := range classDecl.Methods() {
