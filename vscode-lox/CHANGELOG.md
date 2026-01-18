@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Refer to object properties consistently in error messages.
+- Show error for static init() method.
 
 ### Changed
 

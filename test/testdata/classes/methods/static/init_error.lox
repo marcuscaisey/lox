@@ -1,0 +1,7 @@
+class Foo {
+  // error: init() cannot be static
+  // lint error: init() cannot be static
+  static init() {}
+}
+
+_ = Foo;

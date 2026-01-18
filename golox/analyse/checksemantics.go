@@ -16,6 +16,7 @@ const (
 //   - break and continue can only be used inside a loop
 //   - return can only be used inside a function definition
 //   - init() cannot return a value
+//   - init() cannot be static
 //   - _ cannot be used as a value
 //   - _ cannot be used as a field name
 //   - this can only be used inside a method definition
@@ -62,6 +63,7 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 	case *ast.MethodDecl:
 		c.checkNumPropertyParams(node)
 		c.walkFun(node.Function, methodFunType(node))
+		c.checkNoStaticInit(node)
 		return false
 	case *ast.WhileStmt:
 		c.walkWhileStmt(node)
@@ -137,6 +139,12 @@ func (c *semanticChecker) walkClassDecl(decl *ast.ClassDecl) {
 func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {
 	if len(params) > maxParams {
 		c.errs.Addf(params[maxParams], loxerr.Fatal, "cannot define more than %d function parameters", maxParams)
+	}
+}
+
+func (c *semanticChecker) checkNoStaticInit(decl *ast.MethodDecl) {
+	if decl.Name.IsValid() && decl.Name.String() == token.IdentInit && decl.HasModifier(token.Static) {
+		c.errs.Addf(decl.Name, loxerr.Fatal, "%s() cannot be static", token.IdentInit)
 	}
 }
 
