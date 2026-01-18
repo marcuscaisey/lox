@@ -76,12 +76,11 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 		builtins:               builtins,
 		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
-		unresolvedThisPropIdentsByNameByPropTypeByClassDecl:  map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident{},
-		unresolvedSuperPropIdentsByNameByPropTypeByClassDecl: map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident{},
-		unresolvedPropIdentsByName:                           map[string][]*ast.Ident{},
-		bindingsByNameByPropTypeByClassDecl:                  map[*ast.ClassDecl]map[propertyType]map[string][]ast.Binding{},
-		bindingsByName:                                       map[string][]ast.Binding{},
-		identBindings:                                        map[*ast.Ident][]ast.Binding{},
+		unresolvedThisPropIdentsByNameByPropTypeByClassDecl: map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident{},
+		unresolvedPropIdentsByName:                          map[string][]*ast.Ident{},
+		bindingsByNameByPropTypeByClassDecl:                 map[*ast.ClassDecl]map[propertyType]map[string][]ast.Binding{},
+		bindingsByName:                                      map[string][]ast.Binding{},
+		identBindings:                                       map[*ast.Ident][]ast.Binding{},
 	}
 	return r.Resolve(program)
 }
@@ -90,21 +89,20 @@ type identResolver struct {
 	fatalOnly     bool
 	extraFeatures bool
 
-	builtins                                             []ast.Decl
-	scopes                                               *stack.Stack[*scope]
-	globalScope                                          *scope
-	globalDecls                                          map[string]ast.Decl
-	forwardDeclaredGlobals                               map[string]bool
-	inFun                                                bool
-	inGlobalFun                                          bool
-	funScopeLevel                                        int
-	curClassDecl                                         *ast.ClassDecl
-	curPropType                                          propertyType
-	unresolvedThisPropIdentsByNameByPropTypeByClassDecl  map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident
-	unresolvedSuperPropIdentsByNameByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident
-	unresolvedPropIdentsByName                           map[string][]*ast.Ident
-	bindingsByNameByPropTypeByClassDecl                  map[*ast.ClassDecl]map[propertyType]map[string][]ast.Binding
-	bindingsByName                                       map[string][]ast.Binding
+	builtins                                            []ast.Decl
+	scopes                                              *stack.Stack[*scope]
+	globalScope                                         *scope
+	globalDecls                                         map[string]ast.Decl
+	forwardDeclaredGlobals                              map[string]bool
+	inFun                                               bool
+	inGlobalFun                                         bool
+	funScopeLevel                                       int
+	curClassDecl                                        *ast.ClassDecl
+	curPropType                                         propertyType
+	unresolvedThisPropIdentsByNameByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident
+	unresolvedPropIdentsByName                          map[string][]*ast.Ident
+	bindingsByNameByPropTypeByClassDecl                 map[*ast.ClassDecl]map[propertyType]map[string][]ast.Binding
+	bindingsByName                                      map[string][]ast.Binding
 
 	identBindings map[*ast.Ident][]ast.Binding
 	errs          loxerr.Errors
@@ -405,18 +403,16 @@ func (r *identResolver) resolveThisPropertyIdents(idents []*ast.Ident, name stri
 	}
 }
 
-// resolveSuperPropertyIdents resolves identifiers of 'super' properties with the same name to method declarations of
-// the given type within the superclass of a class.
-func (r *identResolver) resolveSuperPropertyIdents(idents []*ast.Ident, name string, classDecl *ast.ClassDecl, propType propertyType) {
+// resolveSuperPropertyIdent resolve an identifier of a 'super' property to the method declaration of the given type
+// within the superclass of a class.
+func (r *identResolver) resolveSuperPropertyIdent(ident *ast.Ident, classDecl *ast.ClassDecl, propType propertyType) {
 	for curClassDecl := range InheritanceChain(classDecl, r.identBindings) {
 		if curClassDecl == classDecl {
 			continue
 		}
-		for _, binding := range r.bindingsByNameByPropTypeByClassDecl[curClassDecl][propType][name] {
+		for _, binding := range r.bindingsByNameByPropTypeByClassDecl[curClassDecl][propType][ident.String()] {
 			if _, ok := binding.(*ast.MethodDecl); ok {
-				for _, ident := range idents {
-					r.identBindings[ident] = append(r.identBindings[ident], binding)
-				}
+				r.identBindings[ident] = append(r.identBindings[ident], binding)
 				return
 			}
 		}
@@ -489,12 +485,6 @@ func (r *identResolver) walkProgram(program *ast.Program) {
 			r.resolveThisPropertyIdents(unresolvedThisPropIdents, name, classDecl, propertyTypeStatic)
 		}
 	}
-
-	for classDecl, unresolvedSuperPropIdentsByNameByPropType := range r.unresolvedSuperPropIdentsByNameByPropTypeByClassDecl {
-		for name, unresolvedSuperPropIdents := range unresolvedSuperPropIdentsByNameByPropType[propertyTypeStatic] {
-			r.resolveSuperPropertyIdents(unresolvedSuperPropIdents, name, classDecl, propertyTypeStatic)
-		}
-	}
 }
 
 func (r *identResolver) walkVarDecl(decl *ast.VarDecl) {
@@ -558,11 +548,6 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 		propertyTypeInstance: {},
 		propertyTypeStatic:   {},
 	}
-	//nolint:exhaustive
-	r.unresolvedSuperPropIdentsByNameByPropTypeByClassDecl[decl] = map[propertyType]map[string][]*ast.Ident{
-		propertyTypeInstance: {},
-		propertyTypeStatic:   {},
-	}
 
 	r.declareIdent(decl)
 	r.defineIdent(decl.Name)
@@ -589,10 +574,6 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 
 	for name, unresolvedThisPropIdents := range r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[decl][propertyTypeInstance] {
 		r.resolveThisPropertyIdents(unresolvedThisPropIdents, name, decl, propertyTypeInstance)
-	}
-
-	for name, unresolvedSuperPropIdents := range r.unresolvedSuperPropIdentsByNameByPropTypeByClassDecl[decl][propertyTypeInstance] {
-		r.resolveSuperPropertyIdents(unresolvedSuperPropIdents, name, decl, propertyTypeInstance)
 	}
 }
 
@@ -658,8 +639,7 @@ func (r *identResolver) walkGetExpr(expr *ast.GetExpr) {
 	}
 
 	if _, ok := expr.Object.(*ast.SuperExpr); ok && r.curClassDecl != nil && r.curPropType != propertyTypeNone {
-		r.unresolvedSuperPropIdentsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name] = append(
-			r.unresolvedSuperPropIdentsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name], expr.Name)
+		r.resolveSuperPropertyIdent(expr.Name, r.curClassDecl, r.curPropType)
 		return
 	}
 
