@@ -6,4 +6,4 @@ class Subclass < Superclass {
   }
 }
 
-Subclass.method(); // error: 'Subclass class' object has no property method
+Subclass.method(); // error: 'Subclass class' object has no property 'method'

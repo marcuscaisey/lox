@@ -1,4 +1,4 @@
 class Foo {}
 
 var foo = Foo();
-print foo.bar; // error: 'Foo' object has no property bar
+print foo.bar; // error: 'Foo' object has no property 'bar'

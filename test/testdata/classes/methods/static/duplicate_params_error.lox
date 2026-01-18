@@ -1,7 +1,7 @@
-// error: x has already been declared
-// lint error: x has already been declared
-// error: y has already been declared
-// lint error: y has already been declared
+// error: 'x' has already been declared
+// lint error: 'x' has already been declared
+// error: 'y' has already been declared
+// lint error: 'y' has already been declared
 class Foo {
   static bar(x, y, z, x, y) {
     _ = x;

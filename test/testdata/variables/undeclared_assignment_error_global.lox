@@ -1,3 +1,3 @@
-// lint warning: a has not been declared
-// error: a has not been declared
+// lint warning: 'a' has not been declared
+// error: 'a' has not been declared
 a = 1;

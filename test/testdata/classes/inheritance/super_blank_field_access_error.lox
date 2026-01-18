@@ -2,8 +2,8 @@ class Superclass {}
 
 class Subclass < Superclass {
   method() {
-    // error: _ cannot be used as a field name
-    // lint error: _ cannot be used as a field name
+    // error: '_' cannot be used as a field name
+    // lint error: '_' cannot be used as a field name
     super._;
   }
 }

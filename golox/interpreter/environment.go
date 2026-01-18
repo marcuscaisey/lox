@@ -51,24 +51,24 @@ func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
 
 func (e *globalEnvironment) Define(name string, value loxObject) environment {
 	if value == nil {
-		panic(fmt.Sprintf("attempt to set %s to nil", name))
+		panic(fmt.Sprintf("attempt to set %q to nil", name))
 	}
 	if _, ok := e.values[name]; !ok {
 		e.values[name] = value
 		return e
 	} else {
-		panic(fmt.Sprintf("%s has already been declared", name))
+		panic(fmt.Sprintf("%q has already been declared", name))
 	}
 }
 
 func (e *globalEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	if value == nil {
-		panic(fmt.Sprintf("attempt to assign nil to %s", ident.String()))
+		panic(fmt.Sprintf("attempt to assign nil to %m", ident))
 	}
 	if _, ok := e.values[ident.String()]; ok {
 		e.values[ident.String()] = value
 	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%m has not been declared", ident))
 	}
 }
 
@@ -76,7 +76,7 @@ func (e *globalEnvironment) Get(ident *ast.Ident) loxObject {
 	if value, ok := e.values[ident.String()]; ok {
 		return value
 	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%m has not been declared", ident))
 	}
 }
 
@@ -84,7 +84,7 @@ func (e *globalEnvironment) GetByName(name string) loxObject {
 	if value, ok := e.values[name]; ok {
 		return value
 	} else {
-		panic(fmt.Sprintf("%s has not been declared", name))
+		panic(fmt.Sprintf("%q has not been declared", name))
 	}
 }
 
@@ -113,21 +113,21 @@ func (e *localEnvironment) Declare(ident *ast.Ident) environment {
 
 func (e *localEnvironment) Define(name string, value loxObject) environment {
 	if value == nil {
-		panic(fmt.Sprintf("attempt to set %s to nil", name))
+		panic(fmt.Sprintf("attempt to set %q to nil", name))
 	}
 	return newLocalEnvironment(e, name, value)
 }
 
 func (e *localEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	if value == nil {
-		panic(fmt.Sprintf("attempt to assign nil to %s", ident.String()))
+		panic(fmt.Sprintf("attempt to assign nil to %m", ident))
 	}
 	if ident.String() == e.name {
 		e.value = value
 	} else if e.parent != nil {
 		e.parent.Assign(ident, value)
 	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%m has not been declared", ident))
 	}
 }
 
@@ -137,7 +137,7 @@ func (e *localEnvironment) Get(ident *ast.Ident) loxObject {
 	} else if e.parent != nil {
 		return e.parent.Get(ident)
 	} else {
-		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
+		panic(loxerr.Newf(ident, loxerr.Fatal, "%m has not been declared", ident))
 	}
 }
 
@@ -147,6 +147,6 @@ func (e *localEnvironment) GetByName(name string) loxObject {
 	} else if e.parent != nil {
 		return e.parent.GetByName(name)
 	} else {
-		panic(fmt.Sprintf("%s has not been declared", name))
+		panic(fmt.Sprintf("%q has not been declared", name))
 	}
 }

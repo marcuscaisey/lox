@@ -1,7 +1,7 @@
 class Foo {
   bar() {
-    // error: _ cannot be used as a field name
-    // lint error: _ cannot be used as a field name
+    // error: '_' cannot be used as a field name
+    // lint error: '_' cannot be used as a field name
     print this._;
   }
 }

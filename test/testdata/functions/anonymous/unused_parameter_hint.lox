@@ -1,4 +1,4 @@
-// lint hint: z has been declared but is never used
+// lint hint: 'z' has been declared but is never used
 var add = fun(x, y, z) {
   return x + y;
 };

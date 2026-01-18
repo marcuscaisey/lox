@@ -1,5 +1,5 @@
 if (false) {
-  // lint warning: x has been used before its declaration
+  // lint warning: 'x' has been used before its declaration
   x = 1;
   var x = 2;
 }

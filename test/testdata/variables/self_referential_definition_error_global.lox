@@ -1,4 +1,4 @@
-// error: a has not been declared
-// lint warning: a has been used before its declaration
+// error: 'a' has not been declared
+// lint warning: 'a' has been used before its declaration
 var a = a;
 print a;

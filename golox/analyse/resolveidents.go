@@ -268,13 +268,13 @@ func (r *identResolver) beginScope() func() {
 	return func() {
 		scope := r.scopes.Pop()
 		for decl := range scope.UnusedDeclarations() {
-			r.addErrorf(decl.BoundIdent(), loxerr.Hint, "%s has been declared but is never used", decl.BoundIdent().String())
+			r.addErrorf(decl.BoundIdent(), loxerr.Hint, "%m has been declared but is never used", decl.BoundIdent())
 		}
 		for ident := range scope.UndeclaredUsages() {
 			if scope.IsDeclared(ident.String()) {
-				r.addErrorf(ident, loxerr.Warning, "%s has been used before its declaration", ident.String())
+				r.addErrorf(ident, loxerr.Warning, "%m has been used before its declaration", ident)
 			} else {
-				r.addErrorf(ident, loxerr.Warning, "%s has not been declared", ident.String())
+				r.addErrorf(ident, loxerr.Warning, "%m has not been declared", ident)
 			}
 		}
 	}
@@ -291,7 +291,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 	}
 	if r.inGlobalScope() && r.forwardDeclaredGlobals[ident.String()] {
 		if r.scopes.Peek().Declaration(ident.String()) != stmt {
-			r.addErrorf(ident, loxerr.Hint, "%s has already been declared", ident.String())
+			r.addErrorf(ident, loxerr.Hint, "%m has already been declared", ident)
 		}
 		return
 	}
@@ -300,7 +300,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 		if r.inGlobalScope() {
 			typ = loxerr.Hint
 		}
-		r.addErrorf(ident, typ, "%s has already been declared", ident.String())
+		r.addErrorf(ident, typ, "%m has already been declared", ident)
 	} else {
 		scope.Declare(stmt)
 		r.identBindings[ident] = append(r.identBindings[ident], stmt)
@@ -362,7 +362,7 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 			// in, then we can't definitely say that the identifier has been defined yet. It might be defined later
 			// before the function is called.
 			if op == identOpRead && !scope.IsDefined(ident.String()) && !(r.inFun && level <= r.funScopeLevel) { //nolint:staticcheck
-				r.addErrorf(ident, loxerr.Hint, "%s has not been defined", ident.String())
+				r.addErrorf(ident, loxerr.Hint, "%m has not been defined", ident)
 			}
 			return
 		}
@@ -637,7 +637,7 @@ func (r *identResolver) walkFunExpr(expr *ast.FunExpr) {
 
 func (r *identResolver) resolveIdentExpr(expr *ast.IdentExpr) {
 	if !r.inGlobalScope() && expr.Ident.IsValid() && r.scopes.Peek().IsInitialising(expr.Ident.String()) {
-		r.addErrorf(expr, loxerr.Fatal, "%s read in its own initialiser", expr.Ident.String())
+		r.addErrorf(expr, loxerr.Fatal, "%m read in its own initialiser", expr.Ident)
 		return
 	}
 	r.resolveIdent(expr.Ident, identOpRead)

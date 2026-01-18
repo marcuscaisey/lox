@@ -2,4 +2,4 @@ class Foo {
   static bar() {}
 }
 
-Foo().bar(); // error: 'Foo' object has no property bar
+Foo().bar(); // error: 'Foo' object has no property 'bar'

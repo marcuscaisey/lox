@@ -1,4 +1,4 @@
-// lint hint: z has been declared but is never used
+// lint hint: 'z' has been declared but is never used
 fun add(x, y, z) {
   return x + y;
 }

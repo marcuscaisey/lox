@@ -54,6 +54,17 @@ func (i *Ident) End() token.Position   { return i.Token.End() }
 func (i *Ident) IsValid() bool         { return i != nil && !i.Token.IsZero() }
 func (i *Ident) String() string        { return i.Token.Lexeme }
 
+// Format implements [fmt.Formatter]. All verbs have the default behaviour, except for 'm' (message) which formats the
+// type for use in an error message.
+func (i *Ident) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'm':
+		fmt.Fprintf(f, "'%s'", i.String())
+	default:
+		fmt.Fprint(f, i.String())
+	}
+}
+
 // Stmt is the interface which all statement nodes implement.
 //
 //sumtype:decl

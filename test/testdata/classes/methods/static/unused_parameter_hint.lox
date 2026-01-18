@@ -1,5 +1,5 @@
 class Foo {
-  // lint hint: z has been declared but is never used
+  // lint hint: 'z' has been declared but is never used
   static add(x, y, z) {
     print x + y;
   }

@@ -231,13 +231,13 @@ func (c *semanticChecker) checkNoConstructorReturn(stmt *ast.ReturnStmt) {
 
 func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
 	if c.extraFeatures && expr.Ident.IsValid() && expr.Ident.String() == token.IdentBlank {
-		c.errs.Addf(expr.Ident, loxerr.Fatal, "%s cannot be used as a value", token.IdentBlank)
+		c.errs.Addf(expr.Ident, loxerr.Fatal, "'%s' cannot be used as a value", token.IdentBlank)
 	}
 }
 
 func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
 	if c.extraFeatures && ident.IsValid() && ident.String() == token.IdentBlank {
-		c.errs.Addf(ident, loxerr.Fatal, "%s cannot be used as a field name", token.IdentBlank)
+		c.errs.Addf(ident, loxerr.Fatal, "'%s' cannot be used as a field name", token.IdentBlank)
 	}
 }
 

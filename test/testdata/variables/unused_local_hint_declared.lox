@@ -1,5 +1,5 @@
 {
-  var a; // lint hint: a has been declared but is never used
+  var a; // lint hint: 'a' has been declared but is never used
   var b = "used";
   print b; // prints: used
 }

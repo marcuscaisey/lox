@@ -1,4 +1,4 @@
 var a = 1;
-var a; // lint hint: a has already been declared
+var a; // lint hint: 'a' has already been declared
 a = 2;
 print a; // prints: 2

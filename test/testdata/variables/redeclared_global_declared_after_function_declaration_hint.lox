@@ -4,6 +4,6 @@ fun f() {
 _ = f;
 
 var a = 1;
-var a = 2; // lint hint: a has already been declared
+var a = 2; // lint hint: 'a' has already been declared
 
 print a; // prints: 2

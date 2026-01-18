@@ -529,7 +529,7 @@ func (s *loxSuperObject) Get(_ *Interpreter, name *ast.Ident) loxObject {
 	}
 	method, ok := s.superclass.GetMethod(name.String())
 	if !ok {
-		panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %s", instance.Type(), name))
+		panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %m", instance.Type(), name))
 	}
 	return method.Bind(instance)
 }
@@ -581,7 +581,7 @@ func (i *loxInstance) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
 		return method.Bind(i)
 	}
 
-	panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %s", i.Type(), name.String()))
+	panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %m", i.Type(), name))
 }
 
 func (i *loxInstance) Set(interpreter *Interpreter, name *ast.Ident, value loxObject) {
