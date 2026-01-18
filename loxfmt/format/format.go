@@ -93,13 +93,13 @@ func formatProgram(program *ast.Program) string {
 }
 
 func formatStmts[T ast.Stmt](stmts []T) string {
-	var b strings.Builder
+	b := new(strings.Builder)
 	for i, stmt := range stmts {
-		fmt.Fprint(&b, Node(stmt))
+		fmt.Fprint(b, Node(stmt))
 		if i < len(stmts)-1 {
-			fmt.Fprintln(&b)
+			fmt.Fprintln(b)
 			if stmts[i+1].Start().Line-stmts[i].End().Line > 1 {
-				fmt.Fprintln(&b)
+				fmt.Fprintln(b)
 			}
 		}
 	}
@@ -123,24 +123,24 @@ func formatVarDecl(decl *ast.VarDecl) string {
 }
 
 func formatFunDecl(decl *ast.FunDecl) string {
-	var b strings.Builder
+	b := new(strings.Builder)
 	if len(decl.Doc) > 0 {
-		fmt.Fprintf(&b, "%s\n", formatStmts(decl.Doc))
+		fmt.Fprintf(b, "%s\n", formatStmts(decl.Doc))
 	}
-	fmt.Fprintf(&b, "fun %s%s", Node(decl.Name), Node(decl.Function))
+	fmt.Fprintf(b, "fun %s%s", Node(decl.Name), Node(decl.Function))
 	return b.String()
 }
 
 func formatFun(fun *ast.Function) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "(")
+	b := new(strings.Builder)
+	fmt.Fprintf(b, "(")
 	for i, param := range fun.Params {
-		fmt.Fprint(&b, Node(param))
+		fmt.Fprint(b, Node(param))
 		if i < len(fun.Params)-1 {
-			fmt.Fprint(&b, ", ")
+			fmt.Fprint(b, ", ")
 		}
 	}
-	fmt.Fprintf(&b, ") %s", formatBlock(fun.Body.Stmts))
+	fmt.Fprintf(b, ") %s", formatBlock(fun.Body.Stmts))
 	return b.String()
 }
 
@@ -149,27 +149,27 @@ func formatParamDecl(decl *ast.ParamDecl) string {
 }
 
 func formatClassDecl(decl *ast.ClassDecl) string {
-	var b strings.Builder
+	b := new(strings.Builder)
 	if len(decl.Doc) > 0 {
-		fmt.Fprintf(&b, "%s\n", formatStmts(decl.Doc))
+		fmt.Fprintf(b, "%s\n", formatStmts(decl.Doc))
 	}
-	fmt.Fprintf(&b, "class %s ", Node(decl.Name))
+	fmt.Fprintf(b, "class %s ", Node(decl.Name))
 	if decl.Superclass.IsValid() {
-		fmt.Fprintf(&b, "< %s ", Node(decl.Superclass))
+		fmt.Fprintf(b, "< %s ", Node(decl.Superclass))
 	}
-	fmt.Fprintf(&b, "%s", Node(decl.Body))
+	fmt.Fprintf(b, "%s", Node(decl.Body))
 	return b.String()
 }
 
 func formatMethodDecl(decl *ast.MethodDecl) string {
-	var b strings.Builder
+	b := new(strings.Builder)
 	if len(decl.Doc) > 0 {
-		fmt.Fprintf(&b, "%s\n", formatStmts(decl.Doc))
+		fmt.Fprintf(b, "%s\n", formatStmts(decl.Doc))
 	}
 	for _, modifier := range decl.Modifiers {
-		fmt.Fprintf(&b, "%s ", modifier.Lexeme)
+		fmt.Fprintf(b, "%s ", modifier.Lexeme)
 	}
-	fmt.Fprintf(&b, "%s%s", Node(decl.Name), Node(decl.Function))
+	fmt.Fprintf(b, "%s%s", Node(decl.Name), Node(decl.Function))
 	return b.String()
 }
 
@@ -194,25 +194,25 @@ func formatBlock[T ast.Stmt](stmts []T) string {
 }
 
 func formatIfStmt(stmt *ast.IfStmt) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "if (%s)", Node(stmt.Condition))
+	b := new(strings.Builder)
+	fmt.Fprintf(b, "if (%s)", Node(stmt.Condition))
 	var thenIsBlock bool
 	if _, thenIsBlock = stmt.Then.(*ast.Block); thenIsBlock {
-		fmt.Fprint(&b, " ", Node(stmt.Then))
+		fmt.Fprint(b, " ", Node(stmt.Then))
 	} else {
-		fmt.Fprint(&b, "\n", indent(Node(stmt.Then)))
+		fmt.Fprint(b, "\n", indent(Node(stmt.Then)))
 	}
 	if stmt.Else != nil {
 		if thenIsBlock {
-			fmt.Fprint(&b, " ")
+			fmt.Fprint(b, " ")
 		} else {
-			fmt.Fprint(&b, "\n")
+			fmt.Fprint(b, "\n")
 		}
 		switch stmt.Else.(type) {
 		case *ast.IfStmt, *ast.Block:
-			fmt.Fprint(&b, "else ", Node(stmt.Else))
+			fmt.Fprint(b, "else ", Node(stmt.Else))
 		default:
-			fmt.Fprint(&b, "else\n", indent(Node(stmt.Else)))
+			fmt.Fprint(b, "else\n", indent(Node(stmt.Else)))
 		}
 	}
 	return b.String()
@@ -227,25 +227,25 @@ func formatWhileStmt(stmt *ast.WhileStmt) string {
 }
 
 func formatForStmt(stmt *ast.ForStmt) string {
-	var b strings.Builder
-	fmt.Fprint(&b, "for (")
+	b := new(strings.Builder)
+	fmt.Fprint(b, "for (")
 	if stmt.Initialise != nil {
-		fmt.Fprintf(&b, "%s", Node(stmt.Initialise))
+		fmt.Fprintf(b, "%s", Node(stmt.Initialise))
 	} else {
-		fmt.Fprint(&b, ";")
+		fmt.Fprint(b, ";")
 	}
 	if stmt.Condition != nil {
-		fmt.Fprintf(&b, " %s", Node(stmt.Condition))
+		fmt.Fprintf(b, " %s", Node(stmt.Condition))
 	}
-	fmt.Fprint(&b, ";")
+	fmt.Fprint(b, ";")
 	if stmt.Update != nil {
-		fmt.Fprintf(&b, " %s", Node(stmt.Update))
+		fmt.Fprintf(b, " %s", Node(stmt.Update))
 	}
-	fmt.Fprint(&b, ")")
+	fmt.Fprint(b, ")")
 	if _, ok := stmt.Body.(*ast.Block); ok {
-		fmt.Fprintf(&b, " %s", Node(stmt.Body))
+		fmt.Fprintf(b, " %s", Node(stmt.Body))
 	} else {
-		fmt.Fprintf(&b, "\n%s", indent(Node(stmt.Body)))
+		fmt.Fprintf(b, "\n%s", indent(Node(stmt.Body)))
 	}
 	return b.String()
 }
@@ -291,15 +291,15 @@ func formatSuperExpr(*ast.SuperExpr) string {
 }
 
 func formatCallExpr(expr *ast.CallExpr) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "%s(", Node(expr.Callee))
+	b := new(strings.Builder)
+	fmt.Fprintf(b, "%s(", Node(expr.Callee))
 	for i, arg := range expr.Args {
-		fmt.Fprint(&b, Node(arg))
+		fmt.Fprint(b, Node(arg))
 		if i < len(expr.Args)-1 {
-			fmt.Fprint(&b, ", ")
+			fmt.Fprint(b, ", ")
 		}
 	}
-	fmt.Fprint(&b, ")")
+	fmt.Fprint(b, ")")
 	return b.String()
 }
 

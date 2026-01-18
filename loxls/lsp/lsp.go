@@ -78,7 +78,7 @@ func formatMethodName(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) (str
 }
 
 func formatMethodModifiers(modifiers []token.Token) string {
-	b := &strings.Builder{}
+	b := new(strings.Builder)
 	for _, modifier := range modifiers {
 		fmt.Fprintf(b, "%s ", modifier.Lexeme)
 	}

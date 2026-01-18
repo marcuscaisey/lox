@@ -62,14 +62,14 @@ func (s *Stack[E]) Backward() iter.Seq2[int, E] {
 }
 
 func (s *Stack[E]) String() string {
-	var b strings.Builder
-	fmt.Fprint(&b, "stack([")
+	b := new(strings.Builder)
+	fmt.Fprint(b, "stack([")
 	for i, v := range *s {
-		fmt.Fprintf(&b, "%v", v)
+		fmt.Fprintf(b, "%v", v)
 		if i < len(*s)-1 {
-			fmt.Fprint(&b, ", ")
+			fmt.Fprint(b, ", ")
 		}
 	}
-	fmt.Fprint(&b, "])")
+	fmt.Fprint(b, "])")
 	return b.String()
 }

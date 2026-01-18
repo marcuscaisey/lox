@@ -842,8 +842,8 @@ func mustExecuteTemplate(text string, data map[string]any) string {
 		"trimStarPrefix":   trimStarPrefix,
 	}
 	tmpl := template.Must(template.New("template").Funcs(funcMap).Parse(text))
-	var b strings.Builder
-	if err := tmpl.Execute(&b, data); err != nil {
+	b := new(strings.Builder)
+	if err := tmpl.Execute(b, data); err != nil {
 		panic(err)
 	}
 	return b.String()

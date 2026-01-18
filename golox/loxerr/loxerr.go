@@ -77,7 +77,7 @@ func (e *Error) End() token.Position {
 //	print "bar;
 //	      ~~~~~
 func (e *Error) Error() string {
-	var b strings.Builder
+	b := new(strings.Builder)
 	buildString := func() string {
 		return strings.TrimSuffix(b.String(), "\n")
 	}
@@ -95,7 +95,7 @@ func (e *Error) Error() string {
 		typeColour = "BLUE"
 		typ = "hint"
 	}
-	ansi.Fprintf(&b, "${BOLD}%m: ${%s}%s${DEFAULT}: %s${DEFAULT}${RESET_BOLD}\n", e.start, typeColour, typ, e.Msg)
+	ansi.Fprintf(b, "${BOLD}%m: ${%s}%s${DEFAULT}: %s${DEFAULT}${RESET_BOLD}\n", e.start, typeColour, typ, e.Msg)
 
 	lines := make([]string, e.end.Line-e.start.Line+1)
 	for i := e.start.Line; i <= e.end.Line; i++ {
@@ -109,12 +109,12 @@ func (e *Error) Error() string {
 	}
 
 	printLine := func(line string) {
-		ansi.Fprint(&b, "${FAINT}", line, "${RESET_BOLD}\n")
+		ansi.Fprint(b, "${FAINT}", line, "${RESET_BOLD}\n")
 	}
 	printLineHighlight := func(line string, start, end int) {
 		leadingWhitespace := strings.Repeat(" ", runewidth.StringWidth(line[:start]))
 		tildes := strings.Repeat("~", runewidth.StringWidth(line[start:end]))
-		ansi.Fprint(&b, leadingWhitespace, "${FAINT}${RED}", tildes, "${DEFAULT}${RESET_BOLD}\n")
+		ansi.Fprint(b, leadingWhitespace, "${FAINT}${RED}", tildes, "${DEFAULT}${RESET_BOLD}\n")
 	}
 
 	printLine(lines[0])

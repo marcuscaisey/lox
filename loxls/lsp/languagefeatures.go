@@ -162,7 +162,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			if !decl.Name.IsValid() {
 				continue
 			}
-			b := &strings.Builder{}
+			b := new(strings.Builder)
 			fmt.Fprintf(b, "class %s ", decl.Name)
 			if decl.Superclass.IsValid() {
 				fmt.Fprintf(b, "< %s ", decl.Superclass)

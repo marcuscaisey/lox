@@ -57,8 +57,8 @@ func (cs *callStack) Clear() {
 }
 
 func (cs *callStack) StackTrace() string {
-	var b strings.Builder
-	ansi.Fprintln(&b, "${BOLD}Stack Trace (most recent call first):${RESET_BOLD}")
+	b := new(strings.Builder)
+	ansi.Fprintln(b, "${BOLD}Stack Trace (most recent call first):${RESET_BOLD}")
 	locations := make([]string, cs.Len())
 	locationWidth := 0
 	functions := make([]string, cs.Len())
@@ -79,9 +79,9 @@ func (cs *callStack) StackTrace() string {
 	for i := cs.Len() - 1; i >= 0; i-- {
 		location := runewidth.FillRight(locations[i], locationWidth)
 		function := runewidth.FillRight(functions[i], functionWidth)
-		fmt.Fprint(&b, "  ", location, " ", function, " ", lines[i])
+		fmt.Fprint(b, "  ", location, " ", function, " ", lines[i])
 		if i > 0 {
-			fmt.Fprintln(&b)
+			fmt.Fprintln(b)
 		}
 	}
 	return b.String()

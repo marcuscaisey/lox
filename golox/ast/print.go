@@ -120,12 +120,12 @@ func formatValue(value reflect.Value, depth int) (string, bool) {
 }
 
 func sexpr(name string, depth int, children ...string) string {
-	var b strings.Builder
-	fmt.Fprint(&b, "(", name)
+	b := new(strings.Builder)
+	fmt.Fprint(b, "(", name)
 	for _, child := range children {
-		fmt.Fprint(&b, "\n", strings.Repeat("  ", depth+1), child)
+		fmt.Fprint(b, "\n", strings.Repeat("  ", depth+1), child)
 	}
-	fmt.Fprint(&b, ")")
+	fmt.Fprint(b, ")")
 	return b.String()
 }
 
