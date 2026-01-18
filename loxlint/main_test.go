@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -18,18 +19,21 @@ var (
 )
 
 func TestLoxlint(t *testing.T) {
+	rootDir := loxtest.MustGoModuleRoot(t)
 	loxlintPath := loxtest.MustBuildBinary(t, "loxlint")
-	runner := newRunner(loxlintPath)
+	runner := newRunner(rootDir, loxlintPath)
 	loxtest.Run(t, runner)
 }
 
-func newRunner(loxlintPath string) *runner {
+func newRunner(rootDir string, loxlintPath string) *runner {
 	return &runner{
+		rootDir:     rootDir,
 		loxlintPath: loxlintPath,
 	}
 }
 
 type runner struct {
+	rootDir     string
 	loxlintPath string
 }
 
@@ -77,7 +81,12 @@ type loxlintResult struct {
 
 func (r *runner) mustRunLoxlint(t *testing.T, path string) *loxlintResult {
 	cmd := exec.Command(r.loxlintPath, path)
-	t.Logf("go run ./loxlint %s", path)
+
+	relPath, err := filepath.Rel(r.rootDir, path)
+	if err != nil {
+		t.Fatalf("making test file path relative: %s", err)
+	}
+	t.Logf("go run ./loxlint %s", relPath)
 
 	stdout, err := cmd.Output()
 

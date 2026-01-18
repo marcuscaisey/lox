@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -12,18 +13,21 @@ import (
 )
 
 func TestLoxfmt(t *testing.T) {
+	rootDir := loxtest.MustGoModuleRoot(t)
 	loxfmtPath := loxtest.MustBuildBinary(t, "loxfmt")
-	runner := newRunner(loxfmtPath)
+	runner := newRunner(rootDir, loxfmtPath)
 	loxtest.Run(t, runner)
 }
 
-func newRunner(loxfmtPath string) *runner {
+func newRunner(rootDir string, loxfmtPath string) *runner {
 	return &runner{
+		rootDir:    rootDir,
 		loxfmtPath: loxfmtPath,
 	}
 }
 
 type runner struct {
+	rootDir    string
 	loxfmtPath string
 }
 
@@ -47,7 +51,13 @@ func (r *runner) Update(t *testing.T, path string) {
 func (r *runner) mustRun(t *testing.T, path string, flags ...string) string {
 	args := append(slices.Clone(flags), path)
 	cmd := exec.Command(r.loxfmtPath, args...)
-	t.Logf("go run ./loxfmt %s", strings.Join(args, " "))
+
+	relPath, err := filepath.Rel(r.rootDir, path)
+	if err != nil {
+		t.Fatalf("making test file path relative: %s", err)
+	}
+	logArgs := append(slices.Clone(flags), relPath)
+	t.Logf("go run ./loxfmt %s", strings.Join(logArgs, " "))
 
 	stdout, err := cmd.Output()
 	exitErr := &exec.ExitError{}

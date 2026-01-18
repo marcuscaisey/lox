@@ -65,7 +65,7 @@ func Run(t *testing.T, runner Runner, opts ...Option) {
 	for _, opt := range opts {
 		opt(cfg)
 	}
-	rootDir := mustGoModuleRoot(t)
+	rootDir := MustGoModuleRoot(t)
 	testdataDir := filepath.Join(rootDir, "test", "testdata")
 	run(t, runner, testdataDir, cfg)
 }
@@ -163,7 +163,7 @@ func colouriseDiff(diff string) string {
 func MustBuildBinary(t *testing.T, name string) string {
 	t.Helper()
 
-	rootDir := mustGoModuleRoot(t)
+	rootDir := MustGoModuleRoot(t)
 	buildDir := filepath.Join(rootDir, "build")
 	if err := os.MkdirAll(buildDir, 0755); err != nil {
 		t.Fatalf("building %s: %s", name, err)
@@ -179,7 +179,9 @@ func MustBuildBinary(t *testing.T, name string) string {
 	return loxfmtPath
 }
 
-func mustGoModuleRoot(t *testing.T) string {
+// MustGoModuleRoot returns the path to the root of the containing Go module. That is, the directory which contains the
+// go.mod file.
+func MustGoModuleRoot(t *testing.T) string {
 	t.Helper()
 
 	wd, err := os.Getwd()

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -20,21 +21,24 @@ var (
 )
 
 func TestGolox(t *testing.T) {
+	rootDir := loxtest.MustGoModuleRoot(t)
 	goloxPath := *interpreter
 	if goloxPath == "" {
 		goloxPath = loxtest.MustBuildBinary(t, "golox")
 	}
-	runner := newRunner(goloxPath)
+	runner := newRunner(rootDir, goloxPath)
 	loxtest.Run(t, runner, loxtest.WithSkipSyntaxErrors(false))
 }
 
-func newRunner(goloxPath string) *runner {
+func newRunner(rootDir string, goloxPath string) *runner {
 	return &runner{
+		rootDir:   rootDir,
 		goloxPath: goloxPath,
 	}
 }
 
 type runner struct {
+	rootDir   string
 	goloxPath string
 }
 
@@ -64,7 +68,12 @@ type goloxResult struct {
 
 func (r *runner) mustRunGolox(t *testing.T, path string) *goloxResult {
 	cmd := exec.Command(r.goloxPath, path)
-	t.Logf("go run ./golox %s", path)
+
+	relPath, err := filepath.Rel(r.rootDir, path)
+	if err != nil {
+		t.Fatalf("making test file path relative: %s", err)
+	}
+	t.Logf("go run ./golox %s", relPath)
 
 	stdout, err := cmd.Output()
 
