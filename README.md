@@ -11,7 +11,8 @@ Interpreters](https://craftinginterpreters.com). This repository contains:
 - A linter: [loxlint](loxlint)
 - A VS Code extension: [vscode-lox](vscode-lox)
 
-Working Lox code examples can be found under [test/testdata](test/testdata).
+Working Lox code examples can be found under [examples](examples) and
+[test/testdata](test/testdata).
 
 [spec.md](spec.md) contains a full specification of the version of the Lox language which has been
 implemented.
