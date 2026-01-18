@@ -10,15 +10,6 @@ import (
 	"github.com/marcuscaisey/lox/golox/ansi"
 )
 
-func init() {
-	for i := range typesEnd {
-		t := Type(i)
-		if _, ok := typeStrings[t]; !ok {
-			panic(fmt.Sprintf("typeStrings is missing entry for Type %s", t.String()))
-		}
-	}
-}
-
 // Constants for special identifiers.
 const (
 	IdentBlank = "_"
@@ -27,7 +18,7 @@ const (
 	IdentSuper = "super"
 )
 
-//go:generate go tool stringer -type Type
+//go:generate go tool stringer -type Type -linecomment
 
 // Type is the type of a lexical token of Lox code.
 type Type int
@@ -39,27 +30,27 @@ const (
 
 	// Keywords
 	keywordsStart
-	Print
-	Var
-	True
-	False
-	Nil
-	If
-	Else
-	And
-	Or
-	While
-	For
-	Break
-	Continue
-	Fun
-	Return
-	Class
-	This
-	Super
-	Static
-	Get
-	Set
+	Print    // print
+	Var      // var
+	True     // true
+	False    // false
+	Nil      // nil
+	If       // if
+	Else     // else
+	And      // and
+	Or       // or
+	While    // while
+	For      // for
+	Break    // break
+	Continue // continue
+	Fun      // fun
+	Return   // return
+	Class    // class
+	This     // this
+	Super    // super
+	Static   // static
+	Get      // get
+	Set      // set
 	keywordsEnd
 
 	// Literals
@@ -69,91 +60,38 @@ const (
 	Comment
 
 	// Symbols
-	Semicolon
-	Comma
-	Dot
-	Equal
-	Plus
-	Minus
-	Asterisk
-	Slash
-	Percent
-	Less
-	LessEqual
-	Greater
-	GreaterEqual
-	EqualEqual
-	BangEqual
-	Bang
-	Question
-	Colon
-	LeftParen
-	RightParen
-	LeftBrace
-	RightBrace
+	symbolsStart
+	Semicolon    // ;
+	Comma        // ,
+	Dot          // .
+	Equal        // =
+	Plus         // +
+	Minus        // -
+	Asterisk     // *
+	Slash        // /
+	Percent      // %
+	Less         // <
+	LessEqual    // <=
+	Greater      // >
+	GreaterEqual // >=
+	EqualEqual   // ==
+	BangEqual    // !=
+	Bang         // !
+	Question     // ?
+	Colon        // :
+	LeftParen    // (
+	RightParen   // )
+	LeftBrace    // {
+	RightBrace   // }
+	symbolsEnd
 
 	typesEnd
 )
 
-var typeStrings = map[Type]string{
-	Illegal:       "illegal",
-	EOF:           "EOF",
-	keywordsStart: "keywordsStart",
-	Print:         "print",
-	Var:           "var",
-	True:          "true",
-	False:         "false",
-	Nil:           "nil",
-	If:            "if",
-	Else:          "else",
-	And:           "and",
-	Or:            "or",
-	While:         "while",
-	For:           "for",
-	Break:         "break",
-	Continue:      "continue",
-	Fun:           "fun",
-	Return:        "return",
-	Class:         "class",
-	This:          IdentThis,
-	Super:         IdentSuper,
-	Static:        "static",
-	Get:           "get",
-	Set:           "set",
-	typesEnd:      "typesEnd",
-	Ident:         "identifier",
-	String:        "string",
-	Number:        "number",
-	Comment:       "comment",
-	Semicolon:     ";",
-	Comma:         ",",
-	Dot:           ".",
-	Equal:         "=",
-	Plus:          "+",
-	Minus:         "-",
-	Asterisk:      "*",
-	Slash:         "/",
-	Percent:       "%",
-	Less:          "<",
-	LessEqual:     "<=",
-	Greater:       ">",
-	GreaterEqual:  ">=",
-	EqualEqual:    "==",
-	BangEqual:     "!=",
-	Bang:          "!",
-	Question:      "?",
-	Colon:         ":",
-	LeftParen:     "(",
-	RightParen:    ")",
-	LeftBrace:     "{",
-	RightBrace:    "}",
-	keywordsEnd:   "keywordsEnd",
-}
-
 var keywordTypesByIdent = func() map[string]Type {
 	keywordTypesByIdent := make(map[string]Type, keywordsEnd-keywordsStart)
 	for i := keywordsStart; i < keywordsEnd; i++ {
-		keywordTypesByIdent[typeStrings[i]] = i
+		keywordTypesByIdent[i.String()] = i
 	}
 	return keywordTypesByIdent
 }()
@@ -172,7 +110,7 @@ func IdentType(ident string) Type {
 func (t Type) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'm':
-		fmt.Fprintf(f, "'%s'", typeStrings[t])
+		fmt.Fprintf(f, "'%s'", t.String())
 	case 's':
 		fmt.Fprint(f, t.String())
 	default:
