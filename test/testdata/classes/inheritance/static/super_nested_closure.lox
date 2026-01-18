@@ -1,0 +1,23 @@
+class Superclass {
+  static toString() {
+    return "Superclass";
+  }
+}
+
+class Subclass < Superclass {
+  static getClosure() {
+    fun f() {
+      fun g() {
+        fun h() {
+          return super.toString();
+        }
+        return h;
+      }
+      return g;
+    }
+    return f;
+  }
+}
+
+var closure = Subclass.getClosure();
+print closure()()(); // prints: Superclass

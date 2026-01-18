@@ -3,6 +3,7 @@ package analyse
 
 import (
 	"errors"
+	"iter"
 	"slices"
 
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -52,4 +53,32 @@ func Program(program *ast.Program, builtins []ast.Decl, opts ...Option) error {
 	errors.As(semanticsErr, &semanticsLoxErrs)
 	loxErrs := slices.Concat(resolveLoxErrs, semanticsLoxErrs)
 	return loxErrs.Err()
+}
+
+// InheritanceChain returns an iterator over the chain of classes used to look up possibly inherited properties.
+// Iteration starts from the given class declaration, then successive iterations traverse its superclasses.
+// identBindings is used to superclass identifiers to their declarations. This will typically be the result of
+// [ResolveIdents].
+func InheritanceChain(decl *ast.ClassDecl, identBindings map[*ast.Ident][]ast.Binding) iter.Seq[*ast.ClassDecl] {
+	return func(yield func(*ast.ClassDecl) bool) {
+		curClassDecl := decl
+		for {
+			if !yield(curClassDecl) {
+				return
+			}
+			superclassBindings, ok := identBindings[curClassDecl.Superclass]
+			if !ok {
+				break
+			}
+			superclassDecl, ok := superclassBindings[0].(*ast.ClassDecl)
+			if !ok {
+				break
+			}
+			// An invalid class declaration might specify itself as its own superclass.
+			if superclassDecl == curClassDecl {
+				break
+			}
+			curClassDecl = superclassDecl
+		}
+	}
 }

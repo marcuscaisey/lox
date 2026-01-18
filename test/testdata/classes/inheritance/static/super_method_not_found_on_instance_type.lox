@@ -1,0 +1,19 @@
+class SuperSuperclass {
+  static method() {
+    print "SuperSuperclass method called";
+  }
+}
+
+class Superclass < SuperSuperclass {
+  static method() {
+    print "Superclass method called";
+  }
+
+  static otherMethod() {
+    super.method();
+  }
+}
+
+class Subclass < Superclass {}
+
+Subclass.otherMethod(); // prints: SuperSuperclass method called

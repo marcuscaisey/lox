@@ -40,8 +40,8 @@ func WithExtraFeatures(enabled bool) Option {
 
 // Parse parses the source code read from r.
 // filename is the name of the file being parsed.
-// If an error is returned then an incomplete AST will still be returned along with it. If there are syntax errors then
-// this error will be a [loxerr.Errors] containing all of the errors.
+// If an error is returned then an incomplete program will still be returned along with it. If there are syntax errors
+// then this error will be a [loxerr.Errors] containing all of the errors.
 func Parse(r io.Reader, filename string, opts ...Option) (*ast.Program, error) {
 	lexer, err := newLexer(r, filename)
 	if err != nil {
@@ -252,6 +252,12 @@ func (p *parser) parseClassDecl(classTok token.Token) (*ast.ClassDecl, bool) {
 
 	if decl.Name, ok = p.parseIdent("expected class name"); !ok {
 		return decl, false
+	}
+
+	if p.match(token.Less) {
+		if decl.Superclass, ok = p.parseIdent("expected superclass name"); !ok {
+			return decl, false
+		}
 	}
 
 	leftBrace, ok := p.expect2(token.LeftBrace)
@@ -717,6 +723,17 @@ func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 		return &ast.IdentExpr{Ident: &ast.Ident{Token: tok}}, true
 	case p.match(token.This):
 		return &ast.ThisExpr{This: tok}, true
+	case p.match(token.Super):
+		superExpr := &ast.SuperExpr{Super: tok}
+		getExpr := &ast.GetExpr{Object: superExpr}
+		var ok bool
+		if getExpr.Dot, ok = p.expect2(token.Dot); !ok {
+			return superExpr, false
+		}
+		if getExpr.Name, ok = p.parseIdent("expected property name"); !ok {
+			return getExpr, false
+		}
+		return getExpr, true
 	case p.extraFeatures && p.match(token.Fun):
 		return p.parseFunExpr(tok)
 	case p.match(token.LeftParen):

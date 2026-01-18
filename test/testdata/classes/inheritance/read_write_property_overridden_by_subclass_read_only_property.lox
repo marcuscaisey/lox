@@ -1,0 +1,18 @@
+class Superclass {
+  set property(value) {
+    this._field = value + " set by Superclass";
+  }
+
+  get property() {
+    return this._field + " got by Superclass";
+  }
+}
+
+class Subclass < Superclass {
+  get property() {
+    return "Subclass property value";
+  }
+}
+
+var subclass = Subclass();
+print subclass.property; // prints: Subclass property value

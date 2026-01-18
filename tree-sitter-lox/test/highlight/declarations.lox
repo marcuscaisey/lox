@@ -77,6 +77,24 @@ class Foo {
 //             ^ function.method
 }
 
+class Doughnut {
+  cook() {
+    print "Fry until golden brown.";
+  }
+}
+
+class BostonCream < Doughnut {
+//    ^ type
+//                ^ operator
+//                  ^ type
+  cook() {
+    super.cook();
+//  ^ variable.builtin
+    print "Pipe full of custard and coat with chocolate.";
+  }
+}
+
+
 // Method Signature
 (method) Point.init(x, y)
 //       ^ type

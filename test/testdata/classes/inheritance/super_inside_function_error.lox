@@ -1,0 +1,7 @@
+fun printThis() {
+  // error: 'super' can only be used inside a method definition
+  // lint error: 'super' can only be used inside a method definition
+  print super.method;
+}
+
+_ = printThis;

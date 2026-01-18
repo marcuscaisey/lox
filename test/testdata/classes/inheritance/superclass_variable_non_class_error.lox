@@ -1,0 +1,5 @@
+var Superclass = "not a class";
+
+// error: expected superclass to be a class, got 'string'
+class Subclass < Superclass {}
+_ = Subclass;

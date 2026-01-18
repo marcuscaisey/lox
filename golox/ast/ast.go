@@ -194,10 +194,11 @@ func (p *ParamDecl) BoundIdent() *Ident    { return p.Name }
 //	  }
 //	}
 type ClassDecl struct {
-	Doc   []*Comment `print:"named"`
-	Class token.Token
-	Name  *Ident `print:"named"`
-	Body  *Block `print:"named"`
+	Doc        []*Comment `print:"named"`
+	Class      token.Token
+	Name       *Ident `print:"named"`
+	Superclass *Ident `print:"named"`
+	Body       *Block `print:"named"`
 	decl
 }
 
@@ -495,6 +496,16 @@ func (t *ThisExpr) Start() token.Position { return t.This.Start() }
 func (t *ThisExpr) End() token.Position   { return t.This.End() }
 func (t *ThisExpr) IsValid() bool         { return t != nil && !t.This.IsZero() }
 
+// SuperExpr is a super expression, such as super.b.
+type SuperExpr struct {
+	Super token.Token
+	expr
+}
+
+func (s *SuperExpr) Start() token.Position { return s.Super.Start() }
+func (s *SuperExpr) End() token.Position   { return s.Super.End() }
+func (s *SuperExpr) IsValid() bool         { return s != nil && !s.Super.IsZero() }
+
 // CallExpr is a call expression, such as add(x, 1).
 type CallExpr struct {
 	Callee     Expr `print:"named"`
@@ -704,6 +715,8 @@ func isNil(node Node) bool {
 	case *IdentExpr:
 		return node == nil
 	case *ThisExpr:
+		return node == nil
+	case *SuperExpr:
 		return node == nil
 	case *CallExpr:
 		return node == nil

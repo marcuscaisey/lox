@@ -1,0 +1,10 @@
+class Superclass {
+  method() {
+    print "Superclass method called";
+  }
+}
+
+class Subclass < Superclass {}
+
+var subclass = Subclass();
+subclass.method(); // prints: Superclass method called

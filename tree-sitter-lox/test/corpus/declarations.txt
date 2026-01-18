@@ -406,6 +406,52 @@ class Foo {
         body: (block)))))
 
 ================================================================================
+Class Declaration - Superclass
+================================================================================
+
+class Doughnut {
+  cook() {
+    print "Fry until golden brown.";
+  }
+}
+
+class BostonCream < Doughnut {
+  cook() {
+    super.cook();
+    print "Pipe full of custard and coat with chocolate.";
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (class_declaration
+    name: (identifier)
+    body: (class_body
+      (method_declaration
+        name: (identifier)
+        parameters: (parameter_list)
+        body: (block
+          (print_statement
+            (string))))))
+  (class_declaration
+    name: (identifier)
+    superclass: (identifier)
+    body: (class_body
+      (method_declaration
+        name: (identifier)
+        parameters: (parameter_list)
+        body: (block
+          (expression_statement
+            (call_expression
+              callee: (get_expression
+                object: (super_expression)
+                name: (identifier))
+              arguments: (argument_list)))
+          (print_statement
+            (string)))))))
+
+================================================================================
 Method Signature - No Parameters
 ================================================================================
 

@@ -446,6 +446,30 @@ print p2.x; // prints: 10
 print p2.y; // prints: 12
 ```
 
+Classes declarations can specify a superclass which properties will be inherited from. `super` is a
+special identifer which can be used inside a method body to refer to the superclass of the class
+containing the method.
+
+```lox
+class Doughnut {
+  cook() {
+    print "Fry until golden brown.";
+  }
+}
+
+class BostonCream < Doughnut {
+  cook() {
+    super.cook();
+    print "Pipe full of custard and coat with chocolate.";
+  }
+}
+
+var bostonCream = BostonCream();
+// prints: Fry until golden brown.
+// prints: Pipe full of custard and coat with chocolate.
+bostonCream.cook();
+```
+
 Methods can be declared as static by prefixing the declaration with `static`. Static methods are
 accessed from the class itself rather than the instance. `this` inside a static method refers to the
 class.
@@ -610,13 +634,13 @@ form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) as descri
 ```ebnf
 program = { decl } , EOF ;
 
-decl       = var_decl | fun_decl | class_decl | stmt ;
-var_decl   = 'var' , IDENT , [ '=' , expr ] , ';' ;
-fun_decl   = 'fun' , function ;
-function   = IDENT , '(' , [ parameters ] , ')' , block ;
-parameters = IDENT , { ',' , IDENT } ;
-class_decl = 'class' , IDENT , '{' , { method } , '}' , ;
-method     = [ 'static' ] , [ 'get' | 'set' ] , function ;
+decl        = var_decl | fun_decl | class_decl | stmt ;
+var_decl    = 'var' , IDENT , [ '=' , expr ] , ';' ;
+fun_decl    = 'fun' , function ;
+function    = IDENT , '(' , [ parameters ] , ')' , block ;
+parameters  = IDENT , { ',' , IDENT } ;
+class_decl  = 'class' , IDENT , { '<', IDENT } , '{' , { method_decl } , '}' , ;
+method_decl = [ 'static' ] , [ 'get' | 'set' ] , function ;
 
 stmt          = expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | break_stmt
               | continue_stmt ;
@@ -644,8 +668,8 @@ multiplicative_expr = unary_expr , { ( '*' | '/' | '%' ) , unary_expr } ;
 unary_expr          = ( '!' | '-' ) , unary_expr | postfix_expr ;
 postfix_expr        = primary_expr , { '(' , [ arguments ] , ')' | '.' , IDENT } ;
 arguments           = assignment_expr , { ',' , assignment_expr } ;
-primary_expr        = NUMBER | STRING | 'true' | 'false' | 'nil' | IDENT | 'this' | group_expr
-                    | fun_expr
+primary_expr        = NUMBER | STRING | 'true' | 'false' | 'nil' | IDENT | 'this'
+                    | 'super' , '.', IDENT | group_expr | fun_expr
                     (* Error productions *)
                     | ( '==' | '!=' ) , relational_expr
                     | ( '<' | '<=' | '>' | '>=' ) , additive_expr

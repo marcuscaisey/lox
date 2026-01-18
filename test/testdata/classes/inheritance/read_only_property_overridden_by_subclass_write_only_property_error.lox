@@ -1,0 +1,11 @@
+class Superclass {
+  get property() {}
+}
+
+class Subclass < Superclass {
+  // error: write-only properties are not allowed
+  // lint error: write-only properties are not allowed
+  set property(_) {}
+}
+
+_ = Subclass;

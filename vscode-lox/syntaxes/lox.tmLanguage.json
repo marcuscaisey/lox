@@ -80,7 +80,7 @@
       ]
     },
     "class-declaration": {
-      "begin": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+(\\{)",
+      "begin": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?:(<)\\s*([A-Za-z_][A-Za-z0-9_]*))\\s*(\\{)",
       "beginCaptures": {
         "1": {
           "name": "storage.type.class.lox"
@@ -89,6 +89,12 @@
           "name": "entity.name.class.lox"
         },
         "3": {
+          "name": "keyword.operator.logical.lox"
+        },
+        "4": {
+          "name": "entity.other.inherited-class"
+        },
+        "5": {
           "name": "punctuation.section.block.begin.lox"
         }
       },
@@ -165,6 +171,9 @@
         },
         {
           "include": "#this-expression"
+        },
+        {
+          "include": "#super-expression"
         },
         {
           "include": "#builtin-functions"
@@ -321,6 +330,10 @@
     "this-expression": {
       "name": "variable.language.this.lox",
       "match": "\\bthis\\b"
+    },
+    "super-expression": {
+      "name": "variable.language.super.lox",
+      "match": "\\bsuper\\b"
     },
     "builtin-functions": {
       "name": "support.function.builtin.lox",

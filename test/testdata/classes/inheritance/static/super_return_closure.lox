@@ -1,0 +1,22 @@
+class AddFactorySuperclass {
+  static setN(n) {
+    this._n = n;
+  }
+
+  static getN() {
+    return this._n;
+  }
+}
+
+class AdderFactory < AddFactorySuperclass {
+  static newAdder() {
+    fun adder(x) {
+      return x + super.getN();
+    }
+    return adder;
+  }
+}
+
+AdderFactory.setN(3);
+var add3 = AdderFactory.newAdder();
+print add3(4); // prints: 7

@@ -1,6 +1,9 @@
 (identifier) @variable
 
-(this_expression) @variable.builtin
+[
+  (this_expression)
+  (super_expression)
+] @variable.builtin
 
 (parameter_list
   (identifier) @variable.parameter)

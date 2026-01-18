@@ -1,0 +1,22 @@
+class Superclass {
+  setFieldSuperclass() {
+    this.field = "field value set by Superclass method";
+  }
+
+  printFieldSuperclass() {
+    print this.field;
+  }
+}
+
+class Subclass < Superclass {
+  printFieldSubclass() {
+    print this.field;
+  }
+}
+
+var subclass = Subclass();
+
+subclass.setFieldSuperclass();
+subclass.printFieldSubclass(); // prints: field value set by Superclass method
+subclass.printFieldSuperclass(); // prints: field value set by Superclass method
+print subclass.field; // prints: field value set by Superclass method

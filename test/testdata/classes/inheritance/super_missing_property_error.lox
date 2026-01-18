@@ -1,0 +1,10 @@
+class Superclass {}
+
+class Subclass < Superclass {
+  method() {
+    super.method();
+  }
+}
+
+var subclass = Subclass();
+subclass.method(); // error: 'Subclass' object has no property method

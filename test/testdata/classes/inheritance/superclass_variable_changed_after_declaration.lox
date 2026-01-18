@@ -1,0 +1,20 @@
+class OriginalSuperclass {
+  method() {
+    print "OriginalSuperclass method called";
+  }
+}
+
+class NewSuperclass {
+  method() {
+    print "NewSuperclass method called";
+  }
+}
+
+var superclass = OriginalSuperclass;
+
+class Subclass < superclass {}
+
+superclass = NewSuperclass;
+
+var subclass = Subclass();
+subclass.method(); // prints: OriginalSuperclass method called

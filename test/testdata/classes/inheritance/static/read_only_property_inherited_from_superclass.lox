@@ -1,0 +1,9 @@
+class Superclass {
+  static get property() {
+    return "Superclass property value";
+  }
+}
+
+class Subclass < Superclass {}
+
+print Subclass.property; // prints: Superclass property value

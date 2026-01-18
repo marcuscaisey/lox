@@ -64,6 +64,8 @@ func Node(node ast.Node) string {
 		return formatIdentExpr(node)
 	case *ast.ThisExpr:
 		return formatThisExpr(node)
+	case *ast.SuperExpr:
+		return formatSuperExpr(node)
 	case *ast.CallExpr:
 		return formatCallExpr(node)
 	case *ast.GetExpr:
@@ -151,7 +153,11 @@ func formatClassDecl(decl *ast.ClassDecl) string {
 	if len(decl.Doc) > 0 {
 		fmt.Fprintf(&b, "%s\n", formatStmts(decl.Doc))
 	}
-	fmt.Fprintf(&b, "class %s %s", Node(decl.Name), Node(decl.Body))
+	fmt.Fprintf(&b, "class %s ", Node(decl.Name))
+	if decl.Superclass.IsValid() {
+		fmt.Fprintf(&b, "< %s ", Node(decl.Superclass))
+	}
+	fmt.Fprintf(&b, "%s", Node(decl.Body))
 	return b.String()
 }
 
@@ -278,6 +284,10 @@ func formatIdentExpr(expr *ast.IdentExpr) string {
 
 func formatThisExpr(*ast.ThisExpr) string {
 	return "this"
+}
+
+func formatSuperExpr(*ast.SuperExpr) string {
+	return "super"
 }
 
 func formatCallExpr(expr *ast.CallExpr) string {

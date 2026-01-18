@@ -19,10 +19,14 @@ const (
 //   - _ cannot be used as a value
 //   - _ cannot be used as a field name
 //   - this can only be used inside a method definition
+//   - super can only be used inside a method definition
+//   - super can only be used inside a subclass
+//   - super properties cannot be assigned to
 //   - property getter cannot have parameters
 //   - property setter must have exactly one parameter
 //   - functions cannot have more than 255 parameters
 //   - function calls cannot have more than 255 arguments
+//   - classes cannot inherit from themselves
 //
 // If there is an error, it will be of type [loxerr.Errors].
 func CheckSemantics(program *ast.Program, opts ...Option) error {
@@ -34,9 +38,10 @@ func CheckSemantics(program *ast.Program, opts ...Option) error {
 type semanticChecker struct {
 	extraFeatures bool
 
-	inLoop     bool
-	curFunType funType
-	inMethod   bool
+	inLoop       bool
+	curFunType   funType
+	inMethod     bool
+	curClassDecl *ast.ClassDecl
 
 	errs loxerr.Errors
 }
@@ -52,7 +57,8 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.walkFun(node.Function, funTypeFunction)
 		return false
 	case *ast.ClassDecl:
-		c.checkNoWriteOnlyProperties(node.Methods())
+		c.walkClassDecl(node)
+		return false
 	case *ast.MethodDecl:
 		c.checkNumPropertyParams(node)
 		c.walkFun(node.Function, methodFunType(node))
@@ -77,12 +83,16 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.checkNoPlaceholderAccess(node)
 	case *ast.ThisExpr:
 		c.checkThisInMethod(node)
+	case *ast.SuperExpr:
+		c.checkSuperInMethod(node)
+		c.checkSuperInSubclass(node)
 	case *ast.CallExpr:
 		c.checkNumArgs(node.Args)
 	case *ast.GetExpr:
 		c.checkNoPlaceholderFieldAccess(node.Name)
 	case *ast.SetExpr:
 		c.checkNoPlaceholderFieldAccess(node.Name)
+		c.checkNoSuperPropertyAssignment(node)
 	default:
 	}
 	return true
@@ -111,6 +121,17 @@ func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
 	}
 
 	ast.WalkChildren(fun, c.walk)
+}
+
+func (c *semanticChecker) walkClassDecl(decl *ast.ClassDecl) {
+	prevCurClassDecl := c.curClassDecl
+	defer func() { c.curClassDecl = prevCurClassDecl }()
+	c.curClassDecl = decl
+
+	c.checkNoWriteOnlyProperties(decl.Methods())
+	c.checkNoSelfReferentialSuperclass(decl)
+
+	ast.WalkChildren(decl, c.walk)
 }
 
 func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {
@@ -160,6 +181,12 @@ func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) 
 		if !gettersByName[name] {
 			c.errs.Addf(ident, loxerr.Fatal, "write-only properties are not allowed")
 		}
+	}
+}
+
+func (c *semanticChecker) checkNoSelfReferentialSuperclass(decl *ast.ClassDecl) {
+	if decl.Superclass.IsValid() && decl.Superclass.String() == decl.Name.String() {
+		c.errs.Addf(decl.Superclass, loxerr.Fatal, "class cannot inherit from itself")
 	}
 }
 
@@ -214,9 +241,27 @@ func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
 	}
 }
 
+func (c *semanticChecker) checkNoSuperPropertyAssignment(expr *ast.SetExpr) {
+	if _, ok := expr.Object.(*ast.SuperExpr); ok {
+		c.errs.Addf(expr.Name, loxerr.Fatal, "property assignment is not valid for %m object", token.Super)
+	}
+}
+
 func (c *semanticChecker) checkThisInMethod(expr *ast.ThisExpr) {
 	if !c.inMethod {
 		c.errs.Addf(expr, loxerr.Fatal, "%m can only be used inside a method definition", token.This)
+	}
+}
+
+func (c *semanticChecker) checkSuperInMethod(expr *ast.SuperExpr) {
+	if !c.inMethod {
+		c.errs.Addf(expr.Super, loxerr.Fatal, "%m can only be used inside a method definition", token.Super)
+	}
+}
+
+func (c *semanticChecker) checkSuperInSubclass(expr *ast.SuperExpr) {
+	if c.curClassDecl != nil && !c.curClassDecl.Superclass.IsValid() {
+		c.errs.Addf(expr.Super, loxerr.Fatal, "%m can only be used inside a subclass", token.Super)
 	}
 }
 

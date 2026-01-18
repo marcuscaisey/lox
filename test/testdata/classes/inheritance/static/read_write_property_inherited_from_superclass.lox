@@ -1,0 +1,14 @@
+class Superclass {
+  static set property(value) {
+    this._field = value + " set by Superclass";
+  }
+
+  static get property() {
+    return this._field + " got by Superclass";
+  }
+}
+
+class Subclass < Superclass {}
+
+Subclass.property = "property value";
+print Subclass.property; // prints: property value set by Superclass got by Superclass

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/format"
 	"github.com/marcuscaisey/lox/golox/token"
@@ -148,6 +149,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 				continue
 			}
 			headers = append(headers, header)
+
 		case *ast.FunDecl:
 			header, ok := funDetail(decl)
 			if !ok {
@@ -155,24 +157,69 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			}
 			headers = append(headers, header)
 			body = commentsText(decl.Doc)
+
 		case *ast.ClassDecl:
 			if !decl.Name.IsValid() {
 				continue
 			}
 			b := &strings.Builder{}
-			fmt.Fprintf(b, "class %s", decl.Name)
-			if methods := decl.Methods(); len(methods) > 0 {
-				fmt.Fprint(b, " {\n")
-				for _, methodDecl := range methods {
+			fmt.Fprintf(b, "class %s ", decl.Name)
+			if decl.Superclass.IsValid() {
+				fmt.Fprintf(b, "< %s ", decl.Superclass)
+			}
+			fmt.Fprint(b, "{")
+			openingNewLineWritten := false
+			seenStaticMethods := map[string]bool{}
+			seenInstanceMethods := map[string]bool{}
+			seenInstanceProps := map[string]bool{}
+			seenStaticProps := map[string]bool{}
+			for curClassDecl := range analyse.InheritanceChain(decl, doc.IdentBindings) {
+				inheritedCommentWritten := false
+				seenInstancePropsInClass := map[string]bool{}
+				seenStaticPropsInClass := map[string]bool{}
+				for _, methodDecl := range curClassDecl.Methods() {
 					if !methodDecl.Name.IsValid() {
 						continue
 					}
+					switch name := methodDecl.Name.String(); {
+					case methodDecl.HasModifier(token.Static) && methodDecl.HasModifier(token.Get, token.Set):
+						if seenStaticProps[name] && !seenStaticPropsInClass[name] {
+							continue
+						}
+						seenStaticProps[name] = true
+						seenStaticPropsInClass[name] = true
+					case methodDecl.HasModifier(token.Get, token.Set):
+						if seenInstanceProps[name] && !seenInstancePropsInClass[name] {
+							continue
+						}
+						seenInstanceProps[name] = true
+						seenInstancePropsInClass[name] = true
+					case methodDecl.HasModifier(token.Static):
+						if seenStaticMethods[name] {
+							continue
+						}
+						seenStaticMethods[name] = true
+					default:
+						if seenInstanceMethods[name] {
+							continue
+						}
+						seenInstanceMethods[name] = true
+					}
+					if !openingNewLineWritten {
+						fmt.Fprint(b, "\n")
+						openingNewLineWritten = true
+					}
+					if !inheritedCommentWritten && curClassDecl != decl {
+						fmt.Fprintf(b, "  // Inherited from %s\n", curClassDecl.Name)
+						inheritedCommentWritten = true
+					}
 					fmt.Fprintf(b, "  %s%s(%s)\n", formatMethodModifiers(methodDecl.Modifiers), methodDecl.Name, formatParams(methodDecl.GetParams()))
 				}
-				fmt.Fprint(b, "}")
 			}
+			fmt.Fprint(b, "}")
 			headers = append(headers, b.String())
 			body = commentsText(decl.Doc)
+
 		case *ast.MethodDecl:
 			classDecl, ok := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
 			if !ok {

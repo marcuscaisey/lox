@@ -1,0 +1,16 @@
+class Superclass {
+  static printFieldSuperclass() {
+    print this.field;
+  }
+}
+
+class Subclass < Superclass {
+  static printFieldSubclass() {
+    print this.field;
+  }
+}
+
+Subclass.field = "field value";
+print Subclass.field; // prints: field value
+Subclass.printFieldSubclass(); // prints: field value
+Subclass.printFieldSuperclass(); // prints: field value

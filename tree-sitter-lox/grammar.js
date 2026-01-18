@@ -48,7 +48,12 @@ module.exports = grammar({
     function_declaration: ($) => seq("fun", $._function),
 
     class_declaration: ($) =>
-      seq("class", field("name", $.identifier), field("body", $.class_body)),
+      seq(
+        "class",
+        field("name", $.identifier),
+        optional(seq("<", field("superclass", $.identifier))),
+        field("body", $.class_body),
+      ),
 
     class_body: ($) => seq("{", repeat($.method_declaration), "}"),
 
@@ -152,6 +157,7 @@ module.exports = grammar({
         $.group_expression,
         $.identifier,
         $.this_expression,
+        $.super_expression,
         $.call_expression,
         $.get_expression,
         $.unary_expression,
@@ -178,6 +184,8 @@ module.exports = grammar({
     identifier: (_) => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
     this_expression: (_) => "this",
+
+    super_expression: (_) => "super",
 
     call_expression: ($) =>
       prec(

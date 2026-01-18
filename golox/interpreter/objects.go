@@ -266,12 +266,12 @@ func methodFunType(decl *ast.MethodDecl) funType {
 type nativeFunBody func(args []loxObject) loxObject
 
 type loxFunction struct {
-	name       string
-	params     []string
-	body       []ast.Stmt
-	nativeBody nativeFunBody
-	typ        funType
-	closure    environment
+	name         string
+	params       []string
+	body         []ast.Stmt
+	nativeBody   nativeFunBody
+	typ          funType
+	enclosingEnv environment
 }
 
 func newLoxFunction(name string, fun *ast.Function, typ funType, closure environment) *loxFunction {
@@ -280,11 +280,11 @@ func newLoxFunction(name string, fun *ast.Function, typ funType, closure environ
 		paramNames[i] = param.Name.String()
 	}
 	f := &loxFunction{
-		name:    name,
-		params:  paramNames,
-		body:    fun.Body.Stmts,
-		typ:     typ,
-		closure: closure,
+		name:         name,
+		params:       paramNames,
+		body:         fun.Body.Stmts,
+		typ:          typ,
+		enclosingEnv: closure,
 	}
 	return f
 }
@@ -331,13 +331,13 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 		return f.nativeBody(args)
 	}
 
-	childEnv := f.closure.Child()
+	childEnv := f.enclosingEnv.Child()
 	for i, param := range f.params {
 		childEnv = childEnv.Define(param, args[i])
 	}
 	result := interpreter.executeBlock(childEnv, f.body)
 	if f.typ.IsConstructor() {
-		return f.closure.Get(&ast.Ident{Token: token.Token{Lexeme: token.CurrentInstanceIdent}})
+		return f.enclosingEnv.Get(&ast.Ident{Token: token.Token{Lexeme: token.CurrentInstanceIdent}})
 	}
 	if r, ok := result.(stmtResultReturn); ok {
 		return r.Value
@@ -347,8 +347,8 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 
 func (f *loxFunction) Bind(instance *loxInstance) *loxFunction {
 	fCopy := *f
-	fCopyClosure := f.closure.Child()
-	fCopy.closure = fCopyClosure.Define(token.CurrentInstanceIdent, instance)
+	fCopyClosure := f.enclosingEnv.Child()
+	fCopy.enclosingEnv = fCopyClosure.Define(token.CurrentInstanceIdent, instance)
 	return &fCopy
 }
 
@@ -373,13 +373,14 @@ func (p *property) Set(interpreter *Interpreter, instance *loxInstance, name *as
 }
 
 type loxClass struct {
-	*loxInstance     // instance of the metaclass or nil for the metaclass itself
-	Name             string
-	methodsByName    map[string]*loxFunction
-	propertiesByName map[string]*property
+	Name              string
+	superclass        *loxClass
+	metaclassInstance *loxInstance
+	methodsByName     map[string]*loxFunction
+	propertiesByName  map[string]*property
 }
 
-func newLoxClass(name string, methods []*ast.MethodDecl, env environment) *loxClass {
+func newLoxClass(name string, superclass *loxClass, methods []*ast.MethodDecl, env environment) *loxClass {
 	instanceMethods := make([]*ast.MethodDecl, 0, len(methods))
 	staticMethods := make([]*ast.MethodDecl, 0, len(methods))
 	for _, decl := range methods {
@@ -389,15 +390,23 @@ func newLoxClass(name string, methods []*ast.MethodDecl, env environment) *loxCl
 			instanceMethods = append(instanceMethods, decl)
 		}
 	}
-	metaclass := newLoxClassWithMetaclass(name, staticMethods, env, nil)
+	var metaclassSuperclass *loxClass
+	if superclass != nil && superclass.metaclassInstance != nil {
+		metaclassSuperclass = superclass.metaclassInstance.Class
+	}
+	metaclass := newLoxClassWithMetaclass(name, metaclassSuperclass, nil, staticMethods, env)
 	metaclass.Name = fmt.Sprintf("%s class", name)
-	return newLoxClassWithMetaclass(name, instanceMethods, env, metaclass)
+	return newLoxClassWithMetaclass(name, superclass, metaclass, instanceMethods, env)
 }
 
-func newLoxClassWithMetaclass(name string, methods []*ast.MethodDecl, env environment, metaclass *loxClass) *loxClass {
+func newLoxClassWithMetaclass(name string, superclass *loxClass, metaclass *loxClass, methods []*ast.MethodDecl, env environment) *loxClass {
 	methodsByName := make(map[string]*loxFunction, len(methods))
 	gettersByName := make(map[string]*loxFunction, len(methods))
 	settersByName := make(map[string]*loxFunction, len(methods))
+	if superclass != nil {
+		env = env.Child()
+		env = env.Define(token.SuperIdent, superclass)
+	}
 	for _, decl := range methods {
 		var funcMap map[string]*loxFunction
 		methodName := name + "." + decl.Name.String()
@@ -420,11 +429,12 @@ func newLoxClassWithMetaclass(name string, methods []*ast.MethodDecl, env enviro
 	}
 	class := &loxClass{
 		Name:             name,
+		superclass:       superclass,
 		methodsByName:    methodsByName,
 		propertiesByName: propertiesByName,
 	}
 	if metaclass != nil {
-		class.loxInstance = newLoxInstance(metaclass)
+		class.metaclassInstance = newLoxInstance(metaclass)
 	}
 	return class
 }
@@ -438,6 +448,10 @@ var (
 
 func (c *loxClass) String() string {
 	return fmt.Sprintf("[class %s]", c.Name)
+}
+
+func (c *loxClass) Type() loxType {
+	return c.metaclassInstance.Type()
 }
 
 func (c *loxClass) CallableName() string {
@@ -462,24 +476,80 @@ func (c *loxClass) Call(interpreter *Interpreter, args []loxObject) loxObject {
 	return instance
 }
 
+func (c *loxClass) Set(interpreter *Interpreter, name *ast.Ident, value loxObject) {
+	c.metaclassInstance.Set(interpreter, name, value)
+}
+
+func (c *loxClass) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
+	return c.metaclassInstance.Get(interpreter, name)
+}
+
 func (c *loxClass) GetMethod(name string) (*loxFunction, bool) {
-	method, ok := c.methodsByName[name]
-	return method, ok
+	if method, ok := c.methodsByName[name]; ok {
+		return method, true
+	}
+	if c.superclass != nil {
+		return c.superclass.GetMethod(name)
+	}
+	return nil, false
 }
 
 func (c *loxClass) GetProperty(name string) (*property, bool) {
-	property, ok := c.propertiesByName[name]
-	return property, ok
+	if property, ok := c.propertiesByName[name]; ok {
+		return property, true
+	}
+	if c.superclass != nil {
+		return c.superclass.GetProperty(name)
+	}
+	return nil, false
+}
+
+type loxSuperObject struct {
+	superclass   *loxClass
+	enclosingEnv environment
+}
+
+func newLoxSuperObject(superclass *loxClass, enclosingEnv environment) *loxSuperObject {
+	return &loxSuperObject{
+		superclass:   superclass,
+		enclosingEnv: enclosingEnv,
+	}
+}
+
+var (
+	_ loxObject = &loxSuperObject{}
+	_ loxGetter = &loxSuperObject{}
+)
+
+func (s *loxSuperObject) Get(_ *Interpreter, name *ast.Ident) loxObject {
+	instanceObject := s.enclosingEnv.GetByName(token.CurrentInstanceIdent)
+	instance, ok := instanceObject.(*loxInstance)
+	if !ok {
+		panic(fmt.Sprintf("unexpected instance type: %T", instanceObject))
+	}
+	method, ok := s.superclass.GetMethod(name.String())
+	if !ok {
+		panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %s", instance.Type(), name))
+	}
+	return method.Bind(instance)
+}
+
+func (s *loxSuperObject) String() string {
+	return s.superclass.String()
+}
+
+func (s *loxSuperObject) Type() loxType {
+	return s.superclass.Type()
 }
 
 type loxInstance struct {
-	class             *loxClass
+	Class             *loxClass
 	fieldValuesByName map[string]loxObject
 }
 
 func newLoxInstance(class *loxClass) *loxInstance {
 	return &loxInstance{
-		class:             class,
+		Class:             class,
 		fieldValuesByName: make(map[string]loxObject),
 	}
 }
@@ -491,15 +561,15 @@ var (
 )
 
 func (i *loxInstance) String() string {
-	return fmt.Sprintf("[%s object]", i.class.Name)
+	return fmt.Sprintf("[%s object]", i.Class.Name)
 }
 
 func (i *loxInstance) Type() loxType {
-	return loxType(i.class.Name)
+	return loxType(i.Class.Name)
 }
 
 func (i *loxInstance) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
-	if property, ok := i.class.GetProperty(name.String()); ok {
+	if property, ok := i.Class.GetProperty(name.String()); ok {
 		return property.Get(interpreter, i, name)
 	}
 
@@ -507,7 +577,7 @@ func (i *loxInstance) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
 		return value
 	}
 
-	if method, ok := i.class.GetMethod(name.String()); ok {
+	if method, ok := i.Class.GetMethod(name.String()); ok {
 		return method.Bind(i)
 	}
 
@@ -515,7 +585,7 @@ func (i *loxInstance) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
 }
 
 func (i *loxInstance) Set(interpreter *Interpreter, name *ast.Ident, value loxObject) {
-	if property, ok := i.class.GetProperty(name.String()); ok {
+	if property, ok := i.Class.GetProperty(name.String()); ok {
 		property.Set(interpreter, i, name, value)
 		return
 	}

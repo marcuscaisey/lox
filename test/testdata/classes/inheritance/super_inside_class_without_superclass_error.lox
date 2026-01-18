@@ -1,0 +1,9 @@
+class Class {
+  method() {
+    // error: 'super' can only be used inside a subclass
+    // lint error: 'super' can only be used inside a subclass
+    super.method();
+  }
+}
+
+_ = Class;

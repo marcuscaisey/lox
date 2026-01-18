@@ -42,6 +42,7 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 	case *ClassDecl:
 		walkSlice(node.Doc, f)
 		Walk(node.Name, f)
+		Walk(node.Superclass, f)
 		Walk(node.Body, f)
 	case *MethodDecl:
 		walkSlice(node.Doc, f)
@@ -77,6 +78,7 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 	case *IdentExpr:
 		Walk(node.Ident, f)
 	case *ThisExpr:
+	case *SuperExpr:
 	case *CallExpr:
 		Walk(node.Callee, f)
 		walkSlice(node.Args, f)

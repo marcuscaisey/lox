@@ -20,6 +20,7 @@ func init() {
 	}
 }
 
+// Constants for special identifiers.
 const (
 	// PlaceholderIdent is the special identifier which can be used as a placeholder in declarations and assignments.
 	PlaceholderIdent = "_"
@@ -27,6 +28,8 @@ const (
 	CurrentInstanceIdent = thisIdent
 	// ConstructorIdent is the identifier used for the constructor method for classes.
 	ConstructorIdent = "init"
+	// SuperIdent is the identifier used in super expressions.
+	SuperIdent = "super"
 
 	thisIdent = "this"
 )

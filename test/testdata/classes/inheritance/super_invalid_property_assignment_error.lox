@@ -1,0 +1,11 @@
+class Superclass {}
+
+class Subclass < Superclass {
+  method() {
+    // error: property assignment is not valid for 'super' object
+    // lint error: property assignment is not valid for 'super' object
+    super.x = 1; //
+  }
+}
+
+_ = Subclass;

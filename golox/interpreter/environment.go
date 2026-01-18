@@ -24,6 +24,9 @@ type environment interface {
 	Assign(ident *ast.Ident, value loxObject)
 	// Get returns the value of the identifier.
 	Get(ident *ast.Ident) loxObject
+	// GetByName returns the value of the identifier with the given name.
+	// This should be used for identifiers without a corresponding [*ast.Ident].
+	GetByName(name string) loxObject
 }
 
 // globalEnvironment is the environment for the global scope.
@@ -77,6 +80,14 @@ func (e *globalEnvironment) Get(ident *ast.Ident) loxObject {
 	}
 }
 
+func (e *globalEnvironment) GetByName(name string) loxObject {
+	if value, ok := e.values[name]; ok {
+		return value
+	} else {
+		panic(fmt.Sprintf("%s has not been declared", name))
+	}
+}
+
 // localEnvironment is the environment for a local scope.
 type localEnvironment struct {
 	parent environment
@@ -127,5 +138,15 @@ func (e *localEnvironment) Get(ident *ast.Ident) loxObject {
 		return e.parent.Get(ident)
 	} else {
 		panic(loxerr.Newf(ident, loxerr.Fatal, "%s has not been declared", ident.String()))
+	}
+}
+
+func (e *localEnvironment) GetByName(name string) loxObject {
+	if name == e.name {
+		return e.value
+	} else if e.parent != nil {
+		return e.parent.GetByName(name)
+	} else {
+		panic(fmt.Sprintf("%s has not been declared", name))
 	}
 }

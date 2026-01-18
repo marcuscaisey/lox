@@ -1,0 +1,11 @@
+class Superclass {
+  static set property(_) {}
+
+  static get property() {}
+}
+
+class Subclass < Superclass {
+  static get property() {}
+}
+
+Subclass.property = 2; // error: property 'property' of 'Subclass class' object is read-only

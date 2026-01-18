@@ -525,27 +525,34 @@ const (
 
 // propertyCompletor provides completions of properties for get and set expressions.
 type propertyCompletor struct {
-	program                         *ast.Program
-	identBindings                   map[*ast.Ident][]ast.Binding
-	compls                          []*completion
-	complsByPropertyTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
+	program                     *ast.Program
+	identBindings               map[*ast.Ident][]ast.Binding
+	compls                      []*completion
+	complsByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
 }
 
 func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding) *propertyCompletor {
-	complsByPropertyTypeByClassDecl := genClassPropertyCompletions(program)
-	var compls []*completion
-	for _, complsByPropertyType := range complsByPropertyTypeByClassDecl {
-		for _, classCompls := range complsByPropertyType {
-			sortPropertyCompletions(classCompls)
-			compls = append(compls, classCompls...)
+	complsByPropTypeByClassDecl := genPropertyCompletions(program, identBindings)
+	seenCompls := map[*completion]bool{}
+	var allCompls []*completion
+	for _, complsByPropType := range complsByPropTypeByClassDecl {
+		for _, compls := range complsByPropType {
+			sortPropertyCompletions(compls)
+			for _, compl := range compls {
+				if seenCompls[compl] {
+					continue
+				}
+				seenCompls[compl] = true
+				allCompls = append(allCompls, compl)
+			}
 		}
 	}
-	sortPropertyCompletions(compls)
+	sortPropertyCompletions(allCompls)
 	return &propertyCompletor{
-		program:                         program,
-		identBindings:                   identBindings,
-		compls:                          compls,
-		complsByPropertyTypeByClassDecl: complsByPropertyTypeByClassDecl,
+		program:                     program,
+		identBindings:               identBindings,
+		compls:                      allCompls,
+		complsByPropTypeByClassDecl: complsByPropTypeByClassDecl,
 	}
 }
 
@@ -569,17 +576,47 @@ func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, boo
 		if !ok {
 			return nil, true
 		}
-		propertyType := propertyTypeInstance
+		propType := propertyTypeInstance
 		if methodDecl.HasModifier(token.Static) {
-			propertyType = propertyTypeStatic
+			propType = propertyTypeStatic
 		}
-		return c.complsByPropertyTypeByClassDecl[classDecl][propertyType], true
+		return c.complsByPropTypeByClassDecl[classDecl][propType], true
+	}
+
+	if _, ok := object.(*ast.SuperExpr); ok {
+		classDecl, ok := innermostNodeAt[*ast.ClassDecl](c.program, pos)
+		if !ok {
+			return nil, true
+		}
+		methodDecl, ok := innermostNodeAt[*ast.MethodDecl](classDecl, pos)
+		if !ok {
+			return nil, true
+		}
+		superclassBindings, ok := c.identBindings[classDecl.Superclass]
+		if !ok {
+			return nil, true
+		}
+		superclassDecl, ok := superclassBindings[0].(*ast.ClassDecl)
+		if !ok {
+			return nil, true
+		}
+		propType := propertyTypeInstance
+		if methodDecl.HasModifier(token.Static) {
+			propType = propertyTypeStatic
+		}
+		compls := make([]*completion, 0, len(c.complsByPropTypeByClassDecl[superclassDecl][propType]))
+		for _, compl := range c.complsByPropTypeByClassDecl[superclassDecl][propType] {
+			if compl.Kind == protocol.CompletionItemKindMethod {
+				compls = append(compls, compl)
+			}
+		}
+		return compls, true
 	}
 
 	if identExpr, ok := object.(*ast.IdentExpr); ok {
 		if bindings, ok := c.identBindings[identExpr.Ident]; ok {
 			if classDecl, ok := bindings[0].(*ast.ClassDecl); ok {
-				return c.complsByPropertyTypeByClassDecl[classDecl][propertyTypeStatic], true
+				return c.complsByPropTypeByClassDecl[classDecl][propertyTypeStatic], true
 			}
 		}
 	}
@@ -587,25 +624,27 @@ func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, boo
 	return c.compls, true
 }
 
-func genClassPropertyCompletions(program *ast.Program) map[*ast.ClassDecl]map[propertyType][]*completion {
+func genPropertyCompletions(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding) map[*ast.ClassDecl]map[propertyType][]*completion {
 	g := &propertyCompletionGenerator{
-		complLabelsByClassDecl:          map[*ast.ClassDecl]map[string]bool{},
-		complsByPropertyTypeByClassDecl: map[*ast.ClassDecl]map[propertyType][]*completion{},
+		complLabelsByPropTypeByClassDecl: map[*ast.ClassDecl]map[propertyType]map[string]bool{},
+		identBindings:                    identBindings,
+		complsByPropTypeByClassDecl:      map[*ast.ClassDecl]map[propertyType][]*completion{},
 	}
 	return g.Generate(program)
 }
 
 type propertyCompletionGenerator struct {
-	curClassDecl           *ast.ClassDecl
-	curMethodDecl          *ast.MethodDecl
-	complLabelsByClassDecl map[*ast.ClassDecl]map[string]bool
+	curClassDecl                     *ast.ClassDecl
+	curMethodDecl                    *ast.MethodDecl
+	complLabelsByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType]map[string]bool
+	identBindings                    map[*ast.Ident][]ast.Binding
 
-	complsByPropertyTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
+	complsByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
 }
 
 func (g *propertyCompletionGenerator) Generate(program *ast.Program) map[*ast.ClassDecl]map[propertyType][]*completion {
 	ast.Walk(program, g.walk)
-	return g.complsByPropertyTypeByClassDecl
+	return g.complsByPropTypeByClassDecl
 }
 
 func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
@@ -629,8 +668,11 @@ func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 	defer func() { g.curClassDecl = prevCurClassDecl }()
 	g.curClassDecl = decl
 
-	g.complLabelsByClassDecl[decl] = map[string]bool{}
-	g.complsByPropertyTypeByClassDecl[decl] = map[propertyType][]*completion{
+	g.complLabelsByPropTypeByClassDecl[decl] = map[propertyType]map[string]bool{
+		propertyTypeInstance: {},
+		propertyTypeStatic:   {},
+	}
+	g.complsByPropTypeByClassDecl[decl] = map[propertyType][]*completion{
 		propertyTypeInstance: nil,
 		propertyTypeStatic:   nil,
 	}
@@ -642,6 +684,23 @@ func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 	}
 
 	ast.WalkChildren(decl, g.walk)
+
+	superclassBindings, ok := g.identBindings[decl.Superclass]
+	if !ok {
+		return
+	}
+	superclassDecl, ok := superclassBindings[0].(*ast.ClassDecl)
+	if !ok {
+		return
+	}
+	for propType, compls := range g.complsByPropTypeByClassDecl[superclassDecl] {
+		for _, compl := range compls {
+			if !g.complLabelsByPropTypeByClassDecl[decl][propType][compl.Label] {
+				g.complLabelsByPropTypeByClassDecl[decl][propType][compl.Label] = true
+				g.complsByPropTypeByClassDecl[decl][propType] = append(g.complsByPropTypeByClassDecl[decl][propType], compl)
+			}
+		}
+	}
 }
 
 func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
@@ -657,15 +716,19 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 	}
 
 	label := decl.Name.String()
-	if g.complLabelsByClassDecl[g.curClassDecl][label] {
+	propType := propertyTypeInstance
+	if decl.HasModifier(token.Static) {
+		propType = propertyTypeStatic
+	}
+	if g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] {
 		return
 	}
+	g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] = true
 	var kind protocol.CompletionItemKind
 	var detail string
 	var documentation string
 	if decl.HasModifier(token.Get, token.Set) {
 		kind = protocol.CompletionItemKindProperty
-		g.complLabelsByClassDecl[g.curClassDecl][label] = true
 	} else {
 		kind = protocol.CompletionItemKindMethod
 		var ok bool
@@ -675,11 +738,7 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 		}
 		documentation = commentsText(decl.Doc)
 	}
-	propertyType := propertyTypeInstance
-	if decl.HasModifier(token.Static) {
-		propertyType = propertyTypeStatic
-	}
-	g.complsByPropertyTypeByClassDecl[g.curClassDecl][propertyType] = append(g.complsByPropertyTypeByClassDecl[g.curClassDecl][propertyType], &completion{
+	g.complsByPropTypeByClassDecl[g.curClassDecl][propType] = append(g.complsByPropTypeByClassDecl[g.curClassDecl][propType], &completion{
 		Label:         label,
 		LabelDetails:  &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curClassDecl.Name)},
 		Kind:          kind,
@@ -700,15 +759,15 @@ func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.SetExpr) {
 	}
 
 	label := expr.Name.String()
-	if g.complLabelsByClassDecl[g.curClassDecl][label] {
+	propType := propertyTypeInstance
+	if g.curMethodDecl.HasModifier(token.Static) {
+		propType = propertyTypeStatic
+	}
+	if g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] {
 		return
 	}
-	g.complLabelsByClassDecl[g.curClassDecl][label] = true
-	propertyType := propertyTypeInstance
-	if g.curMethodDecl.HasModifier(token.Static) {
-		propertyType = propertyTypeStatic
-	}
-	g.complsByPropertyTypeByClassDecl[g.curClassDecl][propertyType] = append(g.complsByPropertyTypeByClassDecl[g.curClassDecl][propertyType], &completion{
+	g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] = true
+	g.complsByPropTypeByClassDecl[g.curClassDecl][propType] = append(g.complsByPropTypeByClassDecl[g.curClassDecl][propType], &completion{
 		Label:        label,
 		LabelDetails: &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curClassDecl.Name)},
 		Kind:         protocol.CompletionItemKindField,

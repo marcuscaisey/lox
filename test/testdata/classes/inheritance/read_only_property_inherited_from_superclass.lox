@@ -1,0 +1,10 @@
+class Superclass {
+  get property() {
+    return "Superclass property value";
+  }
+}
+
+class Subclass < Superclass {}
+
+var subclass = Subclass();
+print subclass.property; // prints: Superclass property value

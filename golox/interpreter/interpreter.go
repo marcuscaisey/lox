@@ -156,8 +156,19 @@ func (i *Interpreter) execClassDecl(env environment, stmt *ast.ClassDecl) enviro
 	if stmt.Name.String() == token.PlaceholderIdent {
 		return env
 	}
+	var superclass *loxClass
+	if stmt.Superclass.IsValid() {
+		superclassLoxObject := env.Get(stmt.Superclass)
+		var ok bool
+		superclass, ok = superclassLoxObject.(*loxClass)
+		if !ok {
+			panic(loxerr.Newf(stmt.Superclass, loxerr.Fatal, "expected superclass to be a class, got %m", superclassLoxObject.Type()))
+		}
+	}
+	_ = superclass
 	newEnv := env.Declare(stmt.Name)
-	newEnv.Assign(stmt.Name, newLoxClass(stmt.Name.String(), stmt.Methods(), newEnv))
+	class := newLoxClass(stmt.Name.String(), superclass, stmt.Methods(), newEnv)
+	newEnv.Assign(stmt.Name, class)
 	return newEnv
 }
 
@@ -263,6 +274,8 @@ func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 		return i.evalIdentExpr(env, expr)
 	case *ast.ThisExpr:
 		return i.evalThisExpr(env, expr)
+	case *ast.SuperExpr:
+		return i.evalSuperExpr(env, expr)
 	case *ast.CallExpr:
 		return i.evalCallExpr(env, expr)
 	case *ast.GetExpr:
@@ -312,8 +325,17 @@ func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxObj
 	return env.Get(expr.Ident)
 }
 
-func (i *Interpreter) evalThisExpr(env environment, expr *ast.ThisExpr) loxObject {
-	return env.Get(&ast.Ident{Token: expr.This})
+func (i *Interpreter) evalThisExpr(env environment, _ *ast.ThisExpr) loxObject {
+	return env.GetByName(token.CurrentInstanceIdent)
+}
+
+func (i *Interpreter) evalSuperExpr(env environment, _ *ast.SuperExpr) loxObject {
+	superObject := env.GetByName(token.SuperIdent)
+	superclass, ok := superObject.(*loxClass)
+	if !ok {
+		panic(fmt.Sprintf("unexpected super type: %T", superObject))
+	}
+	return newLoxSuperObject(superclass, env)
 }
 
 func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObject {

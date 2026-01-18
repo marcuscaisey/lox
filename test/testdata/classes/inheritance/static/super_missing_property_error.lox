@@ -1,0 +1,9 @@
+class Superclass {}
+
+class Subclass < Superclass {
+  static method() {
+    super.method();
+  }
+}
+
+Subclass.method(); // error: 'Subclass class' object has no property method
