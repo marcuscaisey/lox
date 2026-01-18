@@ -372,6 +372,8 @@ func (p *property) Set(interpreter *Interpreter, instance *loxInstance, name *as
 	interpreter.call(name.Start(), p.setter.Bind(instance), []loxObject{value})
 }
 
+const metaclassNameSuffix = " class"
+
 type loxClass struct {
 	Name              string
 	superclass        *loxClass
@@ -395,7 +397,7 @@ func newLoxClass(name string, superclass *loxClass, methods []*ast.MethodDecl, e
 		metaclassSuperclass = superclass.metaclassInstance.Class
 	}
 	metaclass := newLoxClassWithMetaclass(name, metaclassSuperclass, nil, staticMethods, env)
-	metaclass.Name = fmt.Sprintf("%s class", name)
+	metaclass.Name = fmt.Sprint(name, metaclassNameSuffix)
 	return newLoxClassWithMetaclass(name, superclass, metaclass, instanceMethods, env)
 }
 
@@ -529,7 +531,12 @@ func (s *loxSuperObject) Get(_ *Interpreter, name *ast.Ident) loxObject {
 	}
 	method, ok := s.superclass.GetMethod(name.String())
 	if !ok {
-		panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %m", instance.Type(), name))
+		static := ""
+		superclassName, ok := strings.CutSuffix(s.superclass.Name, metaclassNameSuffix)
+		if ok {
+			static = "static "
+		}
+		panic(loxerr.Newf(name, loxerr.Fatal, "'%s' class has no %smethod %m", superclassName, static, name))
 	}
 	return method.Bind(instance)
 }

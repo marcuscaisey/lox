@@ -1,1 +1,3 @@
-true.x; // error: property access is not valid for 'bool' object
+// error: property access is not valid for 'bool' object
+// lint warning: property 'x' has not been declared or assigned anywhere
+true.x;

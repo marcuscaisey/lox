@@ -1,4 +1,8 @@
 class Superclass {
+  _() {
+    this.field = nil; // Silences "'...' class has no property 'field'" lint warning
+  }
+
   printFieldSuperclass() {
     print this.field;
   }

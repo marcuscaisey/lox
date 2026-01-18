@@ -1,4 +1,6 @@
 class Foo {
   init() {}
 }
-Foo().init.x; // error: property access is not valid for 'function' object
+// error: property access is not valid for 'function' object
+// lint warning: property 'x' has not been declared or assigned anywhere
+Foo().init.x;

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Report errors for unresolved properties.
+
 ### Fixed
 
 - Refer to object properties consistently in error messages.

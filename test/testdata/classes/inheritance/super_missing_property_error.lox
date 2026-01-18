@@ -2,9 +2,11 @@ class Superclass {}
 
 class Subclass < Superclass {
   method() {
+    // error: 'Superclass' class has no method 'method'
+    // lint warning: 'Superclass' class has no method 'method'
     super.method();
   }
 }
 
 var subclass = Subclass();
-subclass.method(); // error: 'Subclass' object has no property 'method'
+subclass.method();

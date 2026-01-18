@@ -1,1 +1,3 @@
-clock.y; // error: property access is not valid for 'function' object
+// error: property access is not valid for 'function' object
+// lint warning: property 'y' has not been declared or assigned anywhere
+clock.y;

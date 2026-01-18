@@ -1,0 +1,10 @@
+class Foo {
+  bar() {
+    // lint warning: 'Foo' class has no property 'baz'
+    // error: 'Foo' object has no property 'baz'
+    this.baz();
+  }
+}
+
+var foo = Foo();
+foo.bar();

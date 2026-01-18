@@ -1,1 +1,3 @@
-"foo".y; // error: property access is not valid for 'string' object
+// error: property access is not valid for 'string' object
+// lint warning: property 'y' has not been declared or assigned anywhere
+"foo".y;

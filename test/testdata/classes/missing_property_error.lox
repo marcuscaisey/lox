@@ -1,3 +1,5 @@
 class Foo {}
 
-print Foo.bar; // error: 'Foo class' object has no property 'bar'
+// error: 'Foo class' object has no property 'bar'
+// lint warning: 'Foo' class has no static property 'bar'
+print Foo.bar;

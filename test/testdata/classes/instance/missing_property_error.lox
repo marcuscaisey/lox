@@ -1,4 +1,6 @@
 class Foo {}
 
 var foo = Foo();
-print foo.bar; // error: 'Foo' object has no property 'bar'
+// error: 'Foo' object has no property 'bar'
+// lint warning: property 'bar' has not been declared or assigned anywhere
+print foo.bar;
