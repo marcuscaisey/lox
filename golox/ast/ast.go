@@ -268,7 +268,7 @@ func (m *MethodDecl) HasModifier(types ...token.Type) bool {
 
 // IsConstructor reports whether the declaration is a constructor.
 func (m *MethodDecl) IsConstructor() bool {
-	return !m.HasModifier(token.Static) && m.Name.IsValid() && m.Name.Token.Lexeme == token.ConstructorIdent
+	return !m.HasModifier(token.Static) && m.Name.IsValid() && m.Name.Token.Lexeme == token.IdentInit
 }
 
 // ExprStmt is an expression statement, such as a function call.

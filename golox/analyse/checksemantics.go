@@ -225,19 +225,19 @@ func (c *semanticChecker) checkReturnInFun(stmt *ast.ReturnStmt) {
 
 func (c *semanticChecker) checkNoConstructorReturn(stmt *ast.ReturnStmt) {
 	if stmt.Value != nil && c.curFunType.IsConstructor() {
-		c.errs.Addf(stmt, loxerr.Fatal, "%s() cannot return a value", token.ConstructorIdent)
+		c.errs.Addf(stmt, loxerr.Fatal, "%s() cannot return a value", token.IdentInit)
 	}
 }
 
 func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
-	if c.extraFeatures && expr.Ident.IsValid() && expr.Ident.String() == token.PlaceholderIdent {
-		c.errs.Addf(expr.Ident, loxerr.Fatal, "%s cannot be used as a value", token.PlaceholderIdent)
+	if c.extraFeatures && expr.Ident.IsValid() && expr.Ident.String() == token.IdentBlank {
+		c.errs.Addf(expr.Ident, loxerr.Fatal, "%s cannot be used as a value", token.IdentBlank)
 	}
 }
 
 func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
-	if c.extraFeatures && ident.IsValid() && ident.String() == token.PlaceholderIdent {
-		c.errs.Addf(ident, loxerr.Fatal, "%s cannot be used as a field name", token.PlaceholderIdent)
+	if c.extraFeatures && ident.IsValid() && ident.String() == token.IdentBlank {
+		c.errs.Addf(ident, loxerr.Fatal, "%s cannot be used as a field name", token.IdentBlank)
 	}
 }
 

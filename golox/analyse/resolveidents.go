@@ -286,7 +286,7 @@ func (r *identResolver) inGlobalScope() bool {
 
 func (r *identResolver) declareIdent(stmt ast.Decl) {
 	ident := stmt.BoundIdent()
-	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.PlaceholderIdent) {
+	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.IdentBlank) {
 		return
 	}
 	if r.inGlobalScope() && r.forwardDeclaredGlobals[ident.String()] {
@@ -308,7 +308,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 }
 
 func (r *identResolver) defineIdent(ident *ast.Ident) {
-	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.PlaceholderIdent) {
+	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.IdentBlank) {
 		return
 	}
 	for _, scope := range r.scopes.Backward() {
@@ -320,7 +320,7 @@ func (r *identResolver) defineIdent(ident *ast.Ident) {
 }
 
 func (r *identResolver) startInitialisingIdent(ident *ast.Ident) {
-	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.PlaceholderIdent) {
+	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.IdentBlank) {
 		return
 	}
 	for _, scope := range r.scopes.Backward() {
@@ -332,7 +332,7 @@ func (r *identResolver) startInitialisingIdent(ident *ast.Ident) {
 }
 
 func (r *identResolver) finishInitialisingIdent(ident *ast.Ident) {
-	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.PlaceholderIdent) {
+	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.IdentBlank) {
 		return
 	}
 	for _, scope := range r.scopes.Backward() {
@@ -351,7 +351,7 @@ const (
 )
 
 func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
-	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.PlaceholderIdent) {
+	if !ident.IsValid() || (r.extraFeatures && ident.String() == token.IdentBlank) {
 		return
 	}
 	for level, scope := range r.scopes.Backward() {
@@ -581,9 +581,9 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	}
 
 	scope := r.scopes.Peek()
-	scope.DeclareName(token.CurrentInstanceIdent)
-	scope.Define(token.CurrentInstanceIdent)
-	scope.Use(token.CurrentInstanceIdent)
+	scope.DeclareName(token.IdentThis)
+	scope.Define(token.IdentThis)
+	scope.Use(token.IdentThis)
 
 	ast.WalkChildren(decl, r.walk)
 

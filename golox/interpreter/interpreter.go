@@ -133,7 +133,7 @@ func (i *Interpreter) execVarDecl(env environment, stmt *ast.VarDecl) environmen
 	if stmt.Initialiser != nil {
 		value = i.evalExpr(env, stmt.Initialiser)
 	}
-	if stmt.Name.String() == token.PlaceholderIdent {
+	if stmt.Name.String() == token.IdentBlank {
 		return env
 	}
 	newEnv := env.Declare(stmt.Name)
@@ -144,7 +144,7 @@ func (i *Interpreter) execVarDecl(env environment, stmt *ast.VarDecl) environmen
 }
 
 func (i *Interpreter) execFunDecl(env environment, stmt *ast.FunDecl) environment {
-	if stmt.Name.String() == token.PlaceholderIdent {
+	if stmt.Name.String() == token.IdentBlank {
 		return env
 	}
 	newEnv := env.Declare(stmt.Name)
@@ -153,7 +153,7 @@ func (i *Interpreter) execFunDecl(env environment, stmt *ast.FunDecl) environmen
 }
 
 func (i *Interpreter) execClassDecl(env environment, stmt *ast.ClassDecl) environment {
-	if stmt.Name.String() == token.PlaceholderIdent {
+	if stmt.Name.String() == token.IdentBlank {
 		return env
 	}
 	var superclass *loxClass
@@ -326,11 +326,11 @@ func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxObj
 }
 
 func (i *Interpreter) evalThisExpr(env environment, _ *ast.ThisExpr) loxObject {
-	return env.GetByName(token.CurrentInstanceIdent)
+	return env.GetByName(token.IdentThis)
 }
 
 func (i *Interpreter) evalSuperExpr(env environment, _ *ast.SuperExpr) loxObject {
-	superObject := env.GetByName(token.SuperIdent)
+	superObject := env.GetByName(token.IdentSuper)
 	superclass, ok := superObject.(*loxClass)
 	if !ok {
 		panic(fmt.Sprintf("unexpected super type: %T", superObject))
@@ -459,7 +459,7 @@ func (i *Interpreter) evalTernaryExpr(env environment, expr *ast.TernaryExpr) lo
 
 func (i *Interpreter) evalAssignmentExpr(env environment, expr *ast.AssignmentExpr) loxObject {
 	value := i.evalExpr(env, expr.Right)
-	if expr.Left.String() != token.PlaceholderIdent {
+	if expr.Left.String() != token.IdentBlank {
 		env.Assign(expr.Left, value)
 	}
 	return value

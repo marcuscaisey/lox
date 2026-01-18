@@ -4,7 +4,6 @@ package token
 import (
 	"cmp"
 	"fmt"
-	"unicode"
 
 	"github.com/mattn/go-runewidth"
 
@@ -14,7 +13,7 @@ import (
 func init() {
 	for i := range typesEnd {
 		t := Type(i)
-		if _, ok := typeStrings[t]; !ok && unicode.IsUpper(rune(t.String()[0])) {
+		if _, ok := typeStrings[t]; !ok {
 			panic(fmt.Sprintf("typeStrings is missing entry for Type %s", t.String()))
 		}
 	}
@@ -22,16 +21,10 @@ func init() {
 
 // Constants for special identifiers.
 const (
-	// PlaceholderIdent is the special identifier which can be used as a placeholder in declarations and assignments.
-	PlaceholderIdent = "_"
-	// CurrentInstanceIdent is the identifier used to refer the current instance of the class in a method.
-	CurrentInstanceIdent = thisIdent
-	// ConstructorIdent is the identifier used for the constructor method for classes.
-	ConstructorIdent = "init"
-	// SuperIdent is the identifier used in super expressions.
-	SuperIdent = "super"
-
-	thisIdent = "this"
+	IdentBlank = "_"
+	IdentThis  = "this"
+	IdentInit  = "init"
+	IdentSuper = "super"
 )
 
 //go:generate go tool stringer -type Type
@@ -122,8 +115,8 @@ var typeStrings = map[Type]string{
 	Fun:           "fun",
 	Return:        "return",
 	Class:         "class",
-	This:          thisIdent,
-	Super:         "super",
+	This:          IdentThis,
+	Super:         IdentSuper,
 	Static:        "static",
 	Get:           "get",
 	Set:           "set",
