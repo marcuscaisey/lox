@@ -233,13 +233,9 @@ func (p Position) Compare(other Position) int {
 }
 
 func (p Position) String() string {
-	var prefix string
-	if p.File.Name != "" {
-		prefix = p.File.Name + ":"
-	}
 	line := p.File.Line(p.Line)
 	col := runewidth.StringWidth(string(line[:p.Column])) + 1
-	return fmt.Sprintf("%s%d:%d", prefix, p.Line, col)
+	return fmt.Sprintf("%d:%d", p.Line, col)
 }
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
