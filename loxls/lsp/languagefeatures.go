@@ -321,7 +321,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				}
 				var kind protocol.SymbolKind
 				switch {
-				case methodDecl.IsConstructor():
+				case methodDecl.IsInit():
 					kind = protocol.SymbolKindConstructor
 				default:
 					kind = protocol.SymbolKindMethod
@@ -518,7 +518,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			var params []*ast.ParamDecl
 			doc := decl.Doc
 			for _, methodDecl := range decl.Methods() {
-				if methodDecl.IsConstructor() {
+				if methodDecl.IsInit() {
 					prefixInner, ok := methodDetailPrefix(methodDecl, decl)
 					if !ok {
 						break

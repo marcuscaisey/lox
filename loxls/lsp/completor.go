@@ -25,7 +25,7 @@ var (
 		{"class", "class ${1:name} {\n  $0\n}", "Snippet for a class"},
 	}
 	classBodySnippets = []snippet{
-		{"init", "init($1) {\n  $0\n}", "Snippet for a constructor"},
+		{"init", "init($1) {\n  $0\n}", "Snippet for an init method"},
 		{"method", "${1:name}($2) {\n  $0\n}", "Snippet for a method"},
 		{"get", "get ${1:name}() {\n  $0\n}", "Snippet for a property getter"},
 		{"set", "set ${1:name}(${2:value}) {\n  $0\n}", "Snippet for a property setter"},
@@ -711,7 +711,7 @@ func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
 }
 
 func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDecl) {
-	if !decl.Name.IsValid() || decl.IsConstructor() || g.curClassDecl == nil || !g.curClassDecl.Name.IsValid() {
+	if !decl.Name.IsValid() || decl.IsInit() || g.curClassDecl == nil || !g.curClassDecl.Name.IsValid() {
 		return
 	}
 

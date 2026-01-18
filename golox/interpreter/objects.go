@@ -239,7 +239,7 @@ const (
 	funTypeNone     funType = iota
 	funTypeFunction funType = 1 << (iota - 1)
 	funTypeMethodFlag
-	funTypeConstructorFlag
+	funTypeInitFlag
 	funTypeBuiltinFlag
 )
 
@@ -247,8 +247,8 @@ func (f funType) IsMethod() bool {
 	return f&funTypeMethodFlag != 0
 }
 
-func (f funType) IsConstructor() bool {
-	return f&funTypeConstructorFlag != 0
+func (f funType) IsInit() bool {
+	return f&funTypeInitFlag != 0
 }
 
 func (f funType) IsBuiltin() bool {
@@ -257,8 +257,8 @@ func (f funType) IsBuiltin() bool {
 
 func methodFunType(decl *ast.MethodDecl) funType {
 	typ := funTypeFunction | funTypeMethodFlag
-	if decl.IsConstructor() {
-		typ |= funTypeConstructorFlag
+	if decl.IsInit() {
+		typ |= funTypeInitFlag
 	}
 	return typ
 }
@@ -336,7 +336,7 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 		childEnv = childEnv.Define(param, args[i])
 	}
 	result := interpreter.executeBlock(childEnv, f.body)
-	if f.typ.IsConstructor() {
+	if f.typ.IsInit() {
 		return f.enclosingEnv.GetByName(token.This.String())
 	}
 	if r, ok := result.(stmtResultReturn); ok {

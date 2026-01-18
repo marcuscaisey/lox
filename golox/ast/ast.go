@@ -277,8 +277,8 @@ func (m *MethodDecl) HasModifier(types ...token.Type) bool {
 	return false
 }
 
-// IsConstructor reports whether the declaration is a constructor.
-func (m *MethodDecl) IsConstructor() bool {
+// IsInit reports whether the declaration is an init method.
+func (m *MethodDecl) IsInit() bool {
 	return !m.HasModifier(token.Static) && m.Name.IsValid() && m.Name.Token.Lexeme == token.IdentInit
 }
 

@@ -77,12 +77,12 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.checkContinueInLoop(node)
 	case *ast.ReturnStmt:
 		c.checkReturnInFun(node)
-		c.checkNoConstructorReturn(node)
+		c.checkNoInitReturn(node)
 	case *ast.FunExpr:
 		c.walkFun(node.Function, funTypeFunction)
 		return false
 	case *ast.IdentExpr:
-		c.checkNoPlaceholderAccess(node)
+		c.checkNoBlankAccess(node)
 	case *ast.ThisExpr:
 		c.checkThisInMethod(node)
 	case *ast.SuperExpr:
@@ -91,9 +91,9 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 	case *ast.CallExpr:
 		c.checkNumArgs(node.Args)
 	case *ast.GetExpr:
-		c.checkNoPlaceholderPropertyAccess(node.Name)
+		c.checkNoBlankPropertyAccess(node.Name)
 	case *ast.SetExpr:
-		c.checkNoPlaceholderPropertyAccess(node.Name)
+		c.checkNoBlankPropertyAccess(node.Name)
 		c.checkNoSuperPropertyAssignment(node)
 	default:
 	}
@@ -231,19 +231,19 @@ func (c *semanticChecker) checkReturnInFun(stmt *ast.ReturnStmt) {
 	}
 }
 
-func (c *semanticChecker) checkNoConstructorReturn(stmt *ast.ReturnStmt) {
-	if stmt.Value != nil && c.curFunType.IsConstructor() {
+func (c *semanticChecker) checkNoInitReturn(stmt *ast.ReturnStmt) {
+	if stmt.Value != nil && c.curFunType.IsInit() {
 		c.errs.Addf(stmt, loxerr.Fatal, "%s() cannot return a value", token.IdentInit)
 	}
 }
 
-func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
+func (c *semanticChecker) checkNoBlankAccess(expr *ast.IdentExpr) {
 	if c.extraFeatures && expr.Ident.IsValid() && expr.Ident.String() == token.IdentBlank {
 		c.errs.Addf(expr.Ident, loxerr.Fatal, "'%s' cannot be used as a value", token.IdentBlank)
 	}
 }
 
-func (c *semanticChecker) checkNoPlaceholderPropertyAccess(ident *ast.Ident) {
+func (c *semanticChecker) checkNoBlankPropertyAccess(ident *ast.Ident) {
 	if c.extraFeatures && ident.IsValid() && ident.String() == token.IdentBlank {
 		c.errs.Addf(ident, loxerr.Fatal, "'%s' is not a valid property name", token.IdentBlank)
 	}
@@ -285,21 +285,21 @@ const (
 	funTypeNone     funType = iota
 	funTypeFunction funType = 1 << (iota - 1)
 	funTypeMethodFlag
-	funTypeConstructorFlag
+	funTypeInitFlag
 )
 
 func (f funType) IsMethod() bool {
 	return f&funTypeMethodFlag != 0
 }
 
-func (f funType) IsConstructor() bool {
-	return f&funTypeConstructorFlag != 0
+func (f funType) IsInit() bool {
+	return f&funTypeInitFlag != 0
 }
 
 func methodFunType(decl *ast.MethodDecl) funType {
 	typ := funTypeFunction | funTypeMethodFlag
-	if decl.IsConstructor() {
-		typ |= funTypeConstructorFlag
+	if decl.IsInit() {
+		typ |= funTypeInitFlag
 	}
 	return typ
 }
