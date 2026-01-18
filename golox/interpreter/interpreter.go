@@ -326,11 +326,11 @@ func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxObj
 }
 
 func (i *Interpreter) evalThisExpr(env environment, _ *ast.ThisExpr) loxObject {
-	return env.GetByName(token.IdentThis)
+	return env.GetByName(token.This.String())
 }
 
 func (i *Interpreter) evalSuperExpr(env environment, _ *ast.SuperExpr) loxObject {
-	superObject := env.GetByName(token.IdentSuper)
+	superObject := env.GetByName(token.Super.String())
 	superclass, ok := superObject.(*loxClass)
 	if !ok {
 		panic(fmt.Sprintf("unexpected super type: %T", superObject))

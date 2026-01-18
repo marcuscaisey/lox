@@ -13,9 +13,7 @@ import (
 // Constants for special identifiers.
 const (
 	IdentBlank = "_"
-	IdentThis  = "this"
 	IdentInit  = "init"
-	IdentSuper = "super"
 )
 
 //go:generate go tool stringer -type Type -linecomment
@@ -111,10 +109,8 @@ func (t Type) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'm':
 		fmt.Fprintf(f, "'%s'", t.String())
-	case 's':
-		fmt.Fprint(f, t.String())
 	default:
-		fmt.Fprintf(f, fmt.FormatString(f, verb), uint8(t))
+		fmt.Fprint(f, t.String())
 	}
 }
 

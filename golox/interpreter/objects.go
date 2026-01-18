@@ -201,9 +201,9 @@ var (
 
 func (b loxBool) String() string {
 	if b {
-		return "true"
+		return token.True.String()
 	}
-	return "false"
+	return token.False.String()
 }
 
 func (b loxBool) Type() loxType {
@@ -222,7 +222,7 @@ var (
 )
 
 func (n loxNil) String() string {
-	return "nil"
+	return token.Nil.String()
 }
 
 func (n loxNil) Type() loxType {
@@ -337,7 +337,7 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 	}
 	result := interpreter.executeBlock(childEnv, f.body)
 	if f.typ.IsConstructor() {
-		return f.enclosingEnv.Get(&ast.Ident{Token: token.Token{Lexeme: token.IdentThis}})
+		return f.enclosingEnv.GetByName(token.This.String())
 	}
 	if r, ok := result.(stmtResultReturn); ok {
 		return r.Value
@@ -348,7 +348,7 @@ func (f *loxFunction) Call(interpreter *Interpreter, args []loxObject) loxObject
 func (f *loxFunction) Bind(instance *loxInstance) *loxFunction {
 	fCopy := *f
 	fCopyClosure := f.enclosingEnv.Child()
-	fCopy.enclosingEnv = fCopyClosure.Define(token.IdentThis, instance)
+	fCopy.enclosingEnv = fCopyClosure.Define(token.This.String(), instance)
 	return &fCopy
 }
 
@@ -405,18 +405,18 @@ func newLoxClassWithMetaclass(name string, superclass *loxClass, metaclass *loxC
 	settersByName := make(map[string]*loxFunction, len(methods))
 	if superclass != nil {
 		env = env.Child()
-		env = env.Define(token.IdentSuper, superclass)
+		env = env.Define(token.Super.String(), superclass)
 	}
 	for _, decl := range methods {
 		var funcMap map[string]*loxFunction
-		methodName := name + "." + decl.Name.String()
+		methodName := fmt.Sprint(name, token.Dot, decl.Name.String())
 		switch {
 		case decl.HasModifier(token.Get):
 			funcMap = gettersByName
-			methodName = "get " + methodName
+			methodName = fmt.Sprint(token.Get, " ", methodName)
 		case decl.HasModifier(token.Set):
 			funcMap = settersByName
-			methodName = "set " + methodName
+			methodName = fmt.Sprint(token.Set, " ", methodName)
 		default:
 			funcMap = methodsByName
 		}
@@ -522,7 +522,7 @@ var (
 )
 
 func (s *loxSuperObject) Get(_ *Interpreter, name *ast.Ident) loxObject {
-	instanceObject := s.enclosingEnv.GetByName(token.IdentThis)
+	instanceObject := s.enclosingEnv.GetByName(token.This.String())
 	instance, ok := instanceObject.(*loxInstance)
 	if !ok {
 		panic(fmt.Sprintf("unexpected instance type: %T", instanceObject))

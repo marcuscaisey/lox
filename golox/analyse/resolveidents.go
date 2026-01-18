@@ -581,9 +581,9 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	}
 
 	scope := r.scopes.Peek()
-	scope.DeclareName(token.IdentThis)
-	scope.Define(token.IdentThis)
-	scope.Use(token.IdentThis)
+	scope.DeclareName(token.This.String())
+	scope.Define(token.This.String())
+	scope.Use(token.This.String())
 
 	ast.WalkChildren(decl, r.walk)
 
