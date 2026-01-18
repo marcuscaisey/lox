@@ -527,6 +527,7 @@ The blank identifier `_` is a special identifier which:
 - can be used before it has been declared.
 - can be declared but not used.
 - cannot be used in a non-assignment expression.
+- cannot be used as an object property.
 
 ## Comments
 

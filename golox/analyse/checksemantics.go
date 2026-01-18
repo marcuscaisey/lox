@@ -89,9 +89,9 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 	case *ast.CallExpr:
 		c.checkNumArgs(node.Args)
 	case *ast.GetExpr:
-		c.checkNoPlaceholderFieldAccess(node.Name)
+		c.checkNoPlaceholderPropertyAccess(node.Name)
 	case *ast.SetExpr:
-		c.checkNoPlaceholderFieldAccess(node.Name)
+		c.checkNoPlaceholderPropertyAccess(node.Name)
 		c.checkNoSuperPropertyAssignment(node)
 	default:
 	}
@@ -235,9 +235,9 @@ func (c *semanticChecker) checkNoPlaceholderAccess(expr *ast.IdentExpr) {
 	}
 }
 
-func (c *semanticChecker) checkNoPlaceholderFieldAccess(ident *ast.Ident) {
+func (c *semanticChecker) checkNoPlaceholderPropertyAccess(ident *ast.Ident) {
 	if c.extraFeatures && ident.IsValid() && ident.String() == token.IdentBlank {
-		c.errs.Addf(ident, loxerr.Fatal, "'%s' cannot be used as a field name", token.IdentBlank)
+		c.errs.Addf(ident, loxerr.Fatal, "'%s' is not a valid property name", token.IdentBlank)
 	}
 }
 

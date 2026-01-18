@@ -1,0 +1,8 @@
+class Foo {
+  init() {
+    // error: '_' is not a valid property name
+    // lint error: '_' is not a valid property name
+    this._ = 2;
+  }
+}
+Foo();

@@ -1,0 +1,9 @@
+class Foo {
+  bar() {
+    // error: '_' is not a valid property name
+    // lint error: '_' is not a valid property name
+    print this._;
+  }
+}
+var foo = Foo();
+foo.bar();
