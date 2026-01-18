@@ -10,8 +10,8 @@ import (
 
 	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/format"
 	"github.com/marcuscaisey/lox/golox/token"
+	"github.com/marcuscaisey/lox/loxfmt/format"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
