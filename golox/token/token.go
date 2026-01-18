@@ -145,6 +145,9 @@ func (t Token) String() string {
 	if t.Type == EOF {
 		return fmt.Sprintf("%s: [%s]", t.StartPos, t.Type)
 	}
+	if (keywordsStart < t.Type && t.Type < keywordsEnd) || (symbolsStart < t.Type && t.Type < symbolsEnd) {
+		return fmt.Sprintf("%s: %s", t.StartPos, t.Lexeme)
+	}
 	return fmt.Sprintf("%s: %s [%s]", t.StartPos, t.Lexeme, t.Type)
 }
 
