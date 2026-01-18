@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.0] - 2026-01-18
+
 ### Added
 
 - Report errors for unresolved properties.
@@ -164,7 +166,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Formatting
 - Renaming
 
-[Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v4.1.0...HEAD
+[Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v4.2.0...HEAD
+[4.2.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.2.0/vscode-lox
 [4.1.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.1.0/vscode-lox
 [4.0.2]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.0.2/vscode-lox
 [4.0.1]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.0.1/vscode-lox
