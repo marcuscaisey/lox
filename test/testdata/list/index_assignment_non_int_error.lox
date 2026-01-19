@@ -1,0 +1,2 @@
+var list = [];
+list[2.5] = 0; // error: index (2.5) must be a non-negative integer

@@ -1,0 +1,1 @@
+nil[0]; // error: 'nil' value is not indexable

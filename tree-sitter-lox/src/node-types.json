@@ -28,10 +28,6 @@
           "named": true
         },
         {
-          "type": "get_expression",
-          "named": true
-        },
-        {
           "type": "group_expression",
           "named": true
         },
@@ -40,11 +36,23 @@
           "named": true
         },
         {
+          "type": "index_expression",
+          "named": true
+        },
+        {
+          "type": "list_expression",
+          "named": true
+        },
+        {
           "type": "nil",
           "named": true
         },
         {
           "type": "number",
+          "named": true
+        },
+        {
+          "type": "property_expression",
           "named": true
         },
         {
@@ -79,11 +87,15 @@
         "required": true,
         "types": [
           {
-            "type": "get_expression",
+            "type": "identifier",
             "named": true
           },
           {
-            "type": "identifier",
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           }
         ]
@@ -113,10 +125,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -125,11 +133,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -185,10 +205,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -197,11 +213,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -251,10 +279,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -263,11 +287,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -406,10 +442,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -418,11 +450,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -539,10 +583,6 @@
           "named": true
         },
         {
-          "type": "get_expression",
-          "named": true
-        },
-        {
           "type": "group_expression",
           "named": true
         },
@@ -551,11 +591,23 @@
           "named": true
         },
         {
+          "type": "index_expression",
+          "named": true
+        },
+        {
+          "type": "list_expression",
+          "named": true
+        },
+        {
           "type": "nil",
           "named": true
         },
         {
           "type": "number",
+          "named": true
+        },
+        {
+          "type": "property_expression",
           "named": true
         },
         {
@@ -652,10 +704,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -664,11 +712,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -744,10 +804,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -756,11 +812,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -850,88 +918,6 @@
     }
   },
   {
-    "type": "get_expression",
-    "named": true,
-    "fields": {
-      "name": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          }
-        ]
-      },
-      "object": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "assignment_expression",
-            "named": true
-          },
-          {
-            "type": "binary_expression",
-            "named": true
-          },
-          {
-            "type": "boolean",
-            "named": true
-          },
-          {
-            "type": "call_expression",
-            "named": true
-          },
-          {
-            "type": "function_expression",
-            "named": true
-          },
-          {
-            "type": "get_expression",
-            "named": true
-          },
-          {
-            "type": "group_expression",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "nil",
-            "named": true
-          },
-          {
-            "type": "number",
-            "named": true
-          },
-          {
-            "type": "string",
-            "named": true
-          },
-          {
-            "type": "super_expression",
-            "named": true
-          },
-          {
-            "type": "ternary_expression",
-            "named": true
-          },
-          {
-            "type": "this_expression",
-            "named": true
-          },
-          {
-            "type": "unary_expression",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
     "type": "group_expression",
     "named": true,
     "fields": {
@@ -960,10 +946,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -972,11 +954,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -1032,10 +1026,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -1044,11 +1034,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -1157,6 +1159,239 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "index_expression",
+    "named": true,
+    "fields": {
+      "index": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "assignment_expression",
+            "named": true
+          },
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "call_expression",
+            "named": true
+          },
+          {
+            "type": "function_expression",
+            "named": true
+          },
+          {
+            "type": "group_expression",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
+            "type": "nil",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "super_expression",
+            "named": true
+          },
+          {
+            "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
+            "named": true
+          },
+          {
+            "type": "unary_expression",
+            "named": true
+          }
+        ]
+      },
+      "subject": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "assignment_expression",
+            "named": true
+          },
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "call_expression",
+            "named": true
+          },
+          {
+            "type": "function_expression",
+            "named": true
+          },
+          {
+            "type": "group_expression",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
+            "type": "nil",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "super_expression",
+            "named": true
+          },
+          {
+            "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
+            "named": true
+          },
+          {
+            "type": "unary_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "list_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "assignment_expression",
+          "named": true
+        },
+        {
+          "type": "binary_expression",
+          "named": true
+        },
+        {
+          "type": "boolean",
+          "named": true
+        },
+        {
+          "type": "call_expression",
+          "named": true
+        },
+        {
+          "type": "function_expression",
+          "named": true
+        },
+        {
+          "type": "group_expression",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "index_expression",
+          "named": true
+        },
+        {
+          "type": "list_expression",
+          "named": true
+        },
+        {
+          "type": "nil",
+          "named": true
+        },
+        {
+          "type": "number",
+          "named": true
+        },
+        {
+          "type": "property_expression",
+          "named": true
+        },
+        {
+          "type": "string",
+          "named": true
+        },
+        {
+          "type": "super_expression",
+          "named": true
+        },
+        {
+          "type": "ternary_expression",
+          "named": true
+        },
+        {
+          "type": "this_expression",
+          "named": true
+        },
+        {
+          "type": "unary_expression",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -1300,10 +1535,6 @@
           "named": true
         },
         {
-          "type": "get_expression",
-          "named": true
-        },
-        {
           "type": "group_expression",
           "named": true
         },
@@ -1312,11 +1543,23 @@
           "named": true
         },
         {
+          "type": "index_expression",
+          "named": true
+        },
+        {
+          "type": "list_expression",
+          "named": true
+        },
+        {
           "type": "nil",
           "named": true
         },
         {
           "type": "number",
+          "named": true
+        },
+        {
+          "type": "property_expression",
           "named": true
         },
         {
@@ -1340,6 +1583,96 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "property_expression",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "object": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "assignment_expression",
+            "named": true
+          },
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "call_expression",
+            "named": true
+          },
+          {
+            "type": "function_expression",
+            "named": true
+          },
+          {
+            "type": "group_expression",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
+            "type": "nil",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "super_expression",
+            "named": true
+          },
+          {
+            "type": "ternary_expression",
+            "named": true
+          },
+          {
+            "type": "this_expression",
+            "named": true
+          },
+          {
+            "type": "unary_expression",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1371,10 +1704,6 @@
           "named": true
         },
         {
-          "type": "get_expression",
-          "named": true
-        },
-        {
           "type": "group_expression",
           "named": true
         },
@@ -1383,11 +1712,23 @@
           "named": true
         },
         {
+          "type": "index_expression",
+          "named": true
+        },
+        {
+          "type": "list_expression",
+          "named": true
+        },
+        {
           "type": "nil",
           "named": true
         },
         {
           "type": "number",
+          "named": true
+        },
+        {
+          "type": "property_expression",
           "named": true
         },
         {
@@ -1506,10 +1847,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -1518,11 +1855,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -1572,10 +1921,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -1584,11 +1929,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -1638,10 +1995,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -1650,11 +2003,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -1710,10 +2075,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -1722,11 +2083,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -1782,10 +2155,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -1794,11 +2163,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -1906,10 +2287,6 @@
             "named": true
           },
           {
-            "type": "get_expression",
-            "named": true
-          },
-          {
             "type": "group_expression",
             "named": true
           },
@@ -1918,11 +2295,23 @@
             "named": true
           },
           {
+            "type": "index_expression",
+            "named": true
+          },
+          {
+            "type": "list_expression",
+            "named": true
+          },
+          {
             "type": "nil",
             "named": true
           },
           {
             "type": "number",
+            "named": true
+          },
+          {
+            "type": "property_expression",
             "named": true
           },
           {
@@ -2035,6 +2424,14 @@
   },
   {
     "type": "?",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "]",
     "named": false
   },
   {

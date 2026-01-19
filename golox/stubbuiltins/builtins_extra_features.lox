@@ -9,3 +9,15 @@ fun type(object) {}
 
 // Throws a runtime error with the given message.
 fun error(msg) {}
+
+// @internal
+class list {
+  // Adds an element to the end of the list.
+  push(value) {}
+
+  // Removes and returns the element at the end of the list.
+  pop() {}
+
+  // Number of elements in the list.
+  get length() {}
+}

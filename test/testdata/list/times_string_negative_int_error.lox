@@ -1,0 +1,1 @@
+print ["hello"] * -1; // error: cannot multiply 'list' by negative 'number'

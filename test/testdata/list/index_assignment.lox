@@ -1,0 +1,5 @@
+var list = [1, 2, 3];
+list[0] = 4;
+list[1] = 5;
+list[2] = 6;
+print list; // prints: [4, 5, 6]

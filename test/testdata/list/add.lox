@@ -1,0 +1,5 @@
+var list1 = [1, 2];
+var list2 = [3, 4];
+print list1 + list2; // prints: [1, 2, 3, 4]
+print list1; // prints: [1, 2]
+print list2; // prints: [3, 4]

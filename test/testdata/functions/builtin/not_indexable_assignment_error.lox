@@ -1,0 +1,1 @@
+clock[0] = 0; // error: 'function' value is not indexable

@@ -1,0 +1,1 @@
+[].pop(); // error: pop from empty 'list'

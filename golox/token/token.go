@@ -79,6 +79,8 @@ const (
 	Colon        // :
 	LeftParen    // (
 	RightParen   // )
+	LeftBrack    // [
+	RightBrack   // ]
 	LeftBrace    // {
 	RightBrace   // }
 	symbolsEnd

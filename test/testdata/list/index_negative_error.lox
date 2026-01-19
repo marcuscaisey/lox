@@ -1,0 +1,2 @@
+var list = [];
+list[-1]; // error: index (-1) must not be negative

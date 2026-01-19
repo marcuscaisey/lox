@@ -1,0 +1,5 @@
+var list = [1, 2, 3];
+for (var i = 0; i < list.length; i = i + 1) {
+  list[i] = 4 + i;
+}
+print list; // prints: [4, 5, 6]

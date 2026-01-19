@@ -8,6 +8,11 @@ true;
 nil;
 // <- constant.builtin
 
+// List Expression
+[1, 2, 3];
+// <- punctuation.bracket
+//      ^ punctuation.bracket
+
 // Identifier Expression
 foo;
 // <- variable
@@ -22,6 +27,19 @@ FOO_1_BAR;
 foo = 1;
 // <- variable
 //  ^ operator
+
+foo[1] = 2;
+// <- variable
+// ^ punctuation.bracket
+//  ^ number
+//   ^ punctuation.bracket
+//     ^ operator
+
+foo.bar = 1;
+// <- variable
+// ^ punctuation.delimiter
+//  ^ variable.member
+//      ^ operator
 
 // Function Expression
 fun(x, y) {
@@ -63,13 +81,21 @@ Foo.bar();
 // <- type
 //  ^ function.method.call
 
-// Get Expression
+// Index Expression
+foo[1];
+// <- variable
+// ^ punctuation.bracket
+//  ^ number
+//   ^ punctuation.bracket
+
+// Property Expression
 foo.bar;
 // <- variable
 // ^ punctuation.delimiter
 //  ^ variable.member
 
-// Builtin Functions
+
+// Built-in Functions
 clock;
 // <- function.builtin
 type;

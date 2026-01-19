@@ -25,6 +25,7 @@ from the challenges in the book.
 - [Runtime error message includes stack trace](#Errors)
 - [`error` built-in function](#Built-in-Functions)
 - [Property setter method](#Class-Declaration)
+- [List type](#List)
 
 ## Types
 
@@ -36,6 +37,38 @@ Lox has four primitive types:
 | string | UTF-8 string                 | `"hello"`      |
 | bool   | Boolean value                | `true` `false` |
 | nil    | Absence of a value           | `nil`          |
+
+### List
+
+Lists are mutable sequences of values.
+
+```lox
+var vals = [1, 2, 3];
+vals[1] = 9;
+vals.push(4);
+vals.push(5);
+print vals.pop(); // prints: 5
+for (var i = 0; i < vals.length; i++) {
+  // prints: 1
+  // prints: 9
+  // prints: 3
+  // prints: 4
+  print vals[i];
+}
+```
+
+#### Properties
+
+| Name     | Result   | Description                     |
+| -------- | -------- | ------------------------------- |
+| `length` | `number` | Number of elements in the list. |
+
+#### Methods
+
+| Name          | Result | Description                                             |
+| ------------- | ------ | ------------------------------------------------------- |
+| `push(value)` |        | Adds an element to the end of the list.                 |
+| `pop()`       | any    | Removes and returns the element at the end of the list. |
 
 ## Expressions
 
@@ -70,21 +103,24 @@ print -1; // prints: -1
 
 A binary expression is an operator surrounded by two operands.
 
-| Operator  | Operand 1 | Operand 2 | Result                    | Description                                                            |
-| --------- | --------- | --------- | ------------------------- | ---------------------------------------------------------------------- |
-| \*        | `number`  | `number`  | `number`                  | Multiplies the operands                                                |
-| \*        | `number`  | `string`  | `string`                  | Repeats the string                                                     |
-| /         | `number`  | `number`  | `number`                  | Divides the operands                                                   |
-| %         | `number`  | `number`  | `number`                  | Returns the remainder of the division of the operands                  |
-| +         | `number`  | `number`  | `number`                  | Adds the operands                                                      |
-| +         | `string`  | `string`  | `string`                  | Concatenates the operands                                              |
-| -         | `number`  | `number`  | `number`                  | Subtracts the operands                                                 |
-| < <= > >= | `number`  | `number`  | `bool`                    | Compares the operands                                                  |
-| < <= > >= | `string`  | `string`  | `bool`                    | Compares the operands lexicographically                                |
-| == !=     | All       | All       | `bool`                    | Compares the operands and their types                                  |
-| and       | `bool`    | `bool`    | `bool`                    | Returns the second operand if the first is truthy, otherwise the first |
-| or        | `bool`    | `bool`    | `bool`                    | Returns the first operand if it is truthy, otherwise the second        |
-| ,         | All       | All       | Type of the right operand | Evaluates the left then right operand<br>Returns the second result     |
+| Operator  | Operand 1    | Operand 2    | Result                    | Description                                                            |
+| --------- | ------------ | ------------ | ------------------------- | ---------------------------------------------------------------------- |
+| \*        | `number`     | `number`     | `number`                  | Multiplies the operands                                                |
+| \*        | `number`     | `string`     | `string`                  | Repeats the string                                                     |
+| \*        | `number`     | `list`       | `list`                    | Repeats the list                                                       |
+| /         | `number`     | `number`     | `number`                  | Divides the operands                                                   |
+| %         | `number`     | `number`     | `number`                  | Returns the remainder of the division of the operands                  |
+| +         | `number`     | `number`     | `number`                  | Adds the operands                                                      |
+| +         | `string`     | `string`     | `string`                  | Concatenates the operands                                              |
+| +         | `list`       | `list`       | `list`                    | Concatenates the lists                                                 |
+| -         | `number`     | `number`     | `number`                  | Subtracts the operands                                                 |
+| < <= > >= | `number`     | `number`     | `bool`                    | Compares the operands                                                  |
+| < <= > >= | `string`     | `string`     | `bool`                    | Compares the operands lexicographically                                |
+| == !=     | All - `list` | All - `list` | `bool`                    | Compares the operands and their types                                  |
+| == !=     | `list`       | `list`       | `bool`                    | Compares the lists element-wise                                        |
+| and       | `bool`       | `bool`       | `bool`                    | Returns the second operand if the first is truthy, otherwise the first |
+| or        | `bool`       | `bool`       | `bool`                    | Returns the first operand if it is truthy, otherwise the second        |
+| ,         | All          | All          | Type of the right operand | Evaluates the left then right operand<br>Returns the second result     |
 
 ```lox
 print 2 * 3.5; // prints: 7
@@ -146,9 +182,32 @@ fun add(a, b) {
 print add(1, 2); // prints: 3
 ```
 
-### Get Expression
+### Index Expression
 
-A get expression produces the value of a property of an object.
+An index expression produces the value at an index of a subject.
+
+```lox
+var list = [1, 2, 3];
+print list[0]; // prints: 1
+print list[1]; // prints: 2
+print list[2]; // prints: 3
+```
+
+### Index Set Expression
+
+An index set expression assigns a value to an index of a subject and produces the value.
+
+```lox
+var list = [1, 2, 3];
+list[0] = 4;
+list[1] = 5;
+list[2] = 6;
+print list; // prints: [4, 5, 6]
+```
+
+### Property Expression
+
+A property expression produces the value of a property of an object.
 
 ```lox
 class Foo {
@@ -161,9 +220,9 @@ var foo = Foo(1);
 print foo.bar; // prints: 1
 ```
 
-### Set Expression
+### Property Set Expression
 
-A set expression assigns a value to a property of an object and produces the value.
+A property set expression assigns a value to a property of an object and produces the value.
 
 ```lox
 class Foo {}
@@ -658,7 +717,8 @@ return_stmt   = 'return' , [ expression ] , ';' ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr , { ',' , assignment_expr } ;
-assignment_expr     = { postfix_expr , '.' } , IDENT , '=' , assignment_expr | ternary_expr ;
+assignment_expr     = ( { postfix_expr , '.' } , IDENT | '[' , expr , ']' )
+                    , '=' , assignment_expr | ternary_expr ;
 ternary_expr        = logical_or_expr , [ '?' , expr , ':' , ternary_expr ] ;
 logical_or_expr     = logical_and_expr , { 'or' , logical_and_expr } ;
 logical_and_expr    = equality_expr , { 'and' , equality_expr } ;
@@ -667,10 +727,10 @@ relational_expr     = additive_expr , { ( '<' | '<=' | '>' | '>=' ) , additive_e
 additive_expr       = multiplicative_expr , { ( '+' | '-' ) , multiplicative_expr } ;
 multiplicative_expr = unary_expr , { ( '*' | '/' | '%' ) , unary_expr } ;
 unary_expr          = ( '!' | '-' ) , unary_expr | postfix_expr ;
-postfix_expr        = primary_expr , { '(' , [ arguments ] , ')' | '.' , IDENT } ;
+postfix_expr        = primary_expr , { '(' , [ arguments ] , ')' | '[' , expr , ']' | '.' , IDENT } ;
 arguments           = assignment_expr , { ',' , assignment_expr } ;
 primary_expr        = NUMBER | STRING | 'true' | 'false' | 'nil' | IDENT | 'this'
-                    | 'super' , '.', IDENT | group_expr | fun_expr
+                    | 'super' , '.', IDENT | group_expr | fun_expr | list_expr
                     (* Error productions *)
                     | ( '==' | '!=' ) , relational_expr
                     | ( '<' | '<=' | '>' | '>=' ) , additive_expr
@@ -678,4 +738,5 @@ primary_expr        = NUMBER | STRING | 'true' | 'false' | 'nil' | IDENT | 'this
                     | ( '*' | '/' ) , unary_expr ;
 group_expr          = '(' , expr , ')' ;
 fun_expr            = 'fun' , '(' , [ parameters ] , ')' , block ;
+list_expr           = '[' , [ arguments ] , ']' ;
 ```

@@ -1,0 +1,4 @@
+class Foo {
+  init() {}
+}
+Foo().init[0]; // error: 'function' value is not indexable

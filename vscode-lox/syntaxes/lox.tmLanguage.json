@@ -318,6 +318,14 @@
           "match": "\\)"
         },
         {
+          "name": "punctuation.section.brackets.begin.lox",
+          "match": "\\["
+        },
+        {
+          "name": "punctuation.section.brackets.end.lox",
+          "match": "]"
+        },
+        {
           "name": "punctuation.section.block.begin.lox",
           "match": "\\{"
         },

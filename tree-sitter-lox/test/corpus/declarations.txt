@@ -271,7 +271,7 @@ class Person {
         body: (block
           (expression_statement
             (assignment_expression
-              left: (get_expression
+              left: (property_expression
                 object: (this_expression)
                 name: (identifier))
               right: (identifier))))))))
@@ -329,10 +329,10 @@ class Circle {
               left: (group_expression
                 expression: (binary_expression
                   left: (identifier)
-                  right: (get_expression
+                  right: (property_expression
                     object: (this_expression)
                     name: (identifier))))
-              right: (get_expression
+              right: (property_expression
                 object: (this_expression)
                 name: (identifier)))))))))
 
@@ -373,7 +373,7 @@ class Circle {
                     (string))))))
           (expression_statement
             (assignment_expression
-              left: (get_expression
+              left: (property_expression
                 object: (this_expression)
                 name: (identifier))
               right: (identifier))))))))
@@ -444,7 +444,7 @@ class BostonCream < Doughnut {
         body: (block
           (expression_statement
             (call_expression
-              callee: (get_expression
+              callee: (property_expression
                 object: (super_expression)
                 name: (identifier))
               arguments: (argument_list)))

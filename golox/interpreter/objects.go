@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -20,6 +21,7 @@ const (
 	loxTypeBool     loxType = "bool"
 	loxTypeNil      loxType = "nil"
 	loxTypeFunction loxType = "function"
+	loxTypeList     loxType = "list"
 )
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
@@ -35,7 +37,9 @@ func (t loxType) Format(f fmt.State, verb rune) {
 
 type loxObject interface {
 	String() string
+	Repr() string
 	Type() loxType
+	Equals(other loxObject) bool
 }
 
 type loxUnaryOperand interface {
@@ -60,12 +64,17 @@ type loxCallable interface {
 	Call(interpreter *Interpreter, args []loxObject) loxObject
 }
 
-type loxGetter interface {
-	Get(interpreter *Interpreter, name *ast.Ident) loxObject
+type loxIndexable interface {
+	Index(index loxObject, node ast.Node) loxObject
+	SetIndex(index loxObject, node ast.Node, value loxObject)
 }
 
-type loxSetter interface {
-	Set(interpreter *Interpreter, name *ast.Ident, value loxObject)
+type loxPropertyAccessible interface {
+	Property(interpreter *Interpreter, name *ast.Ident) loxObject
+}
+
+type loxPropertySettable interface {
+	SetProperty(interpreter *Interpreter, name *ast.Ident, value loxObject)
 }
 
 type loxNumber float64
@@ -76,49 +85,58 @@ var (
 	_ loxBinaryOperand = loxNumber(0)
 )
 
-func (n loxNumber) String() string {
-	return strconv.FormatFloat(float64(n), 'f', -1, 64)
+func (l loxNumber) String() string {
+	return strconv.FormatFloat(float64(l), 'f', -1, 64)
 }
 
-func (n loxNumber) Type() loxType {
+func (l loxNumber) Repr() string {
+	return l.String()
+}
+
+func (l loxNumber) Type() loxType {
 	return loxTypeNumber
 }
 
-func (n loxNumber) UnaryOp(op token.Token) loxObject {
+func (l loxNumber) Equals(other loxObject) bool {
+	otherNumber, ok := other.(loxNumber)
+	return ok && l == otherNumber
+}
+
+func (l loxNumber) UnaryOp(op token.Token) loxObject {
 	if op.Type == token.Minus {
-		return -n
+		return -l
 	}
 	return nil
 }
 
-func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
+func (l loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 	switch right := right.(type) {
 	case loxNumber:
 		switch op.Type {
 		case token.Asterisk:
-			return n * right
+			return l * right
 		case token.Slash:
 			if right == 0 {
 				panic(loxerr.Newf(op, loxerr.Fatal, "cannot divide by 0"))
 			}
-			return n / right
+			return l / right
 		case token.Percent:
 			if right == 0 {
 				panic(loxerr.Newf(op, loxerr.Fatal, "cannot modulo by 0"))
 			}
-			return loxNumber(math.Mod(float64(n), float64(right)))
+			return loxNumber(math.Mod(float64(l), float64(right)))
 		case token.Plus:
-			return n + right
+			return l + right
 		case token.Minus:
-			return n - right
+			return l - right
 		case token.Less:
-			return loxBool(n < right)
+			return loxBool(l < right)
 		case token.LessEqual:
-			return loxBool(n <= right)
+			return loxBool(l <= right)
 		case token.Greater:
-			return loxBool(n > right)
+			return loxBool(l > right)
 		case token.GreaterEqual:
-			return loxBool(n >= right)
+			return loxBool(l >= right)
 		default:
 			return nil
 		}
@@ -126,7 +144,15 @@ func (n loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 	case loxString:
 		switch op.Type {
 		case token.Asterisk:
-			return numberTimesString(n, op, right)
+			return numberTimesString(l, op, right)
+		default:
+			return nil
+		}
+
+	case *loxList:
+		switch op.Type {
+		case token.Asterisk:
+			return numberTimesList(l, op, right)
 		default:
 			return nil
 		}
@@ -146,6 +172,17 @@ func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
 	return loxString(strings.Repeat(string(s), int(n)))
 }
 
+func numberTimesList(n loxNumber, op token.Token, l *loxList) *loxList {
+	if math.Floor(float64(n)) != float64(n) {
+		panic(loxerr.Newf(op, loxerr.Fatal, "cannot multiply %m by non-integer %m", loxTypeList, loxTypeNumber))
+	}
+	if n < 0 {
+		panic(loxerr.Newf(op, loxerr.Fatal, "cannot multiply %m by negative %m", loxTypeList, loxTypeNumber))
+	}
+	result := loxList(slices.Repeat(*l, int(n)))
+	return &result
+}
+
 type loxString string
 
 var (
@@ -157,8 +194,17 @@ func (s loxString) String() string {
 	return string(s)
 }
 
+func (s loxString) Repr() string {
+	return fmt.Sprintf("%q", s)
+}
+
 func (s loxString) Type() loxType {
 	return loxTypeString
+}
+
+func (s loxString) Equals(other loxObject) bool {
+	otherString, ok := other.(loxString)
+	return ok && s == otherString
 }
 
 func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
@@ -206,8 +252,17 @@ func (b loxBool) String() string {
 	return token.False.String()
 }
 
+func (b loxBool) Repr() string {
+	return b.String()
+}
+
 func (b loxBool) Type() loxType {
 	return loxTypeBool
+}
+
+func (b loxBool) Equals(other loxObject) bool {
+	otherBool, ok := other.(loxBool)
+	return ok && b == otherBool
 }
 
 func (b loxBool) IsTruthy() loxBool {
@@ -225,8 +280,17 @@ func (n loxNil) String() string {
 	return token.Nil.String()
 }
 
+func (n loxNil) Repr() string {
+	return n.String()
+}
+
 func (n loxNil) Type() loxType {
 	return loxTypeNil
+}
+
+func (n loxNil) Equals(other loxObject) bool {
+	otherNil, ok := other.(loxNil)
+	return ok && n == otherNil
 }
 
 func (n loxNil) IsTruthy() loxBool {
@@ -298,6 +362,15 @@ func newBuiltinLoxFunction(name string, params []string, body nativeFunBody) *lo
 	}
 }
 
+func newBuiltinLoxMethod(name string, params []string, body nativeFunBody) *loxFunction {
+	return &loxFunction{
+		name:       name,
+		params:     params,
+		nativeBody: body,
+		typ:        funTypeMethodFlag | funTypeBuiltinFlag,
+	}
+}
+
 var (
 	_ loxObject   = &loxFunction{}
 	_ loxCallable = &loxFunction{}
@@ -305,6 +378,8 @@ var (
 
 func (f *loxFunction) String() string {
 	switch {
+	case f.typ.IsMethod() && f.typ.IsBuiltin():
+		return fmt.Sprintf("[builtin method %s]", f.name)
 	case f.typ.IsMethod():
 		return fmt.Sprintf("[bound method %s]", f.name)
 	case f.typ.IsBuiltin():
@@ -314,8 +389,17 @@ func (f *loxFunction) String() string {
 	}
 }
 
+func (f *loxFunction) Repr() string {
+	return f.String()
+}
+
 func (f *loxFunction) Type() loxType {
 	return loxTypeFunction
+}
+
+func (f *loxFunction) Equals(other loxObject) bool {
+	otherFunction, ok := other.(*loxFunction)
+	return ok && f == otherFunction
 }
 
 func (f *loxFunction) CallableName() string {
@@ -442,18 +526,27 @@ func newLoxClassWithMetaclass(name string, superclass *loxClass, metaclass *loxC
 }
 
 var (
-	_ loxObject   = &loxClass{}
-	_ loxCallable = &loxClass{}
-	_ loxGetter   = &loxClass{}
-	_ loxSetter   = &loxClass{}
+	_ loxObject             = &loxClass{}
+	_ loxCallable           = &loxClass{}
+	_ loxPropertyAccessible = &loxClass{}
+	_ loxPropertySettable   = &loxClass{}
 )
 
 func (c *loxClass) String() string {
 	return fmt.Sprintf("[class %s]", c.Name)
 }
 
+func (c *loxClass) Repr() string {
+	return c.String()
+}
+
 func (c *loxClass) Type() loxType {
 	return c.metaclassInstance.Type()
+}
+
+func (c *loxClass) Equals(other loxObject) bool {
+	otherClass, ok := other.(*loxClass)
+	return ok && c == otherClass
 }
 
 func (c *loxClass) CallableName() string {
@@ -478,12 +571,12 @@ func (c *loxClass) Call(interpreter *Interpreter, args []loxObject) loxObject {
 	return instance
 }
 
-func (c *loxClass) Set(interpreter *Interpreter, name *ast.Ident, value loxObject) {
-	c.metaclassInstance.Set(interpreter, name, value)
+func (c *loxClass) SetProperty(interpreter *Interpreter, name *ast.Ident, value loxObject) {
+	c.metaclassInstance.SetProperty(interpreter, name, value)
 }
 
-func (c *loxClass) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
-	return c.metaclassInstance.Get(interpreter, name)
+func (c *loxClass) Property(interpreter *Interpreter, name *ast.Ident) loxObject {
+	return c.metaclassInstance.Property(interpreter, name)
 }
 
 func (c *loxClass) GetMethod(name string) (*loxFunction, bool) {
@@ -519,11 +612,11 @@ func newLoxSuperObject(superclass *loxClass, enclosingEnv environment) *loxSuper
 }
 
 var (
-	_ loxObject = &loxSuperObject{}
-	_ loxGetter = &loxSuperObject{}
+	_ loxObject             = &loxSuperObject{}
+	_ loxPropertyAccessible = &loxSuperObject{}
 )
 
-func (s *loxSuperObject) Get(_ *Interpreter, name *ast.Ident) loxObject {
+func (s *loxSuperObject) Property(_ *Interpreter, name *ast.Ident) loxObject {
 	instanceObject := s.enclosingEnv.GetByName(token.This.String())
 	instance, ok := instanceObject.(*loxInstance)
 	if !ok {
@@ -545,8 +638,17 @@ func (s *loxSuperObject) String() string {
 	return s.superclass.String()
 }
 
+func (s *loxSuperObject) Repr() string {
+	return s.String()
+}
+
 func (s *loxSuperObject) Type() loxType {
 	return s.superclass.Type()
+}
+
+func (s *loxSuperObject) Equals(other loxObject) bool {
+	otherSuper, ok := other.(*loxSuperObject)
+	return ok && s == otherSuper
 }
 
 type loxInstance struct {
@@ -562,20 +664,29 @@ func newLoxInstance(class *loxClass) *loxInstance {
 }
 
 var (
-	_ loxObject = &loxInstance{}
-	_ loxGetter = &loxInstance{}
-	_ loxSetter = &loxInstance{}
+	_ loxObject             = &loxInstance{}
+	_ loxPropertyAccessible = &loxInstance{}
+	_ loxPropertySettable   = &loxInstance{}
 )
 
 func (i *loxInstance) String() string {
 	return fmt.Sprintf("[%s object]", i.Class.Name)
 }
 
+func (i *loxInstance) Repr() string {
+	return i.String()
+}
+
 func (i *loxInstance) Type() loxType {
 	return loxType(i.Class.Name)
 }
 
-func (i *loxInstance) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
+func (i *loxInstance) Equals(other loxObject) bool {
+	otherInstance, ok := other.(*loxInstance)
+	return ok && i == otherInstance
+}
+
+func (i *loxInstance) Property(interpreter *Interpreter, name *ast.Ident) loxObject {
 	if property, ok := i.Class.GetProperty(name.String()); ok {
 		return property.Get(interpreter, i, name)
 	}
@@ -591,7 +702,7 @@ func (i *loxInstance) Get(interpreter *Interpreter, name *ast.Ident) loxObject {
 	panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %m", i.Type(), name))
 }
 
-func (i *loxInstance) Set(interpreter *Interpreter, name *ast.Ident, value loxObject) {
+func (i *loxInstance) SetProperty(interpreter *Interpreter, name *ast.Ident, value loxObject) {
 	if property, ok := i.Class.GetProperty(name.String()); ok {
 		property.Set(interpreter, i, name, value)
 		return
@@ -600,14 +711,137 @@ func (i *loxInstance) Set(interpreter *Interpreter, name *ast.Ident, value loxOb
 	i.fieldValuesByName[name.String()] = value
 }
 
-// errorMsg is a special object which is returned by the built-in error function. It will be caught by the interpreter
-// and converted into a runtime error.
+type loxList []loxObject
+
+var (
+	_ loxObject             = (*loxList)(nil)
+	_ loxBinaryOperand      = (*loxList)(nil)
+	_ loxIndexable          = (*loxList)(nil)
+	_ loxPropertyAccessible = (*loxList)(nil)
+)
+
+func (l *loxList) String() string {
+	b := new(strings.Builder)
+	fmt.Fprint(b, token.LeftBrack)
+	for i, el := range *l {
+		fmt.Fprint(b, el.String())
+		if i < len(*l)-1 {
+			fmt.Fprint(b, token.Comma, " ")
+		}
+	}
+	fmt.Fprint(b, token.RightBrack)
+	return b.String()
+}
+
+func (l *loxList) Repr() string {
+	return l.String()
+}
+
+func (l *loxList) Type() loxType {
+	return loxTypeList
+}
+
+func (l *loxList) Equals(other loxObject) bool {
+	otherList, ok := other.(*loxList)
+	if !ok {
+		return false
+	}
+	return slices.EqualFunc(*l, *otherList, func(x, y loxObject) bool {
+		return x.Equals(y)
+	})
+}
+
+func (l *loxList) BinaryOp(op token.Token, right loxObject) loxObject {
+	switch right := right.(type) {
+	case *loxList:
+		switch op.Type {
+		case token.Plus:
+			lCopy := slices.Clone(*l)
+			result := append(lCopy, *right...)
+			return &result
+		default:
+			return nil
+		}
+	case loxNumber:
+		switch op.Type {
+		case token.Asterisk:
+			return numberTimesList(right, op, l)
+		default:
+			return nil
+		}
+	default:
+		return nil
+	}
+}
+
+func (l *loxList) Index(index loxObject, node ast.Node) loxObject {
+	indexInt := l.indexInt(index, node)
+	return (*l)[indexInt]
+}
+
+func (l *loxList) SetIndex(index loxObject, node ast.Node, value loxObject) {
+	indexInt := l.indexInt(index, node)
+	(*l)[indexInt] = value
+}
+
+func (l *loxList) indexInt(index loxObject, node ast.Node) int {
+	indexNumber, ok := index.(loxNumber)
+	if !ok {
+		panic(loxerr.Newf(node, loxerr.Fatal, "index (%s) must be a non-negative integer", index.Repr()))
+	}
+	if math.Floor(float64(indexNumber)) != float64(indexNumber) {
+		panic(loxerr.Newf(node, loxerr.Fatal, "index (%s) must be a non-negative integer", indexNumber))
+	}
+	indexInt := int(indexNumber)
+	if indexInt < 0 {
+		panic(loxerr.Newf(node, loxerr.Fatal, "index (%s) must not be negative", indexNumber))
+	}
+	if indexInt >= len(*l) {
+		panic(loxerr.Newf(node, loxerr.Fatal, "index %d out of bounds for list of length %v", indexInt, len(*l)))
+	}
+	return indexInt
+}
+
+func (l *loxList) Property(_ *Interpreter, name *ast.Ident) loxObject {
+	switch name.String() {
+	case "push":
+		return newBuiltinLoxMethod("list.push", []string{"value"}, func(args []loxObject) loxObject {
+			*l = append(*l, args[0])
+			return loxNil{}
+		})
+	case "pop":
+		return newBuiltinLoxMethod("list.pop", []string{}, func([]loxObject) loxObject {
+			if len(*l) == 0 {
+				return errorMsg(fmt.Sprintf("pop from empty %m", loxTypeList))
+			}
+			value := (*l)[len(*l)-1]
+			*l = (*l)[:len(*l)-1]
+			return value
+		})
+	case "length":
+		return loxNumber(len(*l))
+	}
+	panic(loxerr.Newf(name, loxerr.Fatal, "%m object has no property %m", loxTypeList, name))
+}
+
+// errorMsg is a special object which can be returned a callable. It will be caught by the interpreter and converted
+// into a runtime error.
 type errorMsg string
+
+var _ loxObject = errorMsg("")
 
 func (errorMsg) String() string {
 	panic("errorMsg is not a real loxObject")
 }
 
+func (errorMsg) Repr() string {
+	panic("errorMsg is not a real loxObject")
+}
+
 func (errorMsg) Type() loxType {
+	panic("errorMsg is not a real loxObject")
+}
+
+func (errorMsg) Equals(loxObject) bool {
 	panic("errorMsg is not a real loxObject")
 }

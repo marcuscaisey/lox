@@ -1,0 +1,6 @@
+print ["a", "b"] != ["a", "b"]; // prints: false
+print [] != []; // prints: false
+print ["a", "b"] != ["c", "d"]; // prints: true
+print ["a", "b"] != ["c"]; // prints: true
+print ["1"] != [1]; // prints: true
+print ["a"] != 1; // prints: true

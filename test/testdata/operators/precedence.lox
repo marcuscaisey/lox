@@ -29,13 +29,13 @@ print 1 + 2 * 3; // prints: 7
 // unary - has higher precedence than *
 print --1 * "foo"; // prints: foo
 
-// call and property access have higher precedence than unary -
+// call, index, and property access have higher precedence than unary -
 class C {
   init(x) {
-    this.x = x;
+    this.list = [x];
   }
 }
-print -C(1).x; // prints: -1
+print -C(1).list[0]; // prints: -1
 
 // () has higher precedence than any operator
 print (1 + 2) * 3; // prints: 9

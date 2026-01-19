@@ -1,0 +1,1 @@
+print ["hello"] * 2.5; // error: cannot multiply 'list' by non-integer 'number'

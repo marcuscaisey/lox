@@ -270,6 +270,8 @@ func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 		return i.evalGroupExpr(env, expr)
 	case *ast.LiteralExpr:
 		return i.evalLiteralExpr(expr)
+	case *ast.ListExpr:
+		return i.evalListExpr(env, expr)
 	case *ast.IdentExpr:
 		return i.evalIdentExpr(env, expr)
 	case *ast.ThisExpr:
@@ -278,8 +280,12 @@ func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 		return i.evalSuperExpr(env, expr)
 	case *ast.CallExpr:
 		return i.evalCallExpr(env, expr)
-	case *ast.GetExpr:
-		return i.evalGetExpr(env, expr)
+	case *ast.IndexExpr:
+		return i.evalIndexExpr(env, expr)
+	case *ast.IndexSetExpr:
+		return i.evalIndexSetExpr(env, expr)
+	case *ast.PropertyExpr:
+		return i.evalPropertyExpr(env, expr)
 	case *ast.UnaryExpr:
 		return i.evalUnaryExpr(env, expr)
 	case *ast.BinaryExpr:
@@ -288,8 +294,8 @@ func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 		return i.evalTernaryExpr(env, expr)
 	case *ast.AssignmentExpr:
 		return i.evalAssignmentExpr(env, expr)
-	case *ast.SetExpr:
-		return i.evalSetExpr(env, expr)
+	case *ast.PropertySetExpr:
+		return i.evalPropertySetExpr(env, expr)
 	}
 	panic("unreachable")
 }
@@ -319,6 +325,15 @@ func (i *Interpreter) evalLiteralExpr(expr *ast.LiteralExpr) loxObject {
 	default:
 		panic(fmt.Sprintf("unexpected literal type: %s", tok.Type))
 	}
+}
+
+func (i *Interpreter) evalListExpr(env environment, expr *ast.ListExpr) loxObject {
+	elements := make([]loxObject, len(expr.Elements))
+	for j, element := range expr.Elements {
+		elements[j] = i.evalExpr(env, element)
+	}
+	result := loxList(elements)
+	return &result
 }
 
 func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxObject {
@@ -373,6 +388,30 @@ func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObjec
 	return result
 }
 
+func (i *Interpreter) evalIndexExpr(env environment, expr *ast.IndexExpr) loxObject {
+	subject := i.evalExpr(env, expr.Subject)
+	indexable := assertIndexable(subject, expr.Subject)
+	index := i.evalExpr(env, expr.Index)
+	return indexable.Index(index, expr.Index)
+}
+
+func (i *Interpreter) evalIndexSetExpr(env environment, expr *ast.IndexSetExpr) loxObject {
+	subject := i.evalExpr(env, expr.Subject)
+	indexable := assertIndexable(subject, expr.Subject)
+	index := i.evalExpr(env, expr.Index)
+	value := i.evalExpr(env, expr.Value)
+	indexable.SetIndex(index, expr.Index, value)
+	return value
+}
+
+func assertIndexable(value loxObject, node ast.Node) loxIndexable {
+	indexable, ok := value.(loxIndexable)
+	if !ok {
+		panic(loxerr.Newf(node, loxerr.Fatal, "%m value is not indexable", value.Type()))
+	}
+	return indexable
+}
+
 func (i *Interpreter) call(location token.Position, callable loxCallable, args []loxObject) loxObject {
 	i.callStack.Push(callable.CallableName(), location)
 	result := callable.Call(i, args)
@@ -380,13 +419,13 @@ func (i *Interpreter) call(location token.Position, callable loxCallable, args [
 	return result
 }
 
-func (i *Interpreter) evalGetExpr(env environment, expr *ast.GetExpr) loxObject {
+func (i *Interpreter) evalPropertyExpr(env environment, expr *ast.PropertyExpr) loxObject {
 	object := i.evalExpr(env, expr.Object)
-	getter, ok := object.(loxGetter)
+	accessible, ok := object.(loxPropertyAccessible)
 	if !ok {
 		panic(loxerr.Newf(expr, loxerr.Fatal, "property access is not valid for %m object", object.Type()))
 	}
-	return getter.Get(i, expr.Name)
+	return accessible.Property(i, expr.Name)
 }
 
 func (i *Interpreter) evalUnaryExpr(env environment, expr *ast.UnaryExpr) loxObject {
@@ -433,14 +472,11 @@ func (i *Interpreter) evalBinaryExpr(env environment, expr *ast.BinaryExpr) loxO
 		// It's behavior is independent of the types of the operands, so we can implement it here.
 		return right
 	case token.EqualEqual:
-		// The behaviour of == is independent of the types of the operands, so we can implement it here.
-		return loxBool(left == right)
+		return loxBool(left.Equals(right))
 	case token.BangEqual:
-		// The behaviour of != is independent of the types of the operands, so we can implement it here.
-		return loxBool(left != right)
+		return loxBool(!left.Equals(right))
 	default:
-		binaryOperand, ok := left.(loxBinaryOperand)
-		if ok {
+		if binaryOperand, ok := left.(loxBinaryOperand); ok {
 			if result := binaryOperand.BinaryOp(expr.Op, right); result != nil {
 				return result
 			}
@@ -465,14 +501,14 @@ func (i *Interpreter) evalAssignmentExpr(env environment, expr *ast.AssignmentEx
 	return value
 }
 
-func (i *Interpreter) evalSetExpr(env environment, expr *ast.SetExpr) loxObject {
+func (i *Interpreter) evalPropertySetExpr(env environment, expr *ast.PropertySetExpr) loxObject {
 	object := i.evalExpr(env, expr.Object)
-	setter, ok := object.(loxSetter)
+	settable, ok := object.(loxPropertySettable)
 	if !ok {
 		panic(loxerr.Newf(expr, loxerr.Fatal, "property assignment is not valid for %m object", object.Type()))
 	}
 	value := i.evalExpr(env, expr.Value)
-	setter.Set(i, expr.Name, value)
+	settable.SetProperty(i, expr.Name, value)
 	return value
 }
 

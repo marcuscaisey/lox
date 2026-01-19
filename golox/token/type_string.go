@@ -58,15 +58,17 @@ func _() {
 	_ = x[Colon-47]
 	_ = x[LeftParen-48]
 	_ = x[RightParen-49]
-	_ = x[LeftBrace-50]
-	_ = x[RightBrace-51]
-	_ = x[symbolsEnd-52]
-	_ = x[typesEnd-53]
+	_ = x[LeftBrack-50]
+	_ = x[RightBrack-51]
+	_ = x[LeftBrace-52]
+	_ = x[RightBrace-53]
+	_ = x[symbolsEnd-54]
+	_ = x[typesEnd-55]
 }
 
-const _Type_name = "IllegalEOFkeywordsStartprintvartruefalsenilifelseandorwhileforbreakcontinuefunreturnclassthissuperstaticgetsetkeywordsEndIdentStringNumberCommentsymbolsStart;,.=+-*/%<<=>>===!=!?:(){}symbolsEndtypesEnd"
+const _Type_name = "IllegalEOFkeywordsStartprintvartruefalsenilifelseandorwhileforbreakcontinuefunreturnclassthissuperstaticgetsetkeywordsEndIdentStringNumberCommentsymbolsStart;,.=+-*/%<<=>>===!=!?:()[]{}symbolsEndtypesEnd"
 
-var _Type_index = [...]uint8{0, 7, 10, 23, 28, 31, 35, 40, 43, 45, 49, 52, 54, 59, 62, 67, 75, 78, 84, 89, 93, 98, 104, 107, 110, 121, 126, 132, 138, 145, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 169, 170, 172, 174, 176, 177, 178, 179, 180, 181, 182, 183, 193, 201}
+var _Type_index = [...]uint8{0, 7, 10, 23, 28, 31, 35, 40, 43, 45, 49, 52, 54, 59, 62, 67, 75, 78, 84, 89, 93, 98, 104, 107, 110, 121, 126, 132, 138, 145, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 169, 170, 172, 174, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 195, 203}
 
 func (i Type) String() string {
 	if i < 0 || i >= Type(len(_Type_index)-1) {

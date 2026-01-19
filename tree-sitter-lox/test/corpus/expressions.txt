@@ -40,6 +40,33 @@ Literal Expression
     (string)))
 
 ================================================================================
+List Expression
+================================================================================
+
+[];
+[1];
+[1, 2];
+[1, 2, 3];
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (list_expression))
+  (expression_statement
+    (list_expression
+      (number)))
+  (expression_statement
+    (list_expression
+      (number)
+      (number)))
+  (expression_statement
+    (list_expression
+      (number)
+      (number)
+      (number))))
+
+================================================================================
 Function Expression
 ================================================================================
 
@@ -158,7 +185,67 @@ d(1, 2)(3, 4);
         (number)))))
 
 ================================================================================
-Get Expression - Identifier
+Index Expression - Literal
+================================================================================
+
+foo[1];
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (index_expression
+      subject: (identifier)
+      index: (number))))
+
+================================================================================
+Index Expression - Identifier
+================================================================================
+
+foo[bar];
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (index_expression
+      subject: (identifier)
+      index: (identifier))))
+
+================================================================================
+Index Expression - Repeated
+================================================================================
+
+foo[1][2];
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (index_expression
+      subject: (index_expression
+        subject: (identifier)
+        index: (number))
+      index: (number))))
+
+================================================================================
+Index Expression - Assignment
+================================================================================
+
+foo[1] = 2;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (assignment_expression
+      left: (index_expression
+        subject: (identifier)
+        index: (number))
+      right: (number))))
+
+================================================================================
+Property Expression - Identifier
 ================================================================================
 
 foo.bar;
@@ -167,12 +254,12 @@ foo.bar;
 
 (source_file
   (expression_statement
-    (get_expression
+    (property_expression
       object: (identifier)
       name: (identifier))))
 
 ================================================================================
-Get Expression - Repeated Identifiers
+Property Expression - Repeated Identifiers
 ================================================================================
 
 foo.bar.baz;
@@ -181,14 +268,14 @@ foo.bar.baz;
 
 (source_file
   (expression_statement
-    (get_expression
-      object: (get_expression
+    (property_expression
+      object: (property_expression
         object: (identifier)
         name: (identifier))
       name: (identifier))))
 
 ================================================================================
-Get Expression - Call
+Property Expression - Call
 ================================================================================
 
 foo().bar;
@@ -197,11 +284,27 @@ foo().bar;
 
 (source_file
   (expression_statement
-    (get_expression
+    (property_expression
       object: (call_expression
         callee: (identifier)
         arguments: (argument_list))
       name: (identifier))))
+
+================================================================================
+Property Expression - Assignment
+================================================================================
+
+foo.bar = 2;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (assignment_expression
+      left: (property_expression
+        object: (identifier)
+        name: (identifier))
+      right: (number))))
 
 ================================================================================
 Unary Expression
@@ -483,7 +586,7 @@ a.b = 1;
 (source_file
   (expression_statement
     (assignment_expression
-      left: (get_expression
+      left: (property_expression
         object: (identifier)
         name: (identifier))
       right: (number))))
@@ -534,7 +637,7 @@ Precedence
                     right: (binary_expression
                       left: (number)
                       right: (unary_expression
-                        right: (get_expression
+                        right: (property_expression
                           object: (call_expression
                             callee: (number)
                             arguments: (argument_list))

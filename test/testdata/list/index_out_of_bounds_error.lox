@@ -1,0 +1,2 @@
+var list = [1, 2, 3];
+list[5]; // error: index 5 out of bounds for list of length 3

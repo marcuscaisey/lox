@@ -1,0 +1,4 @@
+var list = [];
+// error: '_' cannot be used as a value
+// lint error: '_' cannot be used as a value
+list[_] = 2;

@@ -1,0 +1,5 @@
+var list = ["hello"];
+print list * 0; // prints: []
+print list * 1; // prints: [hello]
+print list * 2; // prints: [hello, hello]
+print list; // prints: [hello]

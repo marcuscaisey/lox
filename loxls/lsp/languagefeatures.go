@@ -472,15 +472,15 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 		return nil, err
 	}
 
-	callExpr, ok := ast.FindLast(doc.Program, func(callExpr *ast.CallExpr) bool {
-		if callExpr.LeftParen.IsZero() {
+	callExpr, ok := ast.FindLast(doc.Program, func(expr *ast.CallExpr) bool {
+		if expr.LeftParen.IsZero() {
 			return false
 		}
-		start := callExpr.LeftParen.End()
-		if callExpr.RightParen.IsZero() {
+		start := expr.LeftParen.End()
+		if expr.RightParen.IsZero() {
 			return inRangeOrFollowsPositions(params.Position, start, doc.Program.End())
 		}
-		return inRangePositions(params.Position, start, callExpr.RightParen.End())
+		return inRangePositions(params.Position, start, expr.RightParen.End())
 	})
 	if !ok {
 		return nil, nil
@@ -490,7 +490,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 	switch callee := callExpr.Callee.(type) {
 	case *ast.IdentExpr:
 		calleeIdent = callee.Ident
-	case *ast.GetExpr:
+	case *ast.PropertyExpr:
 		calleeIdent = callee.Name
 	default:
 		return nil, nil

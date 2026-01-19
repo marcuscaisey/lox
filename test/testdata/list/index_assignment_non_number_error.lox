@@ -1,0 +1,2 @@
+var list = [];
+list["foo"] = 0; // error: index ("foo") must be a non-negative integer

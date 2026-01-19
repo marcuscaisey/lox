@@ -579,10 +579,16 @@ func (p *parser) parseAssignmentExpr() (ast.Expr, bool) {
 			if assignmentExpr.Right, ok = p.parseAssignmentExpr(); !ok {
 				return expr, false
 			}
-		case *ast.GetExpr:
-			setExpr := &ast.SetExpr{Object: left.Object, Name: left.Name}
-			expr = setExpr
-			if setExpr.Value, ok = p.parseAssignmentExpr(); !ok {
+		case *ast.IndexExpr:
+			indexSetExpr := &ast.IndexSetExpr{Subject: left.Subject, LeftBrack: left.LeftBrack, Index: left.Index, RightBrack: left.RightBrack}
+			expr = indexSetExpr
+			if indexSetExpr.Value, ok = p.parseAssignmentExpr(); !ok {
+				return expr, false
+			}
+		case *ast.PropertyExpr:
+			propertySetExpr := &ast.PropertySetExpr{Object: left.Object, Name: left.Name}
+			expr = propertySetExpr
+			if propertySetExpr.Value, ok = p.parseAssignmentExpr(); !ok {
 				return expr, false
 			}
 		default:
@@ -667,10 +673,10 @@ func (p *parser) parseUnaryExpr() (ast.Expr, bool) {
 		}
 		return expr, true
 	}
-	return p.parseCallExpr()
+	return p.parsePostfixExpr()
 }
 
-func (p *parser) parseCallExpr() (ast.Expr, bool) {
+func (p *parser) parsePostfixExpr() (ast.Expr, bool) {
 	var expr ast.Expr
 	var ok bool
 	if expr, ok = p.parsePrimaryExpr(); !ok {
@@ -679,7 +685,7 @@ func (p *parser) parseCallExpr() (ast.Expr, bool) {
 	for {
 		switch tok := p.tok; {
 		case p.match(token.LeftParen):
-			callExpr := &ast.CallExpr{LeftParen: tok, Callee: expr}
+			callExpr := &ast.CallExpr{Callee: expr, LeftParen: tok}
 			expr = callExpr
 			if callExpr.RightParen, ok = p.match2(token.RightParen); !ok {
 				if callExpr.Args, callExpr.Commas, ok = p.parseArgs(); !ok {
@@ -689,10 +695,19 @@ func (p *parser) parseCallExpr() (ast.Expr, bool) {
 					return expr, false
 				}
 			}
+		case p.match(token.LeftBrack):
+			indexExpr := &ast.IndexExpr{Subject: expr, LeftBrack: tok}
+			expr = indexExpr
+			if indexExpr.Index, ok = p.parseExpr(); !ok {
+				return expr, false
+			}
+			if indexExpr.RightBrack, ok = p.expect2(token.RightBrack); !ok {
+				return expr, false
+			}
 		case p.match(token.Dot):
-			getExpr := &ast.GetExpr{Object: expr, Dot: tok}
-			expr = getExpr
-			if getExpr.Name, ok = p.parseIdent("expected property name"); !ok {
+			propertyExpr := &ast.PropertyExpr{Object: expr, Dot: tok}
+			expr = propertyExpr
+			if propertyExpr.Name, ok = p.parseIdent("expected property name"); !ok {
 				return expr, false
 			}
 		default:
@@ -731,17 +746,29 @@ func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 		return &ast.ThisExpr{This: tok}, true
 	case p.match(token.Super):
 		superExpr := &ast.SuperExpr{Super: tok}
-		getExpr := &ast.GetExpr{Object: superExpr}
+		propertyExpr := &ast.PropertyExpr{Object: superExpr}
 		var ok bool
-		if getExpr.Dot, ok = p.expect2(token.Dot); !ok {
+		if propertyExpr.Dot, ok = p.expect2(token.Dot); !ok {
 			return superExpr, false
 		}
-		if getExpr.Name, ok = p.parseIdent("expected property name"); !ok {
-			return getExpr, false
+		if propertyExpr.Name, ok = p.parseIdent("expected property name"); !ok {
+			return propertyExpr, false
 		}
-		return getExpr, true
+		return propertyExpr, true
 	case p.extraFeatures && p.match(token.Fun):
 		return p.parseFunExpr(tok)
+	case p.match(token.LeftBrack):
+		listExpr := &ast.ListExpr{LeftBrack: tok}
+		var ok bool
+		if listExpr.RightBrack, ok = p.match2(token.RightBrack); !ok {
+			if listExpr.Elements, _, ok = p.parseArgs(); !ok {
+				return listExpr, false
+			}
+			if listExpr.RightBrack, ok = p.expect2(token.RightBrack); !ok {
+				return listExpr, false
+			}
+		}
+		return listExpr, true
 	case p.match(token.LeftParen):
 		expr := &ast.GroupExpr{LeftParen: tok}
 		var ok bool

@@ -6,6 +6,7 @@ import (
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/loxerr"
 	"github.com/marcuscaisey/lox/golox/stack"
+	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -92,6 +93,7 @@ type identResolver struct {
 	builtins                                            []ast.Decl
 	scopes                                              *stack.Stack[*scope]
 	globalScope                                         *scope
+	resolvingBuiltins                                   bool
 	globalDecls                                         map[string]ast.Decl
 	forwardDeclaredGlobals                              map[string]bool
 	inFun                                               bool
@@ -301,6 +303,9 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 		r.addErrorf(ident, typ, "%m has already been declared", ident)
 	} else {
 		scope.Declare(stmt)
+		if r.resolvingBuiltins {
+			scope.Use(stmt.BoundIdent().String())
+		}
 		r.identBindings[ident] = append(r.identBindings[ident], stmt)
 	}
 }
@@ -468,13 +473,13 @@ func (r *identResolver) walk(node ast.Node) bool {
 	case *ast.IdentExpr:
 		r.resolveIdentExpr(node)
 		return true
-	case *ast.GetExpr:
-		r.walkGetExpr(node)
+	case *ast.PropertyExpr:
+		r.walkPropertyExpr(node)
 	case *ast.AssignmentExpr:
 		r.resolveAssignmentExpr(node)
 		return true
-	case *ast.SetExpr:
-		r.walkSetExpr(node)
+	case *ast.PropertySetExpr:
+		r.walkPropertySetExpr(node)
 	default:
 		return true
 	}
@@ -484,14 +489,14 @@ func (r *identResolver) walk(node ast.Node) bool {
 func (r *identResolver) walkProgram(program *ast.Program) {
 	endScope := r.beginScope()
 	defer endScope()
-
 	r.globalScope = r.scopes.Peek()
+
+	r.resolvingBuiltins = true
 	for _, decl := range r.builtins {
-		name := decl.BoundIdent().String()
-		r.globalScope.Declare(decl)
-		r.globalScope.Define(name)
-		r.globalScope.Use(name)
+		ast.Walk(decl, r.walk)
 	}
+	r.resolvingBuiltins = false
+
 	r.globalDecls = r.readGlobalDecls(program)
 
 	ast.WalkChildren(program, r.walk)
@@ -532,8 +537,10 @@ func (r *identResolver) walkVarDecl(decl *ast.VarDecl) {
 }
 
 func (r *identResolver) walkFunDecl(decl *ast.FunDecl) {
-	r.declareIdent(decl)
-	r.defineIdent(decl.Name)
+	if !stubbuiltins.IsInternal(decl) {
+		r.declareIdent(decl)
+		r.defineIdent(decl.Name)
+	}
 	prevFunScopeLevel := r.funScopeLevel
 	r.funScopeLevel = r.scopes.Len() - 1
 	defer func() { r.funScopeLevel = prevFunScopeLevel }()
@@ -576,8 +583,10 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 		propertyTypeStatic:   {},
 	}
 
-	r.declareIdent(decl)
-	r.defineIdent(decl.Name)
+	if !stubbuiltins.IsInternal(decl) {
+		r.declareIdent(decl)
+		r.defineIdent(decl.Name)
+	}
 	r.resolveIdent(decl.Superclass, identOpRead)
 
 	endScope := r.beginScope()
@@ -613,7 +622,7 @@ func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
 	}
 	defer func() { r.curPropType = prevCurPropType }()
 
-	if decl.Class != nil && decl.Name.IsValid() {
+	if decl.Class != nil && decl.Name.IsValid() && !stubbuiltins.IsInternal(decl) {
 		r.identBindings[decl.Name] = append(r.identBindings[decl.Name], decl)
 		name := decl.Name.String()
 		r.bindingsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name] = append(
@@ -651,7 +660,7 @@ func (r *identResolver) resolveIdentExpr(expr *ast.IdentExpr) {
 	r.resolveIdent(expr.Ident, identOpRead)
 }
 
-func (r *identResolver) walkGetExpr(expr *ast.GetExpr) {
+func (r *identResolver) walkPropertyExpr(expr *ast.PropertyExpr) {
 	ast.WalkChildren(expr, r.walk)
 
 	if !expr.Name.IsValid() {
@@ -695,7 +704,7 @@ func (r *identResolver) resolveAssignmentExpr(expr *ast.AssignmentExpr) {
 	r.defineIdent(expr.Left)
 }
 
-func (r *identResolver) walkSetExpr(expr *ast.SetExpr) {
+func (r *identResolver) walkPropertySetExpr(expr *ast.PropertySetExpr) {
 	ast.WalkChildren(expr, r.walk)
 
 	if !expr.Name.IsValid() {

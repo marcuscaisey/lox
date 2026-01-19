@@ -1,0 +1,4 @@
+class Foo {
+  bar() {}
+}
+Foo().bar[0] = 0; // error: 'function' value is not indexable

@@ -153,13 +153,15 @@ module.exports = grammar({
     _expression: ($) =>
       choice(
         $._literal,
+        $.list_expression,
         $.function_expression,
         $.group_expression,
         $.identifier,
         $.this_expression,
         $.super_expression,
         $.call_expression,
-        $.get_expression,
+        $.index_expression,
+        $.property_expression,
         $.unary_expression,
         $.binary_expression,
         $.ternary_expression,
@@ -167,6 +169,20 @@ module.exports = grammar({
       ),
 
     _literal: ($) => choice($.number, $.string, $.boolean, $.nil),
+
+    list_expression: ($) =>
+      seq(
+        "[",
+        seq(
+          optional(
+            seq(
+              optional($._expression),
+              repeat(prec("arguments", seq(",", $._expression))),
+            ),
+          ),
+        ),
+        "]",
+      ),
 
     number: (_) => /\d+(\.\d+)?/,
 
@@ -196,7 +212,18 @@ module.exports = grammar({
         ),
       ),
 
-    get_expression: ($) =>
+    index_expression: ($) =>
+      prec(
+        "postfix",
+        seq(
+          field("subject", $._expression),
+          "[",
+          field("index", $._expression),
+          "]",
+        ),
+      ),
+
+    property_expression: ($) =>
       prec(
         "postfix",
         seq(field("object", $._expression), ".", field("name", $.identifier)),
@@ -289,7 +316,10 @@ module.exports = grammar({
       prec.right(
         "assignment",
         seq(
-          field("left", choice($.identifier, $.get_expression)),
+          field(
+            "left",
+            choice($.identifier, $.index_expression, $.property_expression),
+          ),
           "=",
           field("right", $._expression),
         ),

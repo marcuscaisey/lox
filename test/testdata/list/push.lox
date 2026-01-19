@@ -1,0 +1,7 @@
+var list = [];
+list.push(1);
+print list; // prints: [1]
+list.push(2);
+print list; // prints: [1, 2]
+list.push(3);
+print list; // prints: [1, 2, 3]

@@ -58,3 +58,10 @@ func MustParse(filename string, opts ...Option) []ast.Decl {
 
 	return decls
 }
+
+// IsInternal reports whether a declaration is an internal stub declaration. These declarations should not be surfaced
+// by tooling. They are marked with an "@internal" comment.
+func IsInternal(decl ast.Decl) bool {
+	documentedNode, ok := decl.(ast.Documented)
+	return ok && documentedNode.Documentation() == "@internal"
+}

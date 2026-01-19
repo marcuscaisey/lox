@@ -128,6 +128,10 @@ func (l *lexer) Next() token.Token {
 		tok.Type = token.LeftParen
 	case l.ch == ')':
 		tok.Type = token.RightParen
+	case l.ch == '[' && l.extraFeatures:
+		tok.Type = token.LeftBrack
+	case l.ch == ']' && l.extraFeatures:
+		tok.Type = token.RightBrack
 	case l.ch == '{':
 		tok.Type = token.LeftBrace
 	case l.ch == '}':

@@ -1,0 +1,2 @@
+class Foo {}
+Foo()[0]; // error: 'Foo' value is not indexable

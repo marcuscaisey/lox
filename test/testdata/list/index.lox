@@ -1,0 +1,4 @@
+var list = [1, 2, 3];
+print list[0]; // prints: 1
+print list[1]; // prints: 2
+print list[2]; // prints: 3

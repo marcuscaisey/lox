@@ -1,0 +1,2 @@
+fun f() {}
+f[0]; // error: 'function' value is not indexable

@@ -8,7 +8,7 @@
 (parameter_list
   (identifier) @variable.parameter)
 
-(get_expression
+(property_expression
   name: (identifier) @variable.member)
 
 ((identifier) @constant
@@ -44,7 +44,7 @@
   method: (identifier) @function.method)
 
 (call_expression
-  callee: (get_expression
+  callee: (property_expression
     name: (identifier) @function.method.call))
 
 (method_declaration
@@ -57,7 +57,7 @@
   callee: (identifier) @constructor (#match? @constructor "^[A-Z]"))
 
 (call_expression
-  callee: (get_expression
+  callee: (property_expression
     name: (identifier) @constructor (#match? @constructor "^[A-Z]")))
 
 [
@@ -123,6 +123,8 @@
 [
   "("
   ")"
+  "["
+  "]"
   "{"
   "}"
 ] @punctuation.bracket

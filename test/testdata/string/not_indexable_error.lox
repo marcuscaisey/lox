@@ -1,0 +1,1 @@
+"foo"[0]; // error: 'string' value is not indexable

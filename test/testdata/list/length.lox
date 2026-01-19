@@ -1,0 +1,8 @@
+var list = [];
+print list.length; // prints: 0
+list.push(1);
+print list.length; // prints: 1
+list.push(2);
+print list.length; // prints: 2
+list.push(3);
+print list.length; // prints: 3

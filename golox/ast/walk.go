@@ -75,6 +75,8 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 	case *GroupExpr:
 		Walk(node.Expr, f)
 	case *LiteralExpr:
+	case *ListExpr:
+		walkSlice(node.Elements, f)
 	case *IdentExpr:
 		Walk(node.Ident, f)
 	case *ThisExpr:
@@ -82,7 +84,14 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 	case *CallExpr:
 		Walk(node.Callee, f)
 		walkSlice(node.Args, f)
-	case *GetExpr:
+	case *IndexExpr:
+		Walk(node.Subject, f)
+		Walk(node.Index, f)
+	case *IndexSetExpr:
+		Walk(node.Subject, f)
+		Walk(node.Index, f)
+		Walk(node.Value, f)
+	case *PropertyExpr:
 		Walk(node.Object, f)
 		Walk(node.Name, f)
 	case *UnaryExpr:
@@ -97,7 +106,7 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 	case *AssignmentExpr:
 		Walk(node.Left, f)
 		Walk(node.Right, f)
-	case *SetExpr:
+	case *PropertySetExpr:
 		Walk(node.Object, f)
 		Walk(node.Name, f)
 		Walk(node.Value, f)

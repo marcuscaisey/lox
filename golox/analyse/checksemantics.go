@@ -90,9 +90,9 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.checkSuperInSubclass(node)
 	case *ast.CallExpr:
 		c.checkNumArgs(node.Args)
-	case *ast.GetExpr:
+	case *ast.PropertyExpr:
 		c.checkNoBlankPropertyAccess(node.Name)
-	case *ast.SetExpr:
+	case *ast.PropertySetExpr:
 		c.checkNoBlankPropertyAccess(node.Name)
 		c.checkNoSuperPropertyAssignment(node)
 	default:
@@ -249,7 +249,7 @@ func (c *semanticChecker) checkNoBlankPropertyAccess(ident *ast.Ident) {
 	}
 }
 
-func (c *semanticChecker) checkNoSuperPropertyAssignment(expr *ast.SetExpr) {
+func (c *semanticChecker) checkNoSuperPropertyAssignment(expr *ast.PropertySetExpr) {
 	if _, ok := expr.Object.(*ast.SuperExpr); ok {
 		c.errs.Addf(expr.Name, loxerr.Fatal, "property assignment is not valid for %m object", token.Super)
 	}

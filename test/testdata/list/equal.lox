@@ -1,0 +1,6 @@
+print ["a", "b"] == ["a", "b"]; // prints: true
+print [] == []; // prints: true
+print ["a", "b"] == ["c", "d"]; // prints: false
+print ["a", "b"] == ["c"]; // prints: false
+print ["1"] == [1]; // prints: false
+print ["a"] == 1; // prints: false

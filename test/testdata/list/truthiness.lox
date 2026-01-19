@@ -1,0 +1,2 @@
+print ["a"] ? "non-empty list is truthy" : "non-empty list is falsey"; // prints: non-empty list is truthy
+print [""] ? "empty list is truthy" : "empty list is falsey"; // prints: empty list is truthy

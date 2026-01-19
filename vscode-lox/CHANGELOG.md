@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add support for `list` type when extra features are enabled.
+
 ### Fixed
 
 - Fix crash when opening `builtins.lox`.
