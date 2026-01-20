@@ -279,7 +279,7 @@ func (m *MethodDecl) HasModifier(types ...token.Type) bool {
 
 // IsInit reports whether the declaration is an init method.
 func (m *MethodDecl) IsInit() bool {
-	return !m.HasModifier(token.Static) && m.Name.IsValid() && m.Name.Token.Lexeme == token.IdentInit
+	return !m.HasModifier(token.Static) && m.Name.IsValid() && m.Name.String() == token.IdentInit
 }
 
 // ExprStmt is an expression statement, such as a function call.
