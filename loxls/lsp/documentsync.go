@@ -193,6 +193,8 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 			}
 			diagnostics[i] = &protocol.Diagnostic{Range: newRange(e), Severity: severity, Source: "loxls", Message: e.Msg, Tags: tags}
 		}
+	} else {
+		diagnostics = []*protocol.Diagnostic{}
 	}
 
 	return h.client.TextDocumentPublishDiagnostics(&protocol.PublishDiagnosticsParams{
