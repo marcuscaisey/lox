@@ -156,7 +156,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 				continue
 			}
 			headers = append(headers, header)
-			body = commentsText(decl.Doc)
+			body = decl.Documentation()
 
 		case *ast.ClassDecl:
 			if !decl.Name.IsValid() {
@@ -218,7 +218,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			}
 			fmt.Fprint(b, "}")
 			headers = append(headers, b.String())
-			body = commentsText(decl.Doc)
+			body = decl.Documentation()
 
 		case *ast.MethodDecl:
 			classDecl, ok := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
@@ -230,7 +230,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 				continue
 			}
 			headers = append(headers, header)
-			body = commentsText(decl.Doc)
+			body = decl.Documentation()
 		}
 	}
 	if len(headers) == 0 {
@@ -508,7 +508,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			if !ok {
 				continue
 			}
-			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Doc))
+			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Documentation()))
 
 		case *ast.ClassDecl:
 			if !decl.Name.IsValid() {
@@ -516,7 +516,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			}
 			prefix := decl.Name.String()
 			var params []*ast.ParamDecl
-			doc := decl.Doc
+			doc := decl.Documentation()
 			for _, methodDecl := range decl.Methods() {
 				if methodDecl.IsInit() {
 					prefixInner, ok := methodDetailPrefix(methodDecl, decl)
@@ -525,8 +525,8 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 					}
 					prefix = prefixInner
 					params = methodDecl.GetParams()
-					if len(methodDecl.Doc) > 0 {
-						doc = methodDecl.Doc
+					if methodDoc := methodDecl.Documentation(); methodDoc != "" {
+						doc = methodDoc
 					}
 					break
 				}
@@ -545,7 +545,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			if !ok {
 				continue
 			}
-			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Doc))
+			signatures = append(signatures, h.signature(prefix, decl.GetParams(), decl.Documentation()))
 
 		default:
 		}
@@ -589,7 +589,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 	}, nil
 }
 
-func (h *Handler) signature(prefix string, params []*ast.ParamDecl, doc []*ast.Comment) *protocol.SignatureInformation {
+func (h *Handler) signature(prefix string, params []*ast.ParamDecl, doc string) *protocol.SignatureInformation {
 	parameters := make([]*protocol.ParameterInformation, len(params))
 	labelBuilder := new(strings.Builder)
 	fmt.Fprint(labelBuilder, prefix, "(")
@@ -612,7 +612,7 @@ func (h *Handler) signature(prefix string, params []*ast.ParamDecl, doc []*ast.C
 	fmt.Fprint(labelBuilder, ")")
 
 	var documentation *protocol.StringOrMarkupContent
-	if text := commentsText(doc); text != "" {
+	if doc != "" {
 		kind := protocol.MarkupKindPlainText
 		if format := h.capabilities.GetTextDocument().GetSignatureHelp().GetSignatureInformation().GetDocumentationFormat(); len(format) > 0 {
 			kind = format[0]
@@ -620,7 +620,7 @@ func (h *Handler) signature(prefix string, params []*ast.ParamDecl, doc []*ast.C
 		documentation = &protocol.StringOrMarkupContent{
 			Value: &protocol.MarkupContent{
 				Kind:  kind,
-				Value: text,
+				Value: doc,
 			},
 		}
 	}

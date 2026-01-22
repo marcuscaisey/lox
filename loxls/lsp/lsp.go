@@ -13,14 +13,6 @@ import (
 
 var log *logger
 
-func commentsText(doc []*ast.Comment) string {
-	lines := make([]string, len(doc))
-	for i, comment := range doc {
-		lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
-	}
-	return strings.Join(lines, "\n")
-}
-
 func varDetail(name *ast.Ident) (string, bool) {
 	if !name.IsValid() {
 		return "", false

@@ -4,6 +4,7 @@ package ast
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/marcuscaisey/lox/golox/token"
 )
@@ -117,6 +118,21 @@ func (i *CommentedStmt) IsValid() bool {
 	return i != nil && isValid(i.Stmt) && isValid(i.Comment)
 }
 
+// Documented is the interface implemented by all nodes which can be documented.
+type Documented interface {
+	Node
+	// Documentation returns the node's documentation.
+	Documentation() string
+}
+
+func docText(docComments []*Comment) string {
+	lines := make([]string, len(docComments))
+	for i, comment := range docComments {
+		lines[i] = strings.TrimSpace(strings.TrimPrefix(comment.Comment.Lexeme, "//"))
+	}
+	return strings.Join(lines, "\n")
+}
+
 // Decl is the interface which all declaration nodes implement.
 //
 //sumtype:decl
@@ -150,19 +166,20 @@ func (v *VarDecl) BoundIdent() *Ident { return v.Name }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {
-	Doc      []*Comment `print:"named"`
-	Fun      token.Token
-	Name     *Ident    `print:"named"`
-	Function *Function `print:"named"`
+	DocComments []*Comment `print:"named"`
+	Fun         token.Token
+	Name        *Ident    `print:"named"`
+	Function    *Function `print:"named"`
 	decl
 }
 
 func (f *FunDecl) Start() token.Position { return f.Fun.Start() }
 func (f *FunDecl) End() token.Position   { return last(f.Fun, f.Name, f.Function).End() }
 func (f *FunDecl) IsValid() bool {
-	return f != nil && isValidSlice(f.Doc) && !f.Fun.IsZero() && isValid(f.Name) && isValid(f.Function)
+	return f != nil && isValidSlice(f.DocComments) && !f.Fun.IsZero() && isValid(f.Name) && isValid(f.Function)
 }
-func (f *FunDecl) BoundIdent() *Ident { return f.Name }
+func (f *FunDecl) BoundIdent() *Ident    { return f.Name }
+func (f *FunDecl) Documentation() string { return docText(f.DocComments) }
 
 // GetParams returns Function.Params or nil if Function is nil.
 func (f *FunDecl) GetParams() []*ParamDecl {
@@ -205,20 +222,21 @@ func (p *ParamDecl) BoundIdent() *Ident    { return p.Name }
 //	  }
 //	}
 type ClassDecl struct {
-	Doc        []*Comment `print:"named"`
-	Class      token.Token
-	Name       *Ident `print:"named"`
-	Superclass *Ident `print:"named"`
-	Body       *Block `print:"named"`
+	DocComments []*Comment `print:"named"`
+	Class       token.Token
+	Name        *Ident `print:"named"`
+	Superclass  *Ident `print:"named"`
+	Body        *Block `print:"named"`
 	decl
 }
 
 func (c *ClassDecl) Start() token.Position { return c.Class.Start() }
 func (c *ClassDecl) End() token.Position   { return last(c.Class, c.Name, c.Body).End() }
 func (c *ClassDecl) IsValid() bool {
-	return c != nil && isValidSlice(c.Doc) && !c.Class.IsZero() && isValid(c.Name) && isValid(c.Body)
+	return c != nil && isValidSlice(c.DocComments) && !c.Class.IsZero() && isValid(c.Name) && isValid(c.Body)
 }
-func (c *ClassDecl) BoundIdent() *Ident { return c.Name }
+func (c *ClassDecl) BoundIdent() *Ident    { return c.Name }
+func (c *ClassDecl) Documentation() string { return docText(c.DocComments) }
 
 // Methods returns the methods of the class.
 func (c *ClassDecl) Methods() []*MethodDecl {
@@ -240,10 +258,10 @@ func (c *ClassDecl) Methods() []*MethodDecl {
 //	  return "baz";
 //	}
 type MethodDecl struct {
-	Doc       []*Comment    `print:"named"`
-	Modifiers []token.Token `print:"named"`
-	Name      *Ident        `print:"named"`
-	Function  *Function     `print:"named"`
+	DocComments []*Comment    `print:"named"`
+	Modifiers   []token.Token `print:"named"`
+	Name        *Ident        `print:"named"`
+	Function    *Function     `print:"named"`
 	decl
 }
 
@@ -252,9 +270,10 @@ func (m *MethodDecl) End() token.Position {
 	return last(lastSlice(m.Modifiers), m.Name, m.Function).End()
 }
 func (m *MethodDecl) IsValid() bool {
-	return m != nil && isValidSlice(m.Doc) && isValid(m.Name) && isValid(m.Function)
+	return m != nil && isValidSlice(m.DocComments) && isValid(m.Name) && isValid(m.Function)
 }
-func (m *MethodDecl) BoundIdent() *Ident { return m.Name }
+func (m *MethodDecl) BoundIdent() *Ident    { return m.Name }
+func (m *MethodDecl) Documentation() string { return docText(m.DocComments) }
 
 // GetParams returns Function.Params or nil if Function is nil.
 func (m *MethodDecl) GetParams() []*ParamDecl {

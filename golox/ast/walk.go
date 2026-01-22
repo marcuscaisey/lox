@@ -31,7 +31,7 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 		Walk(node.Name, f)
 		Walk(node.Initialiser, f)
 	case *FunDecl:
-		walkSlice(node.Doc, f)
+		walkSlice(node.DocComments, f)
 		Walk(node.Name, f)
 		Walk(node.Function, f)
 	case *Function:
@@ -40,12 +40,12 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 	case *ParamDecl:
 		Walk(node.Name, f)
 	case *ClassDecl:
-		walkSlice(node.Doc, f)
+		walkSlice(node.DocComments, f)
 		Walk(node.Name, f)
 		Walk(node.Superclass, f)
 		Walk(node.Body, f)
 	case *MethodDecl:
-		walkSlice(node.Doc, f)
+		walkSlice(node.DocComments, f)
 		Walk(node.Name, f)
 		Walk(node.Function, f)
 	case *ExprStmt:

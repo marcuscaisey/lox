@@ -102,7 +102,7 @@ func (p *parser) parseProgram() *ast.Program {
 
 func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 	var stmts []ast.Stmt
-	var doc []*ast.Comment
+	var docComments []*ast.Comment
 	for !slices.Contains(types, p.tok.Type) {
 		from := p.tok
 		stmt, ok := p.parseDecl()
@@ -113,30 +113,30 @@ func (p *parser) parseDeclsUntil(types ...token.Type) []ast.Stmt {
 			}
 		}
 
-		if len(doc) > 0 && stmt.Start().Line != doc[len(doc)-1].Start().Line+1 {
-			doc = doc[:0]
+		if len(docComments) > 0 && stmt.Start().Line != docComments[len(docComments)-1].Start().Line+1 {
+			docComments = docComments[:0]
 		}
 		if comment, ok := stmt.(*ast.Comment); ok {
 			if !p.parseComments {
 				continue
 			}
-			doc = append(doc, comment)
+			docComments = append(docComments, comment)
 		}
 
-		resetDoc := true
+		resetDocComments := true
 		switch decl := stmt.(type) {
 		case *ast.FunDecl:
-			decl.Doc = doc
+			decl.DocComments = docComments
 		case *ast.ClassDecl:
-			decl.Doc = doc
+			decl.DocComments = docComments
 		case *ast.MethodDecl:
-			decl.Doc = doc
+			decl.DocComments = docComments
 		default:
-			resetDoc = false
+			resetDocComments = false
 		}
-		if resetDoc {
-			stmts = stmts[:len(stmts)-len(doc)]
-			doc = nil
+		if resetDocComments {
+			stmts = stmts[:len(stmts)-len(docComments)]
+			docComments = nil
 		}
 		stmts = append(stmts, stmt)
 		if len(p.midStmtComments) > 0 {

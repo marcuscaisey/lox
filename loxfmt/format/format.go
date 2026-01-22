@@ -124,8 +124,8 @@ func formatVarDecl(decl *ast.VarDecl) string {
 
 func formatFunDecl(decl *ast.FunDecl) string {
 	b := new(strings.Builder)
-	if len(decl.Doc) > 0 {
-		fmt.Fprintln(b, formatStmts(decl.Doc))
+	if len(decl.DocComments) > 0 {
+		fmt.Fprintln(b, formatStmts(decl.DocComments))
 	}
 	fmt.Fprint(b, token.Fun, " ", Node(decl.Name), Node(decl.Function))
 	return b.String()
@@ -150,8 +150,8 @@ func formatParamDecl(decl *ast.ParamDecl) string {
 
 func formatClassDecl(decl *ast.ClassDecl) string {
 	b := new(strings.Builder)
-	if len(decl.Doc) > 0 {
-		fmt.Fprintln(b, formatStmts(decl.Doc))
+	if len(decl.DocComments) > 0 {
+		fmt.Fprintln(b, formatStmts(decl.DocComments))
 	}
 	fmt.Fprint(b, token.Class, " ", Node(decl.Name), " ")
 	if decl.Superclass.IsValid() {
@@ -163,8 +163,8 @@ func formatClassDecl(decl *ast.ClassDecl) string {
 
 func formatMethodDecl(decl *ast.MethodDecl) string {
 	b := new(strings.Builder)
-	if len(decl.Doc) > 0 {
-		fmt.Fprintln(b, formatStmts(decl.Doc))
+	if len(decl.DocComments) > 0 {
+		fmt.Fprintln(b, formatStmts(decl.DocComments))
 	}
 	for _, modifier := range decl.Modifiers {
 		fmt.Fprint(b, modifier.Type, " ")

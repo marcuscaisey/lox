@@ -726,7 +726,7 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 	g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] = true
 	var kind protocol.CompletionItemKind
 	var detail string
-	var documentation string
+	var doc string
 	if decl.HasModifier(token.Get, token.Set) {
 		kind = protocol.CompletionItemKindProperty
 	} else {
@@ -736,14 +736,14 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 		if !ok {
 			return
 		}
-		documentation = commentsText(decl.Doc)
+		doc = decl.Documentation()
 	}
 	g.complsByPropTypeByClassDecl[g.curClassDecl][propType] = append(g.complsByPropTypeByClassDecl[g.curClassDecl][propType], &completion{
 		Label:         label,
 		LabelDetails:  &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curClassDecl.Name)},
 		Kind:          kind,
 		Detail:        detail,
-		Documentation: documentation,
+		Documentation: doc,
 	})
 }
 
@@ -835,7 +835,7 @@ func funCompletion(decl *ast.FunDecl) (*completion, bool) {
 		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindFunction,
 		Detail:        detail,
-		Documentation: commentsText(decl.Doc),
+		Documentation: decl.Documentation(),
 	}, true
 }
 
@@ -851,7 +851,7 @@ func classCompletion(decl *ast.ClassDecl) (*completion, bool) {
 		Label:         decl.Name.String(),
 		Kind:          protocol.CompletionItemKindClass,
 		Detail:        detail,
-		Documentation: commentsText(decl.Doc),
+		Documentation: decl.Documentation(),
 	}, true
 }
 
