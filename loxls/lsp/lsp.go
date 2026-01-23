@@ -46,27 +46,27 @@ func classDetail(decl *ast.ClassDecl) (string, bool) {
 	return fmt.Sprintf("class %s", decl.Name), true
 }
 
-func methodDetail(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) (string, bool) {
-	prefix, ok := methodDetailPrefix(methodDecl, classDecl)
+func methodDetail(methodDecl *ast.MethodDecl) (string, bool) {
+	prefix, ok := methodDetailPrefix(methodDecl)
 	if !ok {
 		return "", false
 	}
 	return fmt.Sprintf("%s(%s)", prefix, formatParams(methodDecl.GetParams())), true
 }
 
-func methodDetailPrefix(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) (string, bool) {
-	name, ok := formatMethodName(methodDecl, classDecl)
+func methodDetailPrefix(methodDecl *ast.MethodDecl) (string, bool) {
+	name, ok := formatMethodName(methodDecl)
 	if !ok {
 		return "", false
 	}
 	return fmt.Sprintf("(method) %s", name), true
 }
 
-func formatMethodName(methodDecl *ast.MethodDecl, classDecl *ast.ClassDecl) (string, bool) {
-	if !methodDecl.Name.IsValid() || !classDecl.Name.IsValid() {
+func formatMethodName(decl *ast.MethodDecl) (string, bool) {
+	if !decl.Name.IsValid() || decl.Class == nil || !decl.Class.Name.IsValid() {
 		return "", false
 	}
-	return fmt.Sprintf("%s%s.%s", formatMethodModifiers(methodDecl.Modifiers), classDecl.Name, methodDecl.Name), true
+	return fmt.Sprintf("%s%s.%s", formatMethodModifiers(decl.Modifiers), decl.Class.Name, decl.Name), true
 }
 
 func formatMethodModifiers(modifiers []token.Token) string {

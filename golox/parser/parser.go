@@ -75,6 +75,7 @@ type parser struct {
 
 	scopeDepth          int
 	classBodyScopeDepth int
+	curClassDecl        *ast.ClassDecl
 	midStmtComments     []*ast.Comment
 
 	errs       loxerr.Errors
@@ -248,6 +249,11 @@ func (p *parser) parseClassDecl(classTok token.Token) (*ast.ClassDecl, bool) {
 	defer func() { p.classBodyScopeDepth = prevClassScopeDepth }()
 
 	decl := &ast.ClassDecl{Class: classTok}
+
+	prevCurClassDecl := p.curClassDecl
+	defer func() { p.curClassDecl = prevCurClassDecl }()
+	p.curClassDecl = decl
+
 	var ok bool
 
 	if decl.Name, ok = p.parseIdent("expected class name"); !ok {
@@ -281,7 +287,7 @@ func (p *parser) parseClassDecl(classTok token.Token) (*ast.ClassDecl, bool) {
 }
 
 func (p *parser) parseMethodDecl(firstTok token.Token) (*ast.MethodDecl, bool) {
-	decl := &ast.MethodDecl{}
+	decl := &ast.MethodDecl{Class: p.curClassDecl}
 	var ok bool
 	if firstTok.Type == token.Ident {
 		decl.Name = &ast.Ident{Token: firstTok}

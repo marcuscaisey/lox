@@ -634,7 +634,6 @@ func genPropertyCompletions(program *ast.Program, identBindings map[*ast.Ident][
 }
 
 type propertyCompletionGenerator struct {
-	curClassDecl                     *ast.ClassDecl
 	curMethodDecl                    *ast.MethodDecl
 	complLabelsByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType]map[string]bool
 	identBindings                    map[*ast.Ident][]ast.Binding
@@ -664,10 +663,6 @@ func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
 }
 
 func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
-	prevCurClassDecl := g.curClassDecl
-	defer func() { g.curClassDecl = prevCurClassDecl }()
-	g.curClassDecl = decl
-
 	g.complLabelsByPropTypeByClassDecl[decl] = map[propertyType]map[string]bool{
 		propertyTypeInstance: {},
 		propertyTypeStatic:   {},
@@ -711,7 +706,7 @@ func (g *propertyCompletionGenerator) walkMethodDecl(decl *ast.MethodDecl) {
 }
 
 func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDecl) {
-	if !decl.Name.IsValid() || decl.IsInit() || g.curClassDecl == nil || !g.curClassDecl.Name.IsValid() {
+	if !decl.Name.IsValid() || decl.IsInit() || decl.Class == nil || !decl.Class.Name.IsValid() {
 		return
 	}
 
@@ -720,10 +715,10 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 	if decl.HasModifier(token.Static) {
 		propType = propertyTypeStatic
 	}
-	if g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] {
+	if g.complLabelsByPropTypeByClassDecl[decl.Class][propType][label] {
 		return
 	}
-	g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] = true
+	g.complLabelsByPropTypeByClassDecl[decl.Class][propType][label] = true
 	var kind protocol.CompletionItemKind
 	var detail string
 	var doc string
@@ -732,15 +727,15 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 	} else {
 		kind = protocol.CompletionItemKindMethod
 		var ok bool
-		detail, ok = methodDetail(decl, g.curClassDecl)
+		detail, ok = methodDetail(decl)
 		if !ok {
 			return
 		}
 		doc = decl.Documentation()
 	}
-	g.complsByPropTypeByClassDecl[g.curClassDecl][propType] = append(g.complsByPropTypeByClassDecl[g.curClassDecl][propType], &completion{
+	g.complsByPropTypeByClassDecl[decl.Class][propType] = append(g.complsByPropTypeByClassDecl[decl.Class][propType], &completion{
 		Label:         label,
-		LabelDetails:  &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curClassDecl.Name)},
+		LabelDetails:  &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", decl.Class.Name)},
 		Kind:          kind,
 		Detail:        detail,
 		Documentation: doc,
@@ -748,7 +743,7 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 }
 
 func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.SetExpr) {
-	if expr.Object == nil || g.curClassDecl == nil || !g.curClassDecl.Name.IsValid() {
+	if expr.Object == nil || g.curMethodDecl == nil || g.curMethodDecl.Class == nil || !g.curMethodDecl.Class.Name.IsValid() {
 		return
 	}
 	if _, ok := expr.Object.(*ast.ThisExpr); !ok {
@@ -763,13 +758,13 @@ func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.SetExpr) {
 	if g.curMethodDecl.HasModifier(token.Static) {
 		propType = propertyTypeStatic
 	}
-	if g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] {
+	if g.complLabelsByPropTypeByClassDecl[g.curMethodDecl.Class][propType][label] {
 		return
 	}
-	g.complLabelsByPropTypeByClassDecl[g.curClassDecl][propType][label] = true
-	g.complsByPropTypeByClassDecl[g.curClassDecl][propType] = append(g.complsByPropTypeByClassDecl[g.curClassDecl][propType], &completion{
+	g.complLabelsByPropTypeByClassDecl[g.curMethodDecl.Class][propType][label] = true
+	g.complsByPropTypeByClassDecl[g.curMethodDecl.Class][propType] = append(g.complsByPropTypeByClassDecl[g.curMethodDecl.Class][propType], &completion{
 		Label:        label,
-		LabelDetails: &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curClassDecl.Name)},
+		LabelDetails: &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curMethodDecl.Class.Name)},
 		Kind:         protocol.CompletionItemKindField,
 	})
 }

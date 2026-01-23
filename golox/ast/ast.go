@@ -258,6 +258,7 @@ func (c *ClassDecl) Methods() []*MethodDecl {
 //	  return "baz";
 //	}
 type MethodDecl struct {
+	Class       *ClassDecl
 	DocComments []*Comment    `print:"named"`
 	Modifiers   []token.Token `print:"named"`
 	Name        *Ident        `print:"named"`

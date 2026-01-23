@@ -173,11 +173,11 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			seenInstanceMethods := map[string]bool{}
 			seenInstanceProps := map[string]bool{}
 			seenStaticProps := map[string]bool{}
-			for curClassDecl := range analyse.InheritanceChain(decl, doc.IdentBindings) {
+			for classDecl := range analyse.InheritanceChain(decl, doc.IdentBindings) {
 				inheritedCommentWritten := false
 				seenInstancePropsInClass := map[string]bool{}
 				seenStaticPropsInClass := map[string]bool{}
-				for _, methodDecl := range curClassDecl.Methods() {
+				for _, methodDecl := range classDecl.Methods() {
 					if !methodDecl.Name.IsValid() {
 						continue
 					}
@@ -209,8 +209,8 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 						fmt.Fprint(b, "\n")
 						openingNewLineWritten = true
 					}
-					if !inheritedCommentWritten && curClassDecl != decl {
-						fmt.Fprintf(b, "  // Inherited from %s\n", curClassDecl.Name)
+					if !inheritedCommentWritten && classDecl != decl {
+						fmt.Fprintf(b, "  // Inherited from %s\n", classDecl.Name)
 						inheritedCommentWritten = true
 					}
 					fmt.Fprintf(b, "  %s%s(%s)\n", formatMethodModifiers(methodDecl.Modifiers), methodDecl.Name, formatParams(methodDecl.GetParams()))
@@ -221,11 +221,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			body = decl.Documentation()
 
 		case *ast.MethodDecl:
-			classDecl, ok := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
-			if !ok {
-				continue
-			}
-			header, ok := methodDetail(decl, classDecl)
+			header, ok := methodDetail(decl)
 			if !ok {
 				continue
 			}
@@ -326,7 +322,7 @@ func (h *Handler) textDocumentDocumentSymbol(params *protocol.DocumentSymbolPara
 				default:
 					kind = protocol.SymbolKindMethod
 				}
-				name, ok := formatMethodName(methodDecl, decl)
+				name, ok := formatMethodName(methodDecl)
 				if !ok {
 					continue
 				}
@@ -519,7 +515,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			doc := decl.Documentation()
 			for _, methodDecl := range decl.Methods() {
 				if methodDecl.IsInit() {
-					prefixInner, ok := methodDetailPrefix(methodDecl, decl)
+					prefixInner, ok := methodDetailPrefix(methodDecl)
 					if !ok {
 						break
 					}
@@ -537,11 +533,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			if decl.HasModifier(token.Get, token.Set) {
 				continue
 			}
-			classDecl, ok := innermostNodeAt[*ast.ClassDecl](doc.Program, newPosition(decl.Start()))
-			if !ok {
-				continue
-			}
-			prefix, ok := methodDetailPrefix(decl, classDecl)
+			prefix, ok := methodDetailPrefix(decl)
 			if !ok {
 				continue
 			}

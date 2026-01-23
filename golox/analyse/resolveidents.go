@@ -609,11 +609,11 @@ func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
 	}
 	defer func() { r.curPropType = prevCurPropType }()
 
-	if decl.Name.IsValid() {
+	if decl.Class != nil && decl.Name.IsValid() {
 		r.identBindings[decl.Name] = append(r.identBindings[decl.Name], decl)
 		name := decl.Name.String()
-		r.bindingsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name] = append(
-			r.bindingsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name], decl)
+		r.bindingsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name] = append(
+			r.bindingsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name], decl)
 		r.bindingsByName[name] = append(r.bindingsByName[name], decl)
 	}
 
