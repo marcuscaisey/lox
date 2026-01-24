@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix crash when opening `builtins.lox`.
+- Resolve property of "this" or class to property setter if it exists.
 
 ## [4.2.0] - 2026-01-18
 

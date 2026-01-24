@@ -395,16 +395,20 @@ func (r *identResolver) resolveThisPropertyIdents(idents []*ast.Ident, name stri
 			continue
 		}
 		resolved = true
+		resolvedMethodInClass := false
 		for _, binding := range bindings {
 			if _, ok := binding.(*ast.MethodDecl); ok {
 				if resolvedMethod {
 					continue
 				}
-				resolvedMethod = true
+				resolvedMethodInClass = true
 			}
 			for _, ident := range idents {
 				r.identBindings[ident] = append(r.identBindings[ident], binding)
 			}
+		}
+		if resolvedMethodInClass {
+			resolvedMethod = true
 		}
 	}
 	if !resolved {
