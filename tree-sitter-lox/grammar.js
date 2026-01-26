@@ -26,7 +26,8 @@ module.exports = grammar({
   word: ($) => $.identifier,
 
   rules: {
-    source_file: ($) => repeat(choice($._declaration, $._statement)),
+    source_file: ($) =>
+      repeat(choice($._declaration, $._signature, $._statement)),
 
     // Declarations
     _declaration: ($) =>
@@ -34,7 +35,6 @@ module.exports = grammar({
         $.variable_declaration,
         $.function_declaration,
         $.class_declaration,
-        $.method_signature,
       ),
 
     variable_declaration: ($) =>
@@ -59,14 +59,29 @@ module.exports = grammar({
 
     method_declaration: ($) => seq(optional($.modifiers), $._function),
 
+    _signature: ($) => choice($.method_signature, $.property_signature),
+
     method_signature: ($) =>
       seq(
-        "(method)",
+        "(",
+        "method",
+        ")",
         optional($.modifiers),
         field("class", $.identifier),
         ".",
         field("method", $.identifier),
         field("parameters", $.parameter_list),
+      ),
+
+    property_signature: ($) =>
+      seq(
+        "(",
+        "property",
+        ")",
+        optional($.modifiers),
+        field("class", $.identifier),
+        ".",
+        field("name", $.identifier),
       ),
 
     modifiers: () => repeat1(choice("static", "get", "set")),

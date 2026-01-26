@@ -1,0 +1,163 @@
+================================================================================
+Method Signature - No Parameters
+================================================================================
+
+(method) Breakfast.cook()
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list)))
+
+================================================================================
+Method Signature - One Parameter
+================================================================================
+
+(method) Breakfast.serve(who)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list
+      (identifier))))
+
+================================================================================
+Method Signature - Two Parameters
+================================================================================
+
+(method) Breakfast.serve(what, who)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list
+      (identifier)
+      (identifier))))
+
+================================================================================
+Method Signature - Init
+================================================================================
+
+(method) Person.init(name)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list
+      (identifier))))
+
+================================================================================
+Method Signature - Static
+================================================================================
+
+(method) static Math.square(n)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    (modifiers)
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list
+      (identifier))))
+
+================================================================================
+Method Signature - Getter
+================================================================================
+
+(method) get Circle.area()
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    (modifiers)
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list)))
+
+================================================================================
+Method Signature - Setter
+================================================================================
+
+(method) set Circle.radius(value)
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    (modifiers)
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list
+      (identifier))))
+
+================================================================================
+Method Signature - Static Getter
+================================================================================
+
+(method) static get Foo.bar()
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    (modifiers)
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list)))
+
+================================================================================
+Method Signature - Static Setter
+================================================================================
+
+(method) static set Foo.bar()
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (method_signature
+    (modifiers)
+    class: (identifier)
+    method: (identifier)
+    parameters: (parameter_list)))
+
+================================================================================
+Property Signature
+================================================================================
+
+(property) Foo.bar
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (property_signature
+    class: (identifier)
+    name: (identifier)))
+
+================================================================================
+Property Signature - Static
+================================================================================
+
+(property) static Foo.bar
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (property_signature
+    (modifiers)
+    class: (identifier)
+    name: (identifier)))

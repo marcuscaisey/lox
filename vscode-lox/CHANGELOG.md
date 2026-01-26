@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Add support for `list` type when extra features are enabled.
+- Show documentation for property getter when hovering over or completing properties.
 
 ### Fixed
 

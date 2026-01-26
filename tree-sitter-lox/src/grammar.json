@@ -14,6 +14,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "_signature"
+          },
+          {
+            "type": "SYMBOL",
             "name": "_statement"
           }
         ]
@@ -33,10 +37,6 @@
         {
           "type": "SYMBOL",
           "name": "class_declaration"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "method_signature"
         }
       ]
     },
@@ -190,12 +190,33 @@
         }
       ]
     },
+    "_signature": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "method_signature"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "property_signature"
+        }
+      ]
+    },
     "method_signature": {
       "type": "SEQ",
       "members": [
         {
           "type": "STRING",
-          "value": "(method)"
+          "value": "("
+        },
+        {
+          "type": "STRING",
+          "value": "method"
+        },
+        {
+          "type": "STRING",
+          "value": ")"
         },
         {
           "type": "CHOICE",
@@ -235,6 +256,55 @@
           "content": {
             "type": "SYMBOL",
             "name": "parameter_list"
+          }
+        }
+      ]
+    },
+    "property_signature": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "STRING",
+          "value": "property"
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "modifiers"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "FIELD",
+          "name": "class",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "."
+        },
+        {
+          "type": "FIELD",
+          "name": "name",
+          "content": {
+            "type": "SYMBOL",
+            "name": "identifier"
           }
         }
       ]

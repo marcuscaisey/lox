@@ -81,6 +81,7 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 		unresolvedPropIdentsByName:                          map[string][]*ast.Ident{},
 		bindingsByNameByPropTypeByClassDecl:                 map[*ast.ClassDecl]map[propertyType]map[string][]ast.Binding{},
 		bindingsByName:                                      map[string][]ast.Binding{},
+		propMethodsByNameByPropTypeByClassDecl:              map[*ast.ClassDecl]map[propertyType]map[string][]*ast.MethodDecl{},
 		identBindings:                                       map[*ast.Ident][]ast.Binding{},
 	}
 	return r.Resolve(program)
@@ -105,6 +106,7 @@ type identResolver struct {
 	unresolvedPropIdentsByName                          map[string][]*ast.Ident
 	bindingsByNameByPropTypeByClassDecl                 map[*ast.ClassDecl]map[propertyType]map[string][]ast.Binding
 	bindingsByName                                      map[string][]ast.Binding
+	propMethodsByNameByPropTypeByClassDecl              map[*ast.ClassDecl]map[propertyType]map[string][]*ast.MethodDecl
 
 	identBindings map[*ast.Ident][]ast.Binding
 	errs          loxerr.Errors
@@ -582,6 +584,11 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 		propertyTypeInstance: {},
 		propertyTypeStatic:   {},
 	}
+	//nolint:exhaustive
+	r.propMethodsByNameByPropTypeByClassDecl[decl] = map[propertyType]map[string][]*ast.MethodDecl{
+		propertyTypeInstance: {},
+		propertyTypeStatic:   {},
+	}
 
 	if !stubbuiltins.IsInternal(decl) {
 		r.declareIdent(decl)
@@ -611,6 +618,18 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	for name, unresolvedThisPropIdents := range r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[decl][propertyTypeInstance] {
 		r.resolveThisPropertyIdents(unresolvedThisPropIdents, name, decl, propertyTypeInstance)
 	}
+
+	for _, propMethodsByName := range r.propMethodsByNameByPropTypeByClassDecl[decl] {
+		for _, propMethods := range propMethodsByName {
+			bindings := make([]ast.Binding, len(propMethods))
+			for i, methodDecl := range propMethods {
+				bindings[i] = methodDecl
+			}
+			for _, methodDecl := range propMethods {
+				r.identBindings[methodDecl.Name] = bindings
+			}
+		}
+	}
 }
 
 func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
@@ -623,8 +642,13 @@ func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
 	defer func() { r.curPropType = prevCurPropType }()
 
 	if decl.Class != nil && decl.Name.IsValid() && !stubbuiltins.IsInternal(decl) {
-		r.identBindings[decl.Name] = append(r.identBindings[decl.Name], decl)
 		name := decl.Name.String()
+		if decl.HasModifier(token.Get, token.Set) {
+			r.propMethodsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name] = append(
+				r.propMethodsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name], decl)
+		} else {
+			r.identBindings[decl.Name] = append(r.identBindings[decl.Name], decl)
+		}
 		r.bindingsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name] = append(
 			r.bindingsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name], decl)
 		r.bindingsByName[name] = append(r.bindingsByName[name], decl)

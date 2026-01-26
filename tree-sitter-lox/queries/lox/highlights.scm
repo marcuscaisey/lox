@@ -40,8 +40,14 @@
   name: (identifier) @function.method)
 
 (method_signature
+  "method" @variable
   class: (identifier) @type
   method: (identifier) @function.method)
+
+(property_signature
+  "property" @variable
+  class: (identifier) @type
+  name: (identifier) @variable.member)
 
 (call_expression
   callee: (property_expression

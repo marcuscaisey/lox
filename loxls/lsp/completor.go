@@ -857,26 +857,20 @@ func methodCompletion(decl *ast.MethodDecl) (*completion, bool) {
 	if decl.IsInit() || !decl.Name.IsValid() || decl.Class == nil || !decl.Class.Name.IsValid() {
 		return nil, false
 	}
-	var kind protocol.CompletionItemKind
-	var detail string
-	var doc string
+	kind := protocol.CompletionItemKindMethod
 	if decl.HasModifier(token.Get, token.Set) {
 		kind = protocol.CompletionItemKindProperty
-	} else {
-		kind = protocol.CompletionItemKindMethod
-		var ok bool
-		detail, ok = methodDetail(decl)
-		if !ok {
-			return nil, false
-		}
-		doc = decl.Documentation()
+	}
+	detail, ok := methodDetail(decl)
+	if !ok {
+		return nil, false
 	}
 	return &completion{
 		Label:         decl.Name.String(),
 		LabelDetails:  &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", decl.Class.Name)},
 		Kind:          kind,
 		Detail:        detail,
-		Documentation: doc,
+		Documentation: decl.Documentation(),
 	}, true
 }
 

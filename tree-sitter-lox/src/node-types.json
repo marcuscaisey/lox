@@ -371,10 +371,6 @@
           "named": true
         },
         {
-          "type": "method_signature",
-          "named": true
-        },
-        {
           "type": "print_statement",
           "named": true
         },
@@ -767,10 +763,6 @@
           },
           {
             "type": "function_declaration",
-            "named": true
-          },
-          {
-            "type": "method_signature",
             "named": true
           },
           {
@@ -1676,6 +1668,42 @@
     }
   },
   {
+    "type": "property_signature",
+    "named": true,
+    "fields": {
+      "class": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "modifiers",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "return_statement",
     "named": true,
     "fields": {},
@@ -1801,6 +1829,10 @@
         },
         {
           "type": "print_statement",
+          "named": true
+        },
+        {
+          "type": "property_signature",
           "named": true
         },
         {
@@ -2355,10 +2387,6 @@
     "named": false
   },
   {
-    "type": "(method)",
-    "named": false
-  },
-  {
     "type": ")",
     "named": false
   },
@@ -2479,6 +2507,10 @@
     "named": false
   },
   {
+    "type": "method",
+    "named": false
+  },
+  {
     "type": "nil",
     "named": true
   },
@@ -2492,6 +2524,10 @@
   },
   {
     "type": "print",
+    "named": false
+  },
+  {
+    "type": "property",
     "named": false
   },
   {
