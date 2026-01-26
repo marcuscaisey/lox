@@ -7,8 +7,8 @@ import (
 
 	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/builtins"
 	"github.com/marcuscaisey/lox/golox/loxerr"
-	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -41,7 +41,7 @@ func New(opts ...Option) *Interpreter {
 	interpreter := &Interpreter{
 		globals:      globals,
 		callStack:    newCallStack(),
-		builtInStubs: stubbuiltins.MustParse("built_ins.lox"),
+		builtInStubs: builtins.MustParseStubs("built_ins.lox"),
 	}
 	for _, opt := range opts {
 		opt(interpreter)

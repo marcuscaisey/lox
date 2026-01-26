@@ -9,8 +9,8 @@ import (
 	"os"
 
 	"github.com/marcuscaisey/lox/golox/analyse"
+	"github.com/marcuscaisey/lox/golox/builtins"
 	"github.com/marcuscaisey/lox/golox/parser"
-	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 )
 
 var (
@@ -67,7 +67,7 @@ func run(path string) error {
 		return err
 	}
 
-	builtIns := stubbuiltins.MustParse("built_ins.lox")
+	builtIns := builtins.MustParseStubs("built_ins.lox")
 	if err := analyse.Program(program, builtIns); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

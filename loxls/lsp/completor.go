@@ -9,7 +9,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/marcuscaisey/lox/golox/ast"
-	"github.com/marcuscaisey/lox/golox/stubbuiltins"
+	"github.com/marcuscaisey/lox/golox/builtins"
 	"github.com/marcuscaisey/lox/golox/token"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
@@ -557,7 +557,7 @@ func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]a
 			continue
 		}
 		for _, methodDecl := range classDecl.Methods() {
-			if stubbuiltins.IsInternal(methodDecl) {
+			if builtins.IsInternal(methodDecl) {
 				continue
 			}
 			compl, ok := methodCompletion(methodDecl)
@@ -875,7 +875,7 @@ func methodCompletion(decl *ast.MethodDecl) (*completion, bool) {
 }
 
 func declCompletion(decl ast.Decl) (*completion, bool) {
-	if stubbuiltins.IsInternal(decl) {
+	if builtins.IsInternal(decl) {
 		return nil, false
 	}
 	switch decl := decl.(type) {

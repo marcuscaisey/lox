@@ -4,9 +4,9 @@ import (
 	"iter"
 
 	"github.com/marcuscaisey/lox/golox/ast"
+	"github.com/marcuscaisey/lox/golox/builtins"
 	"github.com/marcuscaisey/lox/golox/loxerr"
 	"github.com/marcuscaisey/lox/golox/stack"
-	"github.com/marcuscaisey/lox/golox/stubbuiltins"
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
@@ -539,7 +539,7 @@ func (r *identResolver) walkVarDecl(decl *ast.VarDecl) {
 }
 
 func (r *identResolver) walkFunDecl(decl *ast.FunDecl) {
-	if !stubbuiltins.IsInternal(decl) {
+	if !builtins.IsInternal(decl) {
 		r.declareIdent(decl)
 		r.defineIdent(decl.Name)
 	}
@@ -590,7 +590,7 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 		propertyTypeStatic:   {},
 	}
 
-	if !stubbuiltins.IsInternal(decl) {
+	if !builtins.IsInternal(decl) {
 		r.declareIdent(decl)
 		r.defineIdent(decl.Name)
 	}
@@ -641,7 +641,7 @@ func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
 	}
 	defer func() { r.curPropType = prevCurPropType }()
 
-	if decl.Class != nil && decl.Name.IsValid() && !stubbuiltins.IsInternal(decl) {
+	if decl.Class != nil && decl.Name.IsValid() && !builtins.IsInternal(decl) {
 		name := decl.Name.String()
 		if decl.HasModifier(token.Get, token.Set) {
 			r.propMethodsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name] = append(

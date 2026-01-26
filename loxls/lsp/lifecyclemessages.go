@@ -11,7 +11,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/marcuscaisey/lox/golox/stubbuiltins"
+	"github.com/marcuscaisey/lox/golox/builtins"
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol"
 )
 
@@ -38,7 +38,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOp
 		return nil, fmt.Errorf("writing built-in stubs to cache directory: %s", err)
 	}
 	h.builtInStubsFilename = fmt.Sprintf("%s/loxls/built_ins.lox", cacheDir)
-	h.builtInStubs = stubbuiltins.MustParse(h.builtInStubsFilename, stubbuiltins.WithExtraFeatures(h.extraFeatures))
+	h.builtInStubs = builtins.MustParseStubs(h.builtInStubsFilename, builtins.WithExtraFeatures(h.extraFeatures))
 	if err := writeBuiltInStubs(h.builtInStubsFilename, h.builtInStubs[0].Start().File.Contents); err != nil {
 		return nil, err
 	}

@@ -1,6 +1,6 @@
-// Package stubbuiltins provides the source code for stubs of Lox's built-ins and a function to parse them.
+// Package builtins provides support for working with stubs of Lox's built-ins.
 // Built-ins are not actually implemented in Lox, but these stubs allow tools to pretend that they are.
-package stubbuiltins
+package builtins
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ type config struct {
 	extraFeatures bool
 }
 
-// Option can be passed to [MustParse] to configure its behaviour.
+// Option can be passed to [MustParseStubs] to configure its behaviour.
 type Option func(*config)
 
 // WithExtraFeatures enables extra features that https://github.com/marcuscaisey/lox implements but the base Lox
@@ -33,9 +33,9 @@ func WithExtraFeatures(enabled bool) Option {
 	}
 }
 
-// MustParse parses the stubs of Lox's built-ins and returns the declarations.
+// MustParseStubs parses the stubs of Lox's built-ins and returns them.
 // filename is the name of the file that the declarations will be associated with.
-func MustParse(filename string, opts ...Option) []ast.Decl {
+func MustParseStubs(filename string, opts ...Option) []ast.Decl {
 	cfg := &config{extraFeatures: true}
 	for _, opt := range opts {
 		opt(cfg)
@@ -59,8 +59,8 @@ func MustParse(filename string, opts ...Option) []ast.Decl {
 	return decls
 }
 
-// IsInternal reports whether a declaration is an internal stub declaration. These declarations should not be surfaced
-// by tooling. They are marked with an "@internal" comment.
+// IsInternal reports whether a built-in stub is internal. These declarations are marked with an "@internal" comment and
+// should not be surfaced by tooling.
 func IsInternal(decl ast.Decl) bool {
 	documentedNode, ok := decl.(ast.Documented)
 	return ok && documentedNode.Documentation() == "@internal"
