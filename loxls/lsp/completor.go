@@ -770,35 +770,35 @@ func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.SetExpr) {
 }
 
 func sortPropertyCompletions(compls []*completion) {
-	orders := []func(c *completion) string{
-		func(c *completion) string {
-			if strings.HasPrefix(c.Label, "_") {
-				return "1"
-			}
-			return "0"
-		},
-		func(c *completion) string {
-			if c.Kind == protocol.CompletionItemKindMethod {
-				return "0"
-			}
-			return "1"
-		},
-		func(c *completion) string {
-			return c.Label
-		},
-		func(c *completion) string {
-			if c.LabelDetails != nil {
-				return c.LabelDetails.Detail
-			}
-			return ""
-		},
-	}
 	slices.SortFunc(compls, func(x, y *completion) int {
-		for _, order := range orders {
-			if c := cmp.Compare(order(x), order(y)); c != 0 {
-				return c
-			}
+		xPrivate := strings.HasPrefix(x.Label, "_")
+		yPrivate := strings.HasPrefix(y.Label, "_")
+		if xPrivate && !yPrivate {
+			return 1
 		}
+		if !xPrivate && yPrivate {
+			return -1
+		}
+
+		xMethod := x.Kind == protocol.CompletionItemKindMethod
+		yMethod := y.Kind == protocol.CompletionItemKindMethod
+		if xMethod && !yMethod {
+			return -1
+		}
+		if !xMethod && yMethod {
+			return 1
+		}
+
+		if x.Label != y.Label {
+			return cmp.Compare(x.Label, y.Label)
+		}
+
+		xLabelDetails := x.LabelDetails.GetDetail()
+		yLabelDetails := y.LabelDetails.GetDetail()
+		if xLabelDetails != yLabelDetails {
+			return cmp.Compare(xLabelDetails, yLabelDetails)
+		}
+
 		return 0
 	})
 }
