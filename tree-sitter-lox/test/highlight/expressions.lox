@@ -94,7 +94,6 @@ foo.bar;
 // ^ punctuation.delimiter
 //  ^ variable.member
 
-
 // Built-in Functions
 clock;
 // <- function.builtin

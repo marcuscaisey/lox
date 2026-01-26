@@ -15,7 +15,7 @@ import (
 // if it's not possible to determine which binding the identifier refers to.
 // If an error is returned then a possibly incomplete map will still be returned along with it. The error will be of
 // type [loxerr.Errors].
-// builtins is a list of builtin declarations to add to the global scope.
+// builtIns is a list of built-in declarations which are available in the global scope.
 //
 // This function also checks that identifiers are not:
 //   - declared and never used
@@ -69,12 +69,12 @@ import (
 //	  15:1: foo => [ 13:1: var foo = Foo(); ],
 //	  15:5: method => [ 2:3: method() {}, 10:3: method() {} ],
 //	}
-func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (map[*ast.Ident][]ast.Binding, error) {
+func ResolveIdents(program *ast.Program, builtIns []ast.Decl, opts ...Option) (map[*ast.Ident][]ast.Binding, error) {
 	cfg := newConfig(opts)
 	r := &identResolver{
 		fatalOnly:              cfg.fatalOnly,
 		extraFeatures:          cfg.extraFeatures,
-		builtins:               builtins,
+		builtIns:               builtIns,
 		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
 		unresolvedThisPropIdentsByNameByPropTypeByClassDecl: map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident{},
@@ -91,10 +91,10 @@ type identResolver struct {
 	fatalOnly     bool
 	extraFeatures bool
 
-	builtins                                            []ast.Decl
+	builtIns                                            []ast.Decl
 	scopes                                              *stack.Stack[*scope]
 	globalScope                                         *scope
-	resolvingBuiltins                                   bool
+	resolvingBuiltIns                                   bool
 	globalDecls                                         map[string]ast.Decl
 	forwardDeclaredGlobals                              map[string]bool
 	inFun                                               bool
@@ -305,7 +305,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 		r.addErrorf(ident, typ, "%m has already been declared", ident)
 	} else {
 		scope.Declare(stmt)
-		if r.resolvingBuiltins {
+		if r.resolvingBuiltIns {
 			scope.Use(stmt.BoundIdent().String())
 		}
 		r.identBindings[ident] = append(r.identBindings[ident], stmt)
@@ -493,11 +493,11 @@ func (r *identResolver) walkProgram(program *ast.Program) {
 	defer endScope()
 	r.globalScope = r.scopes.Peek()
 
-	r.resolvingBuiltins = true
-	for _, decl := range r.builtins {
+	r.resolvingBuiltIns = true
+	for _, decl := range r.builtIns {
 		ast.Walk(decl, r.walk)
 	}
-	r.resolvingBuiltins = false
+	r.resolvingBuiltIns = false
 
 	r.globalDecls = r.readGlobalDecls(program)
 

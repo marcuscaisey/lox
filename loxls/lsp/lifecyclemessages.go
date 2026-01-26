@@ -35,11 +35,11 @@ func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOp
 
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
-		return nil, fmt.Errorf("writing stub builtins to cache directory: %s", err)
+		return nil, fmt.Errorf("writing built-in stubs to cache directory: %s", err)
 	}
-	h.stubBuiltinsFilename = fmt.Sprintf("%s/loxls/builtins.lox", cacheDir)
-	h.stubBuiltins = stubbuiltins.MustParse(h.stubBuiltinsFilename, stubbuiltins.WithExtraFeatures(h.extraFeatures))
-	if err := writeStubBuiltins(h.stubBuiltinsFilename, h.stubBuiltins[0].Start().File.Contents); err != nil {
+	h.builtInStubsFilename = fmt.Sprintf("%s/loxls/built_ins.lox", cacheDir)
+	h.builtInStubs = stubbuiltins.MustParse(h.builtInStubsFilename, stubbuiltins.WithExtraFeatures(h.extraFeatures))
+	if err := writeBuiltInStubs(h.builtInStubsFilename, h.builtInStubs[0].Start().File.Contents); err != nil {
 		return nil, err
 	}
 
@@ -99,19 +99,19 @@ func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOp
 	}, nil
 }
 
-func writeStubBuiltins(filename string, contents []byte) error {
+func writeBuiltInStubs(filename string, contents []byte) error {
 	if data, err := os.ReadFile(filename); err == nil {
 		if bytes.Equal(data, contents) {
 			return nil
 		}
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("writing stub builtins to cache directory: checking if existing stubs up to date: %s", err)
+		return fmt.Errorf("writing built-in stubs to cache directory: checking if existing stubs up to date: %s", err)
 	}
 	if err := os.MkdirAll(path.Dir(filename), 0755); err != nil {
-		return fmt.Errorf("writing stub builtins to cache directory: %s", err)
+		return fmt.Errorf("writing built-in stubs to cache directory: %s", err)
 	}
 	if err := os.WriteFile(filename, contents, 0644); err != nil {
-		return fmt.Errorf("writing stub builtins to cache directory: %s", err)
+		return fmt.Errorf("writing built-in stubs to cache directory: %s", err)
 	}
 	return nil
 }

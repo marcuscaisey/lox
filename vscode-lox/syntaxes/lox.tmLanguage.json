@@ -176,7 +176,7 @@
           "include": "#super-expression"
         },
         {
-          "include": "#builtin-functions"
+          "include": "#built-in-functions"
         },
         {
           "include": "#call-expression"
@@ -343,7 +343,7 @@
       "name": "variable.language.super.lox",
       "match": "\\bsuper\\b"
     },
-    "builtin-functions": {
+    "built-in-functions": {
       "name": "support.function.builtin.lox",
       "match": "\\b(?:clock|type|error)(?=\\()"
     },

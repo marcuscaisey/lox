@@ -16,7 +16,7 @@ var replacements = map[string]string{
 	`(?m)^\[class ([A-Za-z_][A-Za-z0-9_]*)\]$`:                                              "$1",
 	`(?m)^\[([A-Za-z_][A-Za-z0-9_]*) object\]$`:                                             "$1 instance",
 	`(?m)^\[(?:bound method [A-Za-z_][A-Za-z0-9_]*\.|function )([A-Za-z_][A-Za-z0-9_]*)\]$`: "<fn $1>",
-	`(?m)^\[builtin function [A-Za-z_][A-Za-z0-9_]*\]$`:                                     "<native fn>",
+	`(?m)^\[built-in function [A-Za-z_][A-Za-z0-9_]*\]$`:                                    "<native fn>",
 }
 
 type errorReplacement struct {

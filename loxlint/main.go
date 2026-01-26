@@ -67,8 +67,8 @@ func run(path string) error {
 		return err
 	}
 
-	builtins := stubbuiltins.MustParse("builtins.lox")
-	if err := analyse.Program(program, builtins); err != nil {
+	builtIns := stubbuiltins.MustParse("built_ins.lox")
+	if err := analyse.Program(program, builtIns); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

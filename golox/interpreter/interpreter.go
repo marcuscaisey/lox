@@ -16,7 +16,7 @@ import (
 type Interpreter struct {
 	globals      environment
 	callStack    *callStack
-	stubBuiltins []ast.Decl
+	builtInStubs []ast.Decl
 
 	replMode bool
 }
@@ -35,13 +35,13 @@ func WithREPLMode(enabled bool) Option {
 // New constructs a new Interpreter with the given options.
 func New(opts ...Option) *Interpreter {
 	var globals environment = newGlobalEnvironment()
-	for name, builtin := range builtins {
-		globals = globals.Define(name, builtin)
+	for name, builtIn := range builtIns {
+		globals = globals.Define(name, builtIn)
 	}
 	interpreter := &Interpreter{
 		globals:      globals,
 		callStack:    newCallStack(),
-		stubBuiltins: stubbuiltins.MustParse("builtins.lox"),
+		builtInStubs: stubbuiltins.MustParse("built_ins.lox"),
 	}
 	for _, opt := range opts {
 		opt(interpreter)
@@ -52,7 +52,7 @@ func New(opts ...Option) *Interpreter {
 // Interpret executes a program and returns an error if one occurred.
 // Interpret can be called multiple times with different programs and the state will be maintained between calls.
 func (i *Interpreter) Interpret(program *ast.Program) error {
-	if err := analyse.Program(program, i.stubBuiltins, analyse.WithFatalOnly(true)); err != nil {
+	if err := analyse.Program(program, i.builtInStubs, analyse.WithFatalOnly(true)); err != nil {
 		return err
 	}
 	return i.interpretProgram(program)

@@ -1,1 +1,1 @@
-print [].push; // prints: [builtin method list.push]
+print [].push; // prints: [built-in method list.push]

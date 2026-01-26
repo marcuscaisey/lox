@@ -42,20 +42,20 @@ type completor struct {
 	classBodyCompletor *classBodyCompletor
 	identCompletor     *identCompletor
 	keywordCompletor   *keywordCompletor
-	builtinCompls      []*completion
+	builtInCompls      []*completion
 	propertyCompletor  *propertyCompletor
 }
 
 // newCompletor returns a [completor] which provides completions inside the given program.
-// builtins is a list of built-in declarations which are available in the global scope.
-func newCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtins []ast.Decl) *completor {
+// builtIns is a list of built-in declarations which are available in the global scope.
+func newCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtIns []ast.Decl) *completor {
 	return &completor{
 		program:            program,
 		classBodyCompletor: newClassBodyCompletor(program),
 		identCompletor:     newIdentCompletor(program),
 		keywordCompletor:   newKeywordCompletor(program),
-		builtinCompls:      declCompletions(builtins),
-		propertyCompletor:  newPropertyCompletor(program, identBindings, builtins),
+		builtInCompls:      declCompletions(builtIns),
+		propertyCompletor:  newPropertyCompletor(program, identBindings, builtIns),
 	}
 }
 
@@ -70,7 +70,7 @@ func (c *completor) Complete(pos *protocol.Position) (compls []*completion, isIn
 	return slices.Concat(
 		c.identCompletor.Complete(pos),
 		c.keywordCompletor.Complete(pos),
-		c.builtinCompls,
+		c.builtInCompls,
 	), false
 }
 
@@ -532,7 +532,7 @@ type propertyCompletor struct {
 	complsByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
 }
 
-func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtins []ast.Decl) *propertyCompletor {
+func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtIns []ast.Decl) *propertyCompletor {
 	complsByPropTypeByClassDecl := genPropertyCompletions(program, identBindings)
 	seenCompls := map[*completion]bool{}
 	var allCompls []*completion
@@ -550,9 +550,9 @@ func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]a
 	}
 	sortPropertyCompletions(allCompls)
 
-	var builtinCompls []*completion
-	for _, decl := range builtins {
-		classDecl, ok := decl.(*ast.ClassDecl)
+	var builtInCompls []*completion
+	for _, builtIn := range builtIns {
+		classDecl, ok := builtIn.(*ast.ClassDecl)
 		if !ok {
 			continue
 		}
@@ -564,11 +564,11 @@ func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]a
 			if !ok {
 				continue
 			}
-			builtinCompls = append(builtinCompls, compl)
+			builtInCompls = append(builtInCompls, compl)
 		}
 	}
-	sortPropertyCompletions(builtinCompls)
-	allCompls = append(allCompls, builtinCompls...)
+	sortPropertyCompletions(builtInCompls)
+	allCompls = append(allCompls, builtInCompls...)
 
 	return &propertyCompletor{
 		program:                     program,
