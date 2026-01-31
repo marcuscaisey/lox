@@ -12,7 +12,7 @@ GOOS=linux GOARCH=arm64 npx @vscode/vsce publish --target linux-arm64 $common_fl
 # shellcheck disable=SC2086
 GOOS=linux GOARCH=arm npx @vscode/vsce publish --target linux-armhf $common_flags
 # shellcheck disable=SC2086
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 npx @vscode/vsce publish --target alpine-x6 $common_flags
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 npx @vscode/vsce publish --target alpine-x64 $common_flags
 # shellcheck disable=SC2086
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 npx @vscode/vsce publish --target alpine-arm64 $common_flags
 # shellcheck disable=SC2086
