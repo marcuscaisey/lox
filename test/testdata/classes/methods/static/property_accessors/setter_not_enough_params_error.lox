@@ -1,0 +1,9 @@
+class Foo {
+  static get bar() {}
+
+  // error: property setter must have a parameter
+  // lint error: property setter must have a parameter
+  static set bar() {}
+}
+
+_ = Foo;

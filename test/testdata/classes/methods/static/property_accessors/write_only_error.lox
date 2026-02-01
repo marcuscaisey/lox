@@ -1,0 +1,11 @@
+class Foo {
+  get bar() {}
+
+  // error: write-only properties are not allowed
+  // lint error: write-only properties are not allowed
+  static set bar(value) {
+    this._bar = value;
+  }
+}
+
+_ = Foo;

@@ -1,0 +1,12 @@
+class Foo {
+  static get bar() {}
+
+  // error: property setter can only have one parameter
+  // lint error: property setter can only have one parameter
+  static set bar(x, y) {
+    _ = x;
+    _ = y;
+  }
+}
+
+_ = Foo;

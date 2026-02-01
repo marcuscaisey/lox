@@ -1,0 +1,7 @@
+class Math {
+  static get PI() {
+    return 3;
+  }
+}
+
+Math.PI = 2; // error: property 'PI' of 'Math class' object is read-only

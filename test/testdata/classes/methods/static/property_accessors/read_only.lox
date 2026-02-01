@@ -1,0 +1,7 @@
+class Math {
+  static get PI() {
+    return 3;
+  }
+}
+
+print Math.PI; // prints: 3
