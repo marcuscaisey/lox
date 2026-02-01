@@ -8,4 +8,4 @@ class Subclass < Superclass {
   static get property() {}
 }
 
-Subclass.property = 2; // error: property 'property' of 'Subclass class' object is read-only
+Subclass.property = 2; // error: property 'property' of 'class' object is read-only

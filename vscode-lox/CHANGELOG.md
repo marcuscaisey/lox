@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Report errors for duplicate methods and property accessors.
 - Refer to non-objects as values instead of values.
 - Syntax highlighting of classes without superclasses.
+- Remove references to metaclass from error messages.
 
 ## [4.3.0] - 2026-01-31
 

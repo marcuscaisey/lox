@@ -1,2 +1,2 @@
 class Foo {}
--Foo; // error: '-' operator cannot be used with type 'Foo class'
+-Foo; // error: '-' operator cannot be used with type 'class'

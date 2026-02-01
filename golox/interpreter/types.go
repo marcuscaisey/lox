@@ -21,6 +21,7 @@ const (
 	loxTypeBool     loxType = "bool"
 	loxTypeNil      loxType = "nil"
 	loxTypeFunction loxType = "function"
+	loxTypeClass    loxType = "class"
 	loxTypeList     loxType = "list"
 )
 
@@ -530,7 +531,7 @@ func newLoxClassWithMetaclass(name string, superclass *loxClass, metaclass *loxC
 		propertyAccessorsByName: propertyAccessorsByName,
 	}
 	if metaclass != nil {
-		class.metaclassInstance = newLoxInstance(metaclass)
+		class.metaclassInstance = newLoxInstance(metaclass, loxTypeClass)
 	}
 	return class
 }
@@ -574,7 +575,8 @@ func (c *loxClass) Params() []string {
 }
 
 func (c *loxClass) Call(interpreter *Interpreter, args []loxValue) loxValue {
-	instance := newLoxInstance(c)
+	typ := loxType(c.Name)
+	instance := newLoxInstance(c, typ)
 	if init, ok := c.Method(token.IdentInit); ok {
 		init.Bind(instance).Call(interpreter, args)
 	}
@@ -663,12 +665,14 @@ func (s *loxSuperObject) Equals(other loxValue) bool {
 
 type loxInstance struct {
 	Class             *loxClass
+	typ               loxType
 	fieldValuesByName map[string]loxValue
 }
 
-func newLoxInstance(class *loxClass) *loxInstance {
+func newLoxInstance(class *loxClass, typ loxType) *loxInstance {
 	return &loxInstance{
 		Class:             class,
+		typ:               typ,
 		fieldValuesByName: make(map[string]loxValue),
 	}
 }
@@ -688,7 +692,7 @@ func (i *loxInstance) Repr() string {
 }
 
 func (i *loxInstance) Type() loxType {
-	return loxType(i.Class.Name)
+	return i.typ
 }
 
 func (i *loxInstance) Equals(other loxValue) bool {

@@ -4,4 +4,4 @@ class Math {
   }
 }
 
-Math.PI = 2; // error: property 'PI' of 'Math class' object is read-only
+Math.PI = 2; // error: property 'PI' of 'class' object is read-only

@@ -1,2 +1,2 @@
 class Foo {}
-Foo[0]; // error: 'Foo class' value is not indexable
+Foo[0]; // error: 'class' value is not indexable

@@ -1,2 +1,2 @@
 class Foo {}
-print type(Foo); // prints: Foo class
+print type(Foo); // prints: class
