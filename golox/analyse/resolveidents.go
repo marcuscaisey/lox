@@ -475,11 +475,11 @@ func (r *identResolver) walk(node ast.Node) bool {
 	case *ast.IdentExpr:
 		r.resolveIdentExpr(node)
 		return true
-	case *ast.PropertyExpr:
-		r.walkPropertyExpr(node)
 	case *ast.AssignmentExpr:
 		r.resolveAssignmentExpr(node)
 		return true
+	case *ast.PropertyExpr:
+		r.walkPropertyExpr(node)
 	case *ast.PropertySetExpr:
 		r.walkPropertySetExpr(node)
 	default:
@@ -684,6 +684,11 @@ func (r *identResolver) resolveIdentExpr(expr *ast.IdentExpr) {
 	r.resolveIdent(expr.Ident, identOpRead)
 }
 
+func (r *identResolver) resolveAssignmentExpr(expr *ast.AssignmentExpr) {
+	r.resolveIdent(expr.Left, identOpWrite)
+	r.defineIdent(expr.Left)
+}
+
 func (r *identResolver) walkPropertyExpr(expr *ast.PropertyExpr) {
 	ast.WalkChildren(expr, r.walk)
 
@@ -721,11 +726,6 @@ func (r *identResolver) walkPropertyExpr(expr *ast.PropertyExpr) {
 	}
 
 	r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
-}
-
-func (r *identResolver) resolveAssignmentExpr(expr *ast.AssignmentExpr) {
-	r.resolveIdent(expr.Left, identOpWrite)
-	r.defineIdent(expr.Left)
 }
 
 func (r *identResolver) walkPropertySetExpr(expr *ast.PropertySetExpr) {

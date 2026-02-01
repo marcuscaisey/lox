@@ -70,15 +70,16 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 	case *ContinueStmt:
 	case *ReturnStmt:
 		Walk(node.Value, f)
+	case *LiteralExpr:
 	case *FunExpr:
 		Walk(node.Function, f)
-	case *GroupExpr:
-		Walk(node.Expr, f)
-	case *LiteralExpr:
 	case *ListExpr:
 		walkSlice(node.Elements, f)
 	case *IdentExpr:
 		Walk(node.Ident, f)
+	case *AssignmentExpr:
+		Walk(node.Left, f)
+		Walk(node.Right, f)
 	case *ThisExpr:
 	case *SuperExpr:
 	case *CallExpr:
@@ -94,6 +95,10 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 	case *PropertyExpr:
 		Walk(node.Object, f)
 		Walk(node.Name, f)
+	case *PropertySetExpr:
+		Walk(node.Object, f)
+		Walk(node.Name, f)
+		Walk(node.Value, f)
 	case *UnaryExpr:
 		Walk(node.Right, f)
 	case *BinaryExpr:
@@ -103,13 +108,8 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 		Walk(node.Condition, f)
 		Walk(node.Then, f)
 		Walk(node.Else, f)
-	case *AssignmentExpr:
-		Walk(node.Left, f)
-		Walk(node.Right, f)
-	case *PropertySetExpr:
-		Walk(node.Object, f)
-		Walk(node.Name, f)
-		Walk(node.Value, f)
+	case *GroupExpr:
+		Walk(node.Expr, f)
 	}
 }
 

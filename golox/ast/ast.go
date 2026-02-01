@@ -464,6 +464,16 @@ type expr struct {
 
 func (expr) isExpr() {}
 
+// LiteralExpr is a literal expression, such as 123 or "abc".
+type LiteralExpr struct {
+	Value token.Token
+	expr
+}
+
+func (l *LiteralExpr) Start() token.Position { return l.Value.Start() }
+func (l *LiteralExpr) End() token.Position   { return l.Value.End() }
+func (l *LiteralExpr) IsValid() bool         { return l != nil && !l.Value.IsZero() }
+
 // FunExpr is a function expression, such as fun(x, y) { return x + y; }.
 type FunExpr struct {
 	Fun      token.Token
@@ -474,38 +484,6 @@ type FunExpr struct {
 func (f *FunExpr) Start() token.Position { return f.Fun.Start() }
 func (f *FunExpr) End() token.Position   { return last(f.Fun, f.Function).End() }
 func (f *FunExpr) IsValid() bool         { return f != nil && !f.Fun.IsZero() && isValid(f.Function) }
-
-// GetParams returns Function.Params or nil if Function is nil.
-func (f *FunExpr) GetParams() []*ParamDecl {
-	if f.Function == nil {
-		return nil
-	}
-	return f.Function.Params
-}
-
-// GroupExpr is a group expression, such as (a + b).
-type GroupExpr struct {
-	LeftParen  token.Token
-	Expr       Expr `print:"unnamed"`
-	RightParen token.Token
-	expr
-}
-
-func (g *GroupExpr) Start() token.Position { return g.LeftParen.Start() }
-func (g *GroupExpr) End() token.Position   { return last(g.LeftParen, g.Expr, g.RightParen).End() }
-func (g *GroupExpr) IsValid() bool {
-	return g != nil && !g.LeftParen.IsZero() && g.Expr != nil && isValid(g.Expr) && !g.RightParen.IsZero()
-}
-
-// LiteralExpr is a literal expression, such as 123 or "abc".
-type LiteralExpr struct {
-	Value token.Token
-	expr
-}
-
-func (l *LiteralExpr) Start() token.Position { return l.Value.Start() }
-func (l *LiteralExpr) End() token.Position   { return l.Value.End() }
-func (l *LiteralExpr) IsValid() bool         { return l != nil && !l.Value.IsZero() }
 
 // ListExpr is a list literal expression, such as [1, 2, 3].
 type ListExpr struct {
@@ -523,6 +501,14 @@ func (l *ListExpr) IsValid() bool {
 	return l != nil && !l.LeftBrack.IsZero() && isValidSlice(l.Elements) && !l.RightBrack.IsZero()
 }
 
+// GetParams returns Function.Params or nil if Function is nil.
+func (f *FunExpr) GetParams() []*ParamDecl {
+	if f.Function == nil {
+		return nil
+	}
+	return f.Function.Params
+}
+
 // IdentExpr is an identifier expression, such as a or b.
 type IdentExpr struct {
 	Ident *Ident
@@ -532,6 +518,17 @@ type IdentExpr struct {
 func (i *IdentExpr) Start() token.Position { return i.Ident.Start() }
 func (i *IdentExpr) End() token.Position   { return i.Ident.End() }
 func (i *IdentExpr) IsValid() bool         { return i != nil && isValid(i.Ident) }
+
+// AssignmentExpr is an assignment expression, such as a = 2.
+type AssignmentExpr struct {
+	Left  *Ident `print:"named"`
+	Right Expr   `print:"named"`
+	expr
+}
+
+func (a *AssignmentExpr) Start() token.Position { return a.Left.Start() }
+func (a *AssignmentExpr) End() token.Position   { return last(a.Left, a.Right).End() }
+func (a *AssignmentExpr) IsValid() bool         { return a != nil && isValid(a.Left) && isValid(a.Right) }
 
 // ThisExpr represents usage of the 'this' keyword.
 type ThisExpr struct {
@@ -620,6 +617,21 @@ func (p *PropertyExpr) IsValid() bool {
 	return p != nil && isValid(p.Object) && !p.Dot.IsZero() && isValid(p.Name)
 }
 
+// PropertySetExpr is a property assignment expression, such as a.b = 2.
+type PropertySetExpr struct {
+	Object Expr   `print:"named"`
+	Name   *Ident `print:"named"`
+	Value  Expr   `print:"named"`
+	expr
+}
+
+func (p *PropertySetExpr) Start() token.Position { return p.Object.Start() }
+func (p *PropertySetExpr) End() token.Position   { return last(p.Object, p.Name, p.Value).End() }
+func (p *PropertySetExpr) IsValid() bool {
+	return p != nil && isValid(p.Object) && isValid(p.Name) && isValid(p.Value)
+}
+func (p *PropertySetExpr) BoundIdent() *Ident { return p.Name }
+
 // UnaryExpr is a unary operator expression, such as !a.
 type UnaryExpr struct {
 	Op    token.Token `print:"named"`
@@ -659,31 +671,19 @@ func (t *TernaryExpr) IsValid() bool {
 	return t != nil && isValid(t.Condition) && isValid(t.Then) && isValid(t.Else)
 }
 
-// AssignmentExpr is an assignment expression, such as a = 2.
-type AssignmentExpr struct {
-	Left  *Ident `print:"named"`
-	Right Expr   `print:"named"`
+// GroupExpr is a group expression, such as (a + b).
+type GroupExpr struct {
+	LeftParen  token.Token
+	Expr       Expr `print:"unnamed"`
+	RightParen token.Token
 	expr
 }
 
-func (a *AssignmentExpr) Start() token.Position { return a.Left.Start() }
-func (a *AssignmentExpr) End() token.Position   { return last(a.Left, a.Right).End() }
-func (a *AssignmentExpr) IsValid() bool         { return a != nil && isValid(a.Left) && isValid(a.Right) }
-
-// PropertySetExpr is a property assignment expression, such as a.b = 2.
-type PropertySetExpr struct {
-	Object Expr   `print:"named"`
-	Name   *Ident `print:"named"`
-	Value  Expr   `print:"named"`
-	expr
+func (g *GroupExpr) Start() token.Position { return g.LeftParen.Start() }
+func (g *GroupExpr) End() token.Position   { return last(g.LeftParen, g.Expr, g.RightParen).End() }
+func (g *GroupExpr) IsValid() bool {
+	return g != nil && !g.LeftParen.IsZero() && g.Expr != nil && isValid(g.Expr) && !g.RightParen.IsZero()
 }
-
-func (p *PropertySetExpr) Start() token.Position { return p.Object.Start() }
-func (p *PropertySetExpr) End() token.Position   { return last(p.Object, p.Name, p.Value).End() }
-func (p *PropertySetExpr) IsValid() bool {
-	return p != nil && isValid(p.Object) && isValid(p.Name) && isValid(p.Value)
-}
-func (p *PropertySetExpr) BoundIdent() *Ident { return p.Name }
 
 func first(ranges ...token.Range) token.Range {
 	for _, rang := range ranges {
@@ -788,15 +788,15 @@ func isNil(node Node) bool {
 		return node == nil
 	case *ReturnStmt:
 		return node == nil
-	case *FunExpr:
-		return node == nil
-	case *GroupExpr:
-		return node == nil
 	case *LiteralExpr:
+		return node == nil
+	case *FunExpr:
 		return node == nil
 	case *ListExpr:
 		return node == nil
 	case *IdentExpr:
+		return node == nil
+	case *AssignmentExpr:
 		return node == nil
 	case *ThisExpr:
 		return node == nil
@@ -810,15 +810,15 @@ func isNil(node Node) bool {
 		return node == nil
 	case *PropertyExpr:
 		return node == nil
+	case *PropertySetExpr:
+		return node == nil
 	case *UnaryExpr:
 		return node == nil
 	case *BinaryExpr:
 		return node == nil
 	case *TernaryExpr:
 		return node == nil
-	case *AssignmentExpr:
-		return node == nil
-	case *PropertySetExpr:
+	case *GroupExpr:
 		return node == nil
 	case nil:
 		return true

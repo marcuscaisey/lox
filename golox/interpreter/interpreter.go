@@ -264,16 +264,16 @@ func (i *Interpreter) execReturnStmt(env environment, stmt *ast.ReturnStmt) stmt
 
 func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 	switch expr := expr.(type) {
-	case *ast.FunExpr:
-		return i.evalFunExpr(env, expr)
-	case *ast.GroupExpr:
-		return i.evalGroupExpr(env, expr)
 	case *ast.LiteralExpr:
 		return i.evalLiteralExpr(expr)
+	case *ast.FunExpr:
+		return i.evalFunExpr(env, expr)
 	case *ast.ListExpr:
 		return i.evalListExpr(env, expr)
 	case *ast.IdentExpr:
 		return i.evalIdentExpr(env, expr)
+	case *ast.AssignmentExpr:
+		return i.evalAssignmentExpr(env, expr)
 	case *ast.ThisExpr:
 		return i.evalThisExpr(env, expr)
 	case *ast.SuperExpr:
@@ -286,26 +286,18 @@ func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 		return i.evalIndexSetExpr(env, expr)
 	case *ast.PropertyExpr:
 		return i.evalPropertyExpr(env, expr)
+	case *ast.PropertySetExpr:
+		return i.evalPropertySetExpr(env, expr)
 	case *ast.UnaryExpr:
 		return i.evalUnaryExpr(env, expr)
 	case *ast.BinaryExpr:
 		return i.evalBinaryExpr(env, expr)
 	case *ast.TernaryExpr:
 		return i.evalTernaryExpr(env, expr)
-	case *ast.AssignmentExpr:
-		return i.evalAssignmentExpr(env, expr)
-	case *ast.PropertySetExpr:
-		return i.evalPropertySetExpr(env, expr)
+	case *ast.GroupExpr:
+		return i.evalGroupExpr(env, expr)
 	}
 	panic("unreachable")
-}
-
-func (i *Interpreter) evalFunExpr(env environment, expr *ast.FunExpr) loxObject {
-	return newLoxFunction("(anonymous)", expr.Function, funTypeFunction, env)
-}
-
-func (i *Interpreter) evalGroupExpr(env environment, expr *ast.GroupExpr) loxObject {
-	return i.evalExpr(env, expr.Expr)
 }
 
 func (i *Interpreter) evalLiteralExpr(expr *ast.LiteralExpr) loxObject {
@@ -327,6 +319,10 @@ func (i *Interpreter) evalLiteralExpr(expr *ast.LiteralExpr) loxObject {
 	}
 }
 
+func (i *Interpreter) evalFunExpr(env environment, expr *ast.FunExpr) loxObject {
+	return newLoxFunction("(anonymous)", expr.Function, funTypeFunction, env)
+}
+
 func (i *Interpreter) evalListExpr(env environment, expr *ast.ListExpr) loxObject {
 	elements := make([]loxObject, len(expr.Elements))
 	for j, element := range expr.Elements {
@@ -338,6 +334,14 @@ func (i *Interpreter) evalListExpr(env environment, expr *ast.ListExpr) loxObjec
 
 func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxObject {
 	return env.Get(expr.Ident)
+}
+
+func (i *Interpreter) evalAssignmentExpr(env environment, expr *ast.AssignmentExpr) loxObject {
+	value := i.evalExpr(env, expr.Right)
+	if expr.Left.String() != token.IdentBlank {
+		env.Assign(expr.Left, value)
+	}
+	return value
 }
 
 func (i *Interpreter) evalThisExpr(env environment, _ *ast.ThisExpr) loxObject {
@@ -428,6 +432,17 @@ func (i *Interpreter) evalPropertyExpr(env environment, expr *ast.PropertyExpr) 
 	return accessible.Property(i, expr.Name)
 }
 
+func (i *Interpreter) evalPropertySetExpr(env environment, expr *ast.PropertySetExpr) loxObject {
+	object := i.evalExpr(env, expr.Object)
+	settable, ok := object.(loxPropertySettable)
+	if !ok {
+		panic(loxerr.Newf(expr, loxerr.Fatal, "property assignment is not valid for %m object", object.Type()))
+	}
+	value := i.evalExpr(env, expr.Value)
+	settable.SetProperty(i, expr.Name, value)
+	return value
+}
+
 func (i *Interpreter) evalUnaryExpr(env environment, expr *ast.UnaryExpr) loxObject {
 	right := i.evalExpr(env, expr.Right)
 	if expr.Op.Type == token.Bang {
@@ -491,23 +506,8 @@ func (i *Interpreter) evalTernaryExpr(env environment, expr *ast.TernaryExpr) lo
 	return i.evalExpr(env, expr.Else)
 }
 
-func (i *Interpreter) evalAssignmentExpr(env environment, expr *ast.AssignmentExpr) loxObject {
-	value := i.evalExpr(env, expr.Right)
-	if expr.Left.String() != token.IdentBlank {
-		env.Assign(expr.Left, value)
-	}
-	return value
-}
-
-func (i *Interpreter) evalPropertySetExpr(env environment, expr *ast.PropertySetExpr) loxObject {
-	object := i.evalExpr(env, expr.Object)
-	settable, ok := object.(loxPropertySettable)
-	if !ok {
-		panic(loxerr.Newf(expr, loxerr.Fatal, "property assignment is not valid for %m object", object.Type()))
-	}
-	value := i.evalExpr(env, expr.Value)
-	settable.SetProperty(i, expr.Name, value)
-	return value
+func (i *Interpreter) evalGroupExpr(env environment, expr *ast.GroupExpr) loxObject {
+	return i.evalExpr(env, expr.Expr)
 }
 
 func isTruthy(obj loxObject) loxBool {

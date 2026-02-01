@@ -54,16 +54,16 @@ func Node(node ast.Node) string {
 		return formatContinueStmt(node)
 	case *ast.ReturnStmt:
 		return formatReturnStmt(node)
-	case *ast.FunExpr:
-		return formatFunExpr(node)
-	case *ast.GroupExpr:
-		return formatGroupExpr(node)
 	case *ast.LiteralExpr:
 		return formatLiteralExpr(node)
+	case *ast.FunExpr:
+		return formatFunExpr(node)
 	case *ast.ListExpr:
 		return formatListExpr(node)
 	case *ast.IdentExpr:
 		return formatIdentExpr(node)
+	case *ast.AssignmentExpr:
+		return formatAssignmentExpr(node)
 	case *ast.ThisExpr:
 		return formatThisExpr(node)
 	case *ast.SuperExpr:
@@ -76,16 +76,16 @@ func Node(node ast.Node) string {
 		return formatIndexSetExpr(node)
 	case *ast.PropertyExpr:
 		return formatPropertyExpr(node)
+	case *ast.PropertySetExpr:
+		return formatPropertySetExpr(node)
 	case *ast.UnaryExpr:
 		return formatUnaryExpr(node)
 	case *ast.BinaryExpr:
 		return formatBinaryExpr(node)
 	case *ast.TernaryExpr:
 		return formatTernaryExpr(node)
-	case *ast.AssignmentExpr:
-		return formatAssignmentExpr(node)
-	case *ast.PropertySetExpr:
-		return formatPropertySetExpr(node)
+	case *ast.GroupExpr:
+		return formatGroupExpr(node)
 	}
 	panic("unreachable")
 }
@@ -272,16 +272,12 @@ func formatReturnStmt(stmt *ast.ReturnStmt) string {
 	}
 }
 
-func formatFunExpr(expr *ast.FunExpr) string {
-	return fmt.Sprint(token.Fun, Node(expr.Function))
-}
-
-func formatGroupExpr(expr *ast.GroupExpr) string {
-	return fmt.Sprint(token.LeftParen, Node(expr.Expr), token.RightParen)
-}
-
 func formatLiteralExpr(expr *ast.LiteralExpr) string {
 	return expr.Value.Lexeme
+}
+
+func formatFunExpr(expr *ast.FunExpr) string {
+	return fmt.Sprint(token.Fun, Node(expr.Function))
 }
 
 func formatListExpr(expr *ast.ListExpr) string {
@@ -299,6 +295,10 @@ func formatListExpr(expr *ast.ListExpr) string {
 
 func formatIdentExpr(expr *ast.IdentExpr) string {
 	return expr.Ident.String()
+}
+
+func formatAssignmentExpr(expr *ast.AssignmentExpr) string {
+	return fmt.Sprint(Node(expr.Left), " ", token.Equal, " ", Node(expr.Right))
 }
 
 func formatThisExpr(*ast.ThisExpr) string {
@@ -334,6 +334,10 @@ func formatPropertyExpr(expr *ast.PropertyExpr) string {
 	return fmt.Sprint(Node(expr.Object), token.Dot, Node(expr.Name))
 }
 
+func formatPropertySetExpr(expr *ast.PropertySetExpr) string {
+	return fmt.Sprint(Node(expr.Object), token.Dot, Node(expr.Name), " ", token.Equal, " ", Node(expr.Value))
+}
+
 func formatUnaryExpr(expr *ast.UnaryExpr) string {
 	return fmt.Sprint(expr.Op.Lexeme, Node(expr.Right))
 }
@@ -352,12 +356,8 @@ func formatTernaryExpr(expr *ast.TernaryExpr) string {
 	return fmt.Sprint(Node(expr.Condition), " ", token.Question, " ", Node(expr.Then), " ", token.Colon, " ", Node(expr.Else))
 }
 
-func formatAssignmentExpr(expr *ast.AssignmentExpr) string {
-	return fmt.Sprint(Node(expr.Left), " ", token.Equal, " ", Node(expr.Right))
-}
-
-func formatPropertySetExpr(expr *ast.PropertySetExpr) string {
-	return fmt.Sprint(Node(expr.Object), token.Dot, Node(expr.Name), " ", token.Equal, " ", Node(expr.Value))
+func formatGroupExpr(expr *ast.GroupExpr) string {
+	return fmt.Sprint(token.LeftParen, Node(expr.Expr), token.RightParen)
 }
 
 func indent(s string) string {
