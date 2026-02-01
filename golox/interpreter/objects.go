@@ -436,20 +436,20 @@ func (f *loxFunction) Bind(instance *loxInstance) *loxFunction {
 	return &fCopy
 }
 
-type property struct {
+type propertyAccessors struct {
 	getter *loxFunction
 	setter *loxFunction
 }
 
-func newProperty(getter, setter *loxFunction) *property {
-	return &property{getter: getter, setter: setter}
+func newPropertyAccessors(getter, setter *loxFunction) *propertyAccessors {
+	return &propertyAccessors{getter: getter, setter: setter}
 }
 
-func (p *property) Get(interpreter *Interpreter, instance *loxInstance, name *ast.Ident) loxObject {
+func (p *propertyAccessors) Get(interpreter *Interpreter, instance *loxInstance, name *ast.Ident) loxObject {
 	return interpreter.call(name.Start(), p.getter.Bind(instance), nil)
 }
 
-func (p *property) Set(interpreter *Interpreter, instance *loxInstance, name *ast.Ident, value loxObject) {
+func (p *propertyAccessors) Set(interpreter *Interpreter, instance *loxInstance, name *ast.Ident, value loxObject) {
 	if p.setter == nil {
 		panic(loxerr.Newf(name, loxerr.Fatal, "property '%s' of %m object is read-only", name.String(), instance.Type()))
 	}
@@ -459,11 +459,11 @@ func (p *property) Set(interpreter *Interpreter, instance *loxInstance, name *as
 const metaclassNameSuffix = " class"
 
 type loxClass struct {
-	Name              string
-	superclass        *loxClass
-	metaclassInstance *loxInstance
-	methodsByName     map[string]*loxFunction
-	propertiesByName  map[string]*property
+	Name                    string
+	superclass              *loxClass
+	metaclassInstance       *loxInstance
+	methodsByName           map[string]*loxFunction
+	propertyAccessorsByName map[string]*propertyAccessors
 }
 
 func newLoxClass(name string, superclass *loxClass, methods []*ast.MethodDecl, env environment) *loxClass {
@@ -509,15 +509,15 @@ func newLoxClassWithMetaclass(name string, superclass *loxClass, metaclass *loxC
 		funcMap[decl.Name.String()] = newLoxFunction(methodName, decl.Function, methodFunType(decl), env)
 	}
 	// Every setter must have a corresponding getter so we can just iterate over the getters
-	propertiesByName := make(map[string]*property, len(gettersByName))
+	propertyAccessorsByName := make(map[string]*propertyAccessors, len(gettersByName))
 	for name, getter := range gettersByName {
-		propertiesByName[name] = newProperty(getter, settersByName[name])
+		propertyAccessorsByName[name] = newPropertyAccessors(getter, settersByName[name])
 	}
 	class := &loxClass{
-		Name:             name,
-		superclass:       superclass,
-		methodsByName:    methodsByName,
-		propertiesByName: propertiesByName,
+		Name:                    name,
+		superclass:              superclass,
+		methodsByName:           methodsByName,
+		propertyAccessorsByName: propertyAccessorsByName,
 	}
 	if metaclass != nil {
 		class.metaclassInstance = newLoxInstance(metaclass)
@@ -550,14 +550,14 @@ func (c *loxClass) Equals(other loxObject) bool {
 }
 
 func (c *loxClass) CallableName() string {
-	if init, ok := c.GetMethod(token.IdentInit); ok {
+	if init, ok := c.Method(token.IdentInit); ok {
 		return init.CallableName()
 	}
 	return c.Name
 }
 
 func (c *loxClass) Params() []string {
-	if init, ok := c.GetMethod(token.IdentInit); ok {
+	if init, ok := c.Method(token.IdentInit); ok {
 		return init.Params()
 	}
 	return nil
@@ -565,7 +565,7 @@ func (c *loxClass) Params() []string {
 
 func (c *loxClass) Call(interpreter *Interpreter, args []loxObject) loxObject {
 	instance := newLoxInstance(c)
-	if init, ok := c.GetMethod(token.IdentInit); ok {
+	if init, ok := c.Method(token.IdentInit); ok {
 		init.Bind(instance).Call(interpreter, args)
 	}
 	return instance
@@ -579,22 +579,22 @@ func (c *loxClass) Property(interpreter *Interpreter, name *ast.Ident) loxObject
 	return c.metaclassInstance.Property(interpreter, name)
 }
 
-func (c *loxClass) GetMethod(name string) (*loxFunction, bool) {
+func (c *loxClass) Method(name string) (*loxFunction, bool) {
 	if method, ok := c.methodsByName[name]; ok {
 		return method, true
 	}
 	if c.superclass != nil {
-		return c.superclass.GetMethod(name)
+		return c.superclass.Method(name)
 	}
 	return nil, false
 }
 
-func (c *loxClass) GetProperty(name string) (*property, bool) {
-	if property, ok := c.propertiesByName[name]; ok {
-		return property, true
+func (c *loxClass) PropertyAccessors(name string) (*propertyAccessors, bool) {
+	if propertyAccessors, ok := c.propertyAccessorsByName[name]; ok {
+		return propertyAccessors, true
 	}
 	if c.superclass != nil {
-		return c.superclass.GetProperty(name)
+		return c.superclass.PropertyAccessors(name)
 	}
 	return nil, false
 }
@@ -622,7 +622,7 @@ func (s *loxSuperObject) Property(_ *Interpreter, name *ast.Ident) loxObject {
 	if !ok {
 		panic(fmt.Sprintf("unexpected instance type: %T", instanceObject))
 	}
-	method, ok := s.superclass.GetMethod(name.String())
+	method, ok := s.superclass.Method(name.String())
 	if !ok {
 		static := ""
 		superclassName, ok := strings.CutSuffix(s.superclass.Name, metaclassNameSuffix)
@@ -687,15 +687,15 @@ func (i *loxInstance) Equals(other loxObject) bool {
 }
 
 func (i *loxInstance) Property(interpreter *Interpreter, name *ast.Ident) loxObject {
-	if property, ok := i.Class.GetProperty(name.String()); ok {
-		return property.Get(interpreter, i, name)
+	if propertyAccessors, ok := i.Class.PropertyAccessors(name.String()); ok {
+		return propertyAccessors.Get(interpreter, i, name)
 	}
 
 	if value, ok := i.fieldValuesByName[name.String()]; ok {
 		return value
 	}
 
-	if method, ok := i.Class.GetMethod(name.String()); ok {
+	if method, ok := i.Class.Method(name.String()); ok {
 		return method.Bind(i)
 	}
 
@@ -703,8 +703,8 @@ func (i *loxInstance) Property(interpreter *Interpreter, name *ast.Ident) loxObj
 }
 
 func (i *loxInstance) SetProperty(interpreter *Interpreter, name *ast.Ident, value loxObject) {
-	if property, ok := i.Class.GetProperty(name.String()); ok {
-		property.Set(interpreter, i, name, value)
+	if propertyAccessors, ok := i.Class.PropertyAccessors(name.String()); ok {
+		propertyAccessors.Set(interpreter, i, name, value)
 		return
 	}
 

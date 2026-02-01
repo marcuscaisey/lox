@@ -505,6 +505,8 @@ print p2.x; // prints: 10
 print p2.y; // prints: 12
 ```
 
+#### Inheritance
+
 Classes declarations can specify a superclass which properties will be inherited from. `super` is a
 special identifer which can be used inside a method body to refer to the superclass of the class
 containing the method.
@@ -529,6 +531,8 @@ var bostonCream = BostonCream();
 bostonCream.cook();
 ```
 
+#### Static Method
+
 Methods can be declared as static by prefixing the declaration with `static`. Static methods are
 accessed from the class itself rather than the instance. `this` inside a static method refers to the
 class.
@@ -543,9 +547,12 @@ class Math {
 print Math.square(2); // prints: 4
 ```
 
-Methods can be declared as property getters and setters by prefixing the declaration with `get` and
-`set` respectively. Property getters and setters are accessed like properties but are actually calls
-to the getter and setter methods. Property getters and setters can also be static.
+#### Property Accessor
+
+Methods can be declared as property accessors by prefixing the declaration with `get` or `set`.
+These two types of accessor are referred to as property getters and setters respectively. Property
+accessors define properties which are accessed like fields but implemented as calls to the
+corresponding getter or setter. Property accessors can also be static.
 
 ```lox
 var PI = 3;

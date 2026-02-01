@@ -61,7 +61,7 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 		c.walkClassDecl(node)
 		return false
 	case *ast.MethodDecl:
-		c.checkNumPropertyParams(node)
+		c.checkNumPropertyAccessorParams(node)
 		c.walkFun(node.Function, methodFunType(node))
 		c.checkNoStaticInit(node)
 		return false
@@ -198,7 +198,7 @@ func (c *semanticChecker) checkNoSelfReferentialSuperclass(decl *ast.ClassDecl) 
 	}
 }
 
-func (c *semanticChecker) checkNumPropertyParams(decl *ast.MethodDecl) {
+func (c *semanticChecker) checkNumPropertyAccessorParams(decl *ast.MethodDecl) {
 	params := decl.GetParams()
 	switch {
 	case decl.HasModifier(token.Get) && len(params) > 0:
