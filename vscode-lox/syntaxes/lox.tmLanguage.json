@@ -80,7 +80,7 @@
       ]
     },
     "class-declaration": {
-      "begin": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?:(<)\\s*([A-Za-z_][A-Za-z0-9_]*))\\s*(\\{)",
+      "begin": "\\b(class)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(?:(<)\\s*([A-Za-z_][A-Za-z0-9_]*))?\\s*(\\{)",
       "beginCaptures": {
         "1": {
           "name": "storage.type.class.lox"
