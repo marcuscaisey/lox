@@ -42,21 +42,21 @@ foo.bar = 1;
 //      ^ operator
 
 // Function Expression
-fun(x, y) {
-// <- keyword.function
-// ^ punctuation.bracket
-//  ^ variable.parameter
-//   ^ punctuation.delimiter
-//     ^ variable.parameter
-//      ^ punctuation.bracket
-    return x + y;
+var add = fun(x, y) {
+  //      ^ keyword.function
+  //         ^ punctuation.bracket
+  //          ^ variable.parameter
+  //           ^ punctuation.delimiter
+  //             ^ variable.parameter
+  //              ^ punctuation.bracket
+  return x + y;
 };
 
 // Group expression
-( 1 );
+(12);
 // <- punctuation.bracket
-//  ^ punctuation.bracket
-//   ^ punctuation.delimiter
+// ^ punctuation.bracket
+//  ^ punctuation.delimiter
 
 // Call Expression
 foo(1, 2);
@@ -109,36 +109,36 @@ error;
 // <- operator
 
 // Binary Expression
-1, 2;
- // <- punctuation.delimiter
+123, 456;
+// ^ punctuation.delimiter
 1 and 2;
-  // <- keyword.operator
+// ^ keyword.operator
 1 or 2;
-  // <- keyword.operator
+// ^ keyword.operator
 1 == 2;
-  // <- operator
+// ^ operator
 1 != 2;
-  // <- operator
-1 < 2;
-  // <- operator
+// ^ operator
+12 < 3;
+// ^ operator
 1 <= 2;
-  // <- operator
-1 > 2;
-  // <- operator
+// ^ operator
+12 > 3;
+// ^ operator
 1 >= 2;
-  // <- operator
-1 + 2;
-  // <- operator
-1 - 2;
-  // <- operator
-1 * 2;
-  // <- operator
-1 / 2;
-  // <- operator
-1 % 2;
-  // <- operator
+// ^ operator
+12 + 3;
+// ^ operator
+12 - 3;
+// ^ operator
+12 * 3;
+// ^ operator
+12 / 3;
+// ^ operator
+12 % 3;
+// ^ operator
 
 // Ternary expression
-1 ? 2 : 3;
-  // <- keyword.conditional.ternary
-  //  ^ keyword.conditional.ternary
+12 ? 3 : 4;
+// ^ keyword.conditional.ternary
+//     ^ keyword.conditional.ternary
