@@ -1,0 +1,18 @@
+// Prints the prime numbers less than n.
+// Primes are found using the sieve of Eratos.
+
+var n = 50;
+
+var flags = []; // flags[i] is true if i+2 is prime
+for (var i = 0; i < n - 2; i = i + 1) {
+  flags.push(true);
+}
+
+for (var i = 0; i < flags.length; i = i + 1) {
+  if (flags[i]) {
+    print i + 2;
+    for (var j = 2 * (i + 2) - 2; j < flags.length; j = j + (i + 2)) {
+      flags[j] = false;
+    }
+  }
+}
