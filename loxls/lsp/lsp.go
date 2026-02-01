@@ -47,12 +47,12 @@ func classDetail(decl *ast.ClassDecl) (string, bool) {
 }
 
 func methodDetail(methodDecl *ast.MethodDecl) (string, bool) {
-	if methodDecl.HasModifier(token.Set) {
+	if methodDecl.IsSetter() {
 		return "", false
 	}
-	if methodDecl.HasModifier(token.Get) {
+	if methodDecl.IsGetter() {
 		static := ""
-		if methodDecl.HasModifier(token.Static) {
+		if methodDecl.IsStatic() {
 			static = "static "
 		}
 		return fmt.Sprintf("(property) %s%s.%s", static, methodDecl.Class.Name, methodDecl.Name), true

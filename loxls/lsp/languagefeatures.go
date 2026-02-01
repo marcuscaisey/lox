@@ -171,8 +171,8 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 			openingNewLineWritten := false
 			seenStaticMethods := map[string]bool{}
 			seenInstanceMethods := map[string]bool{}
-			seenInstanceProps := map[string]bool{}
-			seenStaticProps := map[string]bool{}
+			seenInstanceAccessors := map[string]bool{}
+			seenStaticAccessors := map[string]bool{}
 			for classDecl := range analyse.InheritanceChain(decl, doc.IdentBindings) {
 				inheritedCommentWritten := false
 				seenInstancePropsInClass := map[string]bool{}
@@ -182,19 +182,19 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 						continue
 					}
 					switch name := methodDecl.Name.String(); {
-					case methodDecl.HasModifier(token.Static) && methodDecl.HasModifier(token.Get, token.Set):
-						if seenStaticProps[name] && !seenStaticPropsInClass[name] {
+					case methodDecl.IsStatic() && methodDecl.IsAccessor():
+						if seenStaticAccessors[name] && !seenStaticPropsInClass[name] {
 							continue
 						}
-						seenStaticProps[name] = true
+						seenStaticAccessors[name] = true
 						seenStaticPropsInClass[name] = true
-					case methodDecl.HasModifier(token.Get, token.Set):
-						if seenInstanceProps[name] && !seenInstancePropsInClass[name] {
+					case methodDecl.IsAccessor():
+						if seenInstanceAccessors[name] && !seenInstancePropsInClass[name] {
 							continue
 						}
-						seenInstanceProps[name] = true
+						seenInstanceAccessors[name] = true
 						seenInstancePropsInClass[name] = true
-					case methodDecl.HasModifier(token.Static):
+					case methodDecl.IsStatic():
 						if seenStaticMethods[name] {
 							continue
 						}
@@ -530,7 +530,7 @@ func (h *Handler) textDocumentSignatureHelp(params *protocol.SignatureHelpParams
 			signatures = append(signatures, h.signature(prefix, params, doc))
 
 		case *ast.MethodDecl:
-			if decl.HasModifier(token.Get, token.Set) {
+			if decl.IsAccessor() {
 				continue
 			}
 			prefix, ok := methodDetailPrefix(decl)

@@ -166,29 +166,28 @@ func (c *semanticChecker) checkMethods(decls []*ast.MethodDecl) {
 		}
 		fullNames[fullName] = true
 
-		isStatic := decl.HasModifier(token.Static)
 		static := ""
-		if isStatic {
+		if decl.IsStatic() {
 			static = "static "
 		}
-		if decl.HasModifier(token.Get, token.Set) {
+		if decl.IsAccessor() {
 			switch {
-			case decl.HasModifier(token.Get):
-				gettersByNameByIsStatic[isStatic][name] = true
-			case decl.HasModifier(token.Set):
-				setterIdentsByNameByIsStatic[isStatic][name] = decl.Name
+			case decl.IsGetter():
+				gettersByNameByIsStatic[decl.IsStatic()][name] = true
+			case decl.IsSetter():
+				setterIdentsByNameByIsStatic[decl.IsStatic()][name] = decl.Name
 			}
-			if methodSeenFirstByIsStatic[isStatic][name] {
+			if methodSeenFirstByIsStatic[decl.IsStatic()][name] {
 				c.errs.Addf(decl.Name, loxerr.Fatal, "%s%m has already been declared as a method", static, decl.Name)
 			} else {
-				accessorSeenFirstByIsStatic[isStatic][name] = true
+				accessorSeenFirstByIsStatic[decl.IsStatic()][name] = true
 			}
 
 		} else {
-			if accessorSeenFirstByIsStatic[isStatic][name] {
+			if accessorSeenFirstByIsStatic[decl.IsStatic()][name] {
 				c.errs.Addf(decl.Name, loxerr.Fatal, "%s%m has already been declared as a property accessor", static, decl.Name)
 			} else {
-				methodSeenFirstByIsStatic[isStatic][name] = true
+				methodSeenFirstByIsStatic[decl.IsStatic()][name] = true
 			}
 		}
 	}
@@ -209,7 +208,7 @@ func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {
 }
 
 func (c *semanticChecker) checkNoStaticInit(decl *ast.MethodDecl) {
-	if decl.Name.IsValid() && decl.Name.String() == token.IdentInit && decl.HasModifier(token.Static) {
+	if decl.Name.IsValid() && decl.Name.String() == token.IdentInit && decl.IsStatic() {
 		c.errs.Addf(decl.Name, loxerr.Fatal, "%s() cannot be static", token.IdentInit)
 	}
 }
@@ -246,9 +245,9 @@ func (c *semanticChecker) checkNoSelfReferentialSuperclass(decl *ast.ClassDecl) 
 func (c *semanticChecker) checkNumPropertyAccessorParams(decl *ast.MethodDecl) {
 	params := decl.GetParams()
 	switch {
-	case decl.HasModifier(token.Get) && len(params) > 0:
+	case decl.IsGetter() && len(params) > 0:
 		c.errs.AddSpanningRangesf(params[0], params[len(params)-1], loxerr.Fatal, "property getter cannot have parameters")
-	case decl.HasModifier(token.Set):
+	case decl.IsSetter():
 		if len(params) == 0 && decl.Name.IsValid() {
 			c.errs.Addf(decl.Name, loxerr.Fatal, "property setter must have a parameter")
 		} else if len(params) > 1 {

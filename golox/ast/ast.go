@@ -284,8 +284,8 @@ func (m *MethodDecl) GetParams() []*ParamDecl {
 	return m.Function.Params
 }
 
-// HasModifier reports whether the declaration has a modifier with one of the target types.
-func (m *MethodDecl) HasModifier(types ...token.Type) bool {
+// hasModifier reports whether the declaration has a modifier with one of the target types.
+func (m *MethodDecl) hasModifier(types ...token.Type) bool {
 	if m == nil {
 		return false
 	}
@@ -299,7 +299,27 @@ func (m *MethodDecl) HasModifier(types ...token.Type) bool {
 
 // IsInit reports whether the declaration is an init method.
 func (m *MethodDecl) IsInit() bool {
-	return !m.HasModifier(token.Static) && m.Name.IsValid() && m.Name.String() == token.IdentInit
+	return !m.IsStatic() && m.Name.IsValid() && m.Name.String() == token.IdentInit
+}
+
+// IsStatic reports whether the declaration is a static method.
+func (m *MethodDecl) IsStatic() bool {
+	return m.hasModifier(token.Static)
+}
+
+// IsGetter reports whether the declaration is a property getter.
+func (m *MethodDecl) IsGetter() bool {
+	return m.hasModifier(token.Get)
+}
+
+// IsSetter reports whether the declaration is a property setter.
+func (m *MethodDecl) IsSetter() bool {
+	return m.hasModifier(token.Set)
+}
+
+// IsAccessor reports whether the declaration is a property accessor.
+func (m *MethodDecl) IsAccessor() bool {
+	return m.IsGetter() || m.IsSetter()
 }
 
 // ExprStmt is an expression statement, such as a function call.

@@ -601,7 +601,7 @@ func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, boo
 			return nil, true
 		}
 		propType := propertyTypeInstance
-		if methodDecl.HasModifier(token.Static) {
+		if methodDecl.IsStatic() {
 			propType = propertyTypeStatic
 		}
 		return c.complsByPropTypeByClassDecl[classDecl][propType], true
@@ -625,7 +625,7 @@ func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, boo
 			return nil, true
 		}
 		propType := propertyTypeInstance
-		if methodDecl.HasModifier(token.Static) {
+		if methodDecl.IsStatic() {
 			propType = propertyTypeStatic
 		}
 		compls := make([]*completion, 0, len(c.complsByPropTypeByClassDecl[superclassDecl][propType]))
@@ -734,7 +734,7 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 		return
 	}
 	propType := propertyTypeInstance
-	if decl.HasModifier(token.Static) {
+	if decl.IsStatic() {
 		propType = propertyTypeStatic
 	}
 	compl, ok := methodCompletion(decl)
@@ -758,7 +758,7 @@ func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.PropertySetEx
 
 	label := expr.Name.String()
 	propType := propertyTypeInstance
-	if g.curMethodDecl.HasModifier(token.Static) {
+	if g.curMethodDecl.IsStatic() {
 		propType = propertyTypeStatic
 	}
 	if g.complLabelsByPropTypeByClassDecl[g.curMethodDecl.Class][propType][label] {
@@ -858,7 +858,7 @@ func methodCompletion(decl *ast.MethodDecl) (*completion, bool) {
 		return nil, false
 	}
 	kind := protocol.CompletionItemKindMethod
-	if decl.HasModifier(token.Get, token.Set) {
+	if decl.IsAccessor() {
 		kind = protocol.CompletionItemKindProperty
 	}
 	detail, ok := methodDetail(decl)

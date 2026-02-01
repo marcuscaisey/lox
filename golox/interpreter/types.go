@@ -480,7 +480,7 @@ func newLoxClass(name string, superclass *loxClass, methods []*ast.MethodDecl, e
 	instanceMethods := make([]*ast.MethodDecl, 0, len(methods))
 	staticMethods := make([]*ast.MethodDecl, 0, len(methods))
 	for _, decl := range methods {
-		if decl.HasModifier(token.Static) {
+		if decl.IsStatic() {
 			staticMethods = append(staticMethods, decl)
 		} else {
 			instanceMethods = append(instanceMethods, decl)
@@ -507,10 +507,10 @@ func newLoxClassWithMetaclass(name string, superclass *loxClass, metaclass *loxC
 		var funcMap map[string]*loxFunction
 		methodName := fmt.Sprint(name, token.Dot, decl.Name.String())
 		switch {
-		case decl.HasModifier(token.Get):
+		case decl.IsGetter():
 			funcMap = gettersByName
 			methodName = fmt.Sprint(token.Get, " ", methodName)
-		case decl.HasModifier(token.Set):
+		case decl.IsSetter():
 			funcMap = settersByName
 			methodName = fmt.Sprint(token.Set, " ", methodName)
 		default:
