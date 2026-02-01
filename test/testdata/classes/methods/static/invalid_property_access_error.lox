@@ -1,6 +1,6 @@
 class Foo {
   static bar() {}
 }
-// error: property access is not valid for 'function' object
+// error: property access is not valid for 'function' value
 // lint warning: property 'x' has not been declared or assigned anywhere
 Foo.bar.x;

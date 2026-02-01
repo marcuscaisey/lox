@@ -1,1 +1,1 @@
-false.y = 1; // error: property assignment is not valid for 'bool' object
+false.y = 1; // error: property assignment is not valid for 'bool' value

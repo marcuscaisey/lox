@@ -1,1 +1,1 @@
-true(); // error: 'bool' object is not callable
+true(); // error: 'bool' value is not callable

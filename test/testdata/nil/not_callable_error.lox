@@ -1,1 +1,1 @@
-nil(); // error: 'nil' object is not callable
+nil(); // error: 'nil' value is not callable

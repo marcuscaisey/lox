@@ -1,1 +1,1 @@
-clock.y = 1; // error: property assignment is not valid for 'function' object
+clock.y = 1; // error: property assignment is not valid for 'function' value

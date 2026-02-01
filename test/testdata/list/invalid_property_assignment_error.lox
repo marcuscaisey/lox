@@ -1,1 +1,1 @@
-["bar"].y = 1; // error: property assignment is not valid for 'list' object
+["bar"].y = 1; // error: property assignment is not valid for 'list' value

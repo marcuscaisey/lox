@@ -1,1 +1,1 @@
-2.y = 1; // error: property assignment is not valid for 'number' object
+2.y = 1; // error: property assignment is not valid for 'number' value

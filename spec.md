@@ -207,7 +207,7 @@ print list; // prints: [4, 5, 6]
 
 ### Property Expression
 
-A property expression produces the value of a property of an object.
+A property expression produces the value of a property of a value.
 
 ```lox
 class Foo {
@@ -593,7 +593,7 @@ The blank identifier `_` is a special identifier which:
 - can be used before it has been declared.
 - can be declared but not used.
 - cannot be used in a non-assignment expression.
-- cannot be used as an object property.
+- cannot be used as a property.
 
 ## Comments
 
@@ -686,11 +686,11 @@ Stack Trace (most recent call first):
 
 Lox has the following built-in functions.
 
-| Name           | Returns  | Description                                         |
-| -------------- | -------- | --------------------------------------------------- |
-| `clock()`      | `number` | Returns the number of seconds since the Unix epoch. |
-| `type(object)` | `string` | Returns the type of the object.                     |
-| `error(msg)`   | `nil`    | Throws a runtime error with the message.            |
+| Name          | Returns  | Description                                         |
+| ------------- | -------- | --------------------------------------------------- |
+| `clock()`     | `number` | Returns the number of seconds since the Unix epoch. |
+| `type(value)` | `string` | Returns the type of the value.                      |
+| `error(msg)`  | `nil`    | Throws a runtime error with the message.            |
 
 ## Grammar
 

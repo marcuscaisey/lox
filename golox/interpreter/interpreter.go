@@ -89,7 +89,7 @@ type (
 	stmtResultBreak    struct{ stmtResult }
 	stmtResultContinue struct{ stmtResult }
 	stmtResultReturn   struct {
-		Value loxObject
+		Value loxValue
 		stmtResult
 	}
 )
@@ -129,7 +129,7 @@ func (i *Interpreter) execStmt(env environment, stmt ast.Stmt) (stmtResult, envi
 }
 
 func (i *Interpreter) execVarDecl(env environment, stmt *ast.VarDecl) environment {
-	var value loxObject
+	var value loxValue
 	if stmt.Initialiser != nil {
 		value = i.evalExpr(env, stmt.Initialiser)
 	}
@@ -158,11 +158,11 @@ func (i *Interpreter) execClassDecl(env environment, stmt *ast.ClassDecl) enviro
 	}
 	var superclass *loxClass
 	if stmt.Superclass.IsValid() {
-		superclassLoxObject := env.Get(stmt.Superclass)
+		superclassValue := env.Get(stmt.Superclass)
 		var ok bool
-		superclass, ok = superclassLoxObject.(*loxClass)
+		superclass, ok = superclassValue.(*loxClass)
 		if !ok {
-			panic(loxerr.Newf(stmt.Superclass, loxerr.Fatal, "expected superclass to be a class, got %m", superclassLoxObject.Type()))
+			panic(loxerr.Newf(stmt.Superclass, loxerr.Fatal, "expected superclass to be a class, got %m", superclassValue.Type()))
 		}
 	}
 	_ = superclass
@@ -255,14 +255,14 @@ func (i *Interpreter) execContinueStmt() stmtResultContinue {
 }
 
 func (i *Interpreter) execReturnStmt(env environment, stmt *ast.ReturnStmt) stmtResultReturn {
-	var value loxObject = loxNil{}
+	var value loxValue = loxNil{}
 	if stmt.Value != nil {
 		value = i.evalExpr(env, stmt.Value)
 	}
 	return stmtResultReturn{Value: value}
 }
 
-func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
+func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxValue {
 	switch expr := expr.(type) {
 	case *ast.LiteralExpr:
 		return i.evalLiteralExpr(expr)
@@ -300,7 +300,7 @@ func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxObject {
 	panic("unreachable")
 }
 
-func (i *Interpreter) evalLiteralExpr(expr *ast.LiteralExpr) loxObject {
+func (i *Interpreter) evalLiteralExpr(expr *ast.LiteralExpr) loxValue {
 	switch tok := expr.Value; tok.Type {
 	case token.Number:
 		value, err := strconv.ParseFloat(tok.Lexeme, 64)
@@ -319,12 +319,12 @@ func (i *Interpreter) evalLiteralExpr(expr *ast.LiteralExpr) loxObject {
 	}
 }
 
-func (i *Interpreter) evalFunExpr(env environment, expr *ast.FunExpr) loxObject {
+func (i *Interpreter) evalFunExpr(env environment, expr *ast.FunExpr) loxValue {
 	return newLoxFunction("(anonymous)", expr.Function, funTypeFunction, env)
 }
 
-func (i *Interpreter) evalListExpr(env environment, expr *ast.ListExpr) loxObject {
-	elements := make([]loxObject, len(expr.Elements))
+func (i *Interpreter) evalListExpr(env environment, expr *ast.ListExpr) loxValue {
+	elements := make([]loxValue, len(expr.Elements))
 	for j, element := range expr.Elements {
 		elements[j] = i.evalExpr(env, element)
 	}
@@ -332,11 +332,11 @@ func (i *Interpreter) evalListExpr(env environment, expr *ast.ListExpr) loxObjec
 	return &result
 }
 
-func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxObject {
+func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxValue {
 	return env.Get(expr.Ident)
 }
 
-func (i *Interpreter) evalAssignmentExpr(env environment, expr *ast.AssignmentExpr) loxObject {
+func (i *Interpreter) evalAssignmentExpr(env environment, expr *ast.AssignmentExpr) loxValue {
 	value := i.evalExpr(env, expr.Right)
 	if expr.Left.String() != token.IdentBlank {
 		env.Assign(expr.Left, value)
@@ -344,29 +344,29 @@ func (i *Interpreter) evalAssignmentExpr(env environment, expr *ast.AssignmentEx
 	return value
 }
 
-func (i *Interpreter) evalThisExpr(env environment, _ *ast.ThisExpr) loxObject {
+func (i *Interpreter) evalThisExpr(env environment, _ *ast.ThisExpr) loxValue {
 	return env.GetByName(token.This.String())
 }
 
-func (i *Interpreter) evalSuperExpr(env environment, _ *ast.SuperExpr) loxObject {
-	superObject := env.GetByName(token.Super.String())
-	superclass, ok := superObject.(*loxClass)
+func (i *Interpreter) evalSuperExpr(env environment, _ *ast.SuperExpr) loxValue {
+	superValue := env.GetByName(token.Super.String())
+	superclass, ok := superValue.(*loxClass)
 	if !ok {
-		panic(fmt.Sprintf("unexpected super type: %T", superObject))
+		panic(fmt.Sprintf("unexpected super type: %T", superValue))
 	}
 	return newLoxSuperObject(superclass, env)
 }
 
-func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObject {
+func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxValue {
 	callee := i.evalExpr(env, expr.Callee)
-	args := make([]loxObject, len(expr.Args))
+	args := make([]loxValue, len(expr.Args))
 	for j, arg := range expr.Args {
 		args[j] = i.evalExpr(env, arg)
 	}
 
 	callable, ok := callee.(loxCallable)
 	if !ok {
-		panic(loxerr.Newf(expr.Callee, loxerr.Fatal, "%m object is not callable", callee.Type()))
+		panic(loxerr.Newf(expr.Callee, loxerr.Fatal, "%m value is not callable", callee.Type()))
 	}
 
 	params := callable.Params()
@@ -392,14 +392,14 @@ func (i *Interpreter) evalCallExpr(env environment, expr *ast.CallExpr) loxObjec
 	return result
 }
 
-func (i *Interpreter) evalIndexExpr(env environment, expr *ast.IndexExpr) loxObject {
+func (i *Interpreter) evalIndexExpr(env environment, expr *ast.IndexExpr) loxValue {
 	subject := i.evalExpr(env, expr.Subject)
 	indexable := assertIndexable(subject, expr.Subject)
 	index := i.evalExpr(env, expr.Index)
 	return indexable.Index(index, expr.Index)
 }
 
-func (i *Interpreter) evalIndexSetExpr(env environment, expr *ast.IndexSetExpr) loxObject {
+func (i *Interpreter) evalIndexSetExpr(env environment, expr *ast.IndexSetExpr) loxValue {
 	subject := i.evalExpr(env, expr.Subject)
 	indexable := assertIndexable(subject, expr.Subject)
 	index := i.evalExpr(env, expr.Index)
@@ -408,7 +408,7 @@ func (i *Interpreter) evalIndexSetExpr(env environment, expr *ast.IndexSetExpr) 
 	return value
 }
 
-func assertIndexable(value loxObject, node ast.Node) loxIndexable {
+func assertIndexable(value loxValue, node ast.Node) loxIndexable {
 	indexable, ok := value.(loxIndexable)
 	if !ok {
 		panic(loxerr.Newf(node, loxerr.Fatal, "%m value is not indexable", value.Type()))
@@ -416,34 +416,34 @@ func assertIndexable(value loxObject, node ast.Node) loxIndexable {
 	return indexable
 }
 
-func (i *Interpreter) call(location token.Position, callable loxCallable, args []loxObject) loxObject {
+func (i *Interpreter) call(location token.Position, callable loxCallable, args []loxValue) loxValue {
 	i.callStack.Push(callable.CallableName(), location)
 	result := callable.Call(i, args)
 	i.callStack.Pop()
 	return result
 }
 
-func (i *Interpreter) evalPropertyExpr(env environment, expr *ast.PropertyExpr) loxObject {
+func (i *Interpreter) evalPropertyExpr(env environment, expr *ast.PropertyExpr) loxValue {
 	object := i.evalExpr(env, expr.Object)
 	accessible, ok := object.(loxPropertyAccessible)
 	if !ok {
-		panic(loxerr.Newf(expr, loxerr.Fatal, "property access is not valid for %m object", object.Type()))
+		panic(loxerr.Newf(expr, loxerr.Fatal, "property access is not valid for %m value", object.Type()))
 	}
 	return accessible.Property(i, expr.Name)
 }
 
-func (i *Interpreter) evalPropertySetExpr(env environment, expr *ast.PropertySetExpr) loxObject {
+func (i *Interpreter) evalPropertySetExpr(env environment, expr *ast.PropertySetExpr) loxValue {
 	object := i.evalExpr(env, expr.Object)
 	settable, ok := object.(loxPropertySettable)
 	if !ok {
-		panic(loxerr.Newf(expr, loxerr.Fatal, "property assignment is not valid for %m object", object.Type()))
+		panic(loxerr.Newf(expr, loxerr.Fatal, "property assignment is not valid for %m value", object.Type()))
 	}
 	value := i.evalExpr(env, expr.Value)
 	settable.SetProperty(i, expr.Name, value)
 	return value
 }
 
-func (i *Interpreter) evalUnaryExpr(env environment, expr *ast.UnaryExpr) loxObject {
+func (i *Interpreter) evalUnaryExpr(env environment, expr *ast.UnaryExpr) loxValue {
 	right := i.evalExpr(env, expr.Right)
 	if expr.Op.Type == token.Bang {
 		// The behaviour of ! is independent of the type of the operand, so we can implement it here.
@@ -456,7 +456,7 @@ func (i *Interpreter) evalUnaryExpr(env environment, expr *ast.UnaryExpr) loxObj
 	return unaryOperand.UnaryOp(expr.Op)
 }
 
-func (i *Interpreter) evalBinaryExpr(env environment, expr *ast.BinaryExpr) loxObject {
+func (i *Interpreter) evalBinaryExpr(env environment, expr *ast.BinaryExpr) loxValue {
 	left := i.evalExpr(env, expr.Left)
 
 	// We check for short-circuiting operators first.
@@ -498,7 +498,7 @@ func (i *Interpreter) evalBinaryExpr(env environment, expr *ast.BinaryExpr) loxO
 	return binaryOperand.BinaryOp(expr.Op, right)
 }
 
-func (i *Interpreter) evalTernaryExpr(env environment, expr *ast.TernaryExpr) loxObject {
+func (i *Interpreter) evalTernaryExpr(env environment, expr *ast.TernaryExpr) loxValue {
 	condition := i.evalExpr(env, expr.Condition)
 	if isTruthy(condition) {
 		return i.evalExpr(env, expr.Then)
@@ -506,11 +506,11 @@ func (i *Interpreter) evalTernaryExpr(env environment, expr *ast.TernaryExpr) lo
 	return i.evalExpr(env, expr.Else)
 }
 
-func (i *Interpreter) evalGroupExpr(env environment, expr *ast.GroupExpr) loxObject {
+func (i *Interpreter) evalGroupExpr(env environment, expr *ast.GroupExpr) loxValue {
 	return i.evalExpr(env, expr.Expr)
 }
 
-func isTruthy(obj loxObject) loxBool {
+func isTruthy(obj loxValue) loxBool {
 	if truther, ok := obj.(loxTruther); ok {
 		return truther.IsTruthy()
 	}

@@ -1,1 +1,1 @@
-fun() {}.y = 1; // error: property assignment is not valid for 'function' object
+fun() {}.y = 1; // error: property assignment is not valid for 'function' value

@@ -1,1 +1,1 @@
-"foo"(); // error: 'string' object is not callable
+"foo"(); // error: 'string' value is not callable

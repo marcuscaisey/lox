@@ -1,4 +1,4 @@
 fun f() {}
-// error: property access is not valid for 'function' object
+// error: property access is not valid for 'function' value
 // lint warning: property 'y' has not been declared or assigned anywhere
 f.y;

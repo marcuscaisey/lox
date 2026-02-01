@@ -10,4 +10,4 @@ class Foo {
 
 var foo = Foo("bar field");
 print foo.bar; // prints: bar field
-foo.bar(); // error: 'string' object is not callable
+foo.bar(); // error: 'string' value is not callable

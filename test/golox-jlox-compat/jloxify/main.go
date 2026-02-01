@@ -48,8 +48,8 @@ var errorReplacements = map[string]errorReplacement{
 	`^'[A-Za-z_][A-Za-z0-9_]*' object has no property '([A-Za-z_][A-Za-z0-9_]*)'$`:                                    {70, "Undefined property '$1'."},
 	`^'([A-Za-z_][A-Za-z0-9_]*)' has not been declared$`:                                                              {70, "Undefined variable '$1'."},
 	`^'[A-Za-z_][A-Za-z0-9_]*' object is not callable$`:                                                               {70, "Can only call functions and classes."},
-	`^property access is not valid for '[A-Za-z_][A-Za-z0-9_]*' object$`:                                              {70, "Only instances have properties."},
-	`^property assignment is not valid for '[A-Za-z_][A-Za-z0-9_]*' object$`:                                          {70, "Only instances have fields."},
+	`^property access is not valid for '[A-Za-z_][A-Za-z0-9_]*' value$`:                                               {70, "Only instances have properties."},
+	`^property assignment is not valid for '[A-Za-z_][A-Za-z0-9_]*' value$`:                                           {70, "Only instances have fields."},
 	`^'[A-Za-z_][A-Za-z0-9_]*' class has no method '([A-Za-z_][A-Za-z0-9_]*)'$`:                                       {70, "Undefined property '$1'."},
 	`^expected superclass to be a class, got '[a-z]+'$`:                                                               {70, "Superclass must be a class."},
 }

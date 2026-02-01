@@ -19,24 +19,24 @@ type environment interface {
 	Declare(ident *ast.Ident) environment
 	// Define defines an identifier and returns the updated environment.
 	// This should be used for identifiers that don't originate from a declaration in code, like a function parameter.
-	Define(name string, value loxObject) environment
+	Define(name string, value loxValue) environment
 	// Assign assigns a value to an identifier and returns the updated environment.
-	Assign(ident *ast.Ident, value loxObject)
+	Assign(ident *ast.Ident, value loxValue)
 	// Get returns the value of the identifier.
-	Get(ident *ast.Ident) loxObject
+	Get(ident *ast.Ident) loxValue
 	// GetByName returns the value of the identifier with the given name.
 	// This should be used for identifiers without a corresponding [*ast.Ident].
-	GetByName(name string) loxObject
+	GetByName(name string) loxValue
 }
 
 // globalEnvironment is the environment for the global scope.
 type globalEnvironment struct {
-	values map[string]loxObject
+	values map[string]loxValue
 }
 
 func newGlobalEnvironment() *globalEnvironment {
 	return &globalEnvironment{
-		values: map[string]loxObject{},
+		values: map[string]loxValue{},
 	}
 }
 
@@ -49,7 +49,7 @@ func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
 	return e
 }
 
-func (e *globalEnvironment) Define(name string, value loxObject) environment {
+func (e *globalEnvironment) Define(name string, value loxValue) environment {
 	if value == nil {
 		panic(fmt.Sprintf("attempt to set %q to nil", name))
 	}
@@ -61,7 +61,7 @@ func (e *globalEnvironment) Define(name string, value loxObject) environment {
 	}
 }
 
-func (e *globalEnvironment) Assign(ident *ast.Ident, value loxObject) {
+func (e *globalEnvironment) Assign(ident *ast.Ident, value loxValue) {
 	if value == nil {
 		panic(fmt.Sprintf("attempt to assign nil to %m", ident))
 	}
@@ -72,7 +72,7 @@ func (e *globalEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	}
 }
 
-func (e *globalEnvironment) Get(ident *ast.Ident) loxObject {
+func (e *globalEnvironment) Get(ident *ast.Ident) loxValue {
 	if value, ok := e.values[ident.String()]; ok {
 		return value
 	} else {
@@ -80,7 +80,7 @@ func (e *globalEnvironment) Get(ident *ast.Ident) loxObject {
 	}
 }
 
-func (e *globalEnvironment) GetByName(name string) loxObject {
+func (e *globalEnvironment) GetByName(name string) loxValue {
 	if value, ok := e.values[name]; ok {
 		return value
 	} else {
@@ -92,10 +92,10 @@ func (e *globalEnvironment) GetByName(name string) loxObject {
 type localEnvironment struct {
 	parent environment
 	name   string
-	value  loxObject
+	value  loxValue
 }
 
-func newLocalEnvironment(parent environment, name string, value loxObject) *localEnvironment {
+func newLocalEnvironment(parent environment, name string, value loxValue) *localEnvironment {
 	return &localEnvironment{
 		parent: parent,
 		name:   name,
@@ -111,14 +111,14 @@ func (e *localEnvironment) Declare(ident *ast.Ident) environment {
 	return newLocalEnvironment(e, ident.String(), loxNil{})
 }
 
-func (e *localEnvironment) Define(name string, value loxObject) environment {
+func (e *localEnvironment) Define(name string, value loxValue) environment {
 	if value == nil {
 		panic(fmt.Sprintf("attempt to set %q to nil", name))
 	}
 	return newLocalEnvironment(e, name, value)
 }
 
-func (e *localEnvironment) Assign(ident *ast.Ident, value loxObject) {
+func (e *localEnvironment) Assign(ident *ast.Ident, value loxValue) {
 	if value == nil {
 		panic(fmt.Sprintf("attempt to assign nil to %m", ident))
 	}
@@ -131,7 +131,7 @@ func (e *localEnvironment) Assign(ident *ast.Ident, value loxObject) {
 	}
 }
 
-func (e *localEnvironment) Get(ident *ast.Ident) loxObject {
+func (e *localEnvironment) Get(ident *ast.Ident) loxValue {
 	if ident.String() == e.name {
 		return e.value
 	} else if e.parent != nil {
@@ -141,7 +141,7 @@ func (e *localEnvironment) Get(ident *ast.Ident) loxObject {
 	}
 }
 
-func (e *localEnvironment) GetByName(name string) loxObject {
+func (e *localEnvironment) GetByName(name string) loxValue {
 	if name == e.name {
 		return e.value
 	} else if e.parent != nil {

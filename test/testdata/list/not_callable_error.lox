@@ -1,1 +1,1 @@
-["foo"](); // error: 'list' object is not callable
+["foo"](); // error: 'list' value is not callable
