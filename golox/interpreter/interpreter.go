@@ -49,9 +49,9 @@ func New(opts ...Option) *Interpreter {
 	return interpreter
 }
 
-// Interpret executes a program and returns an error if one occurred.
-// Interpret can be called multiple times with different programs and the state will be maintained between calls.
-func (i *Interpreter) Interpret(program *ast.Program) error {
+// Execute executes a program and returns an error if one occurred.
+// Execute can be called multiple times with different programs and the state will be maintained between calls.
+func (i *Interpreter) Execute(program *ast.Program) error {
 	if err := analyse.Program(program, i.builtInStubs, analyse.WithFatalOnly(true)); err != nil {
 		return err
 	}

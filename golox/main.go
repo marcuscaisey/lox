@@ -86,7 +86,7 @@ func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) err
 	if err != nil {
 		return err
 	}
-	return interpreter.Interpret(program)
+	return interpreter.Execute(program)
 }
 
 func runREPL() error {
