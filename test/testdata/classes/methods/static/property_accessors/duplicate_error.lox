@@ -1,0 +1,16 @@
+class Foo {
+  static get bar() {}
+  static set bar(_) {}
+  get bar() {}
+  set bar(_) {}
+
+  // error: static get 'bar' has already been declared
+  // lint error: static get 'bar' has already been declared
+  static get bar() {}
+
+  // error: static set 'bar' has already been declared
+  // lint error: static set 'bar' has already been declared
+  static set bar(_) {}
+}
+
+_ = Foo;

@@ -1,0 +1,12 @@
+class Foo {
+  // error: write-only properties are not allowed
+  // lint error: write-only properties are not allowed
+  set bar(_) {}
+  static bar() {}
+
+  // error: 'bar' has already been declared as a property accessor
+  // lint error: 'bar' has already been declared as a property accessor
+  bar() {}
+}
+
+_ = Foo;

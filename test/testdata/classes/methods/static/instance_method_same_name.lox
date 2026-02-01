@@ -1,0 +1,13 @@
+class Foo {
+  bar() {
+    print "instance bar called";
+  }
+
+  static bar() {
+    print "static bar called";
+  }
+}
+
+var foo = Foo();
+foo.bar(); // prints: instance bar called
+Foo.bar(); // prints: static bar called

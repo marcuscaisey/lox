@@ -1,0 +1,10 @@
+class Foo {
+  static bar() {}
+  bar() {}
+
+  // error: static 'bar' has already been declared
+  // lint error: static 'bar' has already been declared
+  static bar() {}
+}
+
+_ = Foo;

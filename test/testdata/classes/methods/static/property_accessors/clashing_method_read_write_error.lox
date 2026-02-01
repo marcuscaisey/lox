@@ -1,0 +1,11 @@
+class Foo {
+  static get bar() {}
+  static set bar(_) {}
+  bar() {}
+
+  // error: static 'bar' has already been declared as a property accessor
+  // lint error: static 'bar' has already been declared as a property accessor
+  static bar() {}
+}
+
+_ = Foo;

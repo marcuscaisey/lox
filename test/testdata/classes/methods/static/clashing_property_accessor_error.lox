@@ -1,0 +1,15 @@
+class Foo {
+  static bar() {}
+  get bar() {}
+  set bar(_) {}
+
+  // error: static 'bar' has already been declared as a method
+  // lint error: static 'bar' has already been declared as a method
+  static get bar() {}
+
+  // error: static 'bar' has already been declared as a method
+  // lint error: static 'bar' has already been declared as a method
+  static set bar(_) {}
+}
+
+_ = Foo;

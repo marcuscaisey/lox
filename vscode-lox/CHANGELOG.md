@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Report write-only property error when getter of different staticness exists.
+- Report errors for duplicate methods and property accessors.
 
 ## [4.3.0] - 2026-01-31
 

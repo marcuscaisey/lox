@@ -1,0 +1,13 @@
+class Foo {
+  get bar() {
+    return "instance bar called";
+  }
+
+  static get bar() {
+    return "static bar called";
+  }
+}
+
+var foo = Foo();
+print foo.bar; // prints: instance bar called
+print Foo.bar; // prints: static bar called

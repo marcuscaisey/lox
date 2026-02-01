@@ -1,6 +1,9 @@
 package analyse
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/marcuscaisey/lox/golox/ast"
 	"github.com/marcuscaisey/lox/golox/loxerr"
 	"github.com/marcuscaisey/lox/golox/token"
@@ -28,6 +31,8 @@ const (
 //   - functions cannot have more than 255 parameters
 //   - function calls cannot have more than 255 arguments
 //   - classes cannot inherit from themselves
+//   - classes cannot have two methods with the same name and modifiers
+//   - classes cannot have a property accessor and method with the same name
 //
 // If there is an error, it will be of type [loxerr.Errors].
 func CheckSemantics(program *ast.Program, opts ...Option) error {
@@ -130,10 +135,71 @@ func (c *semanticChecker) walkClassDecl(decl *ast.ClassDecl) {
 	defer func() { c.curClassDecl = prevCurClassDecl }()
 	c.curClassDecl = decl
 
-	c.checkNoWriteOnlyProperties(decl.Methods())
 	c.checkNoSelfReferentialSuperclass(decl)
+	c.checkMethods(decl.Methods())
 
 	ast.WalkChildren(decl, c.walk)
+}
+
+func (c *semanticChecker) checkMethods(decls []*ast.MethodDecl) {
+	fullNames := map[string]bool{}
+	methodSeenFirstByIsStatic := map[bool]map[string]bool{false: {}, true: {}}
+	accessorSeenFirstByIsStatic := map[bool]map[string]bool{false: {}, true: {}}
+	gettersByNameByIsStatic := map[bool]map[string]bool{false: {}, true: {}}
+	setterIdentsByNameByIsStatic := map[bool]map[string]*ast.Ident{false: {}, true: {}}
+	for _, decl := range decls {
+		if !decl.Name.IsValid() {
+			continue
+		}
+		if decl.Name.String() == token.IdentBlank {
+			continue
+		}
+		name := decl.Name.String()
+
+		modifiers := new(strings.Builder)
+		for _, modifier := range decl.Modifiers {
+			fmt.Fprintf(modifiers, "%s ", modifier.Lexeme)
+		}
+		fullName := fmt.Sprintf("%s%s", modifiers, name)
+		if fullNames[fullName] {
+			c.errs.Addf(decl.Name, loxerr.Fatal, "%s%m has already been declared", modifiers, decl.Name)
+		}
+		fullNames[fullName] = true
+
+		isStatic := decl.HasModifier(token.Static)
+		static := ""
+		if isStatic {
+			static = "static "
+		}
+		if decl.HasModifier(token.Get, token.Set) {
+			switch {
+			case decl.HasModifier(token.Get):
+				gettersByNameByIsStatic[isStatic][name] = true
+			case decl.HasModifier(token.Set):
+				setterIdentsByNameByIsStatic[isStatic][name] = decl.Name
+			}
+			if methodSeenFirstByIsStatic[isStatic][name] {
+				c.errs.Addf(decl.Name, loxerr.Fatal, "%s%m has already been declared as a method", static, decl.Name)
+			} else {
+				accessorSeenFirstByIsStatic[isStatic][name] = true
+			}
+
+		} else {
+			if accessorSeenFirstByIsStatic[isStatic][name] {
+				c.errs.Addf(decl.Name, loxerr.Fatal, "%s%m has already been declared as a property accessor", static, decl.Name)
+			} else {
+				methodSeenFirstByIsStatic[isStatic][name] = true
+			}
+		}
+	}
+
+	for isStatic, setterIdentsByName := range setterIdentsByNameByIsStatic {
+		for name, setterIdent := range setterIdentsByName {
+			if !gettersByNameByIsStatic[isStatic][name] {
+				c.errs.Addf(setterIdent, loxerr.Fatal, "write-only properties are not allowed")
+			}
+		}
+	}
 }
 
 func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {
@@ -169,31 +235,6 @@ func (c *semanticChecker) beginLoop() func() {
 	prev := c.inLoop
 	c.inLoop = true
 	return func() { c.inLoop = prev }
-}
-
-func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) {
-	gettersByNameByIsStatic := map[bool]map[string]bool{false: {}, true: {}}
-	setterIdentsByNameByIsStatic := map[bool]map[string]*ast.Ident{false: {}, true: {}}
-	for _, methodDecl := range methods {
-		if !methodDecl.Name.IsValid() {
-			continue
-		}
-		name := methodDecl.Name.String()
-		isStatic := methodDecl.HasModifier(token.Static)
-		switch {
-		case methodDecl.HasModifier(token.Get):
-			gettersByNameByIsStatic[isStatic][name] = true
-		case methodDecl.HasModifier(token.Set):
-			setterIdentsByNameByIsStatic[isStatic][name] = methodDecl.Name
-		}
-	}
-	for isStatic, setterIdentsByName := range setterIdentsByNameByIsStatic {
-		for name, setterIdent := range setterIdentsByName {
-			if !gettersByNameByIsStatic[isStatic][name] {
-				c.errs.Addf(setterIdent, loxerr.Fatal, "write-only properties are not allowed")
-			}
-		}
-	}
 }
 
 func (c *semanticChecker) checkNoSelfReferentialSuperclass(decl *ast.ClassDecl) {
