@@ -172,22 +172,26 @@ func (c *semanticChecker) beginLoop() func() {
 }
 
 func (c *semanticChecker) checkNoWriteOnlyProperties(methods []*ast.MethodDecl) {
-	gettersByName := map[string]bool{}
-	setterIdentsByName := map[string]*ast.Ident{}
+	gettersByNameByIsStatic := map[bool]map[string]bool{false: {}, true: {}}
+	setterIdentsByNameByIsStatic := map[bool]map[string]*ast.Ident{false: {}, true: {}}
 	for _, methodDecl := range methods {
 		if !methodDecl.Name.IsValid() {
 			continue
 		}
+		name := methodDecl.Name.String()
+		isStatic := methodDecl.HasModifier(token.Static)
 		switch {
 		case methodDecl.HasModifier(token.Get):
-			gettersByName[methodDecl.Name.String()] = true
+			gettersByNameByIsStatic[isStatic][name] = true
 		case methodDecl.HasModifier(token.Set):
-			setterIdentsByName[methodDecl.Name.String()] = methodDecl.Name
+			setterIdentsByNameByIsStatic[isStatic][name] = methodDecl.Name
 		}
 	}
-	for name, ident := range setterIdentsByName {
-		if !gettersByName[name] {
-			c.errs.Addf(ident, loxerr.Fatal, "write-only properties are not allowed")
+	for isStatic, setterIdentsByName := range setterIdentsByNameByIsStatic {
+		for name, setterIdent := range setterIdentsByName {
+			if !gettersByNameByIsStatic[isStatic][name] {
+				c.errs.Addf(setterIdent, loxerr.Fatal, "write-only properties are not allowed")
+			}
 		}
 	}
 }
