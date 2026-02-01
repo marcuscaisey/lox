@@ -435,12 +435,10 @@ func (i *Interpreter) evalUnaryExpr(env environment, expr *ast.UnaryExpr) loxObj
 		return !isTruthy(right)
 	}
 	unaryOperand, ok := right.(loxUnaryOperand)
-	if ok {
-		if result := unaryOperand.UnaryOp(expr.Op); result != nil {
-			return result
-		}
+	if !ok {
+		panic(newInvalidUnaryOpError(expr.Op, right))
 	}
-	panic(loxerr.Newf(expr.Op, loxerr.Fatal, "%m operator cannot be used with type %m", expr.Op.Type, right.Type()))
+	return unaryOperand.UnaryOp(expr.Op)
 }
 
 func (i *Interpreter) evalBinaryExpr(env environment, expr *ast.BinaryExpr) loxObject {
@@ -476,13 +474,13 @@ func (i *Interpreter) evalBinaryExpr(env environment, expr *ast.BinaryExpr) loxO
 	case token.BangEqual:
 		return loxBool(!left.Equals(right))
 	default:
-		if binaryOperand, ok := left.(loxBinaryOperand); ok {
-			if result := binaryOperand.BinaryOp(expr.Op, right); result != nil {
-				return result
-			}
-		}
-		panic(loxerr.Newf(expr.Op, loxerr.Fatal, "%m operator cannot be used with types %m and %m", expr.Op.Type, left.Type(), right.Type()))
 	}
+
+	binaryOperand, ok := left.(loxBinaryOperand)
+	if !ok {
+		panic(newInvalidBinaryOpError(expr.Op, left, right))
+	}
+	return binaryOperand.BinaryOp(expr.Op, right)
 }
 
 func (i *Interpreter) evalTernaryExpr(env environment, expr *ast.TernaryExpr) loxObject {

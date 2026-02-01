@@ -43,15 +43,19 @@ type loxObject interface {
 }
 
 type loxUnaryOperand interface {
-	// UnaryOp returns the result of applying the given unary operator to the object. If the operator is not supported,
-	// then the return value is nil.
 	UnaryOp(op token.Token) loxObject
 }
 
+func newInvalidUnaryOpError(op token.Token, right loxObject) error {
+	return loxerr.Newf(op, loxerr.Fatal, "%m operator cannot be used with type %m", op.Type, right.Type())
+}
+
 type loxBinaryOperand interface {
-	// BinaryOp returns the result of applying the given binary operator to the object. If the operator is not
-	// supported, then the return value is nil.
 	BinaryOp(op token.Token, right loxObject) loxObject
+}
+
+func newInvalidBinaryOpError(op token.Token, left loxObject, right loxObject) error {
+	return loxerr.Newf(op, loxerr.Fatal, "%m operator cannot be used with types %m and %m", op.Type, left.Type(), right.Type())
 }
 
 type loxTruther interface {
@@ -106,10 +110,11 @@ func (l loxNumber) UnaryOp(op token.Token) loxObject {
 	if op.Type == token.Minus {
 		return -l
 	}
-	return nil
+	panic(newInvalidUnaryOpError(op, l))
 }
 
 func (l loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
+rightSwitch:
 	switch right := right.(type) {
 	case loxNumber:
 		switch op.Type {
@@ -138,7 +143,7 @@ func (l loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.GreaterEqual:
 			return loxBool(l >= right)
 		default:
-			return nil
+			break rightSwitch
 		}
 
 	case loxString:
@@ -146,7 +151,7 @@ func (l loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.Asterisk:
 			return numberTimesString(l, op, right)
 		default:
-			return nil
+			break rightSwitch
 		}
 
 	case *loxList:
@@ -154,12 +159,14 @@ func (l loxNumber) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.Asterisk:
 			return numberTimesList(l, op, right)
 		default:
-			return nil
+			break rightSwitch
 		}
 
 	default:
-		return nil
+		break rightSwitch
 	}
+
+	panic(newInvalidBinaryOpError(op, l, right))
 }
 
 func numberTimesString(n loxNumber, op token.Token, s loxString) loxString {
@@ -208,6 +215,7 @@ func (s loxString) Equals(other loxObject) bool {
 }
 
 func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
+rightSwitch:
 	switch right := right.(type) {
 	case loxString:
 		switch op.Type {
@@ -222,7 +230,7 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.GreaterEqual:
 			return loxBool(s >= right)
 		default:
-			return nil
+			break rightSwitch
 		}
 
 	case loxNumber:
@@ -230,12 +238,14 @@ func (s loxString) BinaryOp(op token.Token, right loxObject) loxObject {
 		case token.Asterisk:
 			return numberTimesString(right, op, s)
 		default:
-			return nil
+			break rightSwitch
 		}
 
 	default:
-		return nil
+		break rightSwitch
 	}
+
+	panic(newInvalidBinaryOpError(op, s, right))
 }
 
 type loxBool bool
@@ -752,6 +762,7 @@ func (l *loxList) Equals(other loxObject) bool {
 }
 
 func (l *loxList) BinaryOp(op token.Token, right loxObject) loxObject {
+rightSwitch:
 	switch right := right.(type) {
 	case *loxList:
 		switch op.Type {
@@ -760,18 +771,19 @@ func (l *loxList) BinaryOp(op token.Token, right loxObject) loxObject {
 			result := append(lCopy, *right...)
 			return &result
 		default:
-			return nil
+			break rightSwitch
 		}
 	case loxNumber:
 		switch op.Type {
 		case token.Asterisk:
 			return numberTimesList(right, op, l)
 		default:
-			return nil
+			break rightSwitch
 		}
 	default:
-		return nil
+		break rightSwitch
 	}
+	panic(newInvalidBinaryOpError(op, l, right))
 }
 
 func (l *loxList) Index(index loxObject, node ast.Node) loxObject {
