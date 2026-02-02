@@ -42,8 +42,6 @@ EOF
 golox test.lox
 ```
 
-#### Output
-
 ```
 3
 ```
@@ -68,8 +66,6 @@ golox test.lox arg1 arg2
 golox
 ```
 
-#### Output
-
 ```
 Welcome to the Lox REPL. Press Ctrl-D to exit.
 >>>
@@ -88,8 +84,6 @@ EOF
 
 golox -ast test.lox
 ```
-
-#### Output
 
 ```
 (Program
@@ -128,8 +122,6 @@ EOF
 golox -tokens test.lox
 ```
 
-#### Output
-
 ```
 test.lox:1:1: fun [Fun]
 test.lox:1:5: add [Ident]
@@ -161,8 +153,6 @@ test.lox:6:1:  [EOF]
 ```sh
 golox -program 'fun add(x, y) { return x + y; } print add(5, 6);'
 ```
-
-#### Output
 
 ```
 11

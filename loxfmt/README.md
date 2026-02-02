@@ -34,8 +34,6 @@ If no path is provided, the file is read from stdin.
 echo 'fun add(x, y) { return x + y; } print add(1, 2);' | loxfmt
 ```
 
-#### Output
-
 ```sh
 fun add(x, y) {
     return x + y;
@@ -50,8 +48,6 @@ echo 'fun add(x, y) { return x + y; } print add(3, 4);' > test.lox
 loxfmt test.lox
 ```
 
-#### Output
-
 ```
 fun add(x, y) {
     return x + y;
@@ -64,8 +60,6 @@ print add(3, 4);
 ```sh
 echo 'fun add(x, y) { return x + y; } print add(5, 6);' | loxfmt -ast
 ```
-
-#### Output
 
 ```
 (Program
@@ -97,8 +91,6 @@ echo 'fun add(x, y) { return x + y; } print add(7, 8);' > test.lox
 loxfmt -write test.lox
 cat test.lox
 ```
-
-#### Output
 
 ```
 fun add(x, y) {

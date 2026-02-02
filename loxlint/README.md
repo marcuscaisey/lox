@@ -34,8 +34,6 @@ print add(1, 2);
 EOF
 ```
 
-#### Output
-
 ```
 1:15: hint: z has been declared but is never used
 fun add(x, y, z) {
@@ -54,8 +52,6 @@ print add(3, 4);
 EOF
 loxlint test.lox
 ```
-
-#### Output
 
 ```
 1:15: hint: z has been declared but is never used
