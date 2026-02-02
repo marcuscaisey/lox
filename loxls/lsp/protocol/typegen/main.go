@@ -3,6 +3,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"go/format"
@@ -14,16 +15,21 @@ import (
 	"github.com/marcuscaisey/lox/loxls/lsp/protocol/typegen/metamodel"
 )
 
-var (
-	lspVersion = flag.String("lsp-version", "3.17", "LSP version")
-	pkg        = flag.String("package", "protocol", "Package the file will belong to")
-	output     = flag.String("output", "protocol.go", "Output file")
-)
-
 const methodCommentDirective = "//typegen:method"
 
-func usage() {
-	fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+func main() {
+	os.Exit(cli())
+}
+
+type usageError string
+
+func (e usageError) Error() string {
+	return fmt.Sprintf("error: %s", string(e))
+}
+
+func cli() int {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, strings.TrimSpace(`
 typegen generates a Go file containing the types required to implement handlers
 for the given LSP methods.
 
@@ -42,36 +48,44 @@ Usage: typegen [options] [method ...]
 
 Options:
 `), methodCommentDirective)
-	flag.PrintDefaults()
-}
-
-func main() {
-	if err := typeGen(); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s\n", err)
-		os.Exit(2)
+		flag.PrintDefaults()
 	}
-}
+	lspVersion := flag.String("lsp-version", "3.17", "LSP version")
+	pkg := flag.String("package", "protocol", "Package the file will belong to")
+	output := flag.String("output", "protocol.go", "Output file")
 
-func typeGen() error {
-	flag.Usage = usage
 	flag.Parse()
 
-	methodArgs := flag.Args()
+	if err := typeGen(flag.Args(), *lspVersion, *pkg, *output); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		var usageErr usageError
+		if errors.As(err, &usageErr) {
+			fmt.Fprintln(os.Stderr)
+			flag.Usage()
+			return 2
+		}
+		return 1
+	}
+
+	return 0
+}
+
+func typeGen(args []string, lspVersion string, pkg string, output string) error {
 	methodComments, err := parseMethodComments()
 	if err != nil {
 		return err
 	}
-	if len(methodArgs) > 0 && len(methodComments) > 0 {
-		return fmt.Errorf("cannot specify methods as arguments and via %s comments", methodCommentDirective)
+	if len(args) > 0 && len(methodComments) > 0 {
+		return usageError(fmt.Sprintf("cannot specify methods as arguments and via %s comments", methodCommentDirective))
 	}
-	methods := append(slices.Clone(methodArgs), methodComments...)
+	methods := append(slices.Clone(args), methodComments...)
 
 	if len(methods) == 0 {
 		flag.Usage()
-		os.Exit(0)
+		return nil
 	}
 
-	metaModel, err := metamodel.Load(*lspVersion)
+	metaModel, err := metamodel.Load(lspVersion)
 	if err != nil {
 		return err
 	}
@@ -88,14 +102,14 @@ func typeGen() error {
 		},
 	})
 
-	src := generate.Source(types, metaModel, *pkg)
+	src := generate.Source(types, metaModel, pkg)
 
 	formattedSrc, err := format.Source([]byte(src))
 	if err != nil {
 		return fmt.Errorf("formatting generated file: %s\ncontents: %s", err, src)
 	}
 
-	return os.WriteFile(*output, formattedSrc, 0644)
+	return os.WriteFile(output, formattedSrc, 0644)
 }
 
 func parseMethodComments() ([]string, error) {

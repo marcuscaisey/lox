@@ -54,48 +54,56 @@ var errorReplacements = map[string]errorReplacement{
 	`^expected superclass to be a class, got '[a-z]+'$`:                                                               {70, "Superclass must be a class."},
 }
 
-var (
-	printHelp = flag.Bool("help", false, "Print this message")
-)
-
-func usage() {
-	fmt.Fprintln(os.Stderr, "Usage: jloxify <interpreter> <script>")
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "Options:")
-	flag.PrintDefaults()
-}
-
-func exitWithUsageErr(msg string) {
-	fmt.Fprintf(os.Stderr, "error: %s\n\n", msg)
-	flag.Usage()
-	os.Exit(2)
-}
-
 func main() {
-	flag.Usage = usage
+	os.Exit(cli())
+}
+
+type usageError string
+
+func (e usageError) Error() string {
+	return fmt.Sprintf("error: %s", string(e))
+}
+
+func cli() int {
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "Usage: jloxify <interpreter> <script>")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "Options:")
+		flag.PrintDefaults()
+	}
+	printHelp := flag.Bool("help", false, "Print this message")
+
 	flag.Parse()
 
 	if *printHelp {
 		flag.Usage()
-		os.Exit(0)
+		return 0
 	}
 
-	switch len(flag.Args()) {
-	case 0:
-		exitWithUsageErr("interpreter and script arguments not provided")
-	case 1:
-		exitWithUsageErr("script argument not provided")
+	if err := jloxify(flag.Args()); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		var usageErr usageError
+		if errors.As(err, &usageErr) {
+			fmt.Fprintln(os.Stderr)
+			flag.Usage()
+			return 2
+		}
+		return 1
 	}
 
-	interpreter := flag.Arg(0)
-	script := flag.Arg(1)
-	if err := run(interpreter, script); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
+	return 0
 }
 
-func run(interpreter string, script string) error {
+func jloxify(args []string) error {
+	switch len(flag.Args()) {
+	case 0:
+		return usageError("interpreter and script arguments not provided")
+	case 1:
+		return usageError("script argument not provided")
+	}
+
+	interpreter := args[0]
+	script := args[1]
 	cmd := exec.Command(interpreter, script)
 	stdout, err := cmd.Output()
 	var exitErr *exec.ExitError

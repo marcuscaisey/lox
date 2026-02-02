@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -18,68 +17,81 @@ import (
 	"github.com/marcuscaisey/lox/golox/parser"
 )
 
-var (
-	program     = flag.String("program", "", "Program passed in as string")
-	printAST    = flag.Bool("ast", false, "Print the AST")
-	printTokens = flag.Bool("tokens", false, "Print the lexical tokens")
-	printHelp   = flag.Bool("help", false, "Print this message")
-)
-
-func usage() {
-	fmt.Fprintln(os.Stderr, "Usage: golox [options] [script]")
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "Options:")
-	flag.PrintDefaults()
-}
-
-func exitWithUsageErr(msg string) {
-	fmt.Fprintf(os.Stderr, "error: %s\n\n", msg)
-	flag.Usage()
-	os.Exit(2)
-}
-
 func main() {
-	log.SetFlags(0)
+	os.Exit(cli())
+}
 
-	flag.Usage = usage
+type usageError string
+
+func (e usageError) Error() string {
+	return fmt.Sprintf("error: %s", string(e))
+}
+
+func cli() int {
+	flag.Usage = func() {
+		fmt.Fprintln(os.Stderr, "Usage: golox [options] [script]")
+		fmt.Fprintln(os.Stderr)
+		fmt.Fprintln(os.Stderr, "Options:")
+		flag.PrintDefaults()
+	}
+	program := flag.String("program", "", "Program passed in as string")
+	printAST := flag.Bool("ast", false, "Print the AST")
+	printTokens := flag.Bool("tokens", false, "Print the lexical tokens")
+	printHelp := flag.Bool("help", false, "Print this message")
+
 	flag.Parse()
 
 	if *printHelp {
 		flag.Usage()
-		os.Exit(0)
+		return 0
 	}
 
-	if *printAST && *printTokens {
-		exitWithUsageErr("-ast and -tokens cannot be provided together")
+	if err := golox(flag.Args(), *program, *printTokens, *printAST); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		var usageErr usageError
+		if errors.As(err, &usageErr) {
+			fmt.Fprintln(os.Stderr)
+			flag.Usage()
+			return 2
+		}
+		return 1
 	}
 
-	if *program != "" {
-		if err := run("", strings.NewReader(*program), interpreter.New()); err != nil {
-			log.Fatal(err)
-		}
-		return
-	}
-
-	switch len(flag.Args()) {
-	case 0:
-		if err := runREPL(); err != nil {
-			log.Fatal(err)
-		}
-	case 1:
-		if err := runFile(flag.Arg(0)); err != nil {
-			log.Fatal(err)
-		}
-	default:
-		exitWithUsageErr("at most one path can be provided")
-	}
+	return 0
 }
 
-func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) error {
-	program, err := parser.Parse(r, filename, parser.WithPrintTokens(*printTokens))
-	if *printTokens {
+func golox(args []string, program string, printAST bool, printTokens bool) error {
+	if printAST && printTokens {
+		return usageError("-ast and -tokens cannot be provided together")
+	}
+	if len(args) > 1 {
+		return usageError("at most one path can be provided")
+	}
+
+	if program != "" {
+		filename := ""
+		return exec(filename, strings.NewReader(program), interpreter.New(), printTokens, printAST)
+	}
+
+	if len(args) == 0 {
+		return repl(printTokens, printAST)
+	}
+
+	filename := args[0]
+	f, err := os.Open(filename)
+	if err != nil {
 		return err
 	}
-	if *printAST {
+	defer f.Close()
+	return exec(filename, f, interpreter.New(), printTokens, printAST)
+}
+
+func exec(filename string, r io.Reader, interpreter *interpreter.Interpreter, printTokens bool, printAST bool) error {
+	program, err := parser.Parse(r, filename, parser.WithPrintTokens(printTokens))
+	if printTokens {
+		return err
+	}
+	if printAST {
 		ast.Print(program)
 		return err
 	}
@@ -89,7 +101,7 @@ func run(filename string, r io.Reader, interpreter *interpreter.Interpreter) err
 	return interpreter.Execute(program)
 }
 
-func runREPL() error {
+func repl(printTokens bool, printAST bool) error {
 	cfg := &readline.Config{
 		Prompt: ">>> ",
 	}
@@ -121,19 +133,10 @@ func runREPL() error {
 			}
 			panic(fmt.Sprintf("unexpected error from readline: %s", err))
 		}
-		if err := run("", strings.NewReader(line), interpreter); err != nil {
+		if err := exec("", strings.NewReader(line), interpreter, printTokens, printAST); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}
 
 	return nil
-}
-
-func runFile(filename string) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return run(filename, f, interpreter.New())
 }
