@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/chzyer/readline"
@@ -29,7 +31,7 @@ func (e usageError) Error() string {
 
 func cli() int {
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: golox [options] [<script>]")
+		fmt.Fprintln(os.Stderr, "Usage: golox [options] [<script>] [<argument>...]")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "Options:")
 		flag.PrintDefaults()
@@ -64,13 +66,11 @@ func golox(args []string, program string, printAST bool, printTokens bool) error
 	if printAST && printTokens {
 		return usageError("-ast and -tokens cannot be provided together")
 	}
-	if len(args) > 1 {
-		return usageError("at most one path can be provided")
-	}
 
 	if program != "" {
 		filename := "<string>"
-		return exec(filename, strings.NewReader(program), interpreter.New(), printTokens, printAST)
+		argv := append([]string{filename}, args...)
+		return exec(filename, strings.NewReader(program), interpreter.New(argv), printTokens, printAST)
 	}
 
 	if len(args) == 0 {
@@ -83,7 +83,9 @@ func golox(args []string, program string, printAST bool, printTokens bool) error
 		return err
 	}
 	defer f.Close()
-	return exec(filename, f, interpreter.New(), printTokens, printAST)
+	argv := slices.Clone(args)
+	argv[0] = filepath.Base(argv[0])
+	return exec(filename, f, interpreter.New(argv), printTokens, printAST)
 }
 
 func exec(filename string, r io.Reader, interpreter *interpreter.Interpreter, printTokens bool, printAST bool) error {
@@ -121,7 +123,8 @@ func repl(printTokens bool, printAST bool) error {
 
 	fmt.Fprintln(os.Stderr, "Welcome to the Lox REPL. Press Ctrl-D to exit.")
 
-	interpreter := interpreter.New(interpreter.WithREPLMode(true))
+	argv := []string{"<repl>"}
+	interpreter := interpreter.New(argv, interpreter.WithREPLMode(true))
 	for {
 		line, err := rl.Readline()
 		if err != nil {

@@ -21,3 +21,5 @@ class list {
   // Number of elements in the list.
   get length() {}
 }
+
+var argv = [];

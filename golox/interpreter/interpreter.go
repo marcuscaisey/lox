@@ -33,11 +33,19 @@ func WithREPLMode(enabled bool) Option {
 }
 
 // New constructs a new Interpreter with the given options.
-func New(opts ...Option) *Interpreter {
+// argv
+func New(argv []string, opts ...Option) *Interpreter {
 	var globals environment = newGlobalEnvironment()
 	for name, builtIn := range builtIns {
 		globals = globals.Define(name, builtIn)
 	}
+
+	argvValues := make([]loxValue, len(argv))
+	for i, arg := range argv {
+		argvValues[i] = loxString(arg)
+	}
+	globals = globals.Define("argv", newLoxList(argvValues))
+
 	interpreter := &Interpreter{
 		globals:      globals,
 		callStack:    newCallStack(),
@@ -328,8 +336,7 @@ func (i *Interpreter) evalListExpr(env environment, expr *ast.ListExpr) loxValue
 	for j, element := range expr.Elements {
 		elements[j] = i.evalExpr(env, element)
 	}
-	result := loxList(elements)
-	return &result
+	return newLoxList(elements)
 }
 
 func (i *Interpreter) evalIdentExpr(env environment, expr *ast.IdentExpr) loxValue {

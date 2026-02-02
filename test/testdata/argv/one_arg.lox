@@ -1,0 +1,2 @@
+// arguments: arg1
+print argv; // prints: [one_arg.lox, arg1]

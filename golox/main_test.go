@@ -16,8 +16,9 @@ import (
 var (
 	interpreter = flag.String("interpreter", "", "Interpreter to run tests against instead of golox")
 
-	printsRe = regexp.MustCompile(`// prints: (.+)`)
-	errorRe  = regexp.MustCompile(`// error: (.+)`)
+	printsRe    = regexp.MustCompile(`// prints: (.+)`)
+	errorRe     = regexp.MustCompile(`// error: (.+)`)
+	argumentsRe = regexp.MustCompile(`// arguments: (.+)`)
 )
 
 func TestGolox(t *testing.T) {
@@ -43,8 +44,15 @@ type runner struct {
 }
 
 func (r *runner) Test(t *testing.T, path string) {
-	want := r.mustParseExpectedResult(t, path)
-	got := r.mustRunGolox(t, path)
+	fileContents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want := r.parseExpectedResult(fileContents)
+	scriptArgs := r.mustParseScriptArguments(t, path, fileContents)
+
+	got := r.mustRunGolox(t, path, scriptArgs)
 
 	if got.ExitCode != want.ExitCode {
 		t.Fatalf("exit code = %d, want %d\nstdout:\n%s\nstderr:\n%s", got.ExitCode, want.ExitCode, got.Stdout, got.Stderr)
@@ -66,8 +74,9 @@ type goloxResult struct {
 	ExitCode int
 }
 
-func (r *runner) mustRunGolox(t *testing.T, path string) *goloxResult {
-	cmd := exec.Command(r.goloxPath, path)
+func (r *runner) mustRunGolox(t *testing.T, path string, scriptArgs []string) *goloxResult {
+	args := append([]string{path}, scriptArgs...)
+	cmd := exec.Command(r.goloxPath, args...)
 
 	relPath, err := filepath.Rel(r.rootDir, path)
 	if err != nil {
@@ -95,20 +104,15 @@ func (r *runner) mustRunGolox(t *testing.T, path string) *goloxResult {
 	}
 }
 
-func (r *runner) mustParseExpectedResult(t *testing.T, path string) *goloxResult {
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	stdoutLines := loxtest.ParseComments(contents, printsRe)
+func (r *runner) parseExpectedResult(fileContents []byte) *goloxResult {
+	stdoutLines := loxtest.ParseComments(fileContents, printsRe)
 	stdout := strings.Join(stdoutLines, "\n")
 	if stdout != "" {
 		stdout += "\n"
 	}
 	result := &goloxResult{
 		Stdout: stdout,
-		Errors: loxtest.ParseComments(contents, errorRe),
+		Errors: loxtest.ParseComments(fileContents, errorRe),
 	}
 	if len(result.Errors) > 0 {
 		result.ExitCode = 1
@@ -120,7 +124,13 @@ func (r *runner) mustParseExpectedResult(t *testing.T, path string) *goloxResult
 func (r *runner) Update(t *testing.T, path string) {
 	t.Logf("updating expected output for %s", path)
 
-	result := r.mustRunGolox(t, path)
+	fileContents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	scriptArgs := r.mustParseScriptArguments(t, path, fileContents)
+	result := r.mustRunGolox(t, path, scriptArgs)
 
 	t.Logf("exit code: %d", result.ExitCode)
 	if len(result.Stdout) > 0 {
@@ -154,4 +164,18 @@ func (r *runner) Update(t *testing.T, path string) {
 	if err := os.WriteFile(path, contents, 0644); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func (r *runner) mustParseScriptArguments(t *testing.T, path string, fileContents []byte) []string {
+	argumentsLines := loxtest.ParseComments(fileContents, argumentsRe)
+	var scriptArgs []string
+	switch len(argumentsLines) {
+	case 0:
+		break
+	case 1:
+		scriptArgs = strings.Fields(argumentsLines[0])
+	default:
+		t.Fatalf("%d %q lines found in %s. There should be at most one.", len(argumentsLines), argumentsRe, path)
+	}
+	return scriptArgs
 }

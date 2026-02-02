@@ -727,6 +727,11 @@ func (i *loxInstance) SetProperty(interpreter *Interpreter, name *ast.Ident, val
 
 type loxList []loxValue
 
+func newLoxList(elements []loxValue) *loxList {
+	l := loxList(elements)
+	return &l
+}
+
 var (
 	_ loxValue              = (*loxList)(nil)
 	_ loxBinaryOperand      = (*loxList)(nil)

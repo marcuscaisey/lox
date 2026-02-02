@@ -5,6 +5,12 @@
   (super_expression)
 ] @variable.builtin
 
+
+(
+  (identifier) @variable.builtin
+  (#eq? @variable.builtin "argv")
+)
+
 (parameter_list
   (identifier) @variable.parameter)
 

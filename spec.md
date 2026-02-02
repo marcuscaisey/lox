@@ -26,6 +26,7 @@ from the challenges in the book.
 - [`error` built-in function](#Built-in-Functions)
 - [Property setter method](#Class-Declaration)
 - [List type](#List)
+- [Command Line Arguments](#Command-Line-Arguments)
 
 ## Types
 
@@ -691,6 +692,17 @@ Lox has the following built-in functions.
 | `clock()`     | `number` | Returns the number of seconds since the Unix epoch. |
 | `type(value)` | `string` | Returns the type of the value.                      |
 | `error(msg)`  | `nil`    | Throws a runtime error with the message.            |
+
+## Command Line Arguments
+
+Command line arguments passed to a Lox script are made available through the `argv` global variable.
+The first element will be the name of the script.
+
+```lox
+var scriptName = argv[0];
+var name = argv[1];
+print "Hello, " + name + " (from " + scriptName + ")!"; // prints: Hello, Marcus (from greet.lox)!
+```
 
 ## Grammar
 

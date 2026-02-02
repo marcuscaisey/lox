@@ -11,7 +11,7 @@ go install github.com/marcuscaisey/lox/golox@latest
 ## Usage
 
 ```
-Usage: golox [options] [<script>]
+Usage: golox [options] [<script>] [<argument>...]
 
 Options:
   -ast
@@ -46,6 +46,20 @@ golox test.lox
 
 ```
 3
+```
+
+### Execute script with arguments
+
+```sh
+cat << EOF > test.lox
+print argv;
+EOF
+
+golox test.lox arg1 arg2
+```
+
+```
+[test.lox, arg1, arg2]
 ```
 
 ### Start REPL
@@ -152,4 +166,15 @@ golox -program 'fun add(x, y) { return x + y; } print add(5, 6);'
 
 ```
 11
+```
+
+### Pass program as string with arguments
+
+
+```sh
+golox -program 'print argv;' arg1 arg2
+```
+
+```
+[<string>, arg1, arg2]
 ```
