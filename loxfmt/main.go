@@ -26,7 +26,7 @@ func (e usageError) Error() string {
 
 func cli() int {
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: loxfmt [flags] [path]")
+		fmt.Fprintln(os.Stderr, "Usage: loxfmt [options] [<path>]")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "If no path is provided, the file is read from stdin.")
 		fmt.Fprintln(os.Stderr)

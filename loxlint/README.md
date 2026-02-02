@@ -11,7 +11,7 @@ go install github.com/marcuscaisey/lox/loxlint@latest
 ## Usage
 
 ```
-Usage: loxlint [flags] [path]
+Usage: loxlint [options] [<path>]
 
 If no path is provided, the file is read from stdin.
 

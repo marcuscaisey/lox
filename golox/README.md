@@ -11,7 +11,7 @@ go install github.com/marcuscaisey/lox/golox@latest
 ## Usage
 
 ```
-Usage: golox [options] [script]
+Usage: golox [options] [<script>]
 
 Options:
   -ast

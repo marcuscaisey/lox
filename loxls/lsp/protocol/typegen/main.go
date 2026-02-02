@@ -44,7 +44,7 @@ comment.
 	%[1]s shutdown
 	%[1]s exit
 
-Usage: typegen [options] [method ...]
+Usage: typegen [options] [<method>...]
 
 Options:
 `), methodCommentDirective)

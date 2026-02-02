@@ -29,7 +29,7 @@ func (e usageError) Error() string {
 
 func cli() int {
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage: golox [options] [script]")
+		fmt.Fprintln(os.Stderr, "Usage: golox [options] [<script>]")
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, "Options:")
 		flag.PrintDefaults()

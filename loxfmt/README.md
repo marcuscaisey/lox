@@ -11,13 +11,15 @@ go install github.com/marcuscaisey/lox/loxfmt@latest
 ## Usage
 
 ```
-Usage: loxfmt [flags] [path]
+Usage: loxfmt [options] [<path>]
+
+If no path is provided, the file is read from stdin.
 
 Options:
+  -ast
+        Print the AST
   -help
         Print this message
-  -print-ast
-        Print the AST
   -write
         Write result to (source) file instead of stdout
 ```
