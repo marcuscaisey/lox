@@ -67,7 +67,7 @@ func loxfmt(args []string, write bool, printAST bool) error {
 	}
 
 	reader := io.Reader(os.Stdin)
-	filename := "stdin"
+	filename := "<stdin>"
 	if len(args) > 0 {
 		path := args[0]
 		data, err := os.ReadFile(path)

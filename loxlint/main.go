@@ -61,7 +61,7 @@ func loxlint(args []string) error {
 		return usageError("at most one path can be provided")
 	}
 
-	filename := "stdin"
+	filename := "<stdin>"
 	reader := io.Reader(os.Stdin)
 	if len(args) > 0 {
 		filename := args[0]

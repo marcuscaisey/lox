@@ -69,7 +69,7 @@ func golox(args []string, program string, printAST bool, printTokens bool) error
 	}
 
 	if program != "" {
-		filename := ""
+		filename := "<string>"
 		return exec(filename, strings.NewReader(program), interpreter.New(), printTokens, printAST)
 	}
 
