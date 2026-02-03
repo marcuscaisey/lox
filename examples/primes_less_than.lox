@@ -17,8 +17,9 @@ for (var i = 0; i < n - 2; i = i + 1) {
 
 for (var i = 0; i < flags.length; i = i + 1) {
   if (flags[i]) {
-    print i + 2;
-    for (var j = 2 * (i + 2) - 2; j < flags.length; j = j + (i + 2)) {
+    var prime = i + 2;
+    print prime;
+    for (var j = 2 * prime - 2; j < flags.length; j = j + prime) {
       flags[j] = false;
     }
   }
