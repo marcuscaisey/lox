@@ -1,0 +1,1 @@
+parseNumber("foo bar"); // error: "foo bar" could not be parsed as a 'number'

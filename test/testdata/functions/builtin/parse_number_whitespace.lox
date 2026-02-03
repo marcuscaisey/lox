@@ -1,0 +1,3 @@
+print parseNumber(" 1") == 1; // prints: true
+print parseNumber(" 2 ") == 2; // prints: true
+print parseNumber("3 ") == 3; // prints: true

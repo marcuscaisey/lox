@@ -7,6 +7,9 @@ fun clock() {}
 // Returns the type of the value.
 fun type(value) {}
 
+// Parses a `string` as a `number` and returns it.
+fun parseNumber(str) {}
+
 // Throws a runtime error with the given message.
 fun error(msg) {}
 

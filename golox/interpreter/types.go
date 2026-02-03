@@ -849,6 +849,14 @@ func (l *loxList) Property(_ *Interpreter, name *ast.Ident) loxValue {
 // into a runtime error.
 type errorMsg string
 
+func newErrorMsg(msg string) errorMsg {
+	return errorMsg(msg)
+}
+
+func newErrorMsgf(format string, a ...any) errorMsg {
+	return newErrorMsg(fmt.Sprintf(format, a...))
+}
+
 var _ loxValue = errorMsg("")
 
 func (errorMsg) String() string {

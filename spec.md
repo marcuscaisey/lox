@@ -27,6 +27,7 @@ from the challenges in the book.
 - [Property setter method](#Class-Declaration)
 - [List type](#List)
 - [Command Line Arguments](#Command-Line-Arguments)
+- [`parseNumber` built-in function](#Built-in-Functions)
 
 ## Types
 
@@ -92,7 +93,7 @@ A unary expression is an operator followed by a single operand.
 
 | Operator | Operand  | Result   | Description                           |
 | -------- | -------- | -------- | ------------------------------------- |
-| !        | All      | `bool`   | Negates the truthiness of the operand |
+| !        | any      | `bool`   | Negates the truthiness of the operand |
 | -        | `number` | `number` | Negates the operand                   |
 
 ```lox
@@ -117,11 +118,11 @@ A binary expression is an operator surrounded by two operands.
 | -         | `number`     | `number`     | `number`                  | Subtracts the operands                                                 |
 | < <= > >= | `number`     | `number`     | `bool`                    | Compares the operands                                                  |
 | < <= > >= | `string`     | `string`     | `bool`                    | Compares the operands lexicographically                                |
-| == !=     | All - `list` | All - `list` | `bool`                    | Compares the operands and their types                                  |
+| == !=     | any - `list` | any - `list` | `bool`                    | Compares the operands and their types                                  |
 | == !=     | `list`       | `list`       | `bool`                    | Compares the lists element-wise                                        |
 | and       | `bool`       | `bool`       | `bool`                    | Returns the second operand if the first is truthy, otherwise the first |
 | or        | `bool`       | `bool`       | `bool`                    | Returns the first operand if it is truthy, otherwise the second        |
-| ,         | All          | All          | Type of the right operand | Evaluates the left then right operand<br>Returns the second result     |
+| ,         | any          | any          | Type of the right operand | Evaluates the left then right operand<br>Returns the second result     |
 
 ```lox
 print 2 * 3.5; // prints: 7
@@ -687,11 +688,12 @@ Stack Trace (most recent call first):
 
 Lox has the following built-in functions.
 
-| Name          | Returns  | Description                                         |
-| ------------- | -------- | --------------------------------------------------- |
-| `clock()`     | `number` | Returns the number of seconds since the Unix epoch. |
-| `type(value)` | `string` | Returns the type of the value.                      |
-| `error(msg)`  | `nil`    | Throws a runtime error with the message.            |
+| Name               | Accepts  | Returns  | Description                                         |
+| ------------------ | -------- | -------- | --------------------------------------------------- |
+| `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch. |
+| `type(value)`      | any      | `string` | Returns the type of the value.                      |
+| `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number` and returns it.     |
+| `error(msg)`       | any      | `nil`    | Throws a runtime error with the message.            |
 
 ## Command Line Arguments
 

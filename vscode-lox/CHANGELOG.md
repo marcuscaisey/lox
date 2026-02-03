@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add support for `argv` global variable when extra features are enabled.
+- Add support for `argv` built-in variable when extra features are enabled.
+- Add support for `parseNumber` built-in function when extra features are enabled.
 
 ### Fixed
 
@@ -45,7 +46,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Always quote identifiers in error messages.
-
 
 ## [4.1.0] - 2026-01-18
 

@@ -40,7 +40,7 @@
 (call_expression
   callee: (identifier) @function.call)
 
-((identifier) @function.builtin (#any-of? @function.builtin "clock" "type" "error"))
+((identifier) @function.builtin (#any-of? @function.builtin "clock" "type" "parseNumber" "error"))
 
 (method_declaration
   name: (identifier) @function.method)
