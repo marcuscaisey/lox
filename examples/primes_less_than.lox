@@ -1,7 +1,14 @@
-// Prints the prime numbers less than n.
+// Prints the prime numbers less than n where n is passed as an argument to the script.
 // Primes are found using the sieve of Eratos.
 
-var n = 50;
+if (argv.length < 2) {
+  error("argument not provided");
+}
+if (argv.length > 2) {
+  error("too many arguments provided");
+}
+
+var n = parseNumber(argv[1]);
 
 var flags = []; // flags[i] is true if i+2 is prime
 for (var i = 0; i < n - 2; i = i + 1) {

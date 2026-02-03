@@ -1,3 +1,5 @@
+// Prints the nth fibonacci number where n is passed as an argument to the script.
+
 fun fib(n) {
   if (n < 2) {
     return n;
@@ -5,7 +7,12 @@ fun fib(n) {
   return fib(n - 1) + fib(n - 2);
 }
 
-var before = clock();
-print fib(40);
-var after = clock();
-print after - before;
+if (argv.length < 2) {
+  error("argument not provided");
+}
+if (argv.length > 2) {
+  error("too many arguments provided");
+}
+
+var n = parseNumber(argv[1]);
+print fib(n);
