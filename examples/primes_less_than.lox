@@ -1,5 +1,5 @@
 // Prints the prime numbers less than n where n is passed as an argument to the script.
-// Primes are found using the sieve of Eratos.
+// Primes are found using the sieve of Eratosthenes.
 
 if (argv.length < 2) {
   error("argument not provided");
