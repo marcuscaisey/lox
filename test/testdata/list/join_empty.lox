@@ -1,0 +1,1 @@
+print "before" + [].join("-") + "after"; // prints: beforeafter

@@ -1,0 +1,1 @@
+print ["a", "b", "c"].join("-"); // prints: a-b-c

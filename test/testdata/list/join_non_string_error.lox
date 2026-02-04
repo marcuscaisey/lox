@@ -1,0 +1,1 @@
+[].join(2); // error: expected join separator to be a 'string', got 'number'

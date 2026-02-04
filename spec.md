@@ -67,10 +67,11 @@ for (var i = 0; i < vals.length; i++) {
 
 #### Methods
 
-| Name          | Result | Description                                             |
-| ------------- | ------ | ------------------------------------------------------- |
-| `push(value)` |        | Adds an element to the end of the list.                 |
-| `pop()`       | any    | Removes and returns the element at the end of the list. |
+| Name              | Result   | Description                                                                 |
+| ----------------- | -------- | --------------------------------------------------------------------------- |
+| `push(value)`     |          | Adds an element to the end of the list.                                     |
+| `pop()`           | any      | Removes and returns the element at the end of the list.                     |
+| `join(separator)` | `string` | Returns a string formed by joining the list’s elements with a separator. |
 
 ## Expressions
 
@@ -692,7 +693,7 @@ Lox has the following built-in functions.
 | ------------------ | -------- | -------- | --------------------------------------------------- |
 | `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch. |
 | `type(value)`      | any      | `string` | Returns the type of the value.                      |
-| `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number` and returns it.     |
+| `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                    |
 | `error(msg)`       | any      | `nil`    | Throws a runtime error with the message.            |
 
 ## Command Line Arguments

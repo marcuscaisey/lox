@@ -841,6 +841,18 @@ func (l *loxList) Property(_ *Interpreter, name *ast.Ident) loxValue {
 		})
 	case "length":
 		return loxNumber(len(*l))
+	case "join":
+		return newBuiltInLoxMethod("list.join", []string{"separator"}, func(args []loxValue) loxValue {
+			separator, ok := args[0].(loxString)
+			if !ok {
+				return newErrorMsgf("expected join separator to be a %m, got %m", loxTypeString, args[0].Type())
+			}
+			elems := make([]string, len(*l))
+			for i, elem := range *l {
+				elems[i] = elem.String()
+			}
+			return loxString(strings.Join(elems, separator.String()))
+		})
 	}
 	panic(loxerr.Newf(name, loxerr.Fatal, "%m value has no property %m", loxTypeList, name))
 }
