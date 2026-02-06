@@ -62,8 +62,8 @@ func cli() int {
 	return 0
 }
 
-func golox(args []string, program string, printAST bool, printTokens bool) error {
-	if printAST && printTokens {
+func golox(args []string, program string, printTokens bool, printAST bool) error {
+	if printTokens && printAST {
 		return usageError("-ast and -tokens cannot be provided together")
 	}
 
