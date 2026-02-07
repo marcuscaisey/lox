@@ -10,6 +10,9 @@ fun type(value) {}
 // Parses a `string` as a `number`.
 fun parseNumber(str) {}
 
+// Returns the `string` representation of a value.
+fun string(value) {}
+
 // Throws a runtime error with a message.
 fun error(msg) {}
 

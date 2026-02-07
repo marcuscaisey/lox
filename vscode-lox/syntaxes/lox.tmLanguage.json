@@ -354,7 +354,7 @@
     },
     "built-in-functions": {
       "name": "support.function.builtin.lox",
-      "match": "\\b(?:clock|type|parseNumber|error|printerr|exit)(?=\\()"
+      "match": "\\b(?:clock|type|parseNumber|string|error|printerr|exit)(?=\\()"
     },
     "call-expression": {
       "name": "entity.name.function.lox",

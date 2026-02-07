@@ -27,6 +27,9 @@ var builtinFunctions = map[string]*loxFunction{
 		}
 		return loxNumber(f)
 	}),
+	"string": newBuiltinLoxFunction("string", []string{"value"}, func(args []loxValue) loxValue {
+		return loxString(args[0].String())
+	}),
 	"error": newBuiltinLoxFunction("error", []string{"msg"}, func(args []loxValue) loxValue {
 		return newErrorMsg(args[0].String())
 	}),

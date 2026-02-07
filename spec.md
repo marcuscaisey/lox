@@ -31,6 +31,7 @@ from the challenges in the book.
 - [`string` escape sequences](#String-Escape-Sequences)
 - [`printerr` built-in function](#Built-in-Functions)
 - [`exit` built-in function](#Built-in-Functions)
+- [`string` built-in function](#Built-in-Functions)
 
 ## Types
 
@@ -708,6 +709,7 @@ Lox has the following built-in functions.
 | `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch. |
 | `type(value)`      | any      | `string` | Returns the type of a value.                        |
 | `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                    |
+| `string(value)`    | any      | `string` | Returns the `string` representation of a value.     |
 | `error(msg)`       | any      |          | Throws a runtime error with a message.              |
 | `printerr(msg)`    | any      | `nil`    | Prints a message to stderr.                         |
 | `exit(code)`       | `number` |          | Exits the program with a status code.               |
