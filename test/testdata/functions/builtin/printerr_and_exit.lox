@@ -1,0 +1,4 @@
+// Use the same format as a regular error that we can assert on it in the same way.
+printerr("1:1: error: foo"); // error: foo
+// Use the same status as when a regular error is raised so that the message printed above is asserted on as an error.
+exit(1);

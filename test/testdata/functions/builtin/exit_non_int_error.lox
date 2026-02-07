@@ -1,0 +1,1 @@
+exit(2.5); // error: expected exit argument (2.5) to be an integer

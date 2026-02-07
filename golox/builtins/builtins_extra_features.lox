@@ -16,6 +16,9 @@ fun error(msg) {}
 // Prints a message to stderr.
 fun printerr(msg) {}
 
+// Exits the program with a status code.
+fun exit(code) {}
+
 // @internal
 class list {
   // Adds an element to the end of the list.

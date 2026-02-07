@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -31,6 +32,18 @@ var builtinFunctions = map[string]*loxFunction{
 	}),
 	"printerr": newBuiltinLoxFunction("printerr", []string{"msg"}, func(args []loxValue) loxValue {
 		fmt.Fprintln(os.Stderr, args[0].String())
+		return loxNil{}
+	}),
+	"exit": newBuiltinLoxFunction("exit", []string{"code"}, func(args []loxValue) loxValue {
+		codeNumber, ok := args[0].(loxNumber)
+		if !ok {
+			return newErrorMsgf("expected exit argument to be a %m, got %m", loxTypeNumber, args[0].Type())
+		}
+		if math.Floor(float64(codeNumber)) != float64(codeNumber) {
+			return newErrorMsgf("expected exit argument (%s) to be an integer", codeNumber)
+		}
+		codeInt := int(codeNumber)
+		os.Exit(codeInt)
 		return loxNil{}
 	}),
 }

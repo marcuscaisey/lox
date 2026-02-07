@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for `parseNumber` built-in function when extra features are enabled.
 - Add support for string escape sequences when extra features are enabled.
 - Add support for `printerr` built-in function when extra features are enabled.
+- Add support for `exit` built-in function when extra features are enabled.
 
 ### Fixed
 

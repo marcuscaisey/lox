@@ -30,6 +30,7 @@ from the challenges in the book.
 - [`parseNumber` built-in function](#Built-in-Functions)
 - [`string` escape sequences](#String-Escape-Sequences)
 - [`printerr` built-in function](#Built-in-Functions)
+- [`exit` built-in function](#Built-in-Functions)
 
 ## Types
 
@@ -709,6 +710,7 @@ Lox has the following built-in functions.
 | `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                    |
 | `error(msg)`       | any      |          | Throws a runtime error with a message.              |
 | `printerr(msg)`    | any      | `nil`    | Prints a message to stderr.                         |
+| `exit(code)`       | `number` |          | Exits the program with a status code.               |
 
 ## Command Line Arguments
 
