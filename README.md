@@ -1,8 +1,8 @@
 # Lox [![CI](https://github.com/marcuscaisey/lox/actions/workflows/ci.yml/badge.svg)](https://github.com/marcuscaisey/lox/actions/workflows/ci.yml)
 
 Lox is the dynamically typed programming language defined in the book [Crafting
-Interpreters](https://craftinginterpreters.com). This repository provides an implementation of the
-language and a developer tooling ecosystem as follows:
+Interpreters](https://craftinginterpreters.com). This repository provides an implementation of a
+[superset](spec.md) of the language and a developer tooling ecosystem as follows:
 
 - [golox](golox): An interpreter implemented in Go.
 - [tree-sitter-lox](tree-sitter-lox): A grammar for [tree-sitter](https://github.com/tree-sitter/tree-sitter).
@@ -14,5 +14,5 @@ language and a developer tooling ecosystem as follows:
 Working Lox code examples can be found under [examples](examples) and
 [test/testdata](test/testdata).
 
-[spec.md](spec.md) contains a full specification of the version of the Lox language which has been
+[spec.md](spec.md) contains a full specification of the superset of the Lox language which has been
 implemented.
