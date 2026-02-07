@@ -705,10 +705,10 @@ Lox has the following built-in functions.
 | Name               | Accepts  | Returns  | Description                                         |
 | ------------------ | -------- | -------- | --------------------------------------------------- |
 | `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch. |
-| `type(value)`      | any      | `string` | Returns the type of the value.                      |
+| `type(value)`      | any      | `string` | Returns the type of a value.                        |
 | `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                    |
-| `error(msg)`       | any      |          | Throws a runtime error with the message.            |
-| `printerr(msg)`    | any      | `nil`    | Prints `msg` to stderr.                             |
+| `error(msg)`       | any      |          | Throws a runtime error with a message.              |
+| `printerr(msg)`    | any      | `nil`    | Prints a message to stderr.                         |
 
 ## Command Line Arguments
 

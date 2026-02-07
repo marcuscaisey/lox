@@ -4,13 +4,13 @@
 // Returns the number of seconds since the Unix epoch.
 fun clock() {}
 
-// Returns the type of the value.
+// Returns the type of a value.
 fun type(value) {}
 
 // Parses a `string` as a `number`.
 fun parseNumber(str) {}
 
-// Throws a runtime error with the given message.
+// Throws a runtime error with a message.
 fun error(msg) {}
 
 // Prints a message to stderr.
