@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-var builtIns = map[string]loxValue{
-	"clock": newBuiltInLoxFunction("clock", nil, func([]loxValue) loxValue {
+var builtinFunctions = map[string]*loxFunction{
+	"clock": newBuiltinLoxFunction("clock", nil, func([]loxValue) loxValue {
 		return loxNumber(time.Now().UnixNano()) / loxNumber(time.Second)
 	}),
-	"type": newBuiltInLoxFunction("type", []string{"value"}, func(args []loxValue) loxValue {
+	"type": newBuiltinLoxFunction("type", []string{"value"}, func(args []loxValue) loxValue {
 		return loxString(args[0].Type())
 	}),
-	"parseNumber": newBuiltInLoxFunction("parseNumber", []string{"str"}, func(args []loxValue) loxValue {
+	"parseNumber": newBuiltinLoxFunction("parseNumber", []string{"str"}, func(args []loxValue) loxValue {
 		str, ok := args[0].(loxString)
 		if !ok {
 			return newErrorMsgf("expected parseNumber argument to be a %m, got %m", loxTypeString, args[0].Type())
@@ -24,7 +24,7 @@ var builtIns = map[string]loxValue{
 		}
 		return loxNumber(f)
 	}),
-	"error": newBuiltInLoxFunction("error", []string{"msg"}, func(args []loxValue) loxValue {
+	"error": newBuiltinLoxFunction("error", []string{"msg"}, func(args []loxValue) loxValue {
 		return newErrorMsg(args[0].String())
 	}),
 }

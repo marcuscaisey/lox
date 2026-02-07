@@ -77,6 +77,6 @@ func loxlint(args []string) error {
 		return err
 	}
 
-	builtIns := builtins.MustParseStubs("built_ins.lox")
-	return analyse.Program(program, builtIns)
+	builtins := builtins.MustParseStubs("builtins.lox")
+	return analyse.Program(program, builtins)
 }

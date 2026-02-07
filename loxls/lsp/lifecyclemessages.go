@@ -37,9 +37,9 @@ func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOp
 	if err != nil {
 		return nil, fmt.Errorf("writing built-in stubs to cache directory: %s", err)
 	}
-	h.builtInStubsFilename = fmt.Sprintf("%s/loxls/built_ins.lox", cacheDir)
-	h.builtInStubs = builtins.MustParseStubs(h.builtInStubsFilename, builtins.WithExtraFeatures(h.extraFeatures))
-	if err := writeBuiltInStubs(h.builtInStubsFilename, h.builtInStubs[0].Start().File.Contents); err != nil {
+	h.builtinStubsFilename = fmt.Sprintf("%s/loxls/builtins.lox", cacheDir)
+	h.builtinStubs = builtins.MustParseStubs(h.builtinStubsFilename, builtins.WithExtraFeatures(h.extraFeatures))
+	if err := writeBuiltinStubs(h.builtinStubsFilename, h.builtinStubs[0].Start().File.Contents); err != nil {
 		return nil, err
 	}
 
@@ -99,7 +99,7 @@ func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOp
 	}, nil
 }
 
-func writeBuiltInStubs(filename string, contents []byte) error {
+func writeBuiltinStubs(filename string, contents []byte) error {
 	if data, err := os.ReadFile(filename); err == nil {
 		if bytes.Equal(data, contents) {
 			return nil

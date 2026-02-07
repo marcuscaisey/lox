@@ -18,8 +18,8 @@ type Handler struct {
 	// Internal state
 	initialized          bool
 	shuttingDown         bool
-	builtInStubsFilename string
-	builtInStubs         []ast.Decl
+	builtinStubsFilename string
+	builtinStubs         []ast.Decl
 	docs                 map[string]*document
 	capabilities         *protocol.ClientCapabilities
 	extraFeatures        bool

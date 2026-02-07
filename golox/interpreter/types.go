@@ -315,7 +315,7 @@ const (
 	funTypeFunction funType = 1 << (iota - 1)
 	funTypeMethodFlag
 	funTypeInitFlag
-	funTypeBuiltInFlag
+	funTypeBuiltinFlag
 )
 
 func (f funType) IsMethod() bool {
@@ -326,8 +326,8 @@ func (f funType) IsInit() bool {
 	return f&funTypeInitFlag != 0
 }
 
-func (f funType) IsBuiltIn() bool {
-	return f&funTypeBuiltInFlag != 0
+func (f funType) IsBuiltin() bool {
+	return f&funTypeBuiltinFlag != 0
 }
 
 func methodFunType(decl *ast.MethodDecl) funType {
@@ -364,21 +364,21 @@ func newLoxFunction(name string, fun *ast.Function, typ funType, closure environ
 	return f
 }
 
-func newBuiltInLoxFunction(name string, params []string, body nativeFunBody) *loxFunction {
+func newBuiltinLoxFunction(name string, params []string, body nativeFunBody) *loxFunction {
 	return &loxFunction{
 		name:       name,
 		params:     params,
 		nativeBody: body,
-		typ:        funTypeFunction | funTypeBuiltInFlag,
+		typ:        funTypeFunction | funTypeBuiltinFlag,
 	}
 }
 
-func newBuiltInLoxMethod(name string, params []string, body nativeFunBody) *loxFunction {
+func newBuiltinLoxMethod(name string, params []string, body nativeFunBody) *loxFunction {
 	return &loxFunction{
 		name:       name,
 		params:     params,
 		nativeBody: body,
-		typ:        funTypeMethodFlag | funTypeBuiltInFlag,
+		typ:        funTypeMethodFlag | funTypeBuiltinFlag,
 	}
 }
 
@@ -389,11 +389,11 @@ var (
 
 func (f *loxFunction) String() string {
 	switch {
-	case f.typ.IsMethod() && f.typ.IsBuiltIn():
+	case f.typ.IsMethod() && f.typ.IsBuiltin():
 		return fmt.Sprintf("[built-in method %s]", f.name)
 	case f.typ.IsMethod():
 		return fmt.Sprintf("[bound method %s]", f.name)
-	case f.typ.IsBuiltIn():
+	case f.typ.IsBuiltin():
 		return fmt.Sprintf("[built-in function %s]", f.name)
 	default:
 		return fmt.Sprintf("[function %s]", f.name)
@@ -826,12 +826,12 @@ func (l *loxList) indexInt(index loxValue, node ast.Node) int {
 func (l *loxList) Property(_ *Interpreter, name *ast.Ident) loxValue {
 	switch name.String() {
 	case "push":
-		return newBuiltInLoxMethod("list.push", []string{"value"}, func(args []loxValue) loxValue {
+		return newBuiltinLoxMethod("list.push", []string{"value"}, func(args []loxValue) loxValue {
 			*l = append(*l, args[0])
 			return loxNil{}
 		})
 	case "pop":
-		return newBuiltInLoxMethod("list.pop", []string{}, func([]loxValue) loxValue {
+		return newBuiltinLoxMethod("list.pop", []string{}, func([]loxValue) loxValue {
 			if len(*l) == 0 {
 				return errorMsg(fmt.Sprintf("pop from empty %m", loxTypeList))
 			}
@@ -842,7 +842,7 @@ func (l *loxList) Property(_ *Interpreter, name *ast.Ident) loxValue {
 	case "length":
 		return loxNumber(len(*l))
 	case "join":
-		return newBuiltInLoxMethod("list.join", []string{"separator"}, func(args []loxValue) loxValue {
+		return newBuiltinLoxMethod("list.join", []string{"separator"}, func(args []loxValue) loxValue {
 			separator, ok := args[0].(loxString)
 			if !ok {
 				return newErrorMsgf("expected join separator to be a %m, got %m", loxTypeString, args[0].Type())

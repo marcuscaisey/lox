@@ -42,20 +42,20 @@ type completor struct {
 	classBodyCompletor *classBodyCompletor
 	identCompletor     *identCompletor
 	keywordCompletor   *keywordCompletor
-	builtInCompls      []*completion
+	builtinCompls      []*completion
 	propertyCompletor  *propertyCompletor
 }
 
 // newCompletor returns a [completor] which provides completions inside the given program.
-// builtIns is a list of built-in declarations which are available in the global scope.
-func newCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtIns []ast.Decl) *completor {
+// builtins is a list of built-in declarations which are available in the global scope.
+func newCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtins []ast.Decl) *completor {
 	return &completor{
 		program:            program,
 		classBodyCompletor: newClassBodyCompletor(program),
 		identCompletor:     newIdentCompletor(program),
 		keywordCompletor:   newKeywordCompletor(program),
-		builtInCompls:      declCompletions(builtIns),
-		propertyCompletor:  newPropertyCompletor(program, identBindings, builtIns),
+		builtinCompls:      declCompletions(builtins),
+		propertyCompletor:  newPropertyCompletor(program, identBindings, builtins),
 	}
 }
 
@@ -70,7 +70,7 @@ func (c *completor) Complete(pos *protocol.Position) (compls []*completion, isIn
 	return slices.Concat(
 		c.identCompletor.Complete(pos),
 		c.keywordCompletor.Complete(pos),
-		c.builtInCompls,
+		c.builtinCompls,
 	), false
 }
 
@@ -550,9 +550,9 @@ func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]a
 	}
 	sortPropertyCompletions(allCompls)
 
-	var builtInCompls []*completion
-	for _, builtIn := range builtIns {
-		classDecl, ok := builtIn.(*ast.ClassDecl)
+	var builtinCompls []*completion
+	for _, decl := range builtIns {
+		classDecl, ok := decl.(*ast.ClassDecl)
 		if !ok {
 			continue
 		}
@@ -564,11 +564,11 @@ func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]a
 			if !ok {
 				continue
 			}
-			builtInCompls = append(builtInCompls, compl)
+			builtinCompls = append(builtinCompls, compl)
 		}
 	}
-	sortPropertyCompletions(builtInCompls)
-	allCompls = append(allCompls, builtInCompls...)
+	sortPropertyCompletions(builtinCompls)
+	allCompls = append(allCompls, builtinCompls...)
 
 	return &propertyCompletor{
 		program:                     program,

@@ -43,11 +43,11 @@ func WithExtraFeatures(enabled bool) Option {
 }
 
 // Program performs static analysis of a program and reports any errors detected.
-// builtIns is a list of built-in declarations which are available in the global scope.
+// builtins is a list of built-in declarations which are available in the global scope.
 // The analyses performed are described in the doc comments for [ResolveIdents] and [CheckSemantics].
 // If there is an error, it will be of type [loxerr.Errors].
-func Program(program *ast.Program, builtIns []ast.Decl, opts ...Option) error {
-	_, resolveErr := ResolveIdents(program, builtIns, opts...)
+func Program(program *ast.Program, builtins []ast.Decl, opts ...Option) error {
+	_, resolveErr := ResolveIdents(program, builtins, opts...)
 	semanticsErr := CheckSemantics(program, opts...)
 	var resolveLoxErrs, semanticsLoxErrs loxerr.Errors
 	errors.As(resolveErr, &resolveLoxErrs)

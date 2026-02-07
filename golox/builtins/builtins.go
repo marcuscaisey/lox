@@ -11,11 +11,11 @@ import (
 	"github.com/marcuscaisey/lox/golox/parser"
 )
 
-//go:embed built_ins.lox
-var builtInsSrc []byte
+//go:embed builtins.lox
+var builtinsSrc []byte
 
-//go:embed built_ins_extra_features.lox
-var builtInsExtraFeaturesSrc []byte
+//go:embed builtins_extra_features.lox
+var builtinsExtraFeaturesSrc []byte
 
 type config struct {
 	extraFeatures bool
@@ -40,9 +40,9 @@ func MustParseStubs(filename string, opts ...Option) []ast.Decl {
 	for _, opt := range opts {
 		opt(cfg)
 	}
-	src := builtInsSrc
+	src := builtinsSrc
 	if cfg.extraFeatures {
-		src = builtInsExtraFeaturesSrc
+		src = builtinsExtraFeaturesSrc
 	}
 	program, err := parser.Parse(bytes.NewBuffer(src), filename, parser.WithComments(true))
 	if err != nil {

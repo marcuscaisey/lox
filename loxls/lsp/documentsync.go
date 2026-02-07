@@ -150,11 +150,11 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		return fmt.Errorf("updating document: %w", err)
 	}
 
-	var builtIns []ast.Decl
-	if filename != h.builtInStubsFilename {
-		builtIns = h.builtInStubs
+	var builtins []ast.Decl
+	if filename != h.builtinStubsFilename {
+		builtins = h.builtinStubs
 	}
-	identBindings, resolveErr := analyse.ResolveIdents(program, builtIns, analyse.WithExtraFeatures(h.extraFeatures))
+	identBindings, resolveErr := analyse.ResolveIdents(program, builtins, analyse.WithExtraFeatures(h.extraFeatures))
 
 	h.docs[uri] = &document{
 		URI:            uri,
@@ -164,7 +164,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 		Program:        program,
 		HasParseErrors: len(parseLoxErrs) > 0,
 		IdentBindings:  identBindings,
-		Completor:      newCompletor(program, identBindings, h.builtInStubs),
+		Completor:      newCompletor(program, identBindings, h.builtinStubs),
 	}
 
 	semanticsErr := analyse.CheckSemantics(program, analyse.WithExtraFeatures(h.extraFeatures))
@@ -175,7 +175,7 @@ func (h *Handler) updateDoc(uri string, version int, src string) error {
 	loxErrs.Sort()
 
 	var diagnostics []*protocol.Diagnostic
-	if filename != h.builtInStubsFilename {
+	if filename != h.builtinStubsFilename {
 		diagnostics = make([]*protocol.Diagnostic, len(loxErrs))
 		for i, e := range loxErrs {
 			var severity protocol.DiagnosticSeverity
