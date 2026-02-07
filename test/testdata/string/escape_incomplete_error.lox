@@ -1,0 +1,6 @@
+// syntaxerror
+// error: unterminated string literal
+// lint error: unterminated string literal
+// error: invalid escape sequence
+// lint error: invalid escape sequence
+print "\";

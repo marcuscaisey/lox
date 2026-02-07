@@ -28,6 +28,7 @@ from the challenges in the book.
 - [List type](#List)
 - [Command Line Arguments](#Command-Line-Arguments)
 - [`parseNumber` built-in function](#Built-in-Functions)
+- [`string` escape sequences](#String-escape-sequences)
 
 ## Types
 
@@ -59,6 +60,17 @@ for (var i = 0; i < vals.length; i++) {
 }
 ```
 
+### String Escape Sequences
+
+The following escape sequences are supported inside strings.
+
+| Escape sequence | Character represented                                                              |
+| --------------- | ---------------------------------------------------------------------------------- |
+| \n              | Newline                                                                            |
+| \t              | Horizontal tab                                                                     |
+| \\              | Backslash                                                                          |
+| \xhh            | The byte whoses numerical value is given by hh interpreted as a hexidecimal number |
+
 #### Properties
 
 | Name     | Result   | Description                     |
@@ -67,10 +79,10 @@ for (var i = 0; i < vals.length; i++) {
 
 #### Methods
 
-| Name              | Result   | Description                                                                 |
-| ----------------- | -------- | --------------------------------------------------------------------------- |
-| `push(value)`     |          | Adds an element to the end of the list.                                     |
-| `pop()`           | any      | Removes and returns the element at the end of the list.                     |
+| Name              | Result   | Description                                                              |
+| ----------------- | -------- | ------------------------------------------------------------------------ |
+| `push(value)`     |          | Adds an element to the end of the list.                                  |
+| `pop()`           | any      | Removes and returns the element at the end of the list.                  |
 | `join(separator)` | `string` | Returns a string formed by joining the list’s elements with a separator. |
 
 ## Expressions

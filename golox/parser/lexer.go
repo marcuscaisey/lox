@@ -220,19 +220,76 @@ func (l *lexer) consumeNumber() string {
 }
 
 func (l *lexer) consumeString() (s string, terminated bool) {
-	l.next()
 	var b strings.Builder
 	b.WriteRune('"')
+	l.next()
 	for {
-		if l.ch == eof {
+		switch {
+		case l.ch == eof:
 			return b.String(), false
+		case l.ch == '\\' && l.extraFeatures:
+			s := l.consumeEscapeSequence()
+			b.WriteString(s)
+			continue
 		}
+		b.WriteRune(l.ch)
 		ch := l.ch
-		b.WriteRune(ch)
 		l.next()
 		if ch == '"' {
 			return b.String(), true
 		}
+	}
+}
+
+func (l *lexer) consumeEscapeSequence() string {
+	var b strings.Builder
+	b.WriteRune('\\')
+	l.next()
+	switch l.ch {
+	case 'n', 't', '\\':
+		b.WriteRune(l.ch)
+		l.next()
+		return b.String()
+	case 'x':
+		b.WriteRune(l.ch)
+		l.next()
+		if isHexDigit(l.ch) {
+			b.WriteRune(l.ch)
+			l.next()
+		} else {
+			tok := l.consumeIllegalToken()
+			l.errHandler(tok, "invalid hex digit in escape sequence")
+			b.WriteString(tok.Lexeme)
+			return b.String()
+		}
+		if isHexDigit(l.ch) {
+			b.WriteRune(l.ch)
+			l.next()
+		} else {
+			tok := l.consumeIllegalToken()
+			l.errHandler(tok, "invalid hex digit in escape sequence")
+			b.WriteString(tok.Lexeme)
+			return b.String()
+		}
+		return b.String()
+	default:
+		tok := l.consumeIllegalToken()
+		l.errHandler(tok, "invalid escape sequence")
+		b.WriteString(tok.Lexeme)
+		return b.String()
+	}
+}
+
+func isHexDigit(digit rune) bool {
+	switch {
+	case '0' <= digit && digit <= '9':
+		return true
+	case 'a' <= digit && digit <= 'f':
+		return true
+	case 'A' <= digit && digit <= 'F':
+		return true
+	default:
+		return false
 	}
 }
 
@@ -243,6 +300,18 @@ func (l *lexer) consumeIdent() string {
 		l.next()
 	}
 	return b.String()
+}
+
+func (l *lexer) consumeIllegalToken() token.Token {
+	startPos := l.pos
+	startOffset := l.offset
+	l.next()
+	return token.Token{
+		StartPos: startPos,
+		EndPos:   l.pos,
+		Type:     token.Illegal,
+		Lexeme:   string(l.src[startOffset:l.offset]),
+	}
 }
 
 func isWhitespace(r rune) bool {
@@ -293,6 +362,8 @@ func (l *lexer) next() {
 		l.readOffset += size
 		if r == utf8.RuneError {
 			// If we get here then we've read exactly one invalid UTF-8 byte
+			endPos := l.pos
+			endPos.Column++
 			tok := token.Token{
 				StartPos: l.pos,
 				EndPos:   l.pos,
@@ -300,7 +371,7 @@ func (l *lexer) next() {
 				Lexeme:   string(l.src[l.offset : l.offset+1]),
 			}
 			tok.EndPos.Column++
-			l.errHandler(tok, "invalid UTF-8 byte %#x", l.src[l.offset])
+			l.errHandler(tok, "invalid UTF-8 byte %#x", tok.Lexeme)
 			l.next()
 			return
 		}

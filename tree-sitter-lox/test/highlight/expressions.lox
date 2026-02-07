@@ -3,6 +3,10 @@
 // <- number
 "one";
 // <- string
+"a\nb";
+// <- string
+// ^ string.escape
+//  ^ string
 true;
 // <- boolean
 nil;

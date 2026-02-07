@@ -24,6 +24,8 @@
 
 (string) @string
 
+(escape_sequence) @string.escape
+
 (boolean) @boolean
 
 (number) @number

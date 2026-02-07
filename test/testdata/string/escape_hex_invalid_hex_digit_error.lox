@@ -1,0 +1,6 @@
+// syntaxerror
+// error: invalid hex digit in escape sequence
+// lint error: invalid hex digit in escape sequence
+// error: invalid hex digit in escape sequence
+// lint error: invalid hex digit in escape sequence
+print "\x66\x6Z\xzf";

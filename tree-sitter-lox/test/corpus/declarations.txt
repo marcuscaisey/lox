@@ -30,7 +30,8 @@ fun greet() {
     parameters: (parameter_list)
     body: (block
       (print_statement
-        (string)))))
+        (string
+          (string_content))))))
 
 ================================================================================
 Function Declaration - One Parameter
@@ -152,7 +153,8 @@ class Breakfast {
         parameters: (parameter_list)
         body: (block
           (print_statement
-            (string)))))))
+            (string
+              (string_content))))))))
 
 ================================================================================
 Class Declaration - One Method - One Parameter
@@ -178,9 +180,11 @@ class Breakfast {
           (print_statement
             (binary_expression
               left: (binary_expression
-                left: (string)
+                left: (string
+                  (string_content))
                 right: (identifier))
-              right: (string))))))))
+              right: (string
+                (string_content)))))))))
 
 ================================================================================
 Class Declaration - One Method - Two Parameters
@@ -209,11 +213,14 @@ class Breakfast {
               left: (binary_expression
                 left: (binary_expression
                   left: (binary_expression
-                    left: (string)
+                    left: (string
+                      (string_content))
                     right: (identifier))
-                  right: (string))
+                  right: (string
+                    (string_content)))
                 right: (identifier))
-              right: (string))))))))
+              right: (string
+                (string_content)))))))))
 
 ================================================================================
 Class Declaration - Two Methods
@@ -240,13 +247,15 @@ class Breakfast {
         parameters: (parameter_list)
         body: (block
           (print_statement
-            (string))))
+            (string
+              (string_content)))))
       (method_declaration
         name: (identifier)
         parameters: (parameter_list)
         body: (block
           (print_statement
-            (string)))))))
+            (string
+              (string_content))))))))
 
 ================================================================================
 Class Declaration - Init Method
@@ -370,7 +379,8 @@ class Circle {
                 (call_expression
                   callee: (identifier)
                   arguments: (argument_list
-                    (string))))))
+                    (string
+                      (string_content)))))))
           (expression_statement
             (assignment_expression
               left: (property_expression
@@ -433,7 +443,8 @@ class BostonCream < Doughnut {
         parameters: (parameter_list)
         body: (block
           (print_statement
-            (string))))))
+            (string
+              (string_content)))))))
   (class_declaration
     name: (identifier)
     superclass: (identifier)
@@ -449,4 +460,5 @@ class BostonCream < Doughnut {
                 name: (identifier))
               arguments: (argument_list)))
           (print_statement
-            (string)))))))
+            (string
+              (string_content))))))))

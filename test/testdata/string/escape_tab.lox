@@ -1,0 +1,1 @@
+print "a\tb\tc"; // prints: a	b	c

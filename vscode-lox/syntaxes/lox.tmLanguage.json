@@ -207,7 +207,6 @@
       "match": "\\b\\d+(?:\\.\\d+)?\\b"
     },
     "string": {
-      "name": "string.quoted.double.lox",
       "begin": "\"",
       "beginCaptures": {
         "0": {
@@ -219,7 +218,17 @@
         "0": {
           "name": "punctuation.definition.string.end.lox"
         }
-      }
+      },
+      "patterns": [
+        {
+          "name": "string.quoted.double.lox",
+          "match": "[^\"\\\\]+"
+        },
+        {
+          "name": "constant.character.escape",
+          "match": "\\\\(x[^\"\\\\]{0,2}|[^\"])"
+        }
+      ]
     },
     "boolean": {
       "name": "constant.language.boolean.lox",

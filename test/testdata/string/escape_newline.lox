@@ -1,0 +1,4 @@
+// prints: a
+// prints: b
+// prints: c
+print "a\nb\nc";

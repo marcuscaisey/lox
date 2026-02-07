@@ -1,0 +1,1 @@
+print "a\\b\\c"; // prints: a\b\c

@@ -201,7 +201,12 @@ module.exports = grammar({
 
     number: (_) => /\d+(\.\d+)?/,
 
-    string: (_) => /"[^"]*"/,
+    string: ($) =>
+      seq('"', repeat(choice($.string_content, $.escape_sequence)), '"'),
+
+    string_content: (_) => /[^"\\]+/,
+
+    escape_sequence: (_) => /\\(x[^"\\]{0,2}|[^"])/,
 
     boolean: (_) => choice("true", "false"),
 

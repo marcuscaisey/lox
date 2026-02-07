@@ -4,6 +4,7 @@ package interpreter
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/marcuscaisey/lox/golox/analyse"
 	"github.com/marcuscaisey/lox/golox/ast"
@@ -317,7 +318,13 @@ func (i *Interpreter) evalLiteralExpr(expr *ast.LiteralExpr) loxValue {
 		}
 		return loxNumber(value)
 	case token.String:
-		return loxString(tok.Lexeme[1 : len(tok.Lexeme)-1]) // Remove surrounding quotes
+		// Double-quoted Go strings can't contain new lines.
+		singleLineLexeme := strings.ReplaceAll(tok.Lexeme, "\n", `\n`)
+		value, err := strconv.Unquote(singleLineLexeme)
+		if err != nil {
+			panic(fmt.Sprintf("unexpected error parsing string literal: %s", err))
+		}
+		return loxString(value)
 	case token.True, token.False:
 		return loxBool(tok.Type == token.True)
 	case token.Nil:

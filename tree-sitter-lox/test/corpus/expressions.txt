@@ -17,7 +17,8 @@ nil;
   (expression_statement
     (number))
   (expression_statement
-    (string))
+    (string
+      (string_content)))
   (expression_statement
     (boolean))
   (expression_statement
@@ -26,7 +27,7 @@ nil;
     (nil)))
 
 ================================================================================
-Literal Expression
+Literal Expression - Multiline String
 ================================================================================
 
 "1
@@ -37,7 +38,74 @@ Literal Expression
 
 (source_file
   (expression_statement
-    (string)))
+    (string
+      (string_content))))
+
+================================================================================
+Literal Expression - Escape Sequence
+================================================================================
+
+"\n";
+"a\n";
+"\na";
+"a\nb";
+"a\nb\nc";
+"\n\n";
+"a\x0Ab\x0bc";
+"\x";
+"\x0";
+"a\\b\\c";
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (expression_statement
+    (string
+      (escape_sequence)))
+  (expression_statement
+    (string
+      (string_content)
+      (escape_sequence)))
+  (expression_statement
+    (string
+      (escape_sequence)
+      (string_content)))
+  (expression_statement
+    (string
+      (string_content)
+      (escape_sequence)
+      (string_content)))
+  (expression_statement
+    (string
+      (string_content)
+      (escape_sequence)
+      (string_content)
+      (escape_sequence)
+      (string_content)))
+  (expression_statement
+    (string
+      (escape_sequence)
+      (escape_sequence)))
+  (expression_statement
+    (string
+      (string_content)
+      (escape_sequence)
+      (string_content)
+      (escape_sequence)
+      (string_content)))
+  (expression_statement
+    (string
+      (escape_sequence)))
+  (expression_statement
+    (string
+      (escape_sequence)))
+  (expression_statement
+    (string
+      (string_content)
+      (escape_sequence)
+      (string_content)
+      (escape_sequence)
+      (string_content))))
 
 ================================================================================
 List Expression
