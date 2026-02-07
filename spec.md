@@ -28,7 +28,8 @@ from the challenges in the book.
 - [List type](#List)
 - [Command Line Arguments](#Command-Line-Arguments)
 - [`parseNumber` built-in function](#Built-in-Functions)
-- [`string` escape sequences](#String-escape-sequences)
+- [`string` escape sequences](#String-Escape-Sequences)
+- [`printerr` built-in function](#Built-in-Functions)
 
 ## Types
 
@@ -297,7 +298,7 @@ An expression statement evaluates an expression and discards the result.
 
 ### Print Statement
 
-A print statement evaluates an expression and prints the result.
+A print statement evaluates an expression and prints the result to stdout.
 
 ```lox
 print 1 + 2; // prints: 3
@@ -706,7 +707,8 @@ Lox has the following built-in functions.
 | `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch. |
 | `type(value)`      | any      | `string` | Returns the type of the value.                      |
 | `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                    |
-| `error(msg)`       | any      | `nil`    | Throws a runtime error with the message.            |
+| `error(msg)`       | any      |          | Throws a runtime error with the message.            |
+| `printerr(msg)`    | any      | `nil`    | Prints `msg` to stderr.                             |
 
 ## Command Line Arguments
 

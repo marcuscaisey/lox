@@ -13,6 +13,9 @@ fun parseNumber(str) {}
 // Throws a runtime error with the given message.
 fun error(msg) {}
 
+// Prints a message to stderr.
+fun printerr(msg) {}
+
 // @internal
 class list {
   // Adds an element to the end of the list.

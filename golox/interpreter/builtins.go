@@ -1,6 +1,8 @@
 package interpreter
 
 import (
+	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -26,5 +28,9 @@ var builtinFunctions = map[string]*loxFunction{
 	}),
 	"error": newBuiltinLoxFunction("error", []string{"msg"}, func(args []loxValue) loxValue {
 		return newErrorMsg(args[0].String())
+	}),
+	"printerr": newBuiltinLoxFunction("printerr", []string{"msg"}, func(args []loxValue) loxValue {
+		fmt.Fprintln(os.Stderr, args[0].String())
+		return loxNil{}
 	}),
 }
