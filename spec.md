@@ -63,17 +63,6 @@ for (var i = 0; i < vals.length; i++) {
 }
 ```
 
-### String Escape Sequences
-
-The following escape sequences are supported inside strings.
-
-| Escape sequence | Character represented                                                              |
-| --------------- | ---------------------------------------------------------------------------------- |
-| \n              | Newline                                                                            |
-| \t              | Horizontal tab                                                                     |
-| \\              | Backslash                                                                          |
-| \xhh            | The byte whoses numerical value is given by hh interpreted as a hexidecimal number |
-
 #### Properties
 
 | Name     | Result   | Description                     |
@@ -87,6 +76,17 @@ The following escape sequences are supported inside strings.
 | `push(value)`     |          | Adds an element to the end of the list.                                  |
 | `pop()`           | any      | Removes and returns the element at the end of the list.                  |
 | `join(separator)` | `string` | Returns a string formed by joining the list’s elements with a separator. |
+
+### String Escape Sequences
+
+The following escape sequences are supported inside strings.
+
+| Escape sequence | Character represented                                                              |
+| --------------- | ---------------------------------------------------------------------------------- |
+| \n              | Newline                                                                            |
+| \t              | Horizontal tab                                                                     |
+| \\              | Backslash                                                                          |
+| \xhh            | The byte whoses numerical value is given by hh interpreted as a hexidecimal number |
 
 ## Expressions
 
