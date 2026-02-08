@@ -1,0 +1,2 @@
+print (try 1) ? "success result is truthy" : "success result is falsey"; // prints: success result is truthy
+print (try 1 / 0) ? "failure result is truthy" : "failure result is falsey"; // prints: failure result is truthy

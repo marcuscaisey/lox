@@ -14,6 +14,7 @@ from the challenges in the book. The extra features are as follows:
 - [Division by zero handling](#binary-expression) - [Evaluating Expressions](https://craftinginterpreters.com/evaluating-expressions.html#challenges)
 - [Ternary expression](#ternary-expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
 - [Function expression](#function-expression) - [Functions](https://craftinginterpreters.com/functions.html#challenges)
+- [`try` expression](#try-expression)
 - [`break` statement](#break-statement) - [Control Flow](https://craftinginterpreters.com/control-flow.html#challenges)
 - [`continue` statement](#continue-statement)
 - [Runtime error](#declarations) for accessing uninitialised variable - [Statements and State](https://craftinginterpreters.com/statements-and-state.html#challenges)
@@ -91,6 +92,7 @@ print "hello"; // prints: hello
 print false; // prints: false
 print nil; // prints: nil
 ```
+
 #### String Escape Sequences
 
 The following escape sequences are supported inside strings.
@@ -101,7 +103,6 @@ The following escape sequences are supported inside strings.
 | \t              | Horizontal tab                                                                     |
 | \\              | Backslash                                                                          |
 | \xhh            | The byte whoses numerical value is given by hh interpreted as a hexidecimal number |
-
 
 ### Unary Expression
 
@@ -262,6 +263,26 @@ var add = fun(a, b) {
 };
 
 print add(1, 2); // prints: 3
+```
+
+### Try Expression
+
+A try expression evaluates an expression and produces the result as a `result` value. A `result` has
+two properties: `ok` and `value`. `ok` indicates whether the expression was evaluated without a
+runtime error being thrown. If no runtime error was thrown, `value` is the value of the evaluated
+expression, otherwise it's the error message.
+
+```lox
+var successResult = try 1 / 2;
+print successResult.ok == true; // prints: true
+print successResult.value; // prints: 0.5
+
+var failResult = try 1 / 0;
+print failResult.ok == false; // prints: true
+print failResult.value; // prints: cannot divide by 0
+
+print successResult; // prints: result(ok=true, value=0.5)
+print failureResult; // prints: result(ok=false, value=cannot divide by 0)
 ```
 
 ### Operator Precedence and Associativity
@@ -770,7 +791,7 @@ unary_expr          = ( '!' | '-' ) , unary_expr | postfix_expr ;
 postfix_expr        = primary_expr , { '(' , [ arguments ] , ')' | '[' , expr , ']' | '.' , IDENT } ;
 arguments           = assignment_expr , { ',' , assignment_expr } ;
 primary_expr        = NUMBER | STRING | 'true' | 'false' | 'nil' | IDENT | 'this'
-                    | 'super' , '.', IDENT | group_expr | fun_expr | list_expr
+                    | 'super' , '.', IDENT | group_expr | fun_expr | list_expr | try_expr
                     (* Error productions *)
                     | ( '==' | '!=' ) , relational_expr
                     | ( '<' | '<=' | '>' | '>=' ) , additive_expr
@@ -779,4 +800,5 @@ primary_expr        = NUMBER | STRING | 'true' | 'false' | 'nil' | IDENT | 'this
 group_expr          = '(' , expr , ')' ;
 fun_expr            = 'fun' , '(' , [ parameters ] , ')' , block ;
 list_expr           = '[' , [ arguments ] , ']' ;
+try_expr            = 'try' , expr;
 ```

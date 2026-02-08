@@ -20,6 +20,7 @@ module.exports = grammar({
       "arguments",
       "assignment",
       "comma",
+      "try",
     ],
   ],
 
@@ -168,6 +169,7 @@ module.exports = grammar({
     _expression: ($) =>
       choice(
         $._literal,
+        $.try_expression,
         $.list_expression,
         $.function_expression,
         $.group_expression,
@@ -184,6 +186,8 @@ module.exports = grammar({
       ),
 
     _literal: ($) => choice($.number, $.string, $.boolean, $.nil),
+
+    try_expression: ($) => prec("try", seq("try", $._expression)),
 
     list_expression: ($) =>
       seq(

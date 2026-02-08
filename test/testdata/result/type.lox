@@ -1,0 +1,1 @@
+print type(try 1); // prints: result

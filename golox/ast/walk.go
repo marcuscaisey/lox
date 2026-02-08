@@ -108,6 +108,8 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 		Walk(node.Condition, f)
 		Walk(node.Then, f)
 		Walk(node.Else, f)
+	case *TryExpr:
+		Walk(node.Expr, f)
 	case *GroupExpr:
 		Walk(node.Expr, f)
 	}

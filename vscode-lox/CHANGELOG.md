@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for `printerr` built-in function when extra features are enabled.
 - Add support for `exit` built-in function when extra features are enabled.
 - Add support for `string` built-in function when extra features are enabled.
+- Add support for `try` expression when extra features are enabled.
 
 ### Fixed
 

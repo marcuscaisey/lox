@@ -96,6 +96,7 @@
   "break"
   "continue"
   "return"
+  "try"
 ] @keyword
 
 "fun" @keyword.function

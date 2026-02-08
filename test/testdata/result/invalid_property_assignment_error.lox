@@ -1,0 +1,1 @@
+(try 1).y = 1; // error: property assignment is not valid for 'result' value

@@ -49,6 +49,7 @@ const (
 	Static   // static
 	Get      // get
 	Set      // set
+	Try      // try
 	keywordsEnd
 
 	// Literals

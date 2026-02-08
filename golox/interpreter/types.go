@@ -23,6 +23,7 @@ const (
 	loxTypeFunction loxType = "function"
 	loxTypeClass    loxType = "class"
 	loxTypeList     loxType = "list"
+	loxTypeResult   loxType = "result"
 )
 
 // Format implements fmt.Formatter. All verbs have the default behaviour, except for 'm' (message) which formats the
@@ -855,6 +856,47 @@ func (l *loxList) Property(_ *Interpreter, name *ast.Ident) loxValue {
 		})
 	}
 	panic(loxerr.Newf(name, loxerr.Fatal, "%m value has no property %m", loxTypeList, name))
+}
+
+type loxResult struct {
+	ok    loxBool
+	value loxValue
+}
+
+func newLoxResult(ok bool, value loxValue) *loxResult {
+	return &loxResult{ok: loxBool(ok), value: value}
+}
+
+var (
+	_ loxValue              = (*loxResult)(nil)
+	_ loxPropertyAccessible = (*loxResult)(nil)
+)
+
+func (r *loxResult) String() string {
+	return fmt.Sprintf("result(ok=%s, value=%s)", r.ok, r.value)
+}
+
+func (r *loxResult) Repr() string {
+	return r.String()
+}
+
+func (r *loxResult) Type() loxType {
+	return loxTypeResult
+}
+
+func (r *loxResult) Equals(other loxValue) bool {
+	otherResult, ok := other.(*loxResult)
+	return ok && r.ok.Equals(otherResult.ok) && r.value.Equals(otherResult.value)
+}
+
+func (r *loxResult) Property(_ *Interpreter, name *ast.Ident) loxValue {
+	switch name.String() {
+	case "ok":
+		return r.ok
+	case "value":
+		return r.value
+	}
+	panic(loxerr.Newf(name, loxerr.Fatal, "%m value has no property %m", loxTypeResult, name))
 }
 
 // errorMsg is a special value which can be returned by a callable. It will be caught by the interpreter and converted

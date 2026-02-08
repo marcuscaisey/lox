@@ -84,6 +84,8 @@ func Node(node ast.Node) string {
 		return formatBinaryExpr(node)
 	case *ast.TernaryExpr:
 		return formatTernaryExpr(node)
+	case *ast.TryExpr:
+		return formatTryExpr(node)
 	case *ast.GroupExpr:
 		return formatGroupExpr(node)
 	}
@@ -354,6 +356,10 @@ func formatBinaryExpr(expr *ast.BinaryExpr) string {
 
 func formatTernaryExpr(expr *ast.TernaryExpr) string {
 	return fmt.Sprint(Node(expr.Condition), " ", token.Question, " ", Node(expr.Then), " ", token.Colon, " ", Node(expr.Else))
+}
+
+func formatTryExpr(expr *ast.TryExpr) string {
+	return fmt.Sprint(token.Try, " ", Node(expr.Expr))
 }
 
 func formatGroupExpr(expr *ast.GroupExpr) string {

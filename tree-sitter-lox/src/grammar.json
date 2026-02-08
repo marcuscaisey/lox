@@ -758,6 +758,10 @@
         },
         {
           "type": "SYMBOL",
+          "name": "try_expression"
+        },
+        {
+          "type": "SYMBOL",
           "name": "list_expression"
         },
         {
@@ -830,6 +834,23 @@
           "name": "nil"
         }
       ]
+    },
+    "try_expression": {
+      "type": "PREC",
+      "value": "try",
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "try"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_expression"
+          }
+        ]
+      }
     },
     "list_expression": {
       "type": "SEQ",
@@ -1603,6 +1624,10 @@
       {
         "type": "STRING",
         "value": "comma"
+      },
+      {
+        "type": "STRING",
+        "value": "try"
       }
     ]
   ],

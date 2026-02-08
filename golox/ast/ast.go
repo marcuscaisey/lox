@@ -505,6 +505,14 @@ func (f *FunExpr) Start() token.Position { return f.Fun.Start() }
 func (f *FunExpr) End() token.Position   { return last(f.Fun, f.Function).End() }
 func (f *FunExpr) IsValid() bool         { return f != nil && !f.Fun.IsZero() && isValid(f.Function) }
 
+// GetParams returns Function.Params or nil if Function is nil.
+func (f *FunExpr) GetParams() []*ParamDecl {
+	if f.Function == nil {
+		return nil
+	}
+	return f.Function.Params
+}
+
 // ListExpr is a list literal expression, such as [1, 2, 3].
 type ListExpr struct {
 	LeftBrack  token.Token
@@ -519,14 +527,6 @@ func (l *ListExpr) End() token.Position {
 }
 func (l *ListExpr) IsValid() bool {
 	return l != nil && !l.LeftBrack.IsZero() && isValidSlice(l.Elements) && !l.RightBrack.IsZero()
-}
-
-// GetParams returns Function.Params or nil if Function is nil.
-func (f *FunExpr) GetParams() []*ParamDecl {
-	if f.Function == nil {
-		return nil
-	}
-	return f.Function.Params
 }
 
 // IdentExpr is an identifier expression, such as a or b.
@@ -691,6 +691,17 @@ func (t *TernaryExpr) IsValid() bool {
 	return t != nil && isValid(t.Condition) && isValid(t.Then) && isValid(t.Else)
 }
 
+// TryExpr is a try expression, such as try 1 + 2;
+type TryExpr struct {
+	Try  token.Token
+	Expr Expr `print:"named"`
+	expr
+}
+
+func (t *TryExpr) Start() token.Position { return t.Try.Start() }
+func (t *TryExpr) End() token.Position   { return last(t.Try, t.Expr).End() }
+func (t *TryExpr) IsValid() bool         { return t != nil && !t.Try.IsZero() && t.Expr.IsValid() }
+
 // GroupExpr is a group expression, such as (a + b).
 type GroupExpr struct {
 	LeftParen  token.Token
@@ -837,6 +848,8 @@ func isNil(node Node) bool {
 	case *BinaryExpr:
 		return node == nil
 	case *TernaryExpr:
+		return node == nil
+	case *TryExpr:
 		return node == nil
 	case *GroupExpr:
 		return node == nil

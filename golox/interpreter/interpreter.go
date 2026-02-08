@@ -303,6 +303,8 @@ func (i *Interpreter) evalExpr(env environment, expr ast.Expr) loxValue {
 		return i.evalBinaryExpr(env, expr)
 	case *ast.TernaryExpr:
 		return i.evalTernaryExpr(env, expr)
+	case *ast.TryExpr:
+		return i.evalTryExpr(env, expr)
 	case *ast.GroupExpr:
 		return i.evalGroupExpr(env, expr)
 	}
@@ -518,6 +520,28 @@ func (i *Interpreter) evalTernaryExpr(env environment, expr *ast.TernaryExpr) lo
 		return i.evalExpr(env, expr.Then)
 	}
 	return i.evalExpr(env, expr.Else)
+}
+
+func (i *Interpreter) evalTryExpr(env environment, expr *ast.TryExpr) loxValue {
+	value, loxErr := i.safelyEvalExpr(env, expr.Expr)
+	if loxErr != nil {
+		return newLoxResult(false, loxString(loxErr.Msg))
+	}
+	return newLoxResult(true, value)
+}
+
+func (i *Interpreter) safelyEvalExpr(env environment, expr ast.Expr) (value loxValue, err *loxerr.Error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if loxErr, ok := r.(*loxerr.Error); ok {
+				err = loxErr
+				i.callStack.Clear()
+			} else {
+				panic(r)
+			}
+		}
+	}()
+	return i.evalExpr(env, expr), nil
 }
 
 func (i *Interpreter) evalGroupExpr(env environment, expr *ast.GroupExpr) loxValue {

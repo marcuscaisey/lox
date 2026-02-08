@@ -757,6 +757,13 @@ func (p *parser) parsePrimaryExpr() (ast.Expr, bool) {
 		return propertyExpr, true
 	case p.extraFeatures && p.match(token.Fun):
 		return p.parseFunExpr(tok)
+	case p.extraFeatures && p.match(token.Try):
+		tryExpr := &ast.TryExpr{Try: tok}
+		var ok bool
+		if tryExpr.Expr, ok = p.parseCommaExpr(); !ok {
+			return tryExpr, false
+		}
+		return tryExpr, true
 	case p.match(token.LeftBrack):
 		listExpr := &ast.ListExpr{LeftBrack: tok}
 		var ok bool

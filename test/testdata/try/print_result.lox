@@ -1,0 +1,4 @@
+var successResult = try 1 / 2;
+var failureResult = try 1 / 0;
+print successResult; // prints: result(ok=true, value=0.5)
+print failureResult; // prints: result(ok=false, value=cannot divide by 0)

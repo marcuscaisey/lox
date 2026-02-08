@@ -37,4 +37,13 @@ class list {
   join(separator) {}
 }
 
+// @internal
+class result {
+  // Whether the expression was evaluated without a runtime error being thrown.
+  get ok() {}
+
+  // Value of the evaluated expression if no runtime error was thrown, otherwise the error message.
+  get value() {}
+}
+
 var argv = [];

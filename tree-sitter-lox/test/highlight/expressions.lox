@@ -146,3 +146,7 @@ error;
 12 ? 3 : 4;
 // ^ keyword.conditional.ternary
 //     ^ keyword.conditional.ternary
+
+// Try Expression
+try 1 + 2;
+// <- keyword

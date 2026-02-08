@@ -402,6 +402,10 @@
           "match": "\\bprint\\b"
         },
         {
+          "name": "keyword.other.try.lox",
+          "match": "\\btry\\b"
+        },
+        {
           "name": "keyword.operator.logical.lox",
           "match": "\\b(?:and|or)\\b"
         }

@@ -1,0 +1,3 @@
+var result = try 1 / 0;
+print result.ok == false; // prints: true
+print result.value; // prints: cannot divide by 0
