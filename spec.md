@@ -3,35 +3,35 @@
 ## Extra Features
 
 Implemented is a superset of the language described in the book where the extra features mostly come
-from the challenges in the book.
+from the challenges in the book. The extra features are as follows:
 
+- [UTF-8 string support](#Types)
+- [List type](#List)
+- [`string` escape sequences](#String-Escape-Sequences)
 - [Comma expression](#Binary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
-- [Ternary expression](#Ternary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
-- Error productions for [binary expressions](#Grammar) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
+- [`%` operator](#Binary-Expression)
 - [`<`, `<=`, `>`, `>=` operators for strings](#Binary-Expression) - [Evaluating Expressions](https://craftinginterpreters.com/evaluating-expressions.html#challenges)
 - [Division by zero handling](#Binary-Expression) - [Evaluating Expressions](https://craftinginterpreters.com/evaluating-expressions.html#challenges)
-- Displaying of evaluated expressions in REPL - [Statements and State](https://craftinginterpreters.com/statements-and-state.html#challenges)
-- [Runtime error](#Declarations) for accessing uninitialised variable - [Statements and State](https://craftinginterpreters.com/statements-and-state.html#challenges)
-- [`break` statement](#Break-Statement) - [Control Flow](https://craftinginterpreters.com/control-flow.html#challenges)
+- [Ternary expression](#Ternary-Expression) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
 - [Function expression](#Function-Expression) - [Functions](https://craftinginterpreters.com/functions.html#challenges)
-- [Static method](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
-- [Property getter method](#Class-Declaration) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
-- [UTF-8 string support](#Types)
-- [Blank identifier](#Blank-Identifier)
-- [`%` operator](#Binary-Expression)
+- [`break` statement](#Break-Statement) - [Control Flow](https://craftinginterpreters.com/control-flow.html#challenges)
 - [`continue` statement](#Continue-Statement)
-- [`type` built-in function](#Built-in-Functions)
+- [Runtime error](#Declarations) for accessing uninitialised variable - [Statements and State](https://craftinginterpreters.com/statements-and-state.html#challenges)
+- [Static method](#static-method) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
+- [Property getter method](#property-accessor) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
+- [Property setter method](#property-accessor)
+- [Blank identifier](#Blank-Identifier)
 - [Error messages point to location of error in source code](#Errors)
 - [Runtime error message includes stack trace](#Errors)
-- [`error` built-in function](#Built-in-Functions)
-- [Property setter method](#Class-Declaration)
-- [List type](#List)
-- [Command Line Arguments](#Command-Line-Arguments)
+- [`type` built-in function](#Built-in-Functions)
 - [`parseNumber` built-in function](#Built-in-Functions)
-- [`string` escape sequences](#String-Escape-Sequences)
+- [`string` built-in function](#Built-in-Functions)
+- [`error` built-in function](#Built-in-Functions)
 - [`printerr` built-in function](#Built-in-Functions)
 - [`exit` built-in function](#Built-in-Functions)
-- [`string` built-in function](#Built-in-Functions)
+- [Command Line Arguments](#Command-Line-Arguments)
+- Error productions for [binary expressions](#Grammar) - [Parsing Expressions](https://craftinginterpreters.com/parsing-expressions.html#challenges)
+- Displaying of evaluated expressions in REPL - [Statements and State](https://craftinginterpreters.com/statements-and-state.html#challenges)
 
 ## Types
 
@@ -77,17 +77,6 @@ for (var i = 0; i < vals.length; i++) {
 | `pop()`           | any      | Removes and returns the element at the end of the list.                  |
 | `join(separator)` | `string` | Returns a string formed by joining the list’s elements with a separator. |
 
-### String Escape Sequences
-
-The following escape sequences are supported inside strings.
-
-| Escape sequence | Character represented                                                              |
-| --------------- | ---------------------------------------------------------------------------------- |
-| \n              | Newline                                                                            |
-| \t              | Horizontal tab                                                                     |
-| \\              | Backslash                                                                          |
-| \xhh            | The byte whoses numerical value is given by hh interpreted as a hexidecimal number |
-
 ## Expressions
 
 Expressions are constructs that produce a value.
@@ -102,6 +91,17 @@ print "hello"; // prints: hello
 print false; // prints: false
 print nil; // prints: nil
 ```
+#### String Escape Sequences
+
+The following escape sequences are supported inside strings.
+
+| Escape sequence | Character represented                                                              |
+| --------------- | ---------------------------------------------------------------------------------- |
+| \n              | Newline                                                                            |
+| \t              | Horizontal tab                                                                     |
+| \\              | Backslash                                                                          |
+| \xhh            | The byte whoses numerical value is given by hh interpreted as a hexidecimal number |
+
 
 ### Unary Expression
 
