@@ -1,0 +1,12 @@
+class Foo {
+  static bar() {}
+  static baz() {}
+}
+class Bar {
+  static baz() {}
+}
+
+print Foo.bar == Foo.bar; // prints: false
+print Foo.bar == Foo.baz; // prints: false
+print Foo.baz == Bar.baz; // prints: false
+print Foo.bar == 1; // prints: false

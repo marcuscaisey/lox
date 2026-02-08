@@ -1,0 +1,6 @@
+class Foo {}
+class Bar {}
+
+print Foo == Foo; // prints: true
+print Foo == Bar; // prints: false
+print Foo == 1; // prints: false

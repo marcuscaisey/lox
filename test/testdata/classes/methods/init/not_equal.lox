@@ -1,0 +1,12 @@
+class Foo {
+  init() {}
+}
+class Bar {
+  init() {}
+}
+
+var foo = Foo();
+print foo.init != foo.init; // prints: true
+print Foo().init != Foo().init; // prints: true
+print Foo().init != Bar().init; // prints: true
+print foo.init != 1; // prints: true

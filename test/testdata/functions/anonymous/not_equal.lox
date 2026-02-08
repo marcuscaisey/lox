@@ -1,0 +1,6 @@
+var f = fun() {};
+var g = fun() {};
+
+print f != f; // prints: false
+print f != g; // prints: true
+print f != 1; // prints: true

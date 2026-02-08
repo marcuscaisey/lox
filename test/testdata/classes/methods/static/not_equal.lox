@@ -1,0 +1,12 @@
+class Foo {
+  static bar() {}
+  static baz() {}
+}
+class Bar {
+  static baz() {}
+}
+
+print Foo.bar != Foo.bar; // prints: true
+print Foo.bar != Foo.baz; // prints: true
+print Foo.baz != Bar.baz; // prints: true
+print Foo.bar != 1; // prints: true

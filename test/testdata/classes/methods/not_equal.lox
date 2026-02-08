@@ -1,0 +1,15 @@
+class Foo {
+  bar() {}
+  baz() {}
+}
+class Bar {
+  baz() {}
+}
+
+var foo = Foo();
+print foo.bar != foo.bar; // prints: true
+print foo.bar != foo.baz; // prints: true
+print Foo().bar != Foo().bar; // prints: true
+print Foo().bar != Foo().baz; // prints: true
+print Foo().baz != Bar().baz; // prints: true
+print foo.bar != 1; // prints: true

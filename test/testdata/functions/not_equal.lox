@@ -1,0 +1,6 @@
+fun f() {}
+fun g() {}
+
+print f != f; // prints: false
+print f != g; // prints: true
+print f != 1; // prints: true

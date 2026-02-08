@@ -1,0 +1,3 @@
+print clock != clock; // prints: false
+print clock != error; // prints: true
+print clock != 1; // prints: true
