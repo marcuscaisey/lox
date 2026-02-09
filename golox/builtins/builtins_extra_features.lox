@@ -4,6 +4,9 @@
 // Returns the number of seconds since the Unix epoch.
 fun clock() {}
 
+// Pauses execution of the program for at least `duration` seconds.
+fun sleep(seconds) {}
+
 // Returns the type of a value.
 fun type(value) {}
 

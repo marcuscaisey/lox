@@ -1,0 +1,7 @@
+var start = clock();
+sleep(0.1);
+var duration = clock() - start;
+
+// It's hard to check the exact value, so we just check that within a reasonable range.
+print duration > 0.1; // prints: true
+print duration < 0.11; // prints: true

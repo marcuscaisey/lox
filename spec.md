@@ -24,6 +24,7 @@ from the challenges in the book. The extra features are as follows:
 - [Blank identifier](#blank-identifier)
 - [Error messages point to location of error in source code](#errors)
 - [Runtime error message includes stack trace](#errors)
+- [`sleep` built-in function](#built-in-functions)
 - [`type` built-in function](#built-in-functions)
 - [`parseNumber` built-in function](#built-in-functions)
 - [`string` built-in function](#built-in-functions)
@@ -725,15 +726,16 @@ Stack Trace (most recent call first):
 
 Lox has the following built-in functions.
 
-| Name               | Accepts  | Returns  | Description                                         |
-| ------------------ | -------- | -------- | --------------------------------------------------- |
-| `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch. |
-| `type(value)`      | any      | `string` | Returns the type of a value.                        |
-| `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                    |
-| `string(value)`    | any      | `string` | Returns the `string` representation of a value.     |
-| `error(msg)`       | any      |          | Throws a runtime error with a message.              |
-| `printerr(msg)`    | any      | `nil`    | Prints a message to stderr.                         |
-| `exit(code)`       | `number` |          | Exits the program with a status code.               |
+| Name               | Accepts  | Returns  | Description                                                      |
+| ------------------ | -------- | -------- | ---------------------------------------------------------------- |
+| `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch.              |
+| `sleep(duration)`  | `number` | `nil`    | Pauses execution of the program for at least `duration` seconds. |
+| `type(value)`      | any      | `string` | Returns the type of a value.                                     |
+| `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                                 |
+| `string(value)`    | any      | `string` | Returns the `string` representation of a value.                  |
+| `error(msg)`       | any      |          | Throws a runtime error with a message.                           |
+| `printerr(msg)`    | any      | `nil`    | Prints a message to stderr.                                      |
+| `exit(code)`       | `number` |          | Exits the program with a status code.                            |
 
 ## Command Line Arguments
 

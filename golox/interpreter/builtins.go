@@ -13,6 +13,18 @@ var builtinFunctions = map[string]*loxFunction{
 	"clock": newBuiltinLoxFunction("clock", nil, func([]loxValue) loxValue {
 		return loxNumber(time.Now().UnixNano()) / loxNumber(time.Second)
 	}),
+	"sleep": newBuiltinLoxFunction("sleep", []string{"duration"}, func(args []loxValue) loxValue {
+		durationNumber, ok := args[0].(loxNumber)
+		if !ok {
+			return newErrorMsgf("expected sleep argument to be a %m, got %m", loxTypeNumber, args[0].Type())
+		}
+		durationDuration := time.Duration(durationNumber * loxNumber(time.Second))
+		if durationDuration < 0 {
+			return newErrorMsgf("expected sleep argument (%s) to be non-negative", durationNumber)
+		}
+		time.Sleep(durationDuration)
+		return loxNil{}
+	}),
 	"type": newBuiltinLoxFunction("type", []string{"value"}, func(args []loxValue) loxValue {
 		return loxString(args[0].Type())
 	}),

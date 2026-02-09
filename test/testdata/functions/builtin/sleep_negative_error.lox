@@ -1,0 +1,1 @@
+sleep(-1); // error: expected sleep argument (-1) to be non-negative

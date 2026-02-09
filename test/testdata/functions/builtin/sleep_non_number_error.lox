@@ -1,0 +1,1 @@
+sleep(true); // error: expected sleep argument to be a 'number', got 'bool'
