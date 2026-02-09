@@ -1,0 +1,2 @@
+// environment: VAR=
+print "before" + getenv("VAR") + "after"; // prints: beforeafter

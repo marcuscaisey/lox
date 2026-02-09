@@ -27,6 +27,7 @@ from the challenges in the book. The extra features are as follows:
 - [`sleep` built-in function](#built-in-functions)
 - [`type` built-in function](#built-in-functions)
 - [`parseNumber` built-in function](#built-in-functions)
+- [`getenv` built-in function](#built-in-functions)
 - [`string` built-in function](#built-in-functions)
 - [`error` built-in function](#built-in-functions)
 - [`printerr` built-in function](#built-in-functions)
@@ -732,6 +733,7 @@ Lox has the following built-in functions.
 | `sleep(duration)`  | `number` | `nil`    | Pauses execution of the program for at least `duration` seconds. |
 | `type(value)`      | any      | `string` | Returns the type of a value.                                     |
 | `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                                 |
+| `getenv(name)`     | `string` | `string` | Returns the value of an environment variable or `""` if not set. |
 | `string(value)`    | any      | `string` | Returns the `string` representation of a value.                  |
 | `error(msg)`       | any      |          | Throws a runtime error with a message.                           |
 | `printerr(msg)`    | any      | `nil`    | Prints a message to stderr.                                      |

@@ -1,0 +1,2 @@
+// environment: VAR=value
+print getenv("VAR"); // prints: value
