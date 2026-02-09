@@ -16,10 +16,9 @@ import (
 var (
 	interpreter = flag.String("interpreter", "", "Interpreter to run tests against instead of golox")
 
-	printsRe      = regexp.MustCompile(`// prints: (.+)`)
-	errorRe       = regexp.MustCompile(`// error: (.+)`)
-	argumentsRe   = regexp.MustCompile(`// arguments: (.+)`)
-	environmentRe = regexp.MustCompile(`// environment: ((?:[^\s=]+=[^\s=]*\s*)+)`)
+	printsRe    = regexp.MustCompile(`// prints: (.+)`)
+	errorRe     = regexp.MustCompile(`// error: (.+)`)
+	argumentsRe = regexp.MustCompile(`// arguments: (.+)`)
 )
 
 func TestGolox(t *testing.T) {
@@ -52,9 +51,8 @@ func (r *runner) Test(t *testing.T, path string) {
 
 	want := r.parseExpectedResult(fileContents)
 	scriptArgs := r.mustParseScriptArguments(t, path, fileContents)
-	env := r.mustParseEnv(t, path, fileContents)
 
-	got := r.mustRunGolox(t, path, scriptArgs, env)
+	got := r.mustRunGolox(t, path, scriptArgs)
 
 	if got.ExitCode != want.ExitCode {
 		t.Fatalf("exit code = %d, want %d\nstdout:\n%s\nstderr:\n%s", got.ExitCode, want.ExitCode, got.Stdout, got.Stderr)
@@ -76,10 +74,9 @@ type goloxResult struct {
 	ExitCode int
 }
 
-func (r *runner) mustRunGolox(t *testing.T, path string, scriptArgs []string, env []string) *goloxResult {
+func (r *runner) mustRunGolox(t *testing.T, path string, scriptArgs []string) *goloxResult {
 	args := append([]string{path}, scriptArgs...)
 	cmd := exec.Command(r.goloxPath, args...)
-	cmd.Env = env
 
 	relPath, err := filepath.Rel(r.rootDir, path)
 	if err != nil {
@@ -133,8 +130,7 @@ func (r *runner) Update(t *testing.T, path string) {
 	}
 
 	scriptArgs := r.mustParseScriptArguments(t, path, fileContents)
-	env := r.mustParseEnv(t, path, fileContents)
-	result := r.mustRunGolox(t, path, scriptArgs, env)
+	result := r.mustRunGolox(t, path, scriptArgs)
 
 	t.Logf("exit code: %d", result.ExitCode)
 	if len(result.Stdout) > 0 {
@@ -182,18 +178,4 @@ func (r *runner) mustParseScriptArguments(t *testing.T, path string, fileContent
 		t.Fatalf("%d %q lines found in %s. There should be at most one.", len(argumentsLines), argumentsRe, path)
 	}
 	return scriptArgs
-}
-
-func (r *runner) mustParseEnv(t *testing.T, path string, fileContents []byte) []string {
-	environmentLines := loxtest.ParseComments(fileContents, environmentRe)
-	var env []string
-	switch len(environmentLines) {
-	case 0:
-		break
-	case 1:
-		env = strings.Fields(environmentLines[0])
-	default:
-		t.Fatalf("%d %q lines found in %s. There should be at most one.", len(environmentLines), environmentRe, path)
-	}
-	return env
 }

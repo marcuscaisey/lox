@@ -13,9 +13,6 @@ fun type(value) {}
 // Parses a `string` as a `number`.
 fun parseNumber(str) {}
 
-// Returns the value of an environment variable or `""` if not set.
-fun getenv(name) {}
-
 // Returns the `string` representation of a value.
 fun string(value) {}
 

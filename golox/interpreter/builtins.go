@@ -39,14 +39,6 @@ var builtinFunctions = map[string]*loxFunction{
 		}
 		return loxNumber(f)
 	}),
-	"getenv": newBuiltinLoxFunction("getenv", []string{"name"}, func(args []loxValue) loxValue {
-		name, ok := args[0].(loxString)
-		if !ok {
-			return newErrorMsgf("expected getenv argument to be a %m, got %m", loxTypeString, args[0].Type())
-		}
-		value := os.Getenv(name.String())
-		return loxString(value)
-	}),
 	"string": newBuiltinLoxFunction("string", []string{"value"}, func(args []loxValue) loxValue {
 		return loxString(args[0].String())
 	}),

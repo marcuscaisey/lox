@@ -1,1 +1,0 @@
-print getenv(1); // error: expected getenv argument to be a 'string', got 'number'

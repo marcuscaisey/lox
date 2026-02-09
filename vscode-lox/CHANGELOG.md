@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for the following built-in functions when extra features are enabled:
   - `sleep`
   - `parseNumber`
-  - `getenv`
   - `string`
   - `printerr`
   - `exit`
