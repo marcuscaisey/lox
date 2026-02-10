@@ -1,9 +1,9 @@
 fun usageError(msg) {
   printerr("error: " + msg);
   printerr("");
-  printerr("Generates and prints the prime numbers less than n using the sieve of Eratosthenes.");
-  printerr("");
   printerr("Usage: " + argv[0] + " <n>");
+  printerr("");
+  printerr("Generates and prints the prime numbers less than n using the sieve of Eratosthenes.");
   exit(2);
 }
 

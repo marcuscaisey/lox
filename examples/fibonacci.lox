@@ -8,9 +8,9 @@ fun fib(n) {
 fun usageError(msg) {
   printerr("error: " + msg);
   printerr("");
-  printerr("Prints the nth fibonacci number.");
-  printerr("");
   printerr("Usage: " + argv[0] + " <n>");
+  printerr("");
+  printerr("Prints the nth fibonacci number.");
   exit(2);
 }
 
