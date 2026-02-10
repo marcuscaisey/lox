@@ -7,27 +7,27 @@ fun clock() {}
 // Pauses execution of the program for at least `duration` seconds.
 fun sleep(seconds) {}
 
-// Returns the type of a value.
+// Returns the type of `value`.
 fun type(value) {}
 
-// Parses a `string` as a `number`.
+// Parses `str` as a `number`.
 fun parseNumber(str) {}
 
-// Returns the `string` representation of a value.
+// Returns the `string` representation of `value`.
 fun string(value) {}
 
-// Throws a runtime error with a message.
+// Throws a runtime error with the given message.
 fun error(msg) {}
 
-// Prints a message to stderr.
+// Prints `msg` to stderr.
 fun printerr(msg) {}
 
-// Exits the program with a status code.
+// Exits the program with the given status code.
 fun exit(code) {}
 
 // @internal
 class list {
-  // Adds an element to the end of the list.
+  // Adds `value` to the end of the list.
   push(value) {}
 
   // Removes and returns the element at the end of the list.
@@ -36,7 +36,7 @@ class list {
   // Number of elements in the list.
   get length() {}
 
-  // Returns a string formed by joining the list’s elements with a separator.
+  // Returns a string formed by joining the list’s elements with `separator`.
   join(separator) {}
 }
 

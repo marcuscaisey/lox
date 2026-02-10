@@ -75,9 +75,9 @@ for (var i = 0; i < vals.length; i++) {
 
 | Name              | Result   | Description                                                              |
 | ----------------- | -------- | ------------------------------------------------------------------------ |
-| `push(value)`     |          | Adds an element to the end of the list.                                  |
+| `push(value)`     |          | Adds `value` to the end of the list.                                     |
 | `pop()`           | any      | Removes and returns the element at the end of the list.                  |
-| `join(separator)` | `string` | Returns a string formed by joining the list’s elements with a separator. |
+| `join(separator)` | `string` | Returns a string formed by joining the list’s elements with `separator`. |
 
 ## Expressions
 
@@ -730,12 +730,12 @@ Lox has the following built-in functions.
 | ------------------ | -------- | -------- | ---------------------------------------------------------------- |
 | `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch.              |
 | `sleep(duration)`  | `number` | `nil`    | Pauses execution of the program for at least `duration` seconds. |
-| `type(value)`      | any      | `string` | Returns the type of a value.                                     |
-| `parseNumber(str)` | `string` | `number` | Parses a `string` as a `number`.                                 |
-| `string(value)`    | any      | `string` | Returns the `string` representation of a value.                  |
-| `error(msg)`       | any      |          | Throws a runtime error with a message.                           |
-| `printerr(msg)`    | any      | `nil`    | Prints a message to stderr.                                      |
-| `exit(code)`       | `number` |          | Exits the program with a status code.                            |
+| `type(value)`      | any      | `string` | Returns the type of `value`.                                     |
+| `parseNumber(str)` | `string` | `number` | Parses `str` as a `number`.                                      |
+| `string(value)`    | any      | `string` | Returns the `string` representation of `value`.                  |
+| `error(msg)`       | any      |          | Throws a runtime error with the given message.                   |
+| `printerr(msg)`    | any      | `nil`    | Prints `msg` to stderr.                                          |
+| `exit(code)`       | `number` |          | Exits the program with the given status code.                    |
 
 ## Command Line Arguments
 
