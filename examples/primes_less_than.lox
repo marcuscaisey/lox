@@ -1,14 +1,24 @@
-// Prints the prime numbers less than n where n is passed as an argument to the script.
-// Primes are found using the sieve of Eratosthenes.
+fun usageError(msg) {
+  printerr("error: " + msg);
+  printerr("");
+  printerr("Generates and prints the prime numbers less than n using the sieve of Eratosthenes.");
+  printerr("");
+  printerr("Usage: " + argv[0] + " <n>");
+  exit(2);
+}
 
 if (argv.length < 2) {
-  error("argument not provided");
+  usageError("argument not provided");
 }
 if (argv.length > 2) {
-  error("too many arguments provided");
+  usageError("too many arguments provided");
 }
 
-var n = parseNumber(argv[1]);
+var parseResult = try parseNumber(argv[1]);
+if (!parseResult.ok) {
+  usageError("argument is not a number: " + argv[1]);
+}
+var n = parseResult.value;
 
 var flags = []; // flags[i] is true if i+2 is prime
 for (var i = 0; i < n - 2; i = i + 1) {
