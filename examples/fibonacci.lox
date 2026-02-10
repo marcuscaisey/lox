@@ -1,5 +1,3 @@
-// Prints the nth fibonacci number where n is passed as an argument to the script.
-
 fun fib(n) {
   if (n < 2) {
     return n;
@@ -7,12 +5,26 @@ fun fib(n) {
   return fib(n - 1) + fib(n - 2);
 }
 
-if (argv.length < 2) {
-  error("argument not provided");
-}
-if (argv.length > 2) {
-  error("too many arguments provided");
+fun usageError(msg) {
+  printerr("error: " + msg);
+  printerr("");
+  printerr("Prints the nth fibonacci number.");
+  printerr("");
+  printerr("Usage: " + argv[0] + " <n>");
+  exit(2);
 }
 
-var n = parseNumber(argv[1]);
+if (argv.length < 2) {
+  usageError("argument not provided");
+}
+if (argv.length > 2) {
+  usageError("too many arguments provided");
+}
+
+var parseResult = try parseNumber(argv[1]);
+if (!parseResult.ok) {
+  usageError("argument is not a number: " + argv[1]);
+}
+var n = parseResult.value;
+
 print fib(n);
