@@ -47,7 +47,7 @@ var errorReplacements = map[string]errorReplacement{
 	`^'\+' operator cannot be used with types '[A-Za-z_][A-Za-z0-9_]*' and '[A-Za-z_][A-Za-z0-9_]*'$`:                 {70, "Operands must be two numbers or two strings."},
 	`^'[A-Za-z_][A-Za-z0-9_]*' object has no property '([A-Za-z_][A-Za-z0-9_]*)'$`:                                    {70, "Undefined property '$1'."},
 	`^'([A-Za-z_][A-Za-z0-9_]*)' has not been declared$`:                                                              {70, "Undefined variable '$1'."},
-	`^'[A-Za-z_][A-Za-z0-9_]*' object is not callable$`:                                                               {70, "Can only call functions and classes."},
+	`^'[A-Za-z_][A-Za-z0-9_]*' value is not callable$`:                                                                {70, "Can only call functions and classes."},
 	`^property access is not valid for '[A-Za-z_][A-Za-z0-9_]*' value$`:                                               {70, "Only instances have properties."},
 	`^property assignment is not valid for '[A-Za-z_][A-Za-z0-9_]*' value$`:                                           {70, "Only instances have fields."},
 	`^'[A-Za-z_][A-Za-z0-9_]*' class has no method '([A-Za-z_][A-Za-z0-9_]*)'$`:                                       {70, "Undefined property '$1'."},
