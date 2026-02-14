@@ -10,6 +10,13 @@ import (
 	"github.com/marcuscaisey/lox/golox/ansi"
 )
 
+func init() {
+	keywordTypesByIdent = make(map[string]Type, keywordsEnd-keywordsStart)
+	for i := keywordsStart; i < keywordsEnd; i++ {
+		keywordTypesByIdent[i.String()] = i
+	}
+}
+
 // Constants for special identifiers.
 const (
 	IdentBlank = "_"
@@ -89,13 +96,7 @@ const (
 	typesEnd
 )
 
-var keywordTypesByIdent = func() map[string]Type {
-	keywordTypesByIdent := make(map[string]Type, keywordsEnd-keywordsStart)
-	for i := keywordsStart; i < keywordsEnd; i++ {
-		keywordTypesByIdent[i.String()] = i
-	}
-	return keywordTypesByIdent
-}()
+var keywordTypesByIdent map[string]Type
 
 // IdentType returns the type of the keyword with the given identifier, or Ident if the identifier is not a
 // keyword.

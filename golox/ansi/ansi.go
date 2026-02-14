@@ -43,6 +43,17 @@ import (
 	"golang.org/x/term"
 )
 
+func init() {
+	ansiOldnew := make([]string, 2*len(ansiCodes))
+	emptyOldnew := make([]string, 2*len(ansiCodes))
+	for name, ansiCode := range ansiCodes {
+		ansiOldnew = append(ansiOldnew, fmt.Sprintf("${%s}", name), fmt.Sprintf("\x1b[%dm", ansiCode))
+		emptyOldnew = append(emptyOldnew, fmt.Sprintf("${%s}", name), "")
+	}
+	ansiReplacer = strings.NewReplacer(ansiOldnew...)
+	emptyReplacer = strings.NewReplacer(emptyOldnew...)
+}
+
 // Enabled determines whether ANSI escape sequences will be output by the functions in this package.
 // If stdout and stderr are both connected to a terminal, this will be true.
 var Enabled = term.IsTerminal(int(os.Stdout.Fd())) && term.IsTerminal(int(os.Stderr.Fd()))
@@ -75,21 +86,8 @@ var ansiCodes = map[string]int{
 	"DEFAULT":             39,
 }
 
-var ansiReplacer = func() *strings.Replacer {
-	oldnew := make([]string, 2*len(ansiCodes))
-	for name, ansiCode := range ansiCodes {
-		oldnew = append(oldnew, fmt.Sprintf("${%s}", name), fmt.Sprintf("\x1b[%dm", ansiCode))
-	}
-	return strings.NewReplacer(oldnew...)
-}()
-
-var emptyReplacer = func() *strings.Replacer {
-	oldnew := make([]string, 2*len(ansiCodes))
-	for name := range ansiCodes {
-		oldnew = append(oldnew, fmt.Sprintf("${%s}", name), "")
-	}
-	return strings.NewReplacer(oldnew...)
-}()
+var ansiReplacer *strings.Replacer
+var emptyReplacer *strings.Replacer
 
 func replace(s string) string {
 	if Enabled {
