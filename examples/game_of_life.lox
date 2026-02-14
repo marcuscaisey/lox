@@ -1,0 +1,249 @@
+// Default option values
+var DEFAULT_LINES = 40;
+var DEFAULT_COLUMNS = 100;
+var DEFAULT_SPEED = 30;
+var DEFAULT_PATTERN = "gun";
+
+// Available patterns. Each pattern is a list of coordinates of alive cells, relative to the centre of the grid.
+var GUN = [[-2, -24], [-2, -23], [-1, -24], [-1, -23], [-2, -14], [-1, -14], [0, -14], [-3, -13], [1, -13], [-4, -12], [2, -12], [-4, -11], [2, -11], [-1, -10], [-3, -9], [1, -9], [-2, -8], [-1, -8], [0, -8], [-1, -7], [-4, -4], [-3, -4], [-2, -4], [-4, -3], [-3, -3], [-2, -3], [-5, -2], [-1, -2], [-6, 0], [-5, 0], [-1, 0], [0, 0], [-4, 10], [-4, 11], [-3, 10], [-3, 11]];
+var SPACESHIP = [[0, 1], [0, 4], [1, 0], [2, 0], [2, 4], [3, 0], [3, 1], [3, 2], [3, 3]];
+var GLIDER = [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2]];
+var BLINKER = [[0, 0], [0, 1], [0, 2]];
+var TOAD = [[0, 1], [0, 2], [0, 3], [1, 0], [1, 1], [1, 2]];
+var BEACON = [[0, 0], [0, 1], [1, 0], [2, 3], [3, 2], [3, 3]];
+
+fun main() {
+  var options = Options.parseOrExit(argv);
+
+  // Grid will be rendered with a 1 row border at the top and bottom. It will be displayed with a 1 row header at the
+  // top and a 1 row footer at the bottom. We also want to leave 1 row at the bottom for the user's shell prompt so that
+  // the whole display area can be seen after the program exits. Therefore leave 5 terminal rows free.
+  var gridRows = options.lines - 5;
+  // Grid will be rendered with a 1 column border on each side. Therefore leave 2 terminal columns free.
+  var gridTermCols = options.columns - 2;
+  // Each cell (dead or alive) will be rendered as a two character string so we only need gridTermCols / 2 columns in
+  // the grid.
+  var gridCols = gridTermCols % 2 == 0 ? gridTermCols / 2 : (gridTermCols - 1) / 2;
+  var grid = createDeadGrid(gridRows, gridCols);
+  setAliveCells(grid, options.pattern);
+
+  var sleepDurationSecs = 1 / options.speed;
+  var generations = 0;
+  while (true) {
+    var header = "\x1b[2J\x1b[HSpeed: " + string(options.speed) + " generations/s, Generations: " + string(generations) + ". Press Ctrl-C to exit.";
+    var gridStr = render(grid);
+    print header + "\n" + gridStr;
+
+    sleep(sleepDurationSecs);
+
+    var prevGrid = grid;
+    grid = nextGeneration(grid);
+    if (grid == prevGrid) {
+      print "No more evolutions. Exiting.";
+      return;
+    }
+
+    generations = generations + 1;
+  }
+}
+
+// Represents the options which have been passed on the command line.
+class Options {
+  init(lines, columns, speed, pattern) {
+    this.lines = lines;
+    this.columns = columns;
+    this.speed = speed;
+    this.pattern = pattern;
+    print this.pattern;
+  }
+
+  // Parses the command line arguments into an `Options` and returns it.
+  // Exits the program if any invalid arguments are provided.
+  static parseOrExit(argv) {
+    var printHelp = fun() {
+      printerr("Usage: " + argv[0] + " [options]");
+      printerr("");
+      printerr("Simulates Conway’s Game of Life in the terminal.");
+      printerr("");
+      printerr("Options:");
+      printerr("  --lines    Number of terminal lines used for the display area (default " + string(DEFAULT_LINES) + ")");
+      printerr("  --columns  Number of terminal columns used for the display area (default " + string(DEFAULT_COLUMNS) + ")");
+      printerr("  --speed    Simulation speed in generations per second (default " + string(DEFAULT_SPEED) + ")");
+      printerr("  --pattern  Initial pattern to seed the system with. Must be one of gun,");
+      printerr("             spaceship, glider, blinker, toad, or beacon. (default " + string(DEFAULT_PATTERN) + ")");
+      printerr("  --help     Print this message");
+    };
+    var usageError = fun(msg) {
+      printerr("error: " + msg);
+      printerr("");
+      printHelp();
+      exit(2);
+    };
+
+    var parseOptionValue = fun(i) {
+      if (i + 1 == argv.length) {
+        usageError("missing value for " + argv[i] + " option");
+      }
+      return argv[i + 1];
+    };
+    var parsePositiveInt = fun(i) {
+      var option = argv[i];
+      var optionValue = parseOptionValue(i);
+      var parseResult = try parseNumber(optionValue);
+      if (!parseResult.ok) {
+        usageError(option + " value is not a number: " + string(optionValue));
+      }
+      if (parseResult.value % 1 != 0) {
+        usageError(option + " value is not an integer: " + string(optionValue));
+      }
+      if (parseResult.value <= 0) {
+        usageError(option + " value must be positive: " + string(optionValue));
+      }
+      return parseResult.value;
+    };
+
+    var lines = DEFAULT_LINES;
+    var columns = DEFAULT_COLUMNS;
+    var speed = DEFAULT_SPEED;
+    var patternValue = DEFAULT_PATTERN;
+    for (var i = 1; i < argv.length; i = i + 2) {
+      var option = argv[i];
+      if (option == "--lines") {
+        lines = parsePositiveInt(i);
+      } else if (option == "--columns") {
+        columns = parsePositiveInt(i);
+      } else if (option == "--speed") {
+        speed = parsePositiveInt(i);
+      } else if (option == "--pattern") {
+        patternValue = parseOptionValue(i);
+      } else if (option == "--help") {
+        printHelp();
+        exit(0);
+      } else {
+        usageError("invalid option: " + option);
+      }
+    }
+
+    var pattern;
+    if (patternValue == "gun") {
+      pattern = GUN;
+    } else if (patternValue == "spaceship") {
+      pattern = SPACESHIP;
+    } else if (patternValue == "glider") {
+      pattern = GLIDER;
+    } else if (patternValue == "blinker") {
+      pattern = BLINKER;
+    } else if (patternValue == "toad") {
+      pattern = TOAD;
+    } else if (patternValue == "beacon") {
+      pattern = BEACON;
+    } else {
+      usageError("invalid --pattern value: " + patternValue);
+    }
+
+    return Options(lines, columns, speed, pattern);
+  }
+}
+
+// Returns a `rows` x `cols` grid of dead cells.
+// Each grid cell (element) is either `true` or `false`, representing whether that cell is alive or dead respectively.
+fun createDeadGrid(rows, cols) {
+  var grid = [];
+  for (var i = 0; i < rows; i = i + 1) {
+    var row = [];
+    for (var j = 0; j < cols; j = j + 1) {
+      row.push(false);
+    }
+    grid.push(row);
+  }
+  return grid;
+}
+
+// Sets the cells of `grid` described by `pattern` to alive. `pattern` is a list of (row, col) coordinates relative to
+// the centre of `grid`.
+fun setAliveCells(grid, pattern) {
+  var rows = grid.length;
+  var cols = grid[0].length;
+  var centreRow = rows % 2 == 0 ? rows / 2 : (rows - 1) / 2;
+  var centreCol = cols % 2 == 0 ? cols / 2 : (cols - 1) / 2;
+  for (var i = 0; i < pattern.length; i = i + 1) {
+    var relCoord = pattern[i];
+    var rowOffset = relCoord[0];
+    var colOffset = relCoord[1];
+    grid[centreRow + rowOffset][centreCol + colOffset] = true;
+  }
+}
+
+// Renders `grid` as a `string`.
+// Live cells are rendered as `"██"` and dead cells as `"  "`.
+// The rendered grid is surrounded by a 1 row and column border.
+fun render(grid) {
+  var cols = grid[0].length;
+  var lines = [];
+  lines.push("┌" + 2 * cols * "─" + "┐");
+  for (var i = 0; i < grid.length; i = i + 1) {
+    var line = [];
+    line.push("│");
+    for (var j = 0; j < grid[i].length; j = j + 1) {
+      if (grid[i][j]) {
+        line.push("██");
+      } else {
+        line.push("  ");
+      }
+    }
+    line.push("│");
+    lines.push(line.join(""));
+  }
+  lines.push("└" + 2 * cols * "─" + "┘");
+  return lines.join("\n");
+}
+
+// Returns the next generation of cells, generated by evolving `grid` one step in time according to the following rules:
+//   * Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+//   * Any live cell with two or three live neighbours lives on to the next generation.
+//   * Any live cell with more than three live neighbours dies, as if by overpopulation.
+//   * Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+fun nextGeneration(grid) {
+  var newGrid = [];
+  for (var i = 0; i < grid.length; i = i + 1) {
+    var newRow = [];
+    for (var j = 0; j < grid[i].length; j = j + 1) {
+      var liveNeighbours = countLiveNeighbours(grid, i, j);
+      var alive = grid[i][j];
+      var newAlive = (alive and (liveNeighbours == 2 or liveNeighbours == 3)) or (!alive and liveNeighbours == 3);
+      newRow.push(newAlive);
+    }
+    newGrid.push(newRow);
+  }
+  return newGrid;
+}
+
+// Returns the number of live neighbours surrounding the `grid` cell (`row`, `col`).
+// For cells on the outer edge of the grid, the left/right and top/bottom edges of the grid are considered to be
+// stitched together so that these cells neighbour the cells on the opposite side of the grid.
+fun countLiveNeighbours(grid, row, col) {
+  var rows = grid.length;
+  var cols = grid[0].length;
+  var count = 0;
+  for (var rowOffset = -1; rowOffset <= 1; rowOffset = rowOffset + 1) {
+    for (var colOffset = -1; colOffset <= 1; colOffset = colOffset + 1) {
+      if (rowOffset == 0 and colOffset == 0) {
+        continue;
+      }
+      var targetRow = (row + rowOffset) % rows;
+      if (targetRow < 0) {
+        targetRow = targetRow + rows;
+      }
+      var targetCol = (col + colOffset) % cols;
+      if (targetCol < 0) {
+        targetCol = targetCol + cols;
+      }
+      if (grid[targetRow][targetCol]) {
+        count = count + 1;
+      }
+    }
+  }
+  return count;
+}
+
+main();
