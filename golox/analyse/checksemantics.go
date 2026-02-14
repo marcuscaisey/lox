@@ -143,10 +143,14 @@ func (c *semanticChecker) walkClassDecl(decl *ast.ClassDecl) {
 
 func (c *semanticChecker) checkMethods(decls []*ast.MethodDecl) {
 	fullNames := map[string]bool{}
-	methodSeenFirstByIsStatic := map[bool]map[string]bool{false: {}, true: {}}
-	accessorSeenFirstByIsStatic := map[bool]map[string]bool{false: {}, true: {}}
-	gettersByNameByIsStatic := map[bool]map[string]bool{false: {}, true: {}}
-	setterIdentsByNameByIsStatic := map[bool]map[string]*ast.Ident{false: {}, true: {}}
+	type methodKey struct {
+		Name     string
+		IsStatic bool
+	}
+	methodsSeenFirst := map[methodKey]bool{}
+	accessorsSeenFirst := map[methodKey]bool{}
+	getters := map[methodKey]bool{}
+	setterIdentsByMethodKey := map[methodKey]*ast.Ident{}
 	for _, decl := range decls {
 		if !decl.Name.IsValid() {
 			continue
@@ -170,33 +174,32 @@ func (c *semanticChecker) checkMethods(decls []*ast.MethodDecl) {
 		if decl.IsStatic() {
 			static = "static "
 		}
+		methodKey := methodKey{name, decl.IsStatic()}
 		if decl.IsAccessor() {
 			switch {
 			case decl.IsGetter():
-				gettersByNameByIsStatic[decl.IsStatic()][name] = true
+				getters[methodKey] = true
 			case decl.IsSetter():
-				setterIdentsByNameByIsStatic[decl.IsStatic()][name] = decl.Name
+				setterIdentsByMethodKey[methodKey] = decl.Name
 			}
-			if methodSeenFirstByIsStatic[decl.IsStatic()][name] {
+			if methodsSeenFirst[methodKey] {
 				c.errs.Addf(decl.Name, loxerr.Fatal, "%s%m has already been declared as a method", static, decl.Name)
 			} else {
-				accessorSeenFirstByIsStatic[decl.IsStatic()][name] = true
+				accessorsSeenFirst[methodKey] = true
 			}
 
 		} else {
-			if accessorSeenFirstByIsStatic[decl.IsStatic()][name] {
+			if accessorsSeenFirst[methodKey] {
 				c.errs.Addf(decl.Name, loxerr.Fatal, "%s%m has already been declared as a property accessor", static, decl.Name)
 			} else {
-				methodSeenFirstByIsStatic[decl.IsStatic()][name] = true
+				methodsSeenFirst[methodKey] = true
 			}
 		}
 	}
 
-	for isStatic, setterIdentsByName := range setterIdentsByNameByIsStatic {
-		for name, setterIdent := range setterIdentsByName {
-			if !gettersByNameByIsStatic[isStatic][name] {
-				c.errs.Addf(setterIdent, loxerr.Fatal, "write-only properties are not allowed")
-			}
+	for methodKey, setterIdent := range setterIdentsByMethodKey {
+		if !getters[methodKey] {
+			c.errs.Addf(setterIdent, loxerr.Fatal, "write-only properties are not allowed")
 		}
 	}
 }

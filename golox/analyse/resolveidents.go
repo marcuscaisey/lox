@@ -77,12 +77,12 @@ func ResolveIdents(program *ast.Program, builtins []ast.Decl, opts ...Option) (m
 		builtins:               builtins,
 		scopes:                 stack.New[*scope](),
 		forwardDeclaredGlobals: map[string]bool{},
-		unresolvedThisPropIdentsByNameByPropTypeByClassDecl: map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident{},
-		unresolvedPropIdentsByName:                          map[string][]*ast.Ident{},
-		bindingsByNameByPropTypeByClassDecl:                 map[*ast.ClassDecl]map[propertyType]map[string][]ast.Binding{},
-		bindingsByName:                                      map[string][]ast.Binding{},
-		propAccessorsByNameByPropTypeByClassDecl:            map[*ast.ClassDecl]map[propertyType]map[string][]*ast.MethodDecl{},
-		identBindings:                                       map[*ast.Ident][]ast.Binding{},
+		thisPropIdentsByNameByPropTypeByClassDecl: map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident{},
+		dynamicPropIdentsByName:                   map[string][]*ast.Ident{},
+		bindingsByClassPropKey:                    map[classPropertyKey][]ast.Binding{},
+		bindingsByName:                            map[string][]ast.Binding{},
+		propAccessorsByPropKeyByClassDecl:         map[*ast.ClassDecl]map[propertyKey][]*ast.MethodDecl{},
+		identBindings:                             map[*ast.Ident][]ast.Binding{},
 	}
 	return r.Resolve(program)
 }
@@ -91,25 +91,36 @@ type identResolver struct {
 	fatalOnly     bool
 	extraFeatures bool
 
-	builtins                                            []ast.Decl
-	scopes                                              *stack.Stack[*scope]
-	globalScope                                         *scope
-	resolvingBuiltins                                   bool
-	globalDecls                                         map[string]ast.Decl
-	forwardDeclaredGlobals                              map[string]bool
-	inFun                                               bool
-	inGlobalFun                                         bool
-	funScopeLevel                                       int
-	curClassDecl                                        *ast.ClassDecl
-	curPropType                                         propertyType
-	unresolvedThisPropIdentsByNameByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident
-	unresolvedPropIdentsByName                          map[string][]*ast.Ident
-	bindingsByNameByPropTypeByClassDecl                 map[*ast.ClassDecl]map[propertyType]map[string][]ast.Binding
-	bindingsByName                                      map[string][]ast.Binding
-	propAccessorsByNameByPropTypeByClassDecl            map[*ast.ClassDecl]map[propertyType]map[string][]*ast.MethodDecl
+	builtins                                  []ast.Decl
+	scopes                                    *stack.Stack[*scope]
+	globalScope                               *scope
+	resolvingBuiltins                         bool
+	globalDecls                               map[string]ast.Decl
+	forwardDeclaredGlobals                    map[string]bool
+	inFun                                     bool
+	inGlobalFun                               bool
+	funScopeLevel                             int
+	curClassDecl                              *ast.ClassDecl
+	curPropType                               propertyType
+	thisPropIdentsByNameByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType]map[string][]*ast.Ident
+	dynamicPropIdentsByName                   map[string][]*ast.Ident
+	bindingsByClassPropKey                    map[classPropertyKey][]ast.Binding
+	bindingsByName                            map[string][]ast.Binding
+	propAccessorsByPropKeyByClassDecl         map[*ast.ClassDecl]map[propertyKey][]*ast.MethodDecl
 
 	identBindings map[*ast.Ident][]ast.Binding
 	errs          loxerr.Errors
+}
+
+type classPropertyKey struct {
+	ClassDecl    *ast.ClassDecl
+	PropertyType propertyType
+	Name         string
+}
+
+type propertyKey struct {
+	PropertyType propertyType
+	Name         string
 }
 
 func (r *identResolver) Resolve(program *ast.Program) (map[*ast.Ident][]ast.Binding, error) {
@@ -397,7 +408,7 @@ func (r *identResolver) resolveThisPropertyIdents(idents []*ast.Ident, name stri
 	resolved := false
 	resolvedMethod := false
 	for curClassDecl := range InheritanceChain(classDecl, r.identBindings) {
-		bindings, ok := r.bindingsByNameByPropTypeByClassDecl[curClassDecl][propType][name]
+		bindings, ok := r.bindingsByClassPropKey[classPropertyKey{curClassDecl, propType, name}]
 		if !ok {
 			continue
 		}
@@ -436,7 +447,7 @@ func (r *identResolver) resolveSuperPropertyIdent(ident *ast.Ident, classDecl *a
 		if curClassDecl == classDecl {
 			continue
 		}
-		for _, binding := range r.bindingsByNameByPropTypeByClassDecl[curClassDecl][propType][ident.String()] {
+		for _, binding := range r.bindingsByClassPropKey[classPropertyKey{curClassDecl, propType, ident.String()}] {
 			if _, ok := binding.(*ast.MethodDecl); ok {
 				r.identBindings[ident] = append(r.identBindings[ident], binding)
 				return
@@ -503,9 +514,9 @@ func (r *identResolver) walkProgram(program *ast.Program) {
 
 	ast.WalkChildren(program, r.walk)
 
-	for name, unresolvedPropIdents := range r.unresolvedPropIdentsByName {
+	for name, idents := range r.dynamicPropIdentsByName {
 		bindings, bindingsExist := r.bindingsByName[name]
-		for _, ident := range unresolvedPropIdents {
+		for _, ident := range idents {
 			if bindingsExist {
 				r.identBindings[ident] = bindings
 			} else {
@@ -514,9 +525,9 @@ func (r *identResolver) walkProgram(program *ast.Program) {
 		}
 	}
 
-	for classDecl, unresolvedThisPropIdentsByNameByPropType := range r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl {
-		for name, unresolvedThisPropIdents := range unresolvedThisPropIdentsByNameByPropType[propertyTypeStatic] {
-			r.resolveThisPropertyIdents(unresolvedThisPropIdents, name, classDecl, propertyTypeStatic)
+	for classDecl, thisPropIdentsByNameByPropType := range r.thisPropIdentsByNameByPropTypeByClassDecl {
+		for name, idents := range thisPropIdentsByNameByPropType[propertyTypeStatic] {
+			r.resolveThisPropertyIdents(idents, name, classDecl, propertyTypeStatic)
 		}
 	}
 }
@@ -574,21 +585,6 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 	prevCurClassDecl := r.curClassDecl
 	defer func() { r.curClassDecl = prevCurClassDecl }()
 	r.curClassDecl = decl
-	//nolint:exhaustive
-	r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[decl] = map[propertyType]map[string][]*ast.Ident{
-		propertyTypeInstance: {},
-		propertyTypeStatic:   {},
-	}
-	//nolint:exhaustive
-	r.bindingsByNameByPropTypeByClassDecl[decl] = map[propertyType]map[string][]ast.Binding{
-		propertyTypeInstance: {},
-		propertyTypeStatic:   {},
-	}
-	//nolint:exhaustive
-	r.propAccessorsByNameByPropTypeByClassDecl[decl] = map[propertyType]map[string][]*ast.MethodDecl{
-		propertyTypeInstance: {},
-		propertyTypeStatic:   {},
-	}
 
 	if !builtins.IsInternal(decl) {
 		r.declareIdent(decl)
@@ -615,19 +611,17 @@ func (r *identResolver) walkClassDecl(decl *ast.ClassDecl) {
 
 	ast.WalkChildren(decl, r.walk)
 
-	for name, unresolvedThisPropIdents := range r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[decl][propertyTypeInstance] {
-		r.resolveThisPropertyIdents(unresolvedThisPropIdents, name, decl, propertyTypeInstance)
+	for name, idents := range r.thisPropIdentsByNameByPropTypeByClassDecl[decl][propertyTypeInstance] {
+		r.resolveThisPropertyIdents(idents, name, decl, propertyTypeInstance)
 	}
 
-	for _, propAccessorsByName := range r.propAccessorsByNameByPropTypeByClassDecl[decl] {
-		for _, propAccessors := range propAccessorsByName {
-			bindings := make([]ast.Binding, len(propAccessors))
-			for i, methodDecl := range propAccessors {
-				bindings[i] = methodDecl
-			}
-			for _, methodDecl := range propAccessors {
-				r.identBindings[methodDecl.Name] = bindings
-			}
+	for _, propAccessors := range r.propAccessorsByPropKeyByClassDecl[decl] {
+		bindings := make([]ast.Binding, len(propAccessors))
+		for i, methodDecl := range propAccessors {
+			bindings[i] = methodDecl
+		}
+		for _, methodDecl := range propAccessors {
+			r.identBindings[methodDecl.Name] = bindings
 		}
 	}
 }
@@ -644,17 +638,26 @@ func (r *identResolver) walkMethodDecl(decl *ast.MethodDecl) {
 	if decl.Class != nil && decl.Name.IsValid() && !builtins.IsInternal(decl) {
 		name := decl.Name.String()
 		if decl.IsAccessor() {
-			r.propAccessorsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name] = append(
-				r.propAccessorsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name], decl)
+			r.addPropAccessor(decl.Class, r.curPropType, name, decl)
 		} else {
 			r.identBindings[decl.Name] = append(r.identBindings[decl.Name], decl)
 		}
-		r.bindingsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name] = append(
-			r.bindingsByNameByPropTypeByClassDecl[decl.Class][r.curPropType][name], decl)
+		classPropKey := classPropertyKey{decl.Class, r.curPropType, name}
+		r.bindingsByClassPropKey[classPropKey] = append(r.bindingsByClassPropKey[classPropKey], decl)
 		r.bindingsByName[name] = append(r.bindingsByName[name], decl)
 	}
 
 	ast.WalkChildren(decl, r.walk)
+}
+
+func (r *identResolver) addPropAccessor(classDecl *ast.ClassDecl, propType propertyType, name string, methodDecl *ast.MethodDecl) {
+	propAccessorsByPropTypeName, ok := r.propAccessorsByPropKeyByClassDecl[classDecl]
+	if !ok {
+		propAccessorsByPropTypeName = map[propertyKey][]*ast.MethodDecl{}
+		r.propAccessorsByPropKeyByClassDecl[classDecl] = propAccessorsByPropTypeName
+	}
+	propKey := propertyKey{propType, name}
+	propAccessorsByPropTypeName[propKey] = append(propAccessorsByPropTypeName[propKey], methodDecl)
 }
 
 func (r *identResolver) walkBlock(block *ast.Block) {
@@ -703,8 +706,7 @@ func (r *identResolver) walkPropertyExpr(expr *ast.PropertyExpr) {
 	switch object := expr.Object.(type) {
 	case *ast.ThisExpr:
 		if r.curClassDecl != nil && r.curPropType != propertyTypeNone {
-			r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name] = append(
-				r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name], expr.Name)
+			r.addThisPropIdent(r.curClassDecl, r.curPropType, name, expr.Name)
 		}
 		return
 	case *ast.SuperExpr:
@@ -718,14 +720,13 @@ func (r *identResolver) walkPropertyExpr(expr *ast.PropertyExpr) {
 			break
 		}
 		if classDecl, ok := bindings[0].(*ast.ClassDecl); ok {
-			r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[classDecl][propertyTypeStatic][name] = append(
-				r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[classDecl][propertyTypeStatic][name], expr.Name)
+			r.addThisPropIdent(classDecl, propertyTypeStatic, name, expr.Name)
 			return
 		}
 	default:
 	}
 
-	r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
+	r.dynamicPropIdentsByName[name] = append(r.dynamicPropIdentsByName[name], expr.Name)
 }
 
 func (r *identResolver) walkPropertySetExpr(expr *ast.PropertySetExpr) {
@@ -744,10 +745,9 @@ func (r *identResolver) walkPropertySetExpr(expr *ast.PropertySetExpr) {
 	switch object := expr.Object.(type) {
 	case *ast.ThisExpr:
 		if r.curClassDecl != nil && r.curPropType != propertyTypeNone {
-			r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name] = append(
-				r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name], expr.Name)
-			r.bindingsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name] = append(
-				r.bindingsByNameByPropTypeByClassDecl[r.curClassDecl][r.curPropType][name], expr)
+			r.addThisPropIdent(r.curClassDecl, r.curPropType, name, expr.Name)
+			classPropKey := classPropertyKey{r.curClassDecl, r.curPropType, name}
+			r.bindingsByClassPropKey[classPropKey] = append(r.bindingsByClassPropKey[classPropKey], expr)
 		}
 		return
 	case *ast.IdentExpr:
@@ -756,14 +756,27 @@ func (r *identResolver) walkPropertySetExpr(expr *ast.PropertySetExpr) {
 			return
 		}
 		if classDecl, ok := bindings[0].(*ast.ClassDecl); ok {
-			r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[classDecl][propertyTypeStatic][name] = append(
-				r.unresolvedThisPropIdentsByNameByPropTypeByClassDecl[classDecl][propertyTypeStatic][name], expr.Name)
-			r.bindingsByNameByPropTypeByClassDecl[classDecl][propertyTypeStatic][name] = append(
-				r.bindingsByNameByPropTypeByClassDecl[classDecl][propertyTypeStatic][name], expr)
+			r.addThisPropIdent(classDecl, propertyTypeStatic, name, expr.Name)
+			classPropKey := classPropertyKey{classDecl, propertyTypeStatic, name}
+			r.bindingsByClassPropKey[classPropKey] = append(r.bindingsByClassPropKey[classPropKey], expr)
 			return
 		}
 	default:
 	}
 
-	r.unresolvedPropIdentsByName[name] = append(r.unresolvedPropIdentsByName[name], expr.Name)
+	r.dynamicPropIdentsByName[name] = append(r.dynamicPropIdentsByName[name], expr.Name)
+}
+
+func (r *identResolver) addThisPropIdent(classDecl *ast.ClassDecl, propType propertyType, name string, ident *ast.Ident) {
+	thisPropIdentsByNameByPropType, ok := r.thisPropIdentsByNameByPropTypeByClassDecl[classDecl]
+	if !ok {
+		thisPropIdentsByNameByPropType = map[propertyType]map[string][]*ast.Ident{}
+		r.thisPropIdentsByNameByPropTypeByClassDecl[classDecl] = thisPropIdentsByNameByPropType
+	}
+	thisPropIdentsByName, ok := thisPropIdentsByNameByPropType[propType]
+	if !ok {
+		thisPropIdentsByName = map[string][]*ast.Ident{}
+		thisPropIdentsByNameByPropType[propType] = thisPropIdentsByName
+	}
+	thisPropIdentsByName[name] = append(thisPropIdentsByName[name], ident)
 }

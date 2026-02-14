@@ -526,26 +526,29 @@ const (
 
 // propertyCompletor provides completions of properties for property and property set expressions.
 type propertyCompletor struct {
-	program                     *ast.Program
-	identBindings               map[*ast.Ident][]ast.Binding
-	compls                      []*completion
-	complsByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
+	program              *ast.Program
+	identBindings        map[*ast.Ident][]ast.Binding
+	compls               []*completion
+	complsByPropComplKey map[propertyCompletionKey][]*completion
+}
+
+type propertyCompletionKey struct {
+	ClassDecl    *ast.ClassDecl
+	PropertyType propertyType
 }
 
 func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtIns []ast.Decl) *propertyCompletor {
-	complsByPropTypeByClassDecl := genPropertyCompletions(program, identBindings)
+	complsByPropComplKey := genPropertyCompletions(program, identBindings)
 	seenCompls := map[*completion]bool{}
 	var allCompls []*completion
-	for _, complsByPropType := range complsByPropTypeByClassDecl {
-		for _, compls := range complsByPropType {
-			sortPropertyCompletions(compls)
-			for _, compl := range compls {
-				if seenCompls[compl] {
-					continue
-				}
-				seenCompls[compl] = true
-				allCompls = append(allCompls, compl)
+	for _, compls := range complsByPropComplKey {
+		sortPropertyCompletions(compls)
+		for _, compl := range compls {
+			if seenCompls[compl] {
+				continue
 			}
+			seenCompls[compl] = true
+			allCompls = append(allCompls, compl)
 		}
 	}
 	sortPropertyCompletions(allCompls)
@@ -571,10 +574,10 @@ func newPropertyCompletor(program *ast.Program, identBindings map[*ast.Ident][]a
 	allCompls = append(allCompls, builtinCompls...)
 
 	return &propertyCompletor{
-		program:                     program,
-		identBindings:               identBindings,
-		compls:                      allCompls,
-		complsByPropTypeByClassDecl: complsByPropTypeByClassDecl,
+		program:              program,
+		identBindings:        identBindings,
+		compls:               allCompls,
+		complsByPropComplKey: complsByPropComplKey,
 	}
 }
 
@@ -604,7 +607,7 @@ func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, boo
 		if methodDecl.IsStatic() {
 			propType = propertyTypeStatic
 		}
-		return c.complsByPropTypeByClassDecl[classDecl][propType], true
+		return c.complsByPropComplKey[propertyCompletionKey{classDecl, propType}], true
 	}
 
 	if _, ok := object.(*ast.SuperExpr); ok {
@@ -628,8 +631,9 @@ func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, boo
 		if methodDecl.IsStatic() {
 			propType = propertyTypeStatic
 		}
-		compls := make([]*completion, 0, len(c.complsByPropTypeByClassDecl[superclassDecl][propType]))
-		for _, compl := range c.complsByPropTypeByClassDecl[superclassDecl][propType] {
+		propComplKey := propertyCompletionKey{superclassDecl, propType}
+		compls := make([]*completion, 0, len(c.complsByPropComplKey[propComplKey]))
+		for _, compl := range c.complsByPropComplKey[propComplKey] {
 			if compl.Kind == protocol.CompletionItemKindMethod {
 				compls = append(compls, compl)
 			}
@@ -640,7 +644,7 @@ func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, boo
 	if identExpr, ok := object.(*ast.IdentExpr); ok {
 		if bindings, ok := c.identBindings[identExpr.Ident]; ok {
 			if classDecl, ok := bindings[0].(*ast.ClassDecl); ok {
-				return c.complsByPropTypeByClassDecl[classDecl][propertyTypeStatic], true
+				return c.complsByPropComplKey[propertyCompletionKey{classDecl, propertyTypeStatic}], true
 			}
 		}
 	}
@@ -648,26 +652,32 @@ func (c *propertyCompletor) Complete(pos *protocol.Position) ([]*completion, boo
 	return c.compls, true
 }
 
-func genPropertyCompletions(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding) map[*ast.ClassDecl]map[propertyType][]*completion {
+func genPropertyCompletions(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding) map[propertyCompletionKey][]*completion {
 	g := &propertyCompletionGenerator{
-		complLabelsByPropTypeByClassDecl: map[*ast.ClassDecl]map[propertyType]map[string]bool{},
-		identBindings:                    identBindings,
-		complsByPropTypeByClassDecl:      map[*ast.ClassDecl]map[propertyType][]*completion{},
+		propComplLabels:      map[propertyCompletionLabel]bool{},
+		identBindings:        identBindings,
+		complsByPropComplKey: map[propertyCompletionKey][]*completion{},
 	}
 	return g.Generate(program)
 }
 
 type propertyCompletionGenerator struct {
-	curMethodDecl                    *ast.MethodDecl
-	complLabelsByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType]map[string]bool
-	identBindings                    map[*ast.Ident][]ast.Binding
+	curMethodDecl   *ast.MethodDecl
+	propComplLabels map[propertyCompletionLabel]bool
+	identBindings   map[*ast.Ident][]ast.Binding
 
-	complsByPropTypeByClassDecl map[*ast.ClassDecl]map[propertyType][]*completion
+	complsByPropComplKey map[propertyCompletionKey][]*completion
 }
 
-func (g *propertyCompletionGenerator) Generate(program *ast.Program) map[*ast.ClassDecl]map[propertyType][]*completion {
+type propertyCompletionLabel struct {
+	ClassDecl    *ast.ClassDecl
+	PropertyType propertyType
+	Label        string
+}
+
+func (g *propertyCompletionGenerator) Generate(program *ast.Program) map[propertyCompletionKey][]*completion {
 	ast.Walk(program, g.walk)
-	return g.complsByPropTypeByClassDecl
+	return g.complsByPropComplKey
 }
 
 func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
@@ -687,15 +697,6 @@ func (g *propertyCompletionGenerator) walk(node ast.Node) bool {
 }
 
 func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
-	g.complLabelsByPropTypeByClassDecl[decl] = map[propertyType]map[string]bool{
-		propertyTypeInstance: {},
-		propertyTypeStatic:   {},
-	}
-	g.complsByPropTypeByClassDecl[decl] = map[propertyType][]*completion{
-		propertyTypeInstance: nil,
-		propertyTypeStatic:   nil,
-	}
-
 	// Add completions for all methods before walking any of their bodies so that we can skip adding completions for
 	// fields which already have a property completion.
 	for _, methodDecl := range decl.Methods() {
@@ -712,11 +713,13 @@ func (g *propertyCompletionGenerator) walkClassDecl(decl *ast.ClassDecl) {
 	if !ok {
 		return
 	}
-	for propType, compls := range g.complsByPropTypeByClassDecl[superclassDecl] {
-		for _, compl := range compls {
-			if !g.complLabelsByPropTypeByClassDecl[decl][propType][compl.Label] {
-				g.complLabelsByPropTypeByClassDecl[decl][propType][compl.Label] = true
-				g.complsByPropTypeByClassDecl[decl][propType] = append(g.complsByPropTypeByClassDecl[decl][propType], compl)
+	for _, propType := range []propertyType{propertyTypeInstance, propertyTypeStatic} {
+		for _, compl := range g.complsByPropComplKey[propertyCompletionKey{superclassDecl, propType}] {
+			propComplLabel := propertyCompletionLabel{decl, propType, compl.Label}
+			if !g.propComplLabels[propComplLabel] {
+				g.propComplLabels[propComplLabel] = true
+				propComplKey := propertyCompletionKey{decl, propType}
+				g.complsByPropComplKey[propComplKey] = append(g.complsByPropComplKey[propComplKey], compl)
 			}
 		}
 	}
@@ -738,11 +741,16 @@ func (g *propertyCompletionGenerator) addCompletionForMethod(decl *ast.MethodDec
 		propType = propertyTypeStatic
 	}
 	compl, ok := methodCompletion(decl)
-	if !ok || g.complLabelsByPropTypeByClassDecl[decl.Class][propType][compl.Label] {
+	if !ok {
 		return
 	}
-	g.complLabelsByPropTypeByClassDecl[decl.Class][propType][compl.Label] = true
-	g.complsByPropTypeByClassDecl[decl.Class][propType] = append(g.complsByPropTypeByClassDecl[decl.Class][propType], compl)
+	propComplLabel := propertyCompletionLabel{decl.Class, propType, compl.Label}
+	if g.propComplLabels[propComplLabel] {
+		return
+	}
+	g.propComplLabels[propComplLabel] = true
+	propComplKey := propertyCompletionKey{decl.Class, propType}
+	g.complsByPropComplKey[propComplKey] = append(g.complsByPropComplKey[propComplKey], compl)
 }
 
 func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.PropertySetExpr) {
@@ -761,11 +769,13 @@ func (g *propertyCompletionGenerator) addFieldCompletion(expr *ast.PropertySetEx
 	if g.curMethodDecl.IsStatic() {
 		propType = propertyTypeStatic
 	}
-	if g.complLabelsByPropTypeByClassDecl[g.curMethodDecl.Class][propType][label] {
+	propComplLabel := propertyCompletionLabel{g.curMethodDecl.Class, propType, label}
+	if g.propComplLabels[propComplLabel] {
 		return
 	}
-	g.complLabelsByPropTypeByClassDecl[g.curMethodDecl.Class][propType][label] = true
-	g.complsByPropTypeByClassDecl[g.curMethodDecl.Class][propType] = append(g.complsByPropTypeByClassDecl[g.curMethodDecl.Class][propType], &completion{
+	g.propComplLabels[propComplLabel] = true
+	propComplKey := propertyCompletionKey{g.curMethodDecl.Class, propType}
+	g.complsByPropComplKey[propComplKey] = append(g.complsByPropComplKey[propComplKey], &completion{
 		Label:        label,
 		LabelDetails: &protocol.CompletionItemLabelDetails{Detail: fmt.Sprint(" ", g.curMethodDecl.Class.Name)},
 		Kind:         protocol.CompletionItemKindField,
