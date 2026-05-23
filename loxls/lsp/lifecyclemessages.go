@@ -49,17 +49,6 @@ func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOp
 	}
 
 	h.initialized = true
-	var signatureHelpProvider *protocol.SignatureHelpOptions
-	if h.capabilities.GetTextDocument().GetSignatureHelp().GetContextSupport() {
-		signatureHelpProvider = &protocol.SignatureHelpOptions{
-			TriggerCharacters:   []string{"(", ","},
-			RetriggerCharacters: []string{")"},
-		}
-	} else {
-		signatureHelpProvider = &protocol.SignatureHelpOptions{
-			TriggerCharacters: []string{"(", ",", ")"},
-		}
-	}
 	return &protocol.InitializeResult{
 		Capabilities: &protocol.ServerCapabilities{
 			PositionEncoding: protocol.PositionEncodingKindUTF16,
@@ -75,7 +64,10 @@ func (h *Handler) initialize(params *protocol.InitializeParams[*initializationOp
 			HoverProvider: &protocol.BooleanOrHoverOptions{
 				Value: protocol.Boolean(true),
 			},
-			SignatureHelpProvider: signatureHelpProvider,
+			SignatureHelpProvider: &protocol.SignatureHelpOptions{
+				TriggerCharacters:   []string{"(", ","},
+				RetriggerCharacters: []string{")"},
+			},
 			DefinitionProvider: &protocol.BooleanOrDefinitionOptions{
 				Value: protocol.Boolean(true),
 			},
