@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     bytecode_chunk_init(&chunk);
 
     bytecode_chunk_write_constant(&chunk, 1.2, 1);
-    bytecode_chunk_write_constant(&chunk, 3.4, 2);
+    bytecode_chunk_write(&chunk, OPCODE_NEGATE, 2);
     bytecode_chunk_write(&chunk, OPCODE_RETURN, 3);
 
     vm_interpret(&vm, &chunk);

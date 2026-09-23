@@ -21,8 +21,8 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         printf("   | ");
     else
         printf("%4d ", line);
-    uint8_t instruction = chunk->instructions[offset];
-    switch (instruction) {
+    enum opcode opcode = chunk->instructions[offset];
+    switch (opcode) {
     case OPCODE_CONSTANT: {
         uint8_t index = chunk->instructions[offset + 1];
         int width = sizeof("OPCODE_CONSTANT_LONG") - 1;
@@ -30,23 +30,25 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         value_print(chunk->constants.values[index]);
         printf("'\n");
         return offset + 2;
-        break;
     }
     case OPCODE_CONSTANT_LONG: {
-        int index = (chunk->instructions[offset + 1] << 16) + (chunk->instructions[offset + 2] << 8) +
-                    (chunk->instructions[offset + 3]);
+        int index = (chunk->instructions[offset + 1] << 16) +
+                    (chunk->instructions[offset + 2] << 8) + (chunk->instructions[offset + 3]);
         printf("%s %4d '", "OPCODE_CONSTANT_LONG", index);
         value_print(chunk->constants.values[index]);
         printf("'\n");
         return offset + 4;
+    }
+    case OPCODE_NEGATE: {
+        printf("%s\n", "OPCODE_NEGATE");
+        return offset + 1;
         break;
     }
     case OPCODE_RETURN:
         printf("%s\n", "OPCODE_RETURN");
         return offset + 1;
-        break;
     default:
-        printf("Unknown opcode %d\n", instruction);
+        printf("Unknown opcode %d\n", opcode);
         return offset + 1;
     }
 }

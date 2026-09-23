@@ -1,7 +1,7 @@
 .PHONY: clean clean-all
 
 BASE_BUILD_DIR := build
-CFLAGS := -std=c99 -Wall -Wextra -Wpedantic -Werror
+CFLAGS := -std=c99 -Wall -Wextra -Wpedantic -Wswitch-enum -Werror
 
 ifdef DEBUG
 	CFLAGS += -O0 -g

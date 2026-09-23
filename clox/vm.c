@@ -87,6 +87,11 @@ static enum interpret_result vm_execute(struct vm *vm)
             vm_stack_push(vm, value);
             break;
         }
+        case OPCODE_NEGATE: {
+            value value = vm_stack_pop(vm);
+            vm_stack_push(vm, -value);
+            break;
+        }
         case OPCODE_RETURN: {
             value value = vm_stack_pop(vm);
             value_print(value);

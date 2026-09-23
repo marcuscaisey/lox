@@ -5,17 +5,21 @@
 
 #include "value.h"
 
-// Instruction types supported by the bytecode.
-// The comment on each opcode describes the operation and operands, if any.
+// Instruction types supported by the Lox bytecode.
+// Instructions operate on a stack-based virtual machine.
+// The comment on each opcode describes the operation and operands, if any. Push and pop in these
+// descriptions refer to pushing and popping from the virtual machine's value stack.
 enum opcode {
-    // Pushes a constant with index <= 255 onto the value stack
+    // Pushes a constant with index <= 255
     // Operands:
     //   u8 - index of the constant in `bytecode_chunk.constants`
     OPCODE_CONSTANT,
-    // Pushes a constant with index > 255 onto the value stack
+    // Pushes a constant with index > 255
     // Operands:
     //   u24 - index of the constant in `bytecode_chunk.constants`, encoded in big-endian
     OPCODE_CONSTANT_LONG,
+    // Pops a number, negates it, then pushes it back
+    OPCODE_NEGATE,
     // TODO
     OPCODE_RETURN,
 };
