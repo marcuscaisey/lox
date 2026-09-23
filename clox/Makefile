@@ -30,3 +30,7 @@ clean:
 
 clean-all:
 	rm -rf $(BASE_BUILD_DIR)
+
+compile_commands.json: Makefile $(SOURCES) $(HEADERS)
+	$(MAKE) clean
+	bear -- make
