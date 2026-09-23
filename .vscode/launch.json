@@ -1,15 +1,22 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Launch golox",
-      "type": "go",
-      "request": "launch",
-      "mode": "debug",
-      "program": "./golox",
-      "args": [
-        "${file}"
-      ]
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch golox",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "./golox",
+            "args": [
+                "${file}"
+            ]
+        },
+        {
+            "name": "LLDB: compile and debug clox",
+            "type": "lldb",
+            "request": "launch",
+            "program": "clox/build/debug/clox",
+            "preLaunchTask": "make: clox debug"
+        }
+    ]
 }
