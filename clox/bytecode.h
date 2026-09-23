@@ -8,11 +8,11 @@
 // Instruction types supported by the bytecode.
 // The comment on each opcode describes the operation and operands, if any.
 enum opcode {
-    // TODO
+    // Pushes a constant with index <= 255 onto the value stack
     // Operands:
-    //   u8 - index of the constant in `bytecode_chunk.constants`.
+    //   u8 - index of the constant in `bytecode_chunk.constants`
     OPCODE_CONSTANT,
-    // TODO
+    // Pushes a constant with index > 255 onto the value stack
     // Operands:
     //   u24 - index of the constant in `bytecode_chunk.constants`, encoded in big-endian
     OPCODE_CONSTANT_LONG,
