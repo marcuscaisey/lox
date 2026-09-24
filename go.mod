@@ -21,6 +21,5 @@ require (
 )
 
 tool (
-	github.com/alecthomas/go-check-sumtype/cmd/go-check-sumtype
 	golang.org/x/tools/cmd/stringer
 )
