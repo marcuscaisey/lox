@@ -18,8 +18,11 @@ enum opcode {
     // Operands:
     //   u24 - index of the constant in `bytecode_chunk.constants`, encoded in big-endian
     OPCODE_CONSTANT_LONG,
-    // Pops a number, negates it, then pushes it back
-    OPCODE_NEGATE,
+    OPCODE_ADD, // Pops two numbers then pushes their sum
+    OPCODE_SUBTRACT, // Pops two numbers b, then a, then pushes a - b
+    OPCODE_MULTIPLY, // Pops two numbers then pushes their product
+    OPCODE_DIVIDE, // Pops two numbers b, then a, then pushes a / b
+    OPCODE_NEGATE, // Pops a number, negates it, then pushes it back
     // TODO
     OPCODE_RETURN,
 };

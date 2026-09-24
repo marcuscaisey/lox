@@ -1,6 +1,6 @@
 #include "vm.h"
 
-#include <stddef.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -54,13 +54,15 @@ static void vm_print_trace_info(const struct vm *vm)
 {
     // Lines up the start of the stack with the start of the instruction in the
     // disassemble_instruction output
-    printf("          ");
-    for (const value *p = vm->_stack; p < vm->_stack_top; p++) {
-        printf("[ ");
-        value_print(*p);
-        printf(" ]");
+    if (vm->_stack_top - vm->_stack > 0) {
+        printf("          ");
+        for (const value *p = vm->_stack; p < vm->_stack_top; p++) {
+            printf("[ ");
+            value_print(*p);
+            printf(" ]");
+        }
+        printf("\n");
     }
-    printf("\n");
     int offset = vm->_ip - vm->_chunk->instructions;
     disassemble_instruction(vm->_chunk, offset);
 }
@@ -69,7 +71,7 @@ static void vm_print_trace_info(const struct vm *vm)
 // `_ip`.
 static enum interpret_result vm_execute(struct vm *vm)
 {
-    for (;;) {
+    while (true) {
 #ifdef DEBUG_TRACE_EXECUTION
         vm_print_trace_info(vm);
 #endif
@@ -85,6 +87,30 @@ static enum interpret_result vm_execute(struct vm *vm)
             uint8_t index = vm_read_u24(vm);
             value value = vm->_chunk->constants.values[index];
             vm_stack_push(vm, value);
+            break;
+        }
+        case OPCODE_ADD: {
+            value b = vm_stack_pop(vm);
+            value a = vm_stack_pop(vm);
+            vm_stack_push(vm, a + b);
+            break;
+        }
+        case OPCODE_SUBTRACT: {
+            value b = vm_stack_pop(vm);
+            value a = vm_stack_pop(vm);
+            vm_stack_push(vm, a - b);
+            break;
+        }
+        case OPCODE_MULTIPLY: {
+            value b = vm_stack_pop(vm);
+            value a = vm_stack_pop(vm);
+            vm_stack_push(vm, a * b);
+            break;
+        }
+        case OPCODE_DIVIDE: {
+            value b = vm_stack_pop(vm);
+            value a = vm_stack_pop(vm);
+            vm_stack_push(vm, a / b);
             break;
         }
         case OPCODE_NEGATE: {
