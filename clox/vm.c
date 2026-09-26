@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "bytecode.h"
+#include "compiler.h"
 #include "debug.h"
 #include "value.h"
 
@@ -69,7 +70,8 @@ static void vm_print_trace_info(const struct vm *vm)
 
 // Executes the chunk of instructions stored in `_chunk`, starting from the instruction pointer
 // `_ip`.
-static enum interpret_result vm_execute(struct vm *vm)
+// Returns 0 on success, -1 on failure.
+static int vm_execute(struct vm *vm)
 {
     while (true) {
 #ifdef DEBUG_TRACE_EXECUTION
@@ -77,62 +79,66 @@ static enum interpret_result vm_execute(struct vm *vm)
 #endif
         enum opcode opcode = vm_read_u8(vm);
         switch (opcode) {
-        case OPCODE_CONSTANT: {
+        case OP_CONSTANT: {
             uint8_t index = vm_read_u8(vm);
             value value = vm->_chunk->constants.values[index];
             vm_stack_push(vm, value);
             break;
         }
-        case OPCODE_CONSTANT_LONG: {
+        case OP_CONSTANT_LONG: {
             uint8_t index = vm_read_u24(vm);
             value value = vm->_chunk->constants.values[index];
             vm_stack_push(vm, value);
             break;
         }
-        case OPCODE_ADD: {
+        case OP_ADD: {
             value b = vm_stack_pop(vm);
             value a = vm_stack_pop(vm);
             vm_stack_push(vm, a + b);
             break;
         }
-        case OPCODE_SUBTRACT: {
+        case OP_SUBTRACT: {
             value b = vm_stack_pop(vm);
             value a = vm_stack_pop(vm);
             vm_stack_push(vm, a - b);
             break;
         }
-        case OPCODE_MULTIPLY: {
+        case OP_MULTIPLY: {
             value b = vm_stack_pop(vm);
             value a = vm_stack_pop(vm);
             vm_stack_push(vm, a * b);
             break;
         }
-        case OPCODE_DIVIDE: {
+        case OP_DIVIDE: {
             value b = vm_stack_pop(vm);
             value a = vm_stack_pop(vm);
             vm_stack_push(vm, a / b);
             break;
         }
-        case OPCODE_NEGATE: {
+        case OP_NEGATE: {
             value value = vm_stack_pop(vm);
             vm_stack_push(vm, -value);
             break;
         }
-        case OPCODE_RETURN: {
+        case OP_RETURN: {
             value value = vm_stack_pop(vm);
             value_print(value);
             printf("\n");
-            return INTERPRET_RESULT_OK;
+            return 0;
         }
         }
     }
 }
 
-enum interpret_result vm_interpret(struct vm *vm, const struct bytecode_chunk *chunk)
+int vm_interpret(struct vm *vm, const char *source)
 {
-    // TODO: maybe these don't need to be struct members
-    vm->_chunk = chunk;
-    vm->_ip = chunk->instructions;
+    (void)vm;
+    (void)vm_execute;
+    compile(source);
+    // // TODO: maybe these don't need to be struct members
+    // vm->_chunk = chunk;
+    // vm->_ip = chunk->instructions;
 
-    return vm_execute(vm);
+    return 0;
+    // return vm_execute(vm);
 }

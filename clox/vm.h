@@ -8,7 +8,7 @@
 #define STACK_MAX 256
 
 // A virtual machine which interprets Lox code.
-// Must be initialised with `vm_init` before usage and freed with `vm_free` after usage.
+// Must be initialised with `vm_init()` before use and freed with `vm_free()` after use.
 struct vm {
     // Internal fields below, do not use.
     const struct bytecode_chunk *_chunk; // Chunk currently being executed
@@ -23,16 +23,10 @@ void vm_init(struct vm *vm);
 // Frees the memory associated with `vm`.
 void vm_free(struct vm *vm);
 
-// TODO: In the future, return a success status and populate an error struct similar to LoxError
-
-// Values returned by `vm_interpret`.
-enum interpret_result {
-    INTERPRET_RESULT_OK,
-    INTERPRET_RESULT_COMPILE_ERROR,
-    INTERPRET_RESULT_RUNTIME_ERROR,
-};
-
-// Executes the given chunk of bytecode.
-enum interpret_result vm_interpret(struct vm *vm, const struct bytecode_chunk *chunk);
+// Interprets the given Lox `source`.
+// Returns 0 on success and -1 on failure.
+// This function can be called multiple times with different sources and the state will be
+// maintained between calls.
+int vm_interpret(struct vm *vm, const char *source);
 
 #endif

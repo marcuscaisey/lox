@@ -12,14 +12,14 @@
 static void offset_lines_init(struct _bytecode_offset_lines *lines)
 {
     lines->_data = NULL;
-    lines->_length = 0;
-    lines->_capacity = 0;
+    lines->_len = 0;
+    lines->_cap = 0;
     lines->_max_offset = -1;
 }
 
 static void offset_lines_free(struct _bytecode_offset_lines *lines)
 {
-    deallocate(lines->_data, lines->_capacity * sizeof(lines->_data));
+    deallocate(lines->_data, lines->_cap * sizeof(*lines->_data));
     offset_lines_init(lines);
 }
 
@@ -27,23 +27,23 @@ static void offset_lines_insert(struct _bytecode_offset_lines *lines, int offset
 {
     if (offset > lines->_max_offset)
         lines->_max_offset = offset;
-    if (lines->_length > 0) {
-        int last_offset = lines->_data[lines->_length - 2];
-        int last_line = lines->_data[lines->_length - 1];
+    if (lines->_len > 0) {
+        int last_offset = lines->_data[lines->_len - 2];
+        int last_line = lines->_data[lines->_len - 1];
         // These are just the assumptions stated in the comment on _bytecode_offset_lines
         assert(offset > last_offset);
         assert(line >= last_line);
         if (line == last_line)
             return;
     }
-    if (lines->_length + 2 > lines->_capacity) {
-        size_t current_size = sizeof(lines->_data) * lines->_capacity;
-        lines->_capacity = lines->_capacity < 8 ? 8 : lines->_capacity * 2;
-        size_t target_size = sizeof(lines->_data) * lines->_capacity;
+    if (lines->_len + 2 > lines->_cap) {
+        size_t current_size = lines->_cap * sizeof(*lines->_data);
+        lines->_cap = lines->_cap < 8 ? 8 : lines->_cap * 2;
+        size_t target_size = lines->_cap * sizeof(*lines->_data);
         lines->_data = reallocate(lines->_data, current_size, target_size);
     }
-    lines->_data[lines->_length++] = offset;
-    lines->_data[lines->_length++] = line;
+    lines->_data[lines->_len++] = offset;
+    lines->_data[lines->_len++] = line;
 }
 
 // Returns the line corresponding with `offset` or -1 if not found.
@@ -55,7 +55,7 @@ int offset_lines_get(const struct _bytecode_offset_lines *lines, int offset)
     // offset <= i. To find this, we do a binary search to find the first pair with offset > i and
     // then look at the preceding pair which will then have offset <= i.
     int low = 0; // Lower bound of search range
-    int high = lines->_length; // Upper bound of search range
+    int high = lines->_len; // Upper bound of search range
     while (low != high) {
         int midpoint = low + (high - low) / 2;
         midpoint -= midpoint % 2; // Ensure this stays even so that it points to an offset
@@ -75,8 +75,8 @@ int offset_lines_get(const struct _bytecode_offset_lines *lines, int offset)
 
 void bytecode_chunk_init(struct bytecode_chunk *chunk)
 {
-    chunk->length = 0;
-    chunk->_capacity = 0;
+    chunk->len = 0;
+    chunk->_cap = 0;
     chunk->instructions = NULL;
     value_array_init(&chunk->constants);
     offset_lines_init(&chunk->_offset_lines);
@@ -84,7 +84,7 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk)
 
 void bytecode_chunk_free(struct bytecode_chunk *chunk)
 {
-    deallocate(chunk->instructions, chunk->_capacity * sizeof(chunk->instructions));
+    deallocate(chunk->instructions, chunk->_cap * sizeof(*chunk->instructions));
     value_array_free(&chunk->constants);
     offset_lines_free(&chunk->_offset_lines);
     bytecode_chunk_init(chunk);
@@ -95,27 +95,27 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk)
 
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
 {
-    if (chunk->length + 1 > chunk->_capacity) {
-        size_t current_size = sizeof(chunk->instructions) * chunk->_capacity;
-        chunk->_capacity = chunk->_capacity < 8 ? 8 : chunk->_capacity * 2;
-        size_t target_size = sizeof(chunk->instructions) * chunk->_capacity;
+    if (chunk->len + 1 > chunk->_cap) {
+        size_t current_size = chunk->_cap * sizeof(*chunk->instructions);
+        chunk->_cap = chunk->_cap < 8 ? 8 : chunk->_cap * 2;
+        size_t target_size = chunk->_cap * sizeof(*chunk->instructions);
         chunk->instructions = reallocate(chunk->instructions, current_size, target_size);
     }
-    int offset = chunk->length;
+    int offset = chunk->len;
     offset_lines_insert(&chunk->_offset_lines, offset, line);
-    chunk->instructions[chunk->length++] = byte;
+    chunk->instructions[chunk->len++] = byte;
 }
 
-void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, value value, int line)
+void bytecode_chunk_write_constant_instruction(struct bytecode_chunk *chunk, value value, int line)
 {
-    int constant_index = chunk->constants.length;
+    int constant_index = chunk->constants.len;
     value_array_write(&chunk->constants, value);
     int max_constant_index = (1 << (sizeof(*chunk->instructions) * 8)) - 1;
     if (constant_index <= max_constant_index) {
-        bytecode_chunk_write(chunk, OPCODE_CONSTANT, line);
+        bytecode_chunk_write(chunk, OP_CONSTANT, line);
         bytecode_chunk_write(chunk, constant_index, line);
     } else {
-        bytecode_chunk_write(chunk, OPCODE_CONSTANT_LONG, line);
+        bytecode_chunk_write(chunk, OP_CONSTANT_LONG, line);
         bytecode_chunk_write(chunk, (constant_index >> 16) & 0xff, line);
         bytecode_chunk_write(chunk, (constant_index >> 8) & 0xff, line);
         bytecode_chunk_write(chunk, (constant_index >> 0) & 0xff, line);

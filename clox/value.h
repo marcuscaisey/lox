@@ -8,12 +8,12 @@ typedef double value;
 void value_print(value value);
 
 // Array of `values`. Elements can be accessed directly through `values` but must only be appended
-// via `value_array_write`.
-// Must be initialised with `value_array_init` before usage and freed with `value_array_free` after
-// usage.
+// via `value_array_write()`.
+// Must be initialised with `value_array_init()` before use and freed with `value_array_free()`
+// after use.
 struct value_array {
     value *values;
-    int length; // Number of elements in `values`
+    int len; // Number of elements in `values`
     // Internal fields below, do not use.
     int _capacity; // Number of elements that space has been allocated for in `values`
 };
