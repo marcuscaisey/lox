@@ -15,7 +15,7 @@ struct value_array {
     value *values;
     int len; // Number of elements in `values`
     // Internal fields below, do not use.
-    int _capacity; // Number of elements that space has been allocated for in `values`
+    int _cap; // Number of elements that space has been allocated for in `values`
 };
 
 // Initialises `array` for use.
