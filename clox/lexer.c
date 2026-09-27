@@ -22,7 +22,7 @@ void lexer_free(struct lexer *lexer)
 {
     for (struct _lexer_str *s = lexer->_strs; s < lexer->_strs + lexer->_strs_len; s++)
         deallocate(s->data, s->size);
-    deallocate(lexer->_strs, lexer->_strs_cap);
+    deallocate(lexer->_strs, lexer->_strs_cap * sizeof(*lexer->_strs));
 }
 
 // Updates `_char` to point to the next character in the source and updates `_line` if the next line
