@@ -9,9 +9,6 @@
 #include "debug.h"
 #include "value.h"
 
-#define DEBUG_TRACE_EXECUTION
-// #undef DEBUG_TRACE_EXECUTION
-
 // Updates the stack to be empty
 static void vm_stack_reset(struct vm *vm)
 {
@@ -77,6 +74,7 @@ static int vm_execute(struct vm *vm)
 #ifdef DEBUG_TRACE_EXECUTION
         vm_print_trace_info(vm);
 #endif
+
         enum opcode opcode = vm_read_u8(vm);
         switch (opcode) {
         case OP_CONSTANT: {
