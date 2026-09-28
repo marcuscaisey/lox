@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
+#include "dynamic_array.h"
 #include "memory.h"
 
 void value_print(value value)
@@ -19,17 +20,12 @@ void value_array_init(struct value_array *array)
 
 void value_array_write(struct value_array *array, value value)
 {
-    if (array->len + 1 > array->_cap) {
-        size_t current_size = array->_cap * sizeof(*array->values);
-        array->_cap = array->_cap < 8 ? 8 : array->_cap * 2;
-        size_t target_size = array->_cap * sizeof(*array->values);
-        array->values = reallocate(array->values, current_size, target_size);
-    }
+    DYNAMIC_ARRAY_GROW(array, array->_cap, array->len + 1);
     array->values[array->len++] = value;
 }
 
 void value_array_free(struct value_array *array)
 {
-    deallocate(array->values, array->_cap * sizeof(*array->values));
+    deallocate(array->values, DYNAMIC_ARRAY_SIZE(array->values, array->_cap));
     value_array_init(array);
 }

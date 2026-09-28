@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "dynamic_array.h"
 #include "memory.h"
 #include "value.h"
 
@@ -19,7 +20,7 @@ static void offset_lines_init(struct _bytecode_offset_lines *lines)
 
 static void offset_lines_free(struct _bytecode_offset_lines *lines)
 {
-    deallocate(lines->_data, lines->_cap * sizeof(*lines->_data));
+    deallocate(lines->_data, DYNAMIC_ARRAY_SIZE(lines->_data, lines->_cap));
     offset_lines_init(lines);
 }
 
@@ -36,12 +37,7 @@ static void offset_lines_insert(struct _bytecode_offset_lines *lines, int offset
         if (line == last_line)
             return;
     }
-    if (lines->_len + 2 > lines->_cap) {
-        size_t current_size = lines->_cap * sizeof(*lines->_data);
-        lines->_cap = lines->_cap < 8 ? 8 : lines->_cap * 2;
-        size_t target_size = lines->_cap * sizeof(*lines->_data);
-        lines->_data = reallocate(lines->_data, current_size, target_size);
-    }
+    DYNAMIC_ARRAY_GROW(lines->_data, lines->_cap, lines->_len + 2);
     lines->_data[lines->_len++] = offset;
     lines->_data[lines->_len++] = line;
 }
@@ -84,7 +80,7 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk)
 
 void bytecode_chunk_free(struct bytecode_chunk *chunk)
 {
-    deallocate(chunk->instructions, chunk->_cap * sizeof(*chunk->instructions));
+    deallocate(chunk->instructions, DYNAMIC_ARRAY_SIZE(chunk->instructions, chunk->_cap));
     value_array_free(&chunk->constants);
     offset_lines_free(&chunk->_offset_lines);
     bytecode_chunk_init(chunk);
@@ -95,14 +91,9 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk)
 
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
 {
-    if (chunk->len + 1 > chunk->_cap) {
-        size_t current_size = chunk->_cap * sizeof(*chunk->instructions);
-        chunk->_cap = chunk->_cap < 8 ? 8 : chunk->_cap * 2;
-        size_t target_size = chunk->_cap * sizeof(*chunk->instructions);
-        chunk->instructions = reallocate(chunk->instructions, current_size, target_size);
-    }
     int offset = chunk->len;
     offset_lines_insert(&chunk->_offset_lines, offset, line);
+    DYNAMIC_ARRAY_GROW(chunk->instructions, chunk->_cap, chunk->len + 1);
     chunk->instructions[chunk->len++] = byte;
 }
 

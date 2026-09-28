@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "dynamic_array.h"
 #include "memory.h"
 
 void lexer_init(struct lexer *lexer, const char *source)
@@ -22,7 +23,7 @@ void lexer_free(struct lexer *lexer)
 {
     for (struct _lexer_str *s = lexer->_strs; s < lexer->_strs + lexer->_strs_len; s++)
         deallocate(s->data, s->size);
-    deallocate(lexer->_strs, lexer->_strs_cap * sizeof(*lexer->_strs));
+    deallocate(lexer->_strs, DYNAMIC_ARRAY_SIZE(lexer->_strs, lexer->_strs_cap));
 }
 
 // Updates `_char` to point to the next character in the source and updates `_line` if the next line
@@ -77,13 +78,6 @@ static void lexer_skip_ignored(struct lexer *lexer)
 // `lexer_free()` is called.
 static char *lexer_sprintf(struct lexer *lexer, const char *format, ...)
 {
-    if (lexer->_strs_len + 1 > lexer->_strs_cap) {
-        size_t current_size = lexer->_strs_cap * sizeof(*lexer->_strs);
-        lexer->_strs_cap = lexer->_strs_cap < 8 ? 8 : lexer->_strs_cap * 2;
-        size_t target_size = lexer->_strs_cap * sizeof(*lexer->_strs);
-        lexer->_strs = reallocate(lexer->_strs, current_size, target_size);
-    }
-
     va_list args;
     va_start(args, format);
     int size = vsnprintf(NULL, 0, format, args) + 1;
@@ -94,6 +88,7 @@ static char *lexer_sprintf(struct lexer *lexer, const char *format, ...)
     vsnprintf(result, size, format, args);
     va_end(args);
 
+    DYNAMIC_ARRAY_GROW(lexer->_strs, lexer->_strs_cap, lexer->_strs_len+1);
     lexer->_strs[lexer->_strs_len++] = (struct _lexer_str){ .data = result, .size = size };
     return result;
 }
