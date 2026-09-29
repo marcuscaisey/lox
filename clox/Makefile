@@ -7,7 +7,7 @@ ifdef DEBUG
 	CFLAGS += -O0 -g -DDEBUG_TRACE_EXECUTION
 	BUILD_DIR := $(BASE_BUILD_DIR)/debug
 else
-	CFLAGS += -O3
+	CFLAGS += -O3 -flto
 	BUILD_DIR := $(BASE_BUILD_DIR)/release
 endif
 
