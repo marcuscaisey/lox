@@ -8,9 +8,6 @@
             "args": [
                 "DEBUG=1"
             ],
-            "options": {
-                "cwd": "clox",
-            },
             "group": {
                 "kind": "build"
             },

@@ -1,0 +1,29 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "clox"
+		},
+		{
+			"path": "golox"
+		},
+		{
+			"path": "loxfmt"
+		},
+		{
+			"path": "loxlint"
+		},
+		{
+			"path": "loxls"
+		},
+		{
+			"path": "tree-sitter-lox"
+		},
+		{
+			"path": "vscode-lox"
+		},
+	],
+	"settings": {}
+}

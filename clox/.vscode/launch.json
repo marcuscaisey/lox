@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "LLDB: compile and debug clox",
+            "type": "lldb",
+            "request": "launch",
+            "program": "build/debug/clox",
+            "args": [
+                "test.lox"
+            ],
+            "preLaunchTask": "make: clox debug"
+        }
+    ]
+}
