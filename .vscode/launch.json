@@ -16,7 +16,9 @@
             "type": "lldb",
             "request": "launch",
             "program": "clox/build/debug/clox",
-            "args": [],
+            "args": [
+                "clox/test.lox"
+            ],
             "preLaunchTask": "make: clox debug"
         }
     ]

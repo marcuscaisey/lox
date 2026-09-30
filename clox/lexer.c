@@ -10,6 +10,114 @@
 #include "dynamic_array.h"
 #include "memory.h"
 
+const char *token_type_string(enum token_type type)
+{
+    switch (type) {
+    case TOKEN_ERROR:
+        return "ERROR";
+    case TOKEN_EOF:
+        return "EOF";
+    case TOKEN_PRINT:
+        return "print";
+    case TOKEN_VAR:
+        return "var";
+    case TOKEN_TRUE:
+        return "true";
+    case TOKEN_FALSE:
+        return "false";
+    case TOKEN_NIL:
+        return "nil";
+    case TOKEN_IF:
+        return "if";
+    case TOKEN_ELSE:
+        return "else";
+    case TOKEN_AND:
+        return "and";
+    case TOKEN_OR:
+        return "or";
+    case TOKEN_WHILE:
+        return "while";
+    case TOKEN_FOR:
+        return "for";
+    case TOKEN_BREAK:
+        return "break";
+    case TOKEN_CONTINUE:
+        return "continue";
+    case TOKEN_FUN:
+        return "fun";
+    case TOKEN_RETURN:
+        return "return";
+    case TOKEN_CLASS:
+        return "class";
+    case TOKEN_THIS:
+        return "this";
+    case TOKEN_SUPER:
+        return "super";
+    case TOKEN_STATIC:
+        return "static";
+    case TOKEN_GET:
+        return "get";
+    case TOKEN_SET:
+        return "set";
+    case TOKEN_TRY:
+        return "try";
+    case TOKEN_IDENT:
+        return "IDENT";
+    case TOKEN_STRING:
+        return "STRING";
+    case TOKEN_NUMBER:
+        return "NUMBER";
+    case TOKEN_SEMICOLON:
+        return ";";
+    case TOKEN_COMMA:
+        return ",";
+    case TOKEN_DOT:
+        return ".";
+    case TOKEN_EQUAL:
+        return "=";
+    case TOKEN_PLUS:
+        return "+";
+    case TOKEN_MINUS:
+        return "-";
+    case TOKEN_ASTERISK:
+        return "*";
+    case TOKEN_SLASH:
+        return "/";
+    case TOKEN_PERCENT:
+        return "%";
+    case TOKEN_LESS:
+        return "<";
+    case TOKEN_LESS_EQUAL:
+        return "<=";
+    case TOKEN_GREATER:
+        return ">";
+    case TOKEN_GREATER_EQUAL:
+        return ">=";
+    case TOKEN_EQUAL_EQUAL:
+        return "==";
+    case TOKEN_BANG_EQUAL:
+        return "!=";
+    case TOKEN_BANG:
+        return "!";
+    case TOKEN_QUESTION:
+        return "?";
+    case TOKEN_COLON:
+        return ":";
+    case TOKEN_LEFT_PAREN:
+        return "(";
+    case TOKEN_RIGHT_PAREN:
+        return ")";
+    case TOKEN_LEFT_BRACK:
+        return "[";
+    case TOKEN_RIGHT_BRACK:
+        return "]";
+    case TOKEN_LEFT_BRACE:
+        return "{";
+    case TOKEN_RIGHT_BRACE:
+        return "}";
+    }
+}
+
 void lexer_init(struct lexer *lexer, const char *source)
 {
     lexer->_char = source;
@@ -26,9 +134,9 @@ void lexer_free(struct lexer *lexer)
     deallocate(lexer->_strs, DYNAMIC_ARRAY_SIZE(lexer->_strs, lexer->_strs_cap));
 }
 
-// Updates `_char` to point to the next character in the source and updates `_line` if the next line
-// has been reached.
-// If `_char` is already at the end of the source, then this is a no-op.
+// Moves the current character forwards one in the source and updates the current line if the next
+// line has been reached.
+// If the current charcter is already at the end of the source, then this is a no-op.
 static void lexer_advance(struct lexer *lexer)
 {
     if (*lexer->_char == '\0')
@@ -38,14 +146,13 @@ static void lexer_advance(struct lexer *lexer)
     lexer->_char++;
 }
 
-// Returns the character following `_char` if there is one, otherwise '\0'.
-static char lexer_peek(const struct lexer *lexer)
+// Returns the character following the current character if there is one, otherwise '\0'.
+static char lexer_peek(struct lexer lexer)
 {
-    return *lexer->_char != '\0' ? *(lexer->_char + 1) : '\0';
+    return *lexer._char != '\0' ? *(lexer._char + 1) : '\0';
 }
 
-// Advances the lexer until `_char` does not point at a character which is not semantically
-// meaningful.
+// Advances the lexer until the current character is semantically meaningful.
 static void lexer_skip_ignored(struct lexer *lexer)
 {
     while (true) {
@@ -59,7 +166,7 @@ static void lexer_skip_ignored(struct lexer *lexer)
             break;
         // Comments
         case '/':
-            if (lexer_peek(lexer) == '/') {
+            if (lexer_peek(*lexer) == '/') {
                 lexer_advance(lexer); // first /
                 lexer_advance(lexer); // second /
                 while (*lexer->_char != '\n' && *lexer->_char != '\0')
@@ -74,9 +181,10 @@ static void lexer_skip_ignored(struct lexer *lexer)
     }
 }
 
-// Allocates and returns a string formatted as if with `sprintf()` which will be freed when
+// Allocates and returns a string formatted as if with `printf()` which will be freed when
 // `lexer_free()` is called.
-static char *lexer_sprintf(struct lexer *lexer, const char *format, ...)
+static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(struct lexer *lexer,
+                                                                 const char *format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -88,7 +196,7 @@ static char *lexer_sprintf(struct lexer *lexer, const char *format, ...)
     vsnprintf(result, size, format, args);
     va_end(args);
 
-    DYNAMIC_ARRAY_GROW(lexer->_strs, lexer->_strs_cap, lexer->_strs_len+1);
+    DYNAMIC_ARRAY_GROW(lexer->_strs, lexer->_strs_cap, lexer->_strs_len + 1);
     lexer->_strs[lexer->_strs_len++] = (struct _lexer_str){ .data = result, .size = size };
     return result;
 }
@@ -304,7 +412,7 @@ struct token lexer_next(struct lexer *lexer)
             // Advance past number literal
             while (isdigit(*lexer->_char))
                 lexer_advance(lexer);
-            if (*lexer->_char == '.' && isdigit(lexer_peek(lexer))) {
+            if (*lexer->_char == '.' && isdigit(lexer_peek(*lexer))) {
                 lexer_advance(lexer); // .
                 lexer_advance(lexer); // digit
                 while (isdigit(*lexer->_char))

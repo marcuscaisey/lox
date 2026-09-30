@@ -1,5 +1,5 @@
-#ifndef clox_dynamic_array_h
-#define clox_dynamic_array_h
+#ifndef CLOX_DYNAMIC_ARRAY_H
+#define CLOX_DYNAMIC_ARRAY_H
 
 #include <stdbool.h>
 
@@ -16,8 +16,9 @@
     do {                                                              \
         if ((n) > (size)) {                                           \
             size_t current_size = DYNAMIC_ARRAY_SIZE((data), (size)); \
+            (size) = (size) < 8 ? 8 : (size) * 2;                     \
             while ((size) < (n))                                      \
-                (size) = (size) < 8 ? 8 : (size) * 2;                 \
+                (size) *= 2;                                          \
             size_t target_size = DYNAMIC_ARRAY_SIZE((data), (size));  \
             (data) = reallocate((data), current_size, target_size);   \
         }                                                             \

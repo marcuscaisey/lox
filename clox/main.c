@@ -72,12 +72,12 @@ static int run_file(const char *filename)
         return 1;
     }
 
-    int result = vm_interpret(&vm, source);
+    bool success = vm_interpret(&vm, source);
 
     vm_free(&vm);
     free(source);
 
-    return result ? 1 : 0;
+    return success ? 0 : 1;
 }
 
 int main(int argc, char *argv[])

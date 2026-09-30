@@ -1,5 +1,5 @@
-#ifndef clox_value_h
-#define clox_value_h
+#ifndef CLOX_VALUE_H
+#define CLOX_VALUE_H
 
 // Represents a Lox value.
 typedef double value;

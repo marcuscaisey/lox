@@ -10,63 +10,26 @@
 #include "memory.h"
 #include "value.h"
 
-static void offset_lines_init(struct _bytecode_offset_lines *lines)
+const char *instruction_name(enum opcode opcode)
 {
-    lines->_data = NULL;
-    lines->_len = 0;
-    lines->_cap = 0;
-    lines->_max_offset = -1;
-}
-
-static void offset_lines_free(struct _bytecode_offset_lines *lines)
-{
-    deallocate(lines->_data, DYNAMIC_ARRAY_SIZE(lines->_data, lines->_cap));
-    offset_lines_init(lines);
-}
-
-static void offset_lines_insert(struct _bytecode_offset_lines *lines, int offset, int line)
-{
-    if (offset > lines->_max_offset)
-        lines->_max_offset = offset;
-    if (lines->_len > 0) {
-        int last_offset = lines->_data[lines->_len - 2];
-        int last_line = lines->_data[lines->_len - 1];
-        // These are just the assumptions stated in the comment on _bytecode_offset_lines
-        assert(offset > last_offset);
-        assert(line >= last_line);
-        if (line == last_line)
-            return;
+    switch (opcode) {
+    case OP_CONSTANT:
+        return "CONSTANT";
+    case OP_CONSTANT_LONG:
+        return "CONSTANT_LONG";
+    case OP_ADD:
+        return "ADD";
+    case OP_SUBTRACT:
+        return "SUBTRACT";
+    case OP_MULTIPLY:
+        return "MULTIPLY";
+    case OP_DIVIDE:
+        return "DIVIDE";
+    case OP_NEGATE:
+        return "NEGATE";
+    case OP_RETURN:
+        return "RETURN";
     }
-    DYNAMIC_ARRAY_GROW(lines->_data, lines->_cap, lines->_len + 2);
-    lines->_data[lines->_len++] = offset;
-    lines->_data[lines->_len++] = line;
-}
-
-// Returns the line corresponding with `offset` or -1 if not found.
-int offset_lines_get(const struct _bytecode_offset_lines *lines, int offset)
-{
-    if (offset < 0 || offset > lines->_max_offset)
-        return -1;
-    // The line corresponding with offset i is the line from the last {offset, line} pair with
-    // offset <= i. To find this, we do a binary search to find the first pair with offset > i and
-    // then look at the preceding pair which will then have offset <= i.
-    int low = 0; // Lower bound of search range
-    int high = lines->_len; // Upper bound of search range
-    while (low != high) {
-        int midpoint = low + (high - low) / 2;
-        midpoint -= midpoint % 2; // Ensure this stays even so that it points to an offset
-        if (lines->_data[midpoint] > offset)
-            // This might be the answer so keep in search range
-            high = midpoint;
-        else
-            // Everything to the left including this is definitely not the answer so exclude from
-            // the search range. Increment by 2 to skip the line part of the {offset, line}
-            // pair.
-            low = midpoint + 2;
-    }
-    // {..., offset_i, line_i, ..., offset_j, line, low, line_k, ...}
-    int line = lines->_data[low - 1];
-    return line;
 }
 
 void bytecode_chunk_init(struct bytecode_chunk *chunk)
@@ -74,15 +37,14 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk)
     chunk->len = 0;
     chunk->_cap = 0;
     chunk->instructions = NULL;
+    chunk->_offset_lines = NULL;
     value_array_init(&chunk->constants);
-    offset_lines_init(&chunk->_offset_lines);
 }
 
 void bytecode_chunk_free(struct bytecode_chunk *chunk)
 {
     deallocate(chunk->instructions, DYNAMIC_ARRAY_SIZE(chunk->instructions, chunk->_cap));
     value_array_free(&chunk->constants);
-    offset_lines_free(&chunk->_offset_lines);
     bytecode_chunk_init(chunk);
 }
 
@@ -91,13 +53,18 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk)
 
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
 {
-    int offset = chunk->len;
-    offset_lines_insert(&chunk->_offset_lines, offset, line);
+    int original_cap = chunk->_cap;
     DYNAMIC_ARRAY_GROW(chunk->instructions, chunk->_cap, chunk->len + 1);
-    chunk->instructions[chunk->len++] = byte;
+    // DYNAMIC_ARRAY_GROW might modify _cap so we need to pass in the original value to ensure that
+    // we'll grow _offset_lines as well.
+    DYNAMIC_ARRAY_GROW(chunk->_offset_lines, original_cap, chunk->len + 1);
+    int offset = chunk->len;
+    chunk->instructions[offset] = byte;
+    chunk->_offset_lines[offset] = line;
+    chunk->len++;
 }
 
-void bytecode_chunk_write_constant_instruction(struct bytecode_chunk *chunk, value value, int line)
+void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, value value, int line)
 {
     int constant_index = chunk->constants.len;
     value_array_write(&chunk->constants, value);
@@ -113,7 +80,7 @@ void bytecode_chunk_write_constant_instruction(struct bytecode_chunk *chunk, val
     }
 }
 
-int bytecode_chunk_offset_line(const struct bytecode_chunk *chunk, int offset)
+int bytecode_chunk_offset_line(struct bytecode_chunk chunk, int offset)
 {
-    return offset_lines_get(&chunk->_offset_lines, offset);
+    return chunk._offset_lines[offset];
 }

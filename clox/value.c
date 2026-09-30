@@ -20,7 +20,7 @@ void value_array_init(struct value_array *array)
 
 void value_array_write(struct value_array *array, value value)
 {
-    DYNAMIC_ARRAY_GROW(array, array->_cap, array->len + 1);
+    DYNAMIC_ARRAY_GROW(array->values, array->_cap, array->len + 1);
     array->values[array->len++] = value;
 }
 

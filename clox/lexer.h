@@ -1,5 +1,5 @@
-#ifndef clox_lexer_h
-#define clox_lexer_h
+#ifndef CLOX_LEXER_H
+#define CLOX_LEXER_H
 
 // Types of token emitted by the lexer.
 enum token_type {
@@ -58,6 +58,10 @@ enum token_type {
     TOKEN_LEFT_BRACE,
     TOKEN_RIGHT_BRACE,
 };
+
+// Returns a string representation of `type`. If `type` is represented in Lox source code by a fixed
+// string, then this is what's returned.
+const char *token_type_string(enum token_type type);
 
 // A lexical token produced by the lexer.
 // Pointers contained in a token are borrowed and remain valid until the `lexer_free()` has been

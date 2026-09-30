@@ -47,6 +47,7 @@ static uint8_t vm_read_u24(struct vm *vm)
     return (vm_read_u8(vm) << 16) + (vm_read_u8(vm) << 8) + (vm_read_u8(vm));
 }
 
+#ifdef DEBUG
 // Prints the contents of the value stack and the current instruction.
 static void vm_print_trace_info(const struct vm *vm)
 {
@@ -62,16 +63,16 @@ static void vm_print_trace_info(const struct vm *vm)
         printf("\n");
     }
     int offset = vm->_ip - vm->_chunk->instructions;
-    disassemble_instruction(vm->_chunk, offset);
+    disassemble_instruction(*vm->_chunk, offset);
 }
+#endif
 
 // Executes the chunk of instructions stored in `_chunk`, starting from the instruction pointer
-// `_ip`.
-// Returns 0 on success, -1 on failure.
-static int vm_execute(struct vm *vm)
+// `_ip`, and reports whether execution was successful.
+static bool vm_execute(struct vm *vm)
 {
     while (true) {
-#ifdef DEBUG_TRACE_EXECUTION
+#ifdef DEBUG
         vm_print_trace_info(vm);
 #endif
 
@@ -122,21 +123,30 @@ static int vm_execute(struct vm *vm)
             value value = vm_stack_pop(vm);
             value_print(value);
             printf("\n");
-            return 0;
+            return true;
         }
         }
     }
 }
 
-int vm_interpret(struct vm *vm, const char *source)
+bool vm_interpret(struct vm *vm, const char *source)
 {
-    (void)vm;
-    (void)vm_execute;
-    compile(source);
-    // // TODO: maybe these don't need to be struct members
-    // vm->_chunk = chunk;
-    // vm->_ip = chunk->instructions;
+    bool success = true;
 
-    return 0;
-    // return vm_execute(vm);
+    struct bytecode_chunk chunk;
+    bytecode_chunk_init(&chunk);
+
+    if (!compile(source, &chunk)) {
+        success = false;
+        goto out_chunk_free;
+    }
+
+    // TODO: maybe these don't need to be struct members
+    vm->_chunk = &chunk;
+    vm->_ip = chunk.instructions;
+    success = vm_execute(vm);
+
+out_chunk_free:
+    bytecode_chunk_free(&chunk);
+    return success;
 }
