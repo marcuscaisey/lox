@@ -185,7 +185,7 @@ static void compiler_compile_group_expr(struct compiler *compiler)
 static void compiler_compile_unary_expr(struct compiler *compiler)
 {
     int line = compiler->_token.line;
-    enum opcode instruction = -1;
+    enum opcode instruction;
     if (COMPILER_MATCH(compiler, TOKEN_MINUS)) {
         instruction = OP_NEGATE;
     } else {
@@ -220,7 +220,7 @@ static expr_compiler prefix_expr_compiler(enum token_type type)
 static void compiler_compile_binary_expr(struct compiler *compiler)
 {
     int line = compiler->_token.line;
-    enum opcode instruction = -1;
+    enum opcode instruction;
     if (COMPILER_MATCH(compiler, TOKEN_PLUS)) {
         instruction = OP_ADD;
     } else if (COMPILER_MATCH(compiler, TOKEN_MINUS)) {
