@@ -53,15 +53,13 @@ static void vm_print_trace_info(const struct vm *vm)
 {
     // Lines up the start of the stack with the start of the instruction in the
     // disassemble_instruction output
-    if (vm->_stack_top - vm->_stack > 0) {
-        printf("          ");
-        for (const value *p = vm->_stack; p < vm->_stack_top; p++) {
-            printf("[ ");
-            value_print(*p);
-            printf(" ]");
-        }
-        printf("\n");
+    printf("          ");
+    for (const value *p = vm->_stack; p < vm->_stack_top; p++) {
+        printf("[ ");
+        value_print(*p);
+        printf(" ]");
     }
+    printf("\n");
     int offset = vm->_ip - vm->_chunk->instructions;
     disassemble_instruction(*vm->_chunk, offset);
 }
