@@ -17,8 +17,8 @@ void disassemble(struct bytecode_chunk chunk, const char *name)
 int disassemble_instruction(struct bytecode_chunk chunk, int offset)
 {
     printf("%04d ", offset);
-    int line = bytecode_chunk_offset_line(chunk, offset);
-    if (offset > 0 && line == bytecode_chunk_offset_line(chunk, offset - 1))
+    int line = chunk.offset_lines[offset];
+    if (offset > 0 && line == chunk.offset_lines[offset - 1])
         printf("   | ");
     else
         printf("%4d ", line);

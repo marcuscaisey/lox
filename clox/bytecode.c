@@ -34,7 +34,7 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk)
     chunk->len = 0;
     chunk->_cap = 0;
     chunk->instructions = NULL;
-    chunk->_offset_lines = NULL;
+    chunk->offset_lines = NULL;
     value_array_init(&chunk->constants);
 }
 
@@ -54,10 +54,10 @@ void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
     DYNAMIC_ARRAY_GROW(chunk->instructions, chunk->_cap, chunk->len + 1);
     // DYNAMIC_ARRAY_GROW might modify _cap so we need to pass in the original value to ensure that
     // we'll grow _offset_lines as well.
-    DYNAMIC_ARRAY_GROW(chunk->_offset_lines, original_cap, chunk->len + 1);
+    DYNAMIC_ARRAY_GROW(chunk->offset_lines, original_cap, chunk->len + 1);
     int offset = chunk->len;
     chunk->instructions[offset] = byte;
-    chunk->_offset_lines[offset] = line;
+    chunk->offset_lines[offset] = line;
     chunk->len++;
 }
 
@@ -75,9 +75,4 @@ void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, value value, in
         bytecode_chunk_write(chunk, (constant_index >> 8) & 0xff, line);
         bytecode_chunk_write(chunk, (constant_index >> 0) & 0xff, line);
     }
-}
-
-int bytecode_chunk_offset_line(struct bytecode_chunk chunk, int offset)
-{
-    return chunk._offset_lines[offset];
 }
