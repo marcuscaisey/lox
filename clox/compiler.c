@@ -26,6 +26,24 @@ struct compiler {
     bool _had_error; // Whether the compiler has encountered any syntax errors
 };
 
+// Initialises `compiler` for compiling `source` and writing the compiled bytecode into `out`.
+static void compiler_init(struct compiler *compiler, const char *source, struct bytecode_chunk *out)
+{
+    lexer_init(&compiler->_lexer, source);
+    compiler->_prev_token = (struct token){ .type = TOKEN_ERROR };
+    compiler->_token = lexer_next(&compiler->_lexer);
+    compiler->_next_token = lexer_next(&compiler->_lexer);
+    compiler->_out = out;
+    compiler->_in_panic_mode = false;
+    compiler->_had_error = false;
+}
+
+// Frees the memory associated with `compiler`.
+static void compiler_free(struct compiler *compiler)
+{
+    lexer_free(&compiler->_lexer);
+}
+
 // Prints an error with message formatted as if with `printf()` and enters panic mode. If the
 // compiler is already in panic mode, then this is a no-op.
 static __attribute__((format(printf, 3, 4))) void
@@ -83,24 +101,6 @@ static bool compiler_match(struct compiler *compiler, enum token_type *types, in
             return true;
         }
     return false;
-}
-
-// Initialises `compiler` for compiling `source` and writing the compiled bytecode into `out`.
-static void compiler_init(struct compiler *compiler, const char *source, struct bytecode_chunk *out)
-{
-    lexer_init(&compiler->_lexer, source);
-    compiler_advance(compiler); // populate _next_token
-    compiler_advance(compiler); // populate _token
-    compiler->_prev_token = (struct token){ .type = TOKEN_ERROR };
-    compiler->_out = out;
-    compiler->_in_panic_mode = false;
-    compiler->_had_error = false;
-}
-
-// Frees the memory associated with `compiler`.
-static void compiler_free(struct compiler *compiler)
-{
-    lexer_free(&compiler->_lexer);
 }
 
 // Precedence levels of the different operators, ordered by increasing precedence.
