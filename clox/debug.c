@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "bytecode.h"
+#include "value.h"
 
 void disassemble(struct bytecode_chunk chunk, const char *name)
 {

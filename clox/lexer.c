@@ -5,10 +5,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dynamic_array.h"
 #include "memory.h"
+#include "strings.h"
 
 const char *token_type_string(enum token_type type)
 {
@@ -120,8 +122,8 @@ const char *token_type_string(enum token_type type)
 
 void lexer_init(struct lexer *lexer, const char *source)
 {
-    lexer->_char = source;
-    lexer->_line = 1;
+    lexer->_source_start = source;
+    lexer->_char = lexer->_source_start;
     lexer->_strs = NULL;
     lexer->_strs_len = 0;
     lexer->_strs_cap = 0;
@@ -134,8 +136,7 @@ void lexer_free(struct lexer *lexer)
     deallocate(lexer->_strs, DYNAMIC_ARRAY_SIZE(lexer->_strs, lexer->_strs_cap));
 }
 
-// Moves the current character forwards one in the source and updates the current line if the next
-// line has been reached.
+// Moves the current character forwards one character in the source.
 // If the current charcter is already at the end of the source, then this is a no-op.
 static void lexer_advance(struct lexer *lexer)
 {
@@ -181,19 +182,19 @@ static void lexer_skip_ignored(struct lexer *lexer)
     }
 }
 
-// Allocates and returns a string formatted as if with `printf()` which will be freed when
+// Works like `sprintf()`, except a new string is allocated for the output which will be freed when
 // `lexer_free()` is called.
 static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(struct lexer *lexer,
                                                                  const char *format, ...)
 {
+    char *result;
     va_list args;
     va_start(args, format);
-    int size = vsnprintf(NULL, 0, format, args) + 1;
-    va_end(args);
-
-    char *result = allocate(size);
-    va_start(args, format);
-    vsnprintf(result, size, format, args);
+    int size = vsprintf_alloc(&result, format, args);
+    if (size < 0) {
+        fprintf(stderr, "lexer: encoding error formatting \"%s\"\n", format);
+        abort();
+    }
     va_end(args);
 
     DYNAMIC_ARRAY_GROW(lexer->_strs, lexer->_strs_cap, lexer->_strs_len + 1);
@@ -298,7 +299,7 @@ struct token lexer_next(struct lexer *lexer)
     lexer_skip_ignored(lexer);
 
     struct token token;
-    token.lexeme.start = lexer->_char;
+    token.start = lexer->_char;
     token.line = lexer->_line;
 
     char prev_char = *lexer->_char;
@@ -386,26 +387,23 @@ struct token lexer_next(struct lexer *lexer)
     case '"':
         token.type = TOKEN_STRING;
         // Advance past string literal
-        while (true) {
+        do {
             if (*lexer->_char == '\0') {
                 token.type = TOKEN_ERROR;
                 token.error_msg = "unterminated string literal";
-                return token;
-            }
-            char prev_char = *lexer->_char;
-            lexer_advance(lexer);
-            if (prev_char == '"')
                 break;
-        }
+            }
+            prev_char = *lexer->_char;
+            lexer_advance(lexer);
+        } while (prev_char != '"');
         break;
     default: {
         if (isalpha(prev_char) || prev_char == '_') {
             // Advance past identifier
             while (isalnum(*lexer->_char) || *lexer->_char == '_')
                 lexer_advance(lexer);
-            int len = lexer->_char - token.lexeme.start;
-            token.type = ident_type(token.lexeme.start, len);
-            break;
+            int len = lexer->_char - token.start;
+            token.type = ident_type(token.start, len);
 
         } else if (isdigit(prev_char)) {
             token.type = TOKEN_NUMBER;
@@ -418,16 +416,15 @@ struct token lexer_next(struct lexer *lexer)
                 while (isdigit(*lexer->_char))
                     lexer_advance(lexer);
             }
-            break;
+
+        } else {
+            token.type = TOKEN_ERROR;
+            token.error_msg = lexer_sprintf(lexer, "illegal character '%c'", prev_char);
         }
-
-        token.type = TOKEN_ERROR;
-        token.error_msg = lexer_sprintf(lexer, "illegal character '%c'", prev_char);
-        return token;
     }
     }
 
-    token.lexeme.len = lexer->_char - token.lexeme.start;
+    token.len = lexer->_char - token.start;
 
     return token;
 }

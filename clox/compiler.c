@@ -9,12 +9,16 @@
 
 #include "bytecode.h"
 #include "debug.h"
+#include "errors.h"
 #include "lexer.h"
+#include "memory.h"
+#include "strings.h"
 
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
 // chunk.
 // Must be initialised with `compiler_init()` and freed with `compiler_free()` after use.
 struct compiler {
+    const char *_source; // Source being compiled
     struct token _token; // Token currently being considered
     struct token _next_token; // Token after `_token` in the source
     struct token _prev_token; // Token before `_token` in the source
@@ -26,39 +30,34 @@ struct compiler {
     bool _had_error; // Whether the compiler has encountered any syntax errors
 };
 
-// Initialises `compiler` for compiling `source` and writing the compiled bytecode into `out`.
-static void compiler_init(struct compiler *compiler, const char *source, struct bytecode_chunk *out)
-{
-    lexer_init(&compiler->_lexer, source);
-    compiler->_prev_token = (struct token){ .type = TOKEN_ERROR };
-    compiler->_token = lexer_next(&compiler->_lexer);
-    compiler->_next_token = lexer_next(&compiler->_lexer);
-    compiler->_out = out;
-    compiler->_in_panic_mode = false;
-    compiler->_had_error = false;
-}
+// Calls `compiler_report_errorf()` with a range spanning the current token.
+#define COMPILER_REPORT_TOKEN_ERRORF(compiler, format, ...)                             \
+    compiler_report_errorf((compiler), (compiler)->_token.start,                        \
+                           (compiler)->_token.start + (compiler)->_token.len, (format), \
+                           __VA_ARGS__)
 
-// Frees the memory associated with `compiler`.
-static void compiler_free(struct compiler *compiler)
-{
-    lexer_free(&compiler->_lexer);
-}
-
-// Prints an error with message formatted as if with `printf()` and enters panic mode. If the
-// compiler is already in panic mode, then this is a no-op.
-static __attribute__((format(printf, 3, 4))) void
-compiler_report_errorf(struct compiler *compiler, int line, const char *format, ...)
+// Prints a compiler error with message formatted as if with `printf()` and enters panic mode. If
+// the compiler is already in panic mode, then this is a no-op.
+static __attribute__((format(printf, 4, 5))) void compiler_report_errorf(struct compiler *compiler,
+                                                                         const char *start,
+                                                                         const char *end,
+                                                                         const char *format, ...)
 {
     if (compiler->_in_panic_mode)
         return;
     compiler->_in_panic_mode = true;
     compiler->_had_error = true;
-    fprintf(stderr, "%d: ", line);
+    char *msg;
     va_list args;
     va_start(args, format);
-    vfprintf(stderr, format, args);
+    int size = vsprintf_alloc(&msg, format, args);
+    if (size < 0) {
+        fprintf(stderr, "compiler: encoding error formatting \"%s\"\n", format);
+        abort();
+    }
     va_end(args);
-    fprintf(stderr, "\n");
+    print_invalid_range_error(msg, compiler->_source, start, end);
+    deallocate(msg, size);
 }
 
 // Moves the current token forwards in the source until it's valid. An error is reported for each
@@ -71,8 +70,29 @@ static void compiler_advance(struct compiler *compiler)
         compiler->_next_token = lexer_next(&compiler->_lexer);
         if (compiler->_token.type != TOKEN_ERROR)
             break;
-        compiler_report_errorf(compiler, compiler->_token.line, "%s", compiler->_token.error_msg);
+        COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", compiler->_token.error_msg);
     }
+}
+
+// Initialises `compiler` for compiling `source` and writing the compiled bytecode into `out`.
+// `source` and `out` must remain valid until `compiler_free()` is called.
+static void compiler_init(struct compiler *compiler, const char *source, struct bytecode_chunk *out)
+{
+    compiler->_source = source;
+    lexer_init(&compiler->_lexer, source);
+    compiler->_prev_token = (struct token){ .type = TOKEN_ERROR };
+    compiler->_token = (struct token){ .type = TOKEN_ERROR };
+    compiler->_next_token = lexer_next(&compiler->_lexer);
+    compiler_advance(compiler); // Populate current token
+    compiler->_out = out;
+    compiler->_in_panic_mode = false;
+    compiler->_had_error = false;
+}
+
+// Frees the memory associated with `compiler`.
+static void compiler_free(struct compiler *compiler)
+{
+    lexer_free(&compiler->_lexer);
 }
 
 // Checks whether the current token has `type`. If it does, the compiler is advanced. Otherwise, an
@@ -82,11 +102,10 @@ static void compiler_expect(struct compiler *compiler, enum token_type type)
     if (compiler->_token.type == type)
         compiler_advance(compiler);
     else
-        compiler_report_errorf(compiler, compiler->_token.line, "expected '%s'",
-                               token_type_string(type));
+        COMPILER_REPORT_TOKEN_ERRORF(compiler, "expected '%s'", token_type_string(type));
 }
 
-// Convenience macro for calling `compiler_match()` with a variable number of arguments.
+// Calls `compiler_match()` with a variable number of arguments.
 #define COMPILER_MATCH(compiler, ...)                              \
     compiler_match((compiler), (enum token_type[]){ __VA_ARGS__ }, \
                    sizeof((enum token_type[]){ __VA_ARGS__ }) / sizeof(enum token_type))
@@ -125,35 +144,35 @@ enum precedence_level {
 static enum precedence_level infix_operator_precedence_level(enum token_type type)
 {
     switch (type) {
-    case TOKEN_COMMA:
-        return PREC_COMMA;
-    case TOKEN_EQUAL:
-        return PREC_ASSIGNMENT;
-    case TOKEN_QUESTION:
-        return PREC_TERNARY;
-    case TOKEN_OR:
-        return PREC_LOGICAL_OR;
-    case TOKEN_AND:
-        return PREC_LOGICAL_AND;
-    case TOKEN_EQUAL_EQUAL:
-    case TOKEN_BANG_EQUAL:
-        return PREC_EQUALITY;
-    case TOKEN_LESS:
-    case TOKEN_LESS_EQUAL:
-    case TOKEN_GREATER:
-    case TOKEN_GREATER_EQUAL:
-        return PREC_RELATIONAL;
+    // case TOKEN_COMMA:
+    //     return PREC_COMMA;
+    // case TOKEN_EQUAL:
+    //     return PREC_ASSIGNMENT;
+    // case TOKEN_QUESTION:
+    //     return PREC_TERNARY;
+    // case TOKEN_OR:
+    //     return PREC_LOGICAL_OR;
+    // case TOKEN_AND:
+    //     return PREC_LOGICAL_AND;
+    // case TOKEN_EQUAL_EQUAL:
+    // case TOKEN_BANG_EQUAL:
+    //     return PREC_EQUALITY;
+    // case TOKEN_LESS:
+    // case TOKEN_LESS_EQUAL:
+    // case TOKEN_GREATER:
+    // case TOKEN_GREATER_EQUAL:
+    //     return PREC_RELATIONAL;
     case TOKEN_PLUS:
     case TOKEN_MINUS:
         return PREC_ADDITIVE;
     case TOKEN_ASTERISK:
     case TOKEN_SLASH:
-    case TOKEN_PERCENT:
+        // case TOKEN_PERCENT:
         return PREC_MULTIPLICATIVE;
-    case TOKEN_LEFT_PAREN:
-    case TOKEN_LEFT_BRACK:
-    case TOKEN_DOT:
-        return PREC_POSTFIX;
+    // case TOKEN_LEFT_PAREN:
+    // case TOKEN_LEFT_BRACK:
+    // case TOKEN_DOT:
+    //     return PREC_POSTFIX;
     default:
         return PREC_NONE;
     }
@@ -167,11 +186,11 @@ static void compiler_compile_expr(struct compiler *compiler);
 static void compiler_compile_number(struct compiler *compiler)
 {
     compiler_expect(compiler, TOKEN_NUMBER);
-    double value = strtod(compiler->_prev_token.lexeme.start, NULL);
+    double value = strtod(compiler->_prev_token.start, NULL);
     bytecode_chunk_write_constant(compiler->_out, value, compiler->_prev_token.line);
 }
 
-// Writes the bytecode for the group expression starting at the current token and advances the
+// Writes the bytecode for the group e_source = source;xpression starting at the current token and advances the
 // compiler past it.
 static void compiler_compile_group_expr(struct compiler *compiler)
 {
@@ -189,7 +208,7 @@ static void compiler_compile_unary_expr(struct compiler *compiler)
     if (COMPILER_MATCH(compiler, TOKEN_MINUS)) {
         instruction = OP_NEGATE;
     } else {
-        compiler_report_errorf(compiler, compiler->_token.line, "expected unary operator");
+        COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected unary operator");
         return;
     }
     compiler_compile_expr_at_level(compiler, PREC_UNARY);
@@ -230,7 +249,7 @@ static void compiler_compile_binary_expr(struct compiler *compiler)
     } else if (COMPILER_MATCH(compiler, TOKEN_SLASH)) {
         instruction = OP_DIVIDE;
     } else {
-        compiler_report_errorf(compiler, compiler->_token.line, "expected binary operator");
+        COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected binary operator");
         return;
     }
     enum precedence_level current_level =
@@ -260,7 +279,7 @@ static void compiler_compile_expr_at_level(struct compiler *compiler, enum prece
 {
     expr_compiler prefix_compiler = prefix_expr_compiler(compiler->_token.type);
     if (prefix_compiler == NULL) {
-        compiler_report_errorf(compiler, compiler->_token.line, "expected expression");
+        COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected expression");
         return;
     }
     prefix_compiler(compiler);

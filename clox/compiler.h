@@ -5,7 +5,7 @@
 #include "bytecode.h"
 
 // Writes the bytecode for the Lox `source` into `out` and reports whether compilation was
-// successful.
+// successful. If complication was unsuccessful, errors are printed to stderr.
 bool compile(const char *source, struct bytecode_chunk *out);
 
 #endif

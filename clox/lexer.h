@@ -64,22 +64,15 @@ enum token_type {
 const char *token_type_string(enum token_type type);
 
 // A lexical token produced by the lexer.
-// Pointers contained in a token are borrowed and remain valid until the `lexer_free()` has been
-// called.
+// Pointers contained in a token remain valid until `lexer_free()` has been called.
 struct token {
     enum token_type type;
-    union {
-        struct {
-            // Pointer to the start of the lexeme.
-            // This is not a null-terminated string, so `len` must be used to read it.
-            const char *start;
-            int len;
-        } lexeme; // Valid when `type != TOKEN_ERROR`.
-        // Valid when `type == TOKEN_ERROR`.
-        // Null-terminated error message.
-        const char *error_msg;
-    };
-    int line;
+    // Pointer to the start of the lexeme in the source.
+    // This is not a null-terminated string, so `len` must be used to read it.
+    const char *start;
+    int len;
+    const char *error_msg; // Null-terminated error message. Valid when `type == TOKEN_ERROR`.
+    int line; // Line that the token starts on
 };
 
 // Internal type, do not use.
@@ -92,15 +85,16 @@ struct _lexer_str {
 // Must be initialised with `lexer_init()` before use and freed with `lexer_free()` after use.
 struct lexer {
     // Internal fields, do not use.
-    const char *_char; // Points to character currently being considered
-    int _line; // Current line number in the source
+    const char *_source_start; // Points to start of source
+    const char *_char; // Points to character in source currently being considered
+    int _line; // Line number of the current character
     struct _lexer_str *_strs; // Strings allocated as part of produced tokens
     int _strs_len; // Number of elements in `_strs`
     int _strs_cap; // Number of elements that space has been allocated for in `_strs`
 };
 
 // Initialises `lexer` for lexing `source`.
-// `source` is borrowed and must remain valid and unmodified until `lexer_free()` is called.
+// `source` must remain valid until `lexer_free()` is called.
 void lexer_init(struct lexer *lexer, const char *source);
 
 // Frees the memory associated with `lexer`.

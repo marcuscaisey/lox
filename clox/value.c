@@ -1,6 +1,5 @@
 #include "value.h"
 
-#include <stddef.h>
 #include <stdio.h>
 
 #include "dynamic_array.h"
