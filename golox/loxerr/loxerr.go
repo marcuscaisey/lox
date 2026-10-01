@@ -109,12 +109,12 @@ func (e *Error) Error() string {
 	}
 
 	printLine := func(line string) {
-		ansi.Fprint(b, "${FAINT}", line, "${RESET_BOLD}\n")
+		ansi.Fprint(b, "${FAINT}", line, "${RESET}\n")
 	}
 	printLineHighlight := func(line string, start, end int) {
 		leadingWhitespace := strings.Repeat(" ", runewidth.StringWidth(line[:start]))
 		tildes := strings.Repeat("~", runewidth.StringWidth(line[start:end]))
-		ansi.Fprint(b, leadingWhitespace, "${FAINT}${RED}", tildes, "${DEFAULT}${RESET_BOLD}\n")
+		ansi.Fprint(b, leadingWhitespace, "${RED}", tildes, "${RESET}\n")
 	}
 
 	printLine(lines[0])
