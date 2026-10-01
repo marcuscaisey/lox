@@ -35,10 +35,11 @@ compiler_report_errorf(struct compiler *compiler, int line, const char *format, 
         return;
     compiler->_in_panic_mode = true;
     compiler->_had_error = true;
+    fprintf(stderr, "%d: ", line);
     va_list args;
     va_start(args, format);
-    fprintf(stderr, "%d: ", line);
     vfprintf(stderr, format, args);
+    va_end(args);
     fprintf(stderr, "\n");
 }
 
