@@ -13,6 +13,7 @@
 #include "lexer.h"
 #include "memory.h"
 #include "strings.h"
+#include "value.h"
 
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
 // chunk.
@@ -36,8 +37,9 @@ struct compiler {
                            (compiler)->_token.start + (compiler)->_token.len, (format), \
                            __VA_ARGS__)
 
-// Prints a compiler error with message formatted as if with `printf()` and enters panic mode. If
-// the compiler is already in panic mode, then this is a no-op.
+// Prints an error relating to the source range `[start, end)` with a formatted message and enters
+// panic mode. If the compiler is already in panic mode, then this is a no-op. See
+// `print_invalid_range_error()` for how the error is printed.
 static __attribute__((format(printf, 4, 5))) void compiler_report_errorf(struct compiler *compiler,
                                                                          const char *start,
                                                                          const char *end,
@@ -154,14 +156,14 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
     //     return PREC_LOGICAL_OR;
     // case TOKEN_AND:
     //     return PREC_LOGICAL_AND;
-    // case TOKEN_EQUAL_EQUAL:
-    // case TOKEN_BANG_EQUAL:
-    //     return PREC_EQUALITY;
-    // case TOKEN_LESS:
-    // case TOKEN_LESS_EQUAL:
-    // case TOKEN_GREATER:
-    // case TOKEN_GREATER_EQUAL:
-    //     return PREC_RELATIONAL;
+    case TOKEN_EQUAL_EQUAL:
+    case TOKEN_BANG_EQUAL:
+        return PREC_EQUALITY;
+    case TOKEN_LESS:
+    case TOKEN_LESS_EQUAL:
+    case TOKEN_GREATER:
+    case TOKEN_GREATER_EQUAL:
+        return PREC_RELATIONAL;
     case TOKEN_PLUS:
     case TOKEN_MINUS:
         return PREC_ADDITIVE;
@@ -181,13 +183,31 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
 static void compiler_compile_expr_at_level(struct compiler *compiler, enum precedence_level level);
 static void compiler_compile_expr(struct compiler *compiler);
 
+// Writes the bytecode for the literal keyword in the current token and advances the compiler past
+// it.
+static void compiler_compile_literal_keyword(struct compiler *compiler)
+{
+    enum opcode instruction;
+    if (COMPILER_MATCH(compiler, TOKEN_NIL)) {
+        instruction = OP_NIL;
+    } else if (COMPILER_MATCH(compiler, TOKEN_TRUE)) {
+        instruction = OP_TRUE;
+    } else if (COMPILER_MATCH(compiler, TOKEN_FALSE)) {
+        instruction = OP_FALSE;
+    } else {
+        COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected literal keyword");
+        return;
+    }
+    bytecode_chunk_write(compiler->_out, instruction, compiler->_prev_token.line);
+}
+
 // Writes the bytecode for the number literal in the current token and advances the compiler past
 // it.
 static void compiler_compile_number(struct compiler *compiler)
 {
     compiler_expect(compiler, TOKEN_NUMBER);
-    double value = strtod(compiler->_prev_token.start, NULL);
-    bytecode_chunk_write_constant(compiler->_out, value, compiler->_prev_token.line);
+    double n = strtod(compiler->_prev_token.start, NULL);
+    bytecode_chunk_write_constant(compiler->_out, value_number(n), compiler->_prev_token.line);
 }
 
 // Writes the bytecode for the group e_source = source;xpression starting at the current token and advances the
@@ -207,6 +227,8 @@ static void compiler_compile_unary_expr(struct compiler *compiler)
     enum opcode instruction;
     if (COMPILER_MATCH(compiler, TOKEN_MINUS)) {
         instruction = OP_NEGATE;
+    } else if (COMPILER_MATCH(compiler, TOKEN_BANG)) {
+        instruction = OP_NOT;
     } else {
         COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected unary operator");
         return;
@@ -223,11 +245,16 @@ typedef void (*expr_compiler)(struct compiler *compiler);
 static expr_compiler prefix_expr_compiler(enum token_type type)
 {
     switch (type) {
+    case TOKEN_NIL:
+    case TOKEN_TRUE:
+    case TOKEN_FALSE:
+        return compiler_compile_literal_keyword;
     case TOKEN_NUMBER:
         return compiler_compile_number;
     case TOKEN_LEFT_PAREN:
         return compiler_compile_group_expr;
     case TOKEN_MINUS:
+    case TOKEN_BANG:
         return compiler_compile_unary_expr;
     default:
         return NULL;
@@ -248,6 +275,18 @@ static void compiler_compile_binary_expr(struct compiler *compiler)
         instruction = OP_MULTIPLY;
     } else if (COMPILER_MATCH(compiler, TOKEN_SLASH)) {
         instruction = OP_DIVIDE;
+    } else if (COMPILER_MATCH(compiler, TOKEN_LESS)) {
+        instruction = OP_LESS;
+    } else if (COMPILER_MATCH(compiler, TOKEN_LESS_EQUAL)) {
+        instruction = OP_LESS_EQUAL;
+    } else if (COMPILER_MATCH(compiler, TOKEN_GREATER)) {
+        instruction = OP_GREATER;
+    } else if (COMPILER_MATCH(compiler, TOKEN_GREATER_EQUAL)) {
+        instruction = OP_GREATER_EQUAL;
+    } else if (COMPILER_MATCH(compiler, TOKEN_EQUAL_EQUAL)) {
+        instruction = OP_EQUAL;
+    } else if (COMPILER_MATCH(compiler, TOKEN_BANG_EQUAL)) {
+        instruction = OP_NOT_EQUAL;
     } else {
         COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected binary operator");
         return;
@@ -267,6 +306,12 @@ static expr_compiler infix_expr_compiler(enum token_type type)
     case TOKEN_MINUS:
     case TOKEN_ASTERISK:
     case TOKEN_SLASH:
+    case TOKEN_LESS:
+    case TOKEN_LESS_EQUAL:
+    case TOKEN_GREATER:
+    case TOKEN_GREATER_EQUAL:
+    case TOKEN_EQUAL_EQUAL:
+    case TOKEN_BANG_EQUAL:
         return compiler_compile_binary_expr;
     default:
         return NULL;
@@ -301,7 +346,7 @@ static void compiler_compile_expr(struct compiler *compiler)
 static bool compiler_compile(struct compiler *compiler)
 {
     compiler_compile_expr(compiler);
-    compiler_expect(compiler, TOKEN_EOF);
+    compiler_expect(compiler, TOKEN_SEMICOLON);
     bytecode_chunk_write(compiler->_out, OP_RETURN, compiler->_token.line);
     bool success = !compiler->_had_error;
 #ifdef DEBUG

@@ -7,4 +7,7 @@
 void print_invalid_range_error(const char *msg, const char *source, const char *start,
                                const char *end);
 
+// Prints an error message to stderr highlighting the invalid `line` in `source`.
+void print_invalid_line_error(const char *msg, const char *source, int line);
+
 #endif

@@ -124,6 +124,7 @@ void lexer_init(struct lexer *lexer, const char *source)
 {
     lexer->_source_start = source;
     lexer->_char = lexer->_source_start;
+    lexer->_line = 1;
     lexer->_strs = NULL;
     lexer->_strs_len = 0;
     lexer->_strs_cap = 0;

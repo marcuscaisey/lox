@@ -14,6 +14,24 @@ const char *instruction_name(enum opcode opcode)
         return "CONSTANT";
     case OP_CONSTANT_LONG:
         return "CONSTANT_LONG";
+    case OP_NIL:
+        return "NIL";
+    case OP_TRUE:
+        return "TRUE";
+    case OP_FALSE:
+        return "FALSE";
+    case OP_EQUAL:
+        return "EQUAL";
+    case OP_NOT_EQUAL:
+        return "NOT_EQUAL";
+    case OP_LESS:
+        return "LESS";
+    case OP_LESS_EQUAL:
+        return "LESS_EQUAL";
+    case OP_GREATER:
+        return "GREATER";
+    case OP_GREATER_EQUAL:
+        return "GREATER_EQUAL";
     case OP_ADD:
         return "ADD";
     case OP_SUBTRACT:
@@ -22,6 +40,8 @@ const char *instruction_name(enum opcode opcode)
         return "MULTIPLY";
     case OP_DIVIDE:
         return "DIVIDE";
+    case OP_NOT:
+        return "NOT";
     case OP_NEGATE:
         return "NEGATE";
     case OP_RETURN:
@@ -61,7 +81,7 @@ void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
     chunk->len++;
 }
 
-void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, value value, int line)
+void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, struct value value, int line)
 {
     int constant_index = chunk->constants.len;
     value_array_write(&chunk->constants, value);

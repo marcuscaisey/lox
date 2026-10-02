@@ -18,10 +18,20 @@ enum opcode {
     // Operands:
     //   u24 - index of the constant in `bytecode_chunk.constants`, encoded in big-endian
     OP_CONSTANT_LONG,
+    OP_NIL, // Pushes nil
+    OP_TRUE, // Pushes true
+    OP_FALSE, // Pushes false
+    OP_EQUAL, // Pops two numbers then pushes whether they're equal
+    OP_NOT_EQUAL, // Pops two numbers then pushes whether they're not equal
+    OP_LESS, // Pops two numbers b, then a, then pushes a < b
+    OP_LESS_EQUAL, // Pops two numbers b, then a, then pushes a <= b
+    OP_GREATER, // Pops two numbers b, then a, then pushes a > b
+    OP_GREATER_EQUAL, // Pops two numbers b, then a, then pushes a >= b
     OP_ADD, // Pops two numbers then pushes their sum
     OP_SUBTRACT, // Pops two numbers b, then a, then pushes a - b
     OP_MULTIPLY, // Pops two numbers then pushes their product
     OP_DIVIDE, // Pops two numbers b, then a, then pushes a / b
+    OP_NOT, // Pops a value, then pushes whether it is falsey
     OP_NEGATE, // Pops a number, negates it, then pushes it back
     // TODO
     OP_RETURN,
@@ -57,6 +67,6 @@ void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);
 
 // Stores `value` in the chunk's constants and writes the instruction to load it into the chunk's
 // instructions. `line` is the line number corresponding to the value.
-void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, value value, int line);
+void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, struct value value, int line);
 
 #endif
