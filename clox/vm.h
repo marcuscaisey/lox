@@ -16,8 +16,8 @@ struct vm {
     const char *_source; // Source being interpreted
     const struct bytecode_chunk *_chunk; // Chunk currently being executed
     uint8_t *_ip; // Instruction pointer pointing to the instruction to be executed next
-    struct value _stack[STACK_MAX]; // Value stack for instructions to use
-    struct value *_stack_top; // Points to where the next element will be pushed on the value stack
+    value _stack[STACK_MAX]; // Value stack for instructions to use
+    value *_stack_top; // Points to where the next element will be pushed on the value stack
 };
 
 // Initialises `vm` for use.

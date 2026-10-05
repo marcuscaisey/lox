@@ -1,6 +1,7 @@
 #ifndef CLOX_BYTECODE_H
 #define CLOX_BYTECODE_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "value.h"
@@ -49,11 +50,11 @@ struct bytecode_chunk {
     // Must only be appended to via the `bytecode_write_*()` functions.
     uint8_t *instructions;
     int *offset_lines; // Line numbers associated with each offset
-    int len; // Number of elements in `instructions` and `offset_lines`
+    size_t len; // Number of elements in `instructions` and `offset_lines`
     struct value_array constants; // Pool of constants referenced by the bytecode
     // Internal fields below, do not use.
     // Number of elements that space has been allocated for in `instructions` and `offset_lines`
-    int _cap;
+    size_t _cap;
 };
 
 // Initialises `chunk` for use.
@@ -67,6 +68,6 @@ void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);
 
 // Stores `value` in the chunk's constants and writes the instruction to load it into the chunk's
 // instructions. `line` is the line number corresponding to the value.
-void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, struct value value, int line);
+void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, value value, int line);
 
 #endif

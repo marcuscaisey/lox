@@ -5,61 +5,86 @@
 #include "dynamic_array.h"
 #include "memory.h"
 
-const char *value_type_string(enum value_type type)
+const char *value_type_string(value value)
 {
-    switch (type) {
-    case TYPE_NUMBER:
+    switch (value._type) {
+    case _VALUE_NUMBER:
         return "number";
-    case TYPE_BOOL:
+    case _VALUE_BOOL:
         return "bool";
-    case TYPE_NIL:
+    case _VALUE_NIL:
         return "nil";
     }
 }
 
-struct value value_number(double n)
+value value_number(double n)
 {
-    return (struct value){ .type = TYPE_NUMBER, .number = n };
+    return (value){ ._type = _VALUE_NUMBER, ._number = n };
 }
 
-struct value value_bool(bool b)
+value value_bool(bool b)
 {
-    return (struct value){ .type = TYPE_BOOL, .bool_ = b };
+    return (value){ ._type = _VALUE_BOOL, ._bool = b };
 }
 
-const struct value value_nil = (struct value){ .type = TYPE_NIL };
+const value value_nil = (value){ ._type = _VALUE_NIL };
 
-bool value_is_falsey(struct value value)
+bool value_is_number(value v)
 {
-    return (value.type == TYPE_BOOL && !value.bool_) || value.type == TYPE_NIL;
+    return v._type == _VALUE_NUMBER;
 }
 
-bool values_are_equal(struct value a, struct value b)
+bool value_is_bool(value v)
 {
-    if (a.type != b.type)
+    return v._type == _VALUE_BOOL;
+}
+
+bool value_is_nil(value v)
+{
+    return v._type == _VALUE_NIL;
+}
+
+double value_as_number(value v)
+{
+    return v._number;
+}
+
+bool value_as_bool(value v)
+{
+    return v._bool;
+}
+
+bool value_is_falsey(value value)
+{
+    return (value._type == _VALUE_BOOL && !value._bool) || value._type == _VALUE_NIL;
+}
+
+bool values_are_equal(value a, value b)
+{
+    if (a._type != b._type)
         return false;
-    switch (a.type) {
-    case TYPE_NUMBER:
-        return a.number == b.number;
-    case TYPE_BOOL:
-        return a.bool_ == b.bool_;
-    case TYPE_NIL:
+    switch (a._type) {
+    case _VALUE_NIL:
         return true;
+    case _VALUE_BOOL:
+        return a._bool == b._bool;
+    case _VALUE_NUMBER:
+        return a._number == b._number;
     }
 }
 
-void value_print(struct value value)
+void value_print(value value)
 {
-    switch (value.type) {
-    case TYPE_NUMBER:
-        printf("%g", value.number);
-        return;
-    case TYPE_BOOL:
-        printf(value.bool_ ? "true" : "false");
-        return;
-    case TYPE_NIL:
+    switch (value._type) {
+    case _VALUE_NIL:
         printf("nil");
         break;
+    case _VALUE_BOOL:
+        printf(value._bool ? "true" : "false");
+        return;
+    case _VALUE_NUMBER:
+        printf("%g", value._number);
+        return;
     }
 }
 
@@ -70,7 +95,7 @@ void value_array_init(struct value_array *array)
     array->_cap = 0;
 }
 
-void value_array_write(struct value_array *array, struct value value)
+void value_array_write(struct value_array *array, value value)
 {
     DYNAMIC_ARRAY_GROW(array->values, array->_cap, array->len + 1);
     array->values[array->len++] = value;

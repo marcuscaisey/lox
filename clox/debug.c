@@ -10,7 +10,7 @@
 void disassemble(struct bytecode_chunk chunk, const char *name)
 {
     printf("== %s ==\n", name);
-    for (int offset = 0; offset < chunk.len;)
+    for (size_t offset = 0; offset < chunk.len;)
         offset = disassemble_instruction(chunk, offset);
 }
 

@@ -15,19 +15,19 @@
 #include "value.h"
 
 // Adds an element to the top of the stack.
-static void vm_stack_push(struct vm *vm, struct value value)
+static void vm_stack_push(struct vm *vm, value value)
 {
     *vm->_stack_top++ = value;
 }
 
 // Removes the element from the top of the stack and returns it.
-static struct value vm_stack_pop(struct vm *vm)
+static value vm_stack_pop(struct vm *vm)
 {
     return *(--vm->_stack_top);
 }
 
 // Returns the element `n` places from the top of the stack.
-static struct value vm_stack_peek(struct vm *vm, int n)
+static value vm_stack_peek(struct vm *vm, int n)
 {
     return vm->_stack_top[-1 - n];
 }
@@ -67,7 +67,7 @@ static void vm_print_trace_info(const struct vm *vm)
     // Lines up the start of the stack with the start of the instruction in the
     // disassemble_instruction output
     printf("          ");
-    for (const struct value *p = vm->_stack; p < vm->_stack_top; p++) {
+    for (const value *p = vm->_stack; p < vm->_stack_top; p++) {
         printf("[ ");
         value_print(*p);
         printf(" ]");
@@ -110,13 +110,13 @@ static bool vm_execute(struct vm *vm)
         switch (instruction) {
         case OP_CONSTANT: {
             uint8_t index = vm_read_u8(vm);
-            struct value value = vm->_chunk->constants.values[index];
+            value value = vm->_chunk->constants.values[index];
             vm_stack_push(vm, value);
             break;
         }
         case OP_CONSTANT_LONG: {
             uint8_t index = vm_read_u24(vm);
-            struct value value = vm->_chunk->constants.values[index];
+            value value = vm->_chunk->constants.values[index];
             vm_stack_push(vm, value);
             break;
         }
@@ -130,32 +130,32 @@ static bool vm_execute(struct vm *vm)
             vm_stack_push(vm, value_bool(false));
             break;
         case OP_EQUAL: {
-            struct value a = vm_stack_pop(vm);
-            struct value b = vm_stack_pop(vm);
+            value a = vm_stack_pop(vm);
+            value b = vm_stack_pop(vm);
             bool result = values_are_equal(a, b);
             vm_stack_push(vm, value_bool(result));
             break;
         }
         case OP_NOT_EQUAL: {
-            struct value a = vm_stack_pop(vm);
-            struct value b = vm_stack_pop(vm);
+            value a = vm_stack_pop(vm);
+            value b = vm_stack_pop(vm);
             bool result = !values_are_equal(a, b);
             vm_stack_push(vm, value_bool(result));
             break;
         }
 #define EXECUTE_BINARY_NUMBER_OP(op, construct_result)                                     \
     do {                                                                                   \
-        struct value b = vm_stack_peek(vm, 0);                                             \
-        struct value a = vm_stack_peek(vm, 1);                                             \
-        if (a.type != TYPE_NUMBER || b.type != TYPE_NUMBER) {                              \
+        value b = vm_stack_peek(vm, 0);                                                    \
+        value a = vm_stack_peek(vm, 1);                                                    \
+        if (!value_is_number(a) || !value_is_number(b)) {                                  \
             vm_report_errorf(*vm, instruction_offset,                                      \
                              "'%s' operator cannot be used with types '%s' and '%s'", #op, \
-                             value_type_string(a.type), value_type_string(b.type));        \
+                             value_type_string(a), value_type_string(b));                  \
             return false;                                                                  \
         }                                                                                  \
         vm_stack_pop(vm);                                                                  \
         vm_stack_pop(vm);                                                                  \
-        vm_stack_push(vm, construct_result(a.number op b.number));                         \
+        vm_stack_push(vm, construct_result(value_as_number(a) op value_as_number(b)));     \
     } while (false)
         case OP_LESS:
             EXECUTE_BINARY_NUMBER_OP(<, value_bool);
@@ -183,25 +183,25 @@ static bool vm_execute(struct vm *vm)
             break;
 #undef EXECUTE_BINARY_NUMBER_OP
         case OP_NOT: {
-            struct value value = vm_stack_pop(vm);
+            value value = vm_stack_pop(vm);
             bool result = value_is_falsey(value);
             vm_stack_push(vm, value_bool(result));
             break;
         }
         case OP_NEGATE: {
-            struct value value = vm_stack_peek(vm, 0);
-            if (vm_stack_peek(vm, 0).type != TYPE_NUMBER) {
+            value value = vm_stack_peek(vm, 0);
+            if (!value_is_number(value)) {
                 vm_report_errorf(*vm, instruction_offset,
                                  "'-' operator cannot be used with type '%s'",
-                                 value_type_string(value.type));
+                                 value_type_string(value));
                 return false;
             }
             vm_stack_pop(vm);
-            vm_stack_push(vm, value_number(-value.number));
+            vm_stack_push(vm, value_number(-value_as_number(value)));
             break;
         }
         case OP_RETURN: {
-            struct value value = vm_stack_pop(vm);
+            value value = vm_stack_pop(vm);
             value_print(value);
             printf("\n");
             return true;

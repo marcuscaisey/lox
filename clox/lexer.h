@@ -2,6 +2,7 @@
 #define CLOX_LEXER_H
 
 // Types of token emitted by the lexer.
+#include <stddef.h>
 enum token_type {
     TOKEN_ERROR,
     TOKEN_EOF,
@@ -70,7 +71,7 @@ struct token {
     // Pointer to the start of the lexeme in the source.
     // This is not a null-terminated string, so `len` must be used to read it.
     const char *start;
-    int len;
+    size_t len;
     const char *error_msg; // Null-terminated error message. Valid when `type == TOKEN_ERROR`.
     int line; // Line that the token starts on
 };
@@ -89,8 +90,8 @@ struct lexer {
     const char *_char; // Points to character in source currently being considered
     int _line; // Line number of the current character
     struct _lexer_str *_strs; // Strings allocated as part of produced tokens
-    int _strs_len; // Number of elements in `_strs`
-    int _strs_cap; // Number of elements that space has been allocated for in `_strs`
+    size_t _strs_len; // Number of elements in `_strs`
+    size_t _strs_cap; // Number of elements that space has been allocated for in `_strs`
 };
 
 // Initialises `lexer` for lexing `source`.
