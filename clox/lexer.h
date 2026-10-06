@@ -76,12 +76,6 @@ struct token {
     int line; // Line that the token starts on
 };
 
-// Internal type, do not use.
-struct _lexer_str {
-    char *data;
-    int size;
-};
-
 // Lexer which reads Lox source code and produces lexical tokens.
 // Must be initialised with `lexer_init()` before use and freed with `lexer_free()` after use.
 struct lexer {
@@ -89,7 +83,7 @@ struct lexer {
     const char *_source_start; // Points to start of source
     const char *_char; // Points to character in source currently being considered
     int _line; // Line number of the current character
-    struct _lexer_str *_strs; // Strings allocated as part of produced tokens
+    char **_strs; // Strings allocated as part of produced tokens
     size_t _strs_len; // Number of elements in `_strs`
     size_t _strs_cap; // Number of elements that space has been allocated for in `_strs`
 };

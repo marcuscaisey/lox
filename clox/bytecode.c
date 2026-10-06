@@ -2,9 +2,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "dynamic_array.h"
-#include "memory.h"
 #include "value.h"
 
 const char *instruction_name(enum opcode opcode)
@@ -60,7 +60,7 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk)
 
 void bytecode_chunk_free(struct bytecode_chunk *chunk)
 {
-    deallocate(chunk->instructions, DYNAMIC_ARRAY_SIZE(chunk->instructions, chunk->_cap));
+    free(chunk->instructions);
     value_array_free(&chunk->constants);
     bytecode_chunk_init(chunk);
 }

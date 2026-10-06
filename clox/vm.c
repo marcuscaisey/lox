@@ -10,7 +10,6 @@
 #include "compiler.h"
 #include "debug.h"
 #include "errors.h"
-#include "memory.h"
 #include "strings.h"
 #include "value.h"
 
@@ -85,7 +84,7 @@ static __attribute__((format(printf, 3, 4))) void vm_report_errorf(struct vm vm,
     char *msg;
     va_list args;
     va_start(args, format);
-    int size = vsprintf_alloc(&msg, format, args);
+    int size = vasprintf(&msg, format, args);
     if (size < 0) {
         fprintf(stderr, "compiler: encoding error formatting \"%s\"\n", format);
         abort();
@@ -93,7 +92,7 @@ static __attribute__((format(printf, 3, 4))) void vm_report_errorf(struct vm vm,
     va_end(args);
     int line = vm._chunk->offset_lines[offset];
     print_invalid_line_error(msg, vm._source, line);
-    deallocate(msg, size);
+    free(msg);
 }
 
 // Executes the chunk of instructions stored in `_chunk`, starting from the instruction pointer

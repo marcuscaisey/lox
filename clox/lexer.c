@@ -3,13 +3,11 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "dynamic_array.h"
-#include "memory.h"
 #include "strings.h"
 
 const char *token_type_string(enum token_type type)
@@ -132,9 +130,9 @@ void lexer_init(struct lexer *lexer, const char *source)
 
 void lexer_free(struct lexer *lexer)
 {
-    for (struct _lexer_str *s = lexer->_strs; s < lexer->_strs + lexer->_strs_len; s++)
-        deallocate(s->data, s->size);
-    deallocate(lexer->_strs, DYNAMIC_ARRAY_SIZE(lexer->_strs, lexer->_strs_cap));
+    for (char **s = lexer->_strs; s < lexer->_strs + lexer->_strs_len; s++)
+        free(*s);
+    free(lexer->_strs);
 }
 
 // Moves the current character forwards one character in the source.
@@ -191,7 +189,7 @@ static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(struct lexer *l
     char *result;
     va_list args;
     va_start(args, format);
-    int size = vsprintf_alloc(&result, format, args);
+    int size = vasprintf(&result, format, args);
     if (size < 0) {
         fprintf(stderr, "lexer: encoding error formatting \"%s\"\n", format);
         abort();
@@ -199,7 +197,7 @@ static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(struct lexer *l
     va_end(args);
 
     DYNAMIC_ARRAY_GROW(lexer->_strs, lexer->_strs_cap, lexer->_strs_len + 1);
-    lexer->_strs[lexer->_strs_len++] = (struct _lexer_str){ .data = result, .size = size };
+    lexer->_strs[lexer->_strs_len++] = result;
     return result;
 }
 

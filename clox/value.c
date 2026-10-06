@@ -1,9 +1,9 @@
 #include "value.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "dynamic_array.h"
-#include "memory.h"
 
 const char *value_type_string(value value)
 {
@@ -103,6 +103,6 @@ void value_array_write(struct value_array *array, value value)
 
 void value_array_free(struct value_array *array)
 {
-    deallocate(array->values, DYNAMIC_ARRAY_SIZE(array->values, array->_cap));
+    free(array->values);
     value_array_init(array);
 }

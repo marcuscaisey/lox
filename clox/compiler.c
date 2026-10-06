@@ -2,16 +2,13 @@
 
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "bytecode.h"
 #include "debug.h"
 #include "errors.h"
 #include "lexer.h"
-#include "memory.h"
 #include "strings.h"
 #include "value.h"
 
@@ -52,14 +49,14 @@ static __attribute__((format(printf, 4, 5))) void compiler_report_errorf(struct 
     char *msg;
     va_list args;
     va_start(args, format);
-    int size = vsprintf_alloc(&msg, format, args);
+    int size = vasprintf(&msg, format, args);
     if (size < 0) {
         fprintf(stderr, "compiler: encoding error formatting \"%s\"\n", format);
         abort();
     }
     va_end(args);
     print_invalid_range_error(msg, compiler->_source, start, end);
-    deallocate(msg, size);
+    free(msg);
 }
 
 // Moves the current token forwards in the source until it's valid. An error is reported for each
