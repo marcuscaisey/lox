@@ -208,7 +208,7 @@ static void compiler_compile_string(struct compiler *compiler)
     compiler_expect(compiler, TOKEN_STRING);
     // First and last characters are " so discount these from the length and start data 1 character
     // in
-    struct object_string *string = object_string_copy(
+    struct object_string *string = object_string_create(
         compiler->_vm, compiler->_prev_token.start + 1, compiler->_prev_token.len - 2);
     bytecode_chunk_write_constant(compiler->_out, value_string(string), compiler->_prev_token.line);
 }

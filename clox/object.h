@@ -28,17 +28,17 @@ enum value_type object_value_type(const struct object *object);
 // Must be created with one of the `object_string_*()` functions.
 struct object_string {
     struct object _object; // Internal field, do not use.
-    // Pointer to the string data.
-    // This is not a null-terminated string, so `len` must be used to read it.
-    const char *data;
     size_t len; // Number of characters in `data`
+    // Array of string data.
+    // This is not a null-terminated string, so `len` must be used to read it.
+    char data[];
 };
 
-// Allocates and initialises a new string by taking ownership of `data`.
-struct object_string *object_string_take(struct vm *vm, char *data, size_t len);
+// Allocates and initialises a new string by copying the first `len` characters of `data`.
+struct object_string *object_string_create(struct vm *vm, const char *data, size_t len);
 
-// Allocates and initialises a new string by making a copy of `data`.
-struct object_string *object_string_copy(struct vm *vm, const char *data, size_t len);
+// Allocates a new string, leaving `data` unitialised.
+struct object_string *object_string_alloc(struct vm *vm, size_t len);
 
 value value_string(struct object_string *string);
 struct object_string *value_as_string(value value);

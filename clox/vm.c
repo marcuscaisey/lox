@@ -116,10 +116,10 @@ struct object_string *vm_concat_strings(struct vm *vm, struct object_string *a,
                                         struct object_string *b)
 {
     size_t len = a->len + b->len;
-    char *data = vm_malloc(vm, len);
-    memcpy(data, a->data, a->len);
-    memcpy(data + a->len, b->data, b->len);
-    return object_string_take(vm, data, len);
+    struct object_string *result = object_string_alloc(vm, len);
+    memcpy(result->data, a->data, a->len);
+    memcpy(result->data + a->len, b->data, b->len);
+    return result;
 }
 
 // Executes the chunk of instructions stored in `_chunk`, starting from the instruction pointer
