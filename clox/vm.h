@@ -18,6 +18,7 @@ struct vm {
     uint8_t *_ip; // Instruction pointer pointing to the instruction to be executed next
     value _stack[STACK_MAX]; // Value stack for instructions to use
     value *_stack_top; // Points to where the next element will be pushed on the value stack
+    struct object *_objects; // Head of the linked list of managed objects
 };
 
 // Initialises `vm` for use.

@@ -28,7 +28,7 @@ enum opcode {
     OP_LESS_EQUAL, // Pops two numbers b, then a, then pushes a <= b
     OP_GREATER, // Pops two numbers b, then a, then pushes a > b
     OP_GREATER_EQUAL, // Pops two numbers b, then a, then pushes a >= b
-    OP_ADD, // Pops two numbers then pushes their sum
+    OP_ADD, // Pops two numbers or strings then pushes their sum
     OP_SUBTRACT, // Pops two numbers b, then a, then pushes a - b
     OP_MULTIPLY, // Pops two numbers then pushes their product
     OP_DIVIDE, // Pops two numbers b, then a, then pushes a / b

@@ -4,48 +4,69 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+struct object;
+
+// Type of a Lox value.
+enum value_type {
+    VALUE_NUMBER,
+    VALUE_BOOL,
+    VALUE_NIL,
+    VALUE_STRING,
+};
+
+// Returns a string representation of `type`.
+const char *value_type_string(enum value_type type);
+
 // Represents a Lox value of any type.
-// The physical representation is an implementation detail. Use the following families of functions
-// for working with `value`:
-//   - `value_T()` constructs a Lox `T` value. Use the constant `value_nil` where a nil value is
-//     required instead.
-//   - `value_is_T(v)` reports whether `v` is a Lox `T` value.
-//   - `value_as_T(v)` returns the Lox `T` value represented by `v`. This is not safe to call unless
-//     you've verified (possibly with `value_is_T()`) that `v` is actually a Lox `T` value.
+//
+// For each Lox value type `T`, use the following families of functions from value.h and object.h to
+// work with `T` values:
+//   - `value_type(value)` returns the type `T`.
+//   - `value_T(t_value)` constructs a `T` value from `t_value`. Use the constant `value_nil`
+//     instead where a nil value is required.
+//   - `value_as_T(value)` returns the `T` value represented by `value`. This is not safe to call
+//     unless you've verified (possibly with `value_type()`) that `value` is actually a `T` value.
+//
+// Some Lox values are represented by objects (see object.h). Use `value_object()`,
+// `value_is_object()`, and `value_as_object()` to work with this representation.
 typedef struct {
     // Internal fields below, do not use.
+    // Members must be equal to their corresponding value_type member apart from _VALUE_OBJECT
     enum _value_type {
-        _VALUE_NUMBER,
-        _VALUE_BOOL,
-        _VALUE_NIL,
-    } _type;
+        _VALUE_NUMBER = VALUE_NUMBER,
+        _VALUE_BOOL = VALUE_BOOL,
+        _VALUE_NIL = VALUE_NIL,
+        _VALUE_OBJECT,
+    } _type; ///< Indicates which of the union fields holds the actual value unless
+    ///< `_type == _VALUE_NIL`, in which case there is no associated value.
     union {
-        double _number; // Valid when `type == VALUE_NUMBER`.
-        bool _bool; // Valid when `type == VALUE_BOOL`.
+        double _number; // Valid when `_type == _VALUE_NUMBER`.
+        bool _bool; // Valid when `_type == _VALUE_BOOL`.
+        struct object *_object; // Valid when `_type == _VALUE_OBJECT`.
     };
 } value;
 
-// Returns a string representation of the type of `value`.
-const char *value_type_string(value value);
+// Returns the type of `value`.
+enum value_type value_type(value value);
 
-value value_number(double n);
-value value_bool(bool b);
+value value_number(double number);
+value value_bool(bool bool_);
 const value value_nil;
 
-bool value_is_number(value v);
-bool value_is_bool(value v);
-bool value_is_nil(value v);
+double value_as_number(value value);
+bool value_as_bool(value value);
 
-double value_as_number(value v);
-bool value_as_bool(value v);
-
-// Reports whether `value` is falsey.
-bool value_is_falsey(value value);
+value value_object(struct object *object);
+bool value_is_object(value value);
+struct object *value_as_object(value value);
 
 // Reports whether `a` and `b` are equal.
 bool values_are_equal(value a, value b);
 
-// Prints a Lox syntax representation of `value` with no trailing newline.
+// Reports whether `value` is falsey.
+bool value_is_falsey(value value);
+
+// Prints `value` in the format of the Lox `print` statement with no trailing newline.
 void value_print(value value);
 
 // Array of `values`. Elements can be accessed directly through `values` but must only be appended

@@ -2,8 +2,9 @@
 #define CLOX_DYNAMIC_ARRAY_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
-#include "memory.h"
+#include "memory.h" // IWYU pragma: keep // xrealloc used by DYNAMIC_ARRAY_GROW
 
 // Ensures that there is enough space in a dynamically allocated array so that it can hold at least
 // `n` elements by reallocating more space if necessary. If the array already has enough space, then

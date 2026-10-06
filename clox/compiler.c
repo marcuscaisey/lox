@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "errors.h"
 #include "lexer.h"
+#include "object.h"
 #include "strings.h"
 #include "value.h"
 
@@ -16,6 +17,7 @@
 // chunk.
 // Must be initialised with `compiler_init()` and freed with `compiler_free()` after use.
 struct compiler {
+    struct vm *_vm; // VM the source is being compiled for
     const char *_source; // Source being compiled
     struct token _token; // Token currently being considered
     struct token _next_token; // Token after `_token` in the source
@@ -75,8 +77,9 @@ static void compiler_advance(struct compiler *compiler)
 
 // Initialises `compiler` for compiling `source` and writing the compiled bytecode into `out`.
 // `source` and `out` must remain valid until `compiler_free()` is called.
-static void compiler_init(struct compiler *compiler, const char *source, struct bytecode_chunk *out)
+static void compiler_init(struct compiler *compiler, struct vm *vm, const char *source, struct bytecode_chunk *out)
 {
+    compiler->_vm = vm;
     compiler->_source = source;
     lexer_init(&compiler->_lexer, source);
     compiler->_prev_token = (struct token){ .type = TOKEN_ERROR };
@@ -198,13 +201,25 @@ static void compiler_compile_literal_keyword(struct compiler *compiler)
     bytecode_chunk_write(compiler->_out, instruction, compiler->_prev_token.line);
 }
 
+// Writes the bytecode for the string literal in the current token and advances the compiler past
+// it.
+static void compiler_compile_string(struct compiler *compiler)
+{
+    compiler_expect(compiler, TOKEN_STRING);
+    // First and last characters are " so discount these from the length and start data 1 character
+    // in
+    struct object_string *string = object_string_copy(
+        compiler->_vm, compiler->_prev_token.start + 1, compiler->_prev_token.len - 2);
+    bytecode_chunk_write_constant(compiler->_out, value_string(string), compiler->_prev_token.line);
+}
+
 // Writes the bytecode for the number literal in the current token and advances the compiler past
 // it.
 static void compiler_compile_number(struct compiler *compiler)
 {
     compiler_expect(compiler, TOKEN_NUMBER);
-    double n = strtod(compiler->_prev_token.start, NULL);
-    bytecode_chunk_write_constant(compiler->_out, value_number(n), compiler->_prev_token.line);
+    double number = strtod(compiler->_prev_token.start, NULL);
+    bytecode_chunk_write_constant(compiler->_out, value_number(number), compiler->_prev_token.line);
 }
 
 // Writes the bytecode for the group e_source = source;xpression starting at the current token and advances the
@@ -246,6 +261,8 @@ static expr_compiler prefix_expr_compiler(enum token_type type)
     case TOKEN_TRUE:
     case TOKEN_FALSE:
         return compiler_compile_literal_keyword;
+    case TOKEN_STRING:
+        return compiler_compile_string;
     case TOKEN_NUMBER:
         return compiler_compile_number;
     case TOKEN_LEFT_PAREN:
@@ -353,10 +370,10 @@ static bool compiler_compile(struct compiler *compiler)
     return success;
 }
 
-bool compile(const char *source, struct bytecode_chunk *out)
+bool compile(struct vm *vm, const char *source, struct bytecode_chunk *out)
 {
     struct compiler compiler;
-    compiler_init(&compiler, source, out);
+    compiler_init(&compiler, vm, source, out);
     bool success = compiler_compile(&compiler);
     compiler_free(&compiler);
     return success;
