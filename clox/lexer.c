@@ -147,9 +147,9 @@ static void lexer_advance(struct lexer *lexer)
 }
 
 // Returns the character following the current character if there is one, otherwise '\0'.
-static char lexer_peek(struct lexer lexer)
+static char lexer_peek(const struct lexer *lexer)
 {
-    return *lexer._char != '\0' ? *(lexer._char + 1) : '\0';
+    return *lexer->_char != '\0' ? *(lexer->_char + 1) : '\0';
 }
 
 // Advances the lexer until the current character is semantically meaningful.
@@ -166,7 +166,7 @@ static void lexer_skip_ignored(struct lexer *lexer)
             break;
         // Comments
         case '/':
-            if (lexer_peek(*lexer) == '/') {
+            if (lexer_peek(lexer) == '/') {
                 lexer_advance(lexer); // first /
                 lexer_advance(lexer); // second /
                 while (*lexer->_char != '\n' && *lexer->_char != '\0')
@@ -409,7 +409,7 @@ struct token lexer_next(struct lexer *lexer)
             // Advance past number literal
             while (isdigit(*lexer->_char))
                 lexer_advance(lexer);
-            if (*lexer->_char == '.' && isdigit(lexer_peek(*lexer))) {
+            if (*lexer->_char == '.' && isdigit(lexer_peek(lexer))) {
                 lexer_advance(lexer); // .
                 lexer_advance(lexer); // digit
                 while (isdigit(*lexer->_char))

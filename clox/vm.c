@@ -89,12 +89,12 @@ static void vm_print_trace_info(const struct vm *vm)
     }
     printf("\n");
     int offset = vm->_ip - vm->_chunk->instructions;
-    disassemble_instruction(*vm->_chunk, offset);
+    disassemble_instruction(vm->_chunk, offset);
 }
 #endif
 
 // Prints an error relating to the bytecode offset `offset` with a formatted message.
-static __attribute__((format(printf, 3, 4))) void vm_report_errorf(struct vm vm, int offset,
+static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const struct vm *vm, int offset,
                                                                    const char *format, ...)
 {
     char *msg;
@@ -106,8 +106,8 @@ static __attribute__((format(printf, 3, 4))) void vm_report_errorf(struct vm vm,
         abort();
     }
     va_end(args);
-    int line = vm._chunk->offset_lines[offset];
-    print_invalid_line_error(msg, vm._source, line);
+    int line = vm->_chunk->offset_lines[offset];
+    print_invalid_line_error(msg, vm->_source, line);
     free(msg);
 }
 
@@ -174,7 +174,7 @@ static bool vm_execute(struct vm *vm)
         value b = vm_stack_peek(vm, 0);                                                           \
         value a = vm_stack_peek(vm, 1);                                                           \
         if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {                     \
-            vm_report_errorf(*vm, instruction_offset,                                             \
+            vm_report_errorf(vm, instruction_offset,                                              \
                              "'%s' operator cannot be used with types '%s' and '%s'", #op,        \
                              value_type_string(value_type(a)), value_type_string(value_type(b))); \
             return false;                                                                         \
@@ -228,7 +228,7 @@ static bool vm_execute(struct vm *vm)
         case OP_NEGATE: {
             value value = vm_stack_peek(vm, 0);
             if (value_type(value) != VALUE_NUMBER) {
-                vm_report_errorf(*vm, instruction_offset,
+                vm_report_errorf(vm, instruction_offset,
                                  "'-' operator cannot be used with type '%s'",
                                  value_type_string(value_type(value)));
                 return false;

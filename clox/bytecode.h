@@ -51,10 +51,10 @@ struct bytecode_chunk {
     uint8_t *instructions;
     int *offset_lines; // Line numbers associated with each offset
     size_t len; // Number of elements in `instructions` and `offset_lines`
-    struct value_array constants; // Pool of constants referenced by the bytecode
-    // Internal fields below, do not use.
-    // Number of elements that space has been allocated for in `instructions` and `offset_lines`
+    // Internal field, do not use.
+    // Number of elements that space has been allocated for in `instructions` and `offset_lines`.
     size_t _cap;
+    struct value_array constants; // Pool of constants referenced by the bytecode
 };
 
 // Initialises `chunk` for use.

@@ -7,37 +7,37 @@
 #include "bytecode.h"
 #include "value.h"
 
-void disassemble(struct bytecode_chunk chunk, const char *name)
+void disassemble(const struct bytecode_chunk *chunk, const char *name)
 {
     printf("== %s ==\n", name);
-    for (size_t offset = 0; offset < chunk.len;)
+    for (size_t offset = 0; offset < chunk->len;)
         offset = disassemble_instruction(chunk, offset);
 }
 
-int disassemble_instruction(struct bytecode_chunk chunk, int offset)
+int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
 {
     printf("%04d ", offset);
-    int line = chunk.offset_lines[offset];
-    if (offset > 0 && line == chunk.offset_lines[offset - 1])
+    int line = chunk->offset_lines[offset];
+    if (offset > 0 && line == chunk->offset_lines[offset - 1])
         printf("   | ");
     else
         printf("%4d ", line);
-    enum opcode opcode = chunk.instructions[offset];
+    enum opcode opcode = chunk->instructions[offset];
     const char *name = instruction_name(opcode);
     switch (opcode) {
     case OP_CONSTANT: {
-        uint8_t index = chunk.instructions[offset + 1];
+        uint8_t index = chunk->instructions[offset + 1];
         int width = strlen(instruction_name(OP_CONSTANT_LONG));
         printf("%-*s %4d '", width, name, index);
-        value_print(chunk.constants.values[index]);
+        value_print(chunk->constants.values[index]);
         printf("'\n");
         return offset + 2;
     }
     case OP_CONSTANT_LONG: {
-        int index = (chunk.instructions[offset + 1] << 16) + (chunk.instructions[offset + 2] << 8) +
-                    (chunk.instructions[offset + 3]);
+        int index = (chunk->instructions[offset + 1] << 16) + (chunk->instructions[offset + 2] << 8) +
+                    (chunk->instructions[offset + 3]);
         printf("%s %4d '", name, index);
-        value_print(chunk.constants.values[index]);
+        value_print(chunk->constants.values[index]);
         printf("'\n");
         return offset + 4;
     }
