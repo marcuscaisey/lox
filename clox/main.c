@@ -10,7 +10,7 @@
 // Runs the REPL until the user exits and returns an appropriate exit status.
 static int run_repl(void)
 {
-    struct vm vm;
+    vm vm;
     vm_init(&vm);
 
     printf("Welcome to the Lox REPL. Press Ctrl-D to exit.\n");
@@ -66,7 +66,7 @@ out_close_file:
 // Runs `filename` and returns an appropriate exit status.
 static int run_file(const char *filename)
 {
-    struct vm vm;
+    vm vm;
     vm_init(&vm);
 
     char *source = read_file(filename);

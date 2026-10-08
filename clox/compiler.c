@@ -16,19 +16,19 @@
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
 // chunk.
 // Must be initialised with `compiler_init()` and freed with `compiler_free()` after use.
-struct compiler {
-    struct vm *_vm; // VM the source is being compiled for
+typedef struct {
+    vm *_vm; // VM the source is being compiled for
     const char *_source; // Source being compiled
     struct token _token; // Token currently being considered
     struct token _next_token; // Token after `_token` in the source
     struct token _prev_token; // Token before `_token` in the source
-    struct lexer _lexer; // Lexer set up to lex the source
+    lexer _lexer; // Lexer set up to lex the source
     struct bytecode_chunk *_out; // Chunk that bytecode is written to
     // Panic mode is entered when a syntax error is encountered and exited once it has been
     // recovered from
     bool _in_panic_mode;
     bool _had_error; // Whether the compiler has encountered any syntax errors
-};
+} compiler;
 
 // Calls `compiler_report_errorf()` with a range spanning the current token.
 #define COMPILER_REPORT_TOKEN_ERRORF(compiler, format, ...)                             \
@@ -39,7 +39,7 @@ struct compiler {
 // Prints an error relating to the source range `[start, end)` with a formatted message and enters
 // panic mode. If the compiler is already in panic mode, then this is a no-op. See
 // `print_invalid_range_error()` for how the error is printed.
-static __attribute__((format(printf, 4, 5))) void compiler_report_errorf(struct compiler *compiler,
+static __attribute__((format(printf, 4, 5))) void compiler_report_errorf(compiler *compiler,
                                                                          const char *start,
                                                                          const char *end,
                                                                          const char *format, ...)
@@ -63,7 +63,7 @@ static __attribute__((format(printf, 4, 5))) void compiler_report_errorf(struct 
 
 // Moves the current token forwards in the source until it's valid. An error is reported for each
 // `TOKEN_ERROR` passed.
-static void compiler_advance(struct compiler *compiler)
+static void compiler_advance(compiler *compiler)
 {
     while (true) {
         compiler->_prev_token = compiler->_token;
@@ -77,7 +77,8 @@ static void compiler_advance(struct compiler *compiler)
 
 // Initialises `compiler` for compiling `source` and writing the compiled bytecode into `out`.
 // `source` and `out` must remain valid until `compiler_free()` is called.
-static void compiler_init(struct compiler *compiler, struct vm *vm, const char *source, struct bytecode_chunk *out)
+static void compiler_init(compiler *compiler, vm *vm, const char *source,
+                          struct bytecode_chunk *out)
 {
     compiler->_vm = vm;
     compiler->_source = source;
@@ -92,14 +93,14 @@ static void compiler_init(struct compiler *compiler, struct vm *vm, const char *
 }
 
 // Frees the memory associated with `compiler`.
-static void compiler_free(struct compiler *compiler)
+static void compiler_free(compiler *compiler)
 {
     lexer_free(&compiler->_lexer);
 }
 
 // Checks whether the current token has `type`. If it does, the compiler is advanced. Otherwise, an
 // error is reported.
-static void compiler_expect(struct compiler *compiler, enum token_type type)
+static void compiler_expect(compiler *compiler, enum token_type type)
 {
     if (compiler->_token.type == type)
         compiler_advance(compiler);
@@ -114,7 +115,7 @@ static void compiler_expect(struct compiler *compiler, enum token_type type)
 
 // Reports whether the current token is one of the `count` given `types` and advances the compiler
 // if so.
-static bool compiler_match(struct compiler *compiler, enum token_type *types, int count)
+static bool compiler_match(compiler *compiler, enum token_type *types, int count)
 {
     for (int i = 0; i < count; i++)
         if (compiler->_token.type == types[i]) {
@@ -180,12 +181,12 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
     }
 }
 
-static void compiler_compile_expr_at_level(struct compiler *compiler, enum precedence_level level);
-static void compiler_compile_expr(struct compiler *compiler);
+static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level);
+static void compiler_compile_expr(compiler *compiler);
 
 // Writes the bytecode for the literal keyword in the current token and advances the compiler past
 // it.
-static void compiler_compile_literal_keyword(struct compiler *compiler)
+static void compiler_compile_literal_keyword(compiler *compiler)
 {
     enum opcode instruction;
     if (COMPILER_MATCH(compiler, TOKEN_NIL)) {
@@ -203,7 +204,7 @@ static void compiler_compile_literal_keyword(struct compiler *compiler)
 
 // Writes the bytecode for the string literal in the current token and advances the compiler past
 // it.
-static void compiler_compile_string(struct compiler *compiler)
+static void compiler_compile_string(compiler *compiler)
 {
     compiler_expect(compiler, TOKEN_STRING);
     // First and last characters are " so discount these from the length and start data 1 character
@@ -215,7 +216,7 @@ static void compiler_compile_string(struct compiler *compiler)
 
 // Writes the bytecode for the number literal in the current token and advances the compiler past
 // it.
-static void compiler_compile_number(struct compiler *compiler)
+static void compiler_compile_number(compiler *compiler)
 {
     compiler_expect(compiler, TOKEN_NUMBER);
     double number = strtod(compiler->_prev_token.start, NULL);
@@ -224,7 +225,7 @@ static void compiler_compile_number(struct compiler *compiler)
 
 // Writes the bytecode for the group e_source = source;xpression starting at the current token and advances the
 // compiler past it.
-static void compiler_compile_group_expr(struct compiler *compiler)
+static void compiler_compile_group_expr(compiler *compiler)
 {
     compiler_expect(compiler, TOKEN_LEFT_PAREN);
     compiler_compile_expr(compiler);
@@ -233,7 +234,7 @@ static void compiler_compile_group_expr(struct compiler *compiler)
 
 // Write the bytecode for the unary expression starting at the current token and advances the
 // compiler past it.
-static void compiler_compile_unary_expr(struct compiler *compiler)
+static void compiler_compile_unary_expr(compiler *compiler)
 {
     int line = compiler->_token.line;
     enum opcode instruction;
@@ -250,7 +251,7 @@ static void compiler_compile_unary_expr(struct compiler *compiler)
 }
 
 // Type of function which writes the bytecode for an expression and advances the compiler past it.
-typedef void (*expr_compiler)(struct compiler *compiler);
+typedef void (*expr_compiler)(compiler *compiler);
 
 // Returns the compiler for a prefix expression starting with a `type` token or `NULL` if there is
 // none.
@@ -277,7 +278,7 @@ static expr_compiler prefix_expr_compiler(enum token_type type)
 
 // Writes the bytecode for the right hand side of a binary expression whose operator is at the
 // current token and advances the compiler past the it.
-static void compiler_compile_binary_expr(struct compiler *compiler)
+static void compiler_compile_binary_expr(compiler *compiler)
 {
     int line = compiler->_token.line;
     enum opcode instruction;
@@ -334,7 +335,7 @@ static expr_compiler infix_expr_compiler(enum token_type type)
 
 // Writes the bytecode for the expression starting at the current token consisting only of operators
 // with at least the given precedence `level` and advances the compiler past it.
-static void compiler_compile_expr_at_level(struct compiler *compiler, enum precedence_level level)
+static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level)
 {
     expr_compiler prefix_compiler = prefix_expr_compiler(compiler->_token.type);
     if (prefix_compiler == NULL) {
@@ -351,13 +352,13 @@ static void compiler_compile_expr_at_level(struct compiler *compiler, enum prece
 
 // Writes the bytecode for the expression starting the current token and advances the compiler past
 // it.
-static void compiler_compile_expr(struct compiler *compiler)
+static void compiler_compile_expr(compiler *compiler)
 {
     compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT);
 }
 
 // Writes the bytecode for the program and reports whether compilation was successful.
-static bool compiler_compile(struct compiler *compiler)
+static bool compiler_compile(compiler *compiler)
 {
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_SEMICOLON);
@@ -365,14 +366,14 @@ static bool compiler_compile(struct compiler *compiler)
     bool success = !compiler->_had_error;
 #ifdef DEBUG
     if (success)
-        disassemble(*compiler->_out, "code");
+        disassemble(compiler->_out, "code");
 #endif
     return success;
 }
 
-bool compile(struct vm *vm, const char *source, struct bytecode_chunk *out)
+bool compile(vm *vm, const char *source, struct bytecode_chunk *out)
 {
-    struct compiler compiler;
+    compiler compiler;
     compiler_init(&compiler, vm, source, out);
     bool success = compiler_compile(&compiler);
     compiler_free(&compiler);

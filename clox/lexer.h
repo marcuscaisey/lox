@@ -78,7 +78,7 @@ struct token {
 
 // Lexer which reads Lox source code and produces lexical tokens.
 // Must be initialised with `lexer_init()` before use and freed with `lexer_free()` after use.
-struct lexer {
+typedef struct {
     // Internal fields, do not use.
     const char *_source_start; // Points to start of source
     const char *_char; // Points to character in source currently being considered
@@ -86,18 +86,18 @@ struct lexer {
     char **_strs; // Strings allocated as part of produced tokens
     size_t _strs_len; // Number of elements in `_strs`
     size_t _strs_cap; // Number of elements that space has been allocated for in `_strs`
-};
+} lexer;
 
 // Initialises `lexer` for lexing `source`.
 // `source` must remain valid until `lexer_free()` is called.
-void lexer_init(struct lexer *lexer, const char *source);
+void lexer_init(lexer *lexer, const char *source);
 
 // Frees the memory associated with `lexer`.
-void lexer_free(struct lexer *lexer);
+void lexer_free(lexer *lexer);
 
 // Returns the next token from the source.
 // Once the end of the source has been reached, this function will always return a `TOKEN_EOF`
 // token.
-struct token lexer_next(struct lexer *lexer);
+struct token lexer_next(lexer *lexer);
 
 #endif

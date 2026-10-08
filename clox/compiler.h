@@ -8,6 +8,6 @@
 
 // Writes bytecode that can be executed by `vm` for the Lox `source` into `out` and reports whether
 // compilation was successful. If complication was unsuccessful, errors are printed to stderr.
-bool compile(struct vm *vm, const char *source, struct bytecode_chunk *out);
+bool compile(vm *vm, const char *source, struct bytecode_chunk *out);
 
 #endif

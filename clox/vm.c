@@ -15,40 +15,39 @@
 #include "object.h"
 #include "strings.h"
 #include "value.h"
-#include "vm_internal.h"
 
 // Adds an element to the top of the stack.
-static void vm_stack_push(struct vm *vm, value value)
+static void vm_stack_push(vm *vm, value value)
 {
     *vm->_stack_top++ = value;
 }
 
 // Removes the element from the top of the stack and returns it.
-static value vm_stack_pop(struct vm *vm)
+static value vm_stack_pop(vm *vm)
 {
     return *(--vm->_stack_top);
 }
 
 // Returns the element `distance` places from the top of the stack.
-static value vm_stack_peek(struct vm *vm, int distance)
+static value vm_stack_peek(vm *vm, int distance)
 {
     return vm->_stack_top[-1 - distance];
 }
 
 // Empties the stack so that the next element added with `vm_stack_push()` will be the first one.
-static void vm_stack_reset(struct vm *vm)
+static void vm_stack_reset(vm *vm)
 {
     vm->_stack_top = vm->_stack;
 }
 
-void vm_init(struct vm *vm)
+void vm_init(vm *vm)
 {
     vm_stack_reset(vm);
     vm->_objects = NULL;
 }
 
 // Frees the objects managed by the VM and memory associated with them.
-void vm_destroy_objects(struct vm *vm)
+void vm_destroy_objects(vm *vm)
 {
     struct object *object = vm->_objects;
     while (object != NULL) {
@@ -58,26 +57,26 @@ void vm_destroy_objects(struct vm *vm)
     }
 }
 
-void vm_free(struct vm *vm)
+void vm_free(vm *vm)
 {
     vm_destroy_objects(vm);
 }
 
 // Reads the u8 at the instruction pointer and moves the instruction pointer past it.
-static uint8_t vm_read_u8(struct vm *vm)
+static uint8_t vm_read_u8(vm *vm)
 {
     return *vm->_ip++;
 }
 
 // Reads the u24 at the instruction pointer and moves the instruction pointer past it.
-static uint8_t vm_read_u24(struct vm *vm)
+static uint8_t vm_read_u24(vm *vm)
 {
     return (vm_read_u8(vm) << 16) + (vm_read_u8(vm) << 8) + (vm_read_u8(vm));
 }
 
 #ifdef DEBUG
 // Prints the contents of the value stack and the current instruction.
-static void vm_print_trace_info(const struct vm *vm)
+static void vm_print_trace_info(const vm *vm)
 {
     // Lines up the start of the stack with the start of the instruction in the
     // disassemble_instruction output
@@ -94,7 +93,7 @@ static void vm_print_trace_info(const struct vm *vm)
 #endif
 
 // Prints an error relating to the bytecode offset `offset` with a formatted message.
-static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const struct vm *vm, int offset,
+static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const vm *vm, int offset,
                                                                    const char *format, ...)
 {
     char *msg;
@@ -112,7 +111,7 @@ static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const struct 
 }
 
 // Returns a new string created by concatenating `a` and `b`.
-struct object_string *vm_concat_strings(struct vm *vm, struct object_string *a,
+struct object_string *vm_concat_strings(vm *vm, struct object_string *a,
                                         struct object_string *b)
 {
     size_t len = a->len + b->len;
@@ -124,7 +123,7 @@ struct object_string *vm_concat_strings(struct vm *vm, struct object_string *a,
 
 // Executes the chunk of instructions stored in `_chunk`, starting from the instruction pointer
 // `_ip`, and reports whether execution was successful.
-static bool vm_execute(struct vm *vm)
+static bool vm_execute(vm *vm)
 {
     while (true) {
 #ifdef DEBUG
@@ -247,7 +246,7 @@ static bool vm_execute(struct vm *vm)
     }
 }
 
-bool vm_interpret(struct vm *vm, const char *source)
+bool vm_interpret(vm *vm, const char *source)
 {
     bool success = true;
 

@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-struct object;
-
 // Type of a Lox value.
 enum value_type {
     VALUE_NUMBER,

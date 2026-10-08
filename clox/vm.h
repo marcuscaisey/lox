@@ -11,7 +11,7 @@
 
 // A virtual machine which interprets Lox code.
 // Must be initialised with `vm_init()` before use and freed with `vm_free()` after use.
-struct vm {
+typedef struct {
     // Internal fields below, do not use.
     const char *_source; // Source being interpreted
     const struct bytecode_chunk *_chunk; // Chunk currently being executed
@@ -19,17 +19,17 @@ struct vm {
     value _stack[STACK_MAX]; // Value stack for instructions to use
     value *_stack_top; // Points to where the next element will be pushed on the value stack
     struct object *_objects; // Head of the linked list of managed objects
-};
+} vm;
 
 // Initialises `vm` for use.
-void vm_init(struct vm *vm);
+void vm_init(vm *vm);
 
 // Frees the memory associated with `vm`.
-void vm_free(struct vm *vm);
+void vm_free(vm *vm);
 
 // Interprets the given Lox `source` and reports whether interpretation was successful.
 // This function can be called multiple times with different sources and the state will be
 // maintained between calls.
-bool vm_interpret(struct vm *vm, const char *source);
+bool vm_interpret(vm *vm, const char *source);
 
 #endif

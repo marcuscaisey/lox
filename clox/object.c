@@ -6,7 +6,7 @@
 #include "value.h"
 #include "vm_internal.h"
 
-void object_destroy(struct vm *vm, struct object *object)
+void object_destroy(vm *vm, struct object *object)
 {
     switch (object->_type) {
     case _OBJECT_STRING: {
@@ -22,7 +22,7 @@ enum value_type object_value_type(const struct object *object)
     return (enum value_type)object->_type;
 }
 
-struct object_string *object_string_alloc(struct vm *vm, size_t len)
+struct object_string *object_string_alloc(vm *vm, size_t len)
 {
     struct object_string *string = vm_malloc(vm, sizeof(struct object_string) + len);
     string->_object.next = vm->_objects;
@@ -32,7 +32,7 @@ struct object_string *object_string_alloc(struct vm *vm, size_t len)
     return string;
 }
 
-struct object_string *object_string_create(struct vm *vm, const char *data, size_t len)
+struct object_string *object_string_create(vm *vm, const char *data, size_t len)
 {
     struct object_string *string = object_string_alloc(vm, len);
     memcpy(string->data, data, len);

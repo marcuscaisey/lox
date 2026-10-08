@@ -118,7 +118,7 @@ const char *token_type_string(enum token_type type)
     }
 }
 
-void lexer_init(struct lexer *lexer, const char *source)
+void lexer_init(lexer *lexer, const char *source)
 {
     lexer->_source_start = source;
     lexer->_char = lexer->_source_start;
@@ -128,7 +128,7 @@ void lexer_init(struct lexer *lexer, const char *source)
     lexer->_strs_cap = 0;
 }
 
-void lexer_free(struct lexer *lexer)
+void lexer_free(lexer *lexer)
 {
     for (char **s = lexer->_strs; s < lexer->_strs + lexer->_strs_len; s++)
         free(*s);
@@ -137,7 +137,7 @@ void lexer_free(struct lexer *lexer)
 
 // Moves the current character forwards one character in the source.
 // If the current charcter is already at the end of the source, then this is a no-op.
-static void lexer_advance(struct lexer *lexer)
+static void lexer_advance(lexer *lexer)
 {
     if (*lexer->_char == '\0')
         return;
@@ -147,13 +147,13 @@ static void lexer_advance(struct lexer *lexer)
 }
 
 // Returns the character following the current character if there is one, otherwise '\0'.
-static char lexer_peek(const struct lexer *lexer)
+static char lexer_peek(const lexer *lexer)
 {
     return *lexer->_char != '\0' ? *(lexer->_char + 1) : '\0';
 }
 
 // Advances the lexer until the current character is semantically meaningful.
-static void lexer_skip_ignored(struct lexer *lexer)
+static void lexer_skip_ignored(lexer *lexer)
 {
     while (true) {
         switch (*lexer->_char) {
@@ -183,8 +183,8 @@ static void lexer_skip_ignored(struct lexer *lexer)
 
 // Works like `sprintf()`, except a new string is allocated for the output which will be freed when
 // `lexer_free()` is called.
-static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(struct lexer *lexer,
-                                                                 const char *format, ...)
+static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(lexer *lexer, const char *format,
+                                                                 ...)
 {
     char *result;
     va_list args;
@@ -293,7 +293,7 @@ static enum token_type ident_type(const char *start, int len)
 #undef KEYWORD_OR_IDENT_TYPE
 }
 
-struct token lexer_next(struct lexer *lexer)
+struct token lexer_next(lexer *lexer)
 {
     lexer_skip_ignored(lexer);
 

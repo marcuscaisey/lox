@@ -19,7 +19,7 @@ struct object {
 };
 
 // Frees `object` and the memory associated with it.
-void object_destroy(struct vm *vm, struct object *object);
+void object_destroy(vm *vm, struct object *object);
 
 // Returns the type of `object`.
 enum value_type object_value_type(const struct object *object);
@@ -35,10 +35,10 @@ struct object_string {
 };
 
 // Allocates and initialises a new string by copying the first `len` characters of `data`.
-struct object_string *object_string_create(struct vm *vm, const char *data, size_t len);
+struct object_string *object_string_create(vm *vm, const char *data, size_t len);
 
 // Allocates a new string, leaving `data` unitialised.
-struct object_string *object_string_alloc(struct vm *vm, size_t len);
+struct object_string *object_string_alloc(vm *vm, size_t len);
 
 value value_string(struct object_string *string);
 struct object_string *value_as_string(value value);
