@@ -11,7 +11,8 @@ void object_destroy(vm *vm, struct object *object)
     switch (object->_type) {
     case _OBJECT_STRING: {
         struct object_string *string = (struct object_string *)object;
-        vm_mfree(vm, string, sizeof(struct object_string) + string->len);
+        vm_mfree(vm, (void *)string->data, string->len);
+        vm_mfree(vm, string, sizeof(struct object_string));
     }
     }
 }
@@ -22,21 +23,22 @@ enum value_type object_value_type(const struct object *object)
     return (enum value_type)object->_type;
 }
 
-struct object_string *object_string_alloc(vm *vm, size_t len)
+struct object_string *object_string_take(vm *vm, char *data, size_t len)
 {
-    struct object_string *string = vm_malloc(vm, sizeof(struct object_string) + len);
+    struct object_string *string = vm_malloc(vm, sizeof(struct object_string));
     string->_object.next = vm->_objects;
     vm->_objects = &string->_object;
     string->_object._type = _OBJECT_STRING;
+    string->data = data;
     string->len = len;
     return string;
 }
 
-struct object_string *object_string_create(vm *vm, const char *data, size_t len)
+struct object_string *object_string_copy(vm *vm, const char *data, size_t len)
 {
-    struct object_string *string = object_string_alloc(vm, len);
-    memcpy(string->data, data, len);
-    return string;
+    char *data_copy = vm_malloc(vm, len);
+    memcpy(data_copy, data, len);
+    return object_string_take(vm, data_copy, len);
 }
 
 value value_string(struct object_string *string)

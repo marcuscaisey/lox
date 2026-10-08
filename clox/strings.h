@@ -2,6 +2,7 @@
 #define CLOX_STRINGS_H
 
 #include <stdarg.h>
+#include <stddef.h>
 
 // Works like `vsprintf()`, except a new string is allocated for the output and stored in `*out`.
 // The caller is responsible for freeing the string pointed to by `*out` with `free()` when it's no
