@@ -28,6 +28,7 @@ bool map_set(vm *vm, map *map, struct object_string *key, value value);
 
 // Looks up the value associated with `key` and sets `out` to it if it's found.
 // Reports whether the value was found.
+// If `out == NULL` then it's ignored.
 bool map_get(map *map, struct object_string *key, value *out);
 
 // Returns the key with data matching the provided parameters or `NULL` if no key is found.

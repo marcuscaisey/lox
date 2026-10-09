@@ -84,7 +84,6 @@ struct object_string *map_get_key(map *map, const char *data, size_t len, uint32
     panicf("clox: map: no empty slot found\n");
 }
 
-
 // Allocates a new array with capacity `new_cap` and transfers all of the entries from the old one
 // to it.
 void map_grow(vm *vm, map *map, size_t new_cap)
@@ -161,7 +160,7 @@ bool map_get(map *map, struct object_string *key, value *out)
         return false;
     struct _entry *entry = find_entry(map->_entries, map->_cap, key);
     bool found = entry->key != NULL;
-    if (found)
+    if (found && out != NULL)
         *out = entry->value;
     return found;
 }
