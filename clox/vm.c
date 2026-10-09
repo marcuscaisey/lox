@@ -12,10 +12,11 @@
 #include "compiler.h"
 #include "debug.h"
 #include "errors.h"
+#include "map.h"
 #include "object.h"
 #include "strings.h"
 #include "value.h"
-#include "vm_internal.h"
+#include "vm_memory.h"
 
 // Adds an element to the top of the stack.
 static void vm_stack_push(vm *vm, value value)
@@ -45,6 +46,7 @@ void vm_init(vm *vm)
 {
     vm_stack_reset(vm);
     vm->_objects = NULL;
+    map_init(&vm->_strings);
 }
 
 // Frees the objects managed by the VM and memory associated with them.
@@ -61,6 +63,7 @@ void vm_destroy_objects(vm *vm)
 void vm_free(vm *vm)
 {
     vm_destroy_objects(vm);
+    map_free(vm, &vm->_strings);
 }
 
 // Reads the u8 at the instruction pointer and moves the instruction pointer past it.
@@ -102,8 +105,7 @@ static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const vm *vm,
     va_start(args, format);
     int size = vasprintf(&msg, format, args);
     if (size < 0) {
-        fprintf(stderr, "compiler: encoding error formatting \"%s\"\n", format);
-        abort();
+        panicf("clox: compiler: encoding error formatting \"%s\"\n", format);
     }
     va_end(args);
     int line = vm->_chunk->offset_lines[offset];
@@ -112,8 +114,7 @@ static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const vm *vm,
 }
 
 // Returns a new string created by concatenating `a` and `b`.
-struct object_string *vm_concat_strings(vm *vm, struct object_string *a,
-                                        struct object_string *b)
+struct object_string *vm_concat_strings(vm *vm, struct object_string *a, struct object_string *b)
 {
     size_t len = a->len + b->len;
     char *data = vm_malloc(vm, len);

@@ -10,4 +10,7 @@ void print_invalid_range_error(const char *msg, const char *source, const char *
 // Prints an error message to stderr highlighting the invalid `line` in `source`.
 void print_invalid_line_error(const char *msg, const char *source, int line);
 
+// Aborts the program with an error message.
+__attribute__((format(printf, 1, 2), noreturn)) void panicf(const char *format, ...);
+
 #endif

@@ -1,4 +1,4 @@
-#include "vm_internal.h"
+#include "vm_memory.h"
 
 #include <stdlib.h>
 

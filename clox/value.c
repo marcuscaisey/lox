@@ -78,12 +78,8 @@ bool values_are_equal(value a, value b)
         return value_as_bool(a) == value_as_bool(b);
     case VALUE_NIL:
         return true;
-    case VALUE_STRING: {
-        struct object_string *a_string = value_as_string(a);
-        struct object_string *b_string = value_as_string(b);
-        return a_string->len == b_string->len &&
-               memcmp(a_string->data, b_string->data, a_string->len) == 0;
-    }
+    case VALUE_STRING:
+        return value_as_object(a) == value_as_object(b);
     }
 }
 

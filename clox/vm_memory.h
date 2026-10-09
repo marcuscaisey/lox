@@ -1,5 +1,5 @@
-#ifndef CLOX_VM_INTERNAL_H
-#define CLOX_VM_INTERNAL_H
+#ifndef CLOX_VM_MEMORY_H
+#define CLOX_VM_MEMORY_H
 
 #include "vm.h"
 

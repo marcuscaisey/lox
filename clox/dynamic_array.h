@@ -26,7 +26,6 @@
         }                                                    \
     } while (false)
 
-// TODO: maybe not needed
 // Returns the number of bytes occupied by the dynamically allocated array pointed to by `data` with
 // space allocated for `cap` elements.
 #define DYNAMIC_ARRAY_SIZE(data, cap) ((cap) * sizeof(*(data)))

@@ -34,8 +34,8 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         return offset + 2;
     }
     case OP_CONSTANT_LONG: {
-        int index = (chunk->instructions[offset + 1] << 16) + (chunk->instructions[offset + 2] << 8) +
-                    (chunk->instructions[offset + 3]);
+        int index = (chunk->instructions[offset + 1] << 16) +
+                    (chunk->instructions[offset + 2] << 8) + (chunk->instructions[offset + 3]);
         printf("%s %4d '", name, index);
         value_print(chunk->constants.values[index]);
         printf("'\n");

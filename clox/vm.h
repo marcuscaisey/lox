@@ -5,13 +5,14 @@
 #include <stdint.h>
 
 #include "bytecode.h"
+#include "map.h"
 #include "value.h"
 
 #define STACK_MAX 256
 
 // A virtual machine which interprets Lox code.
 // Must be initialised with `vm_init()` before use and freed with `vm_free()` after use.
-typedef struct {
+typedef struct vm {
     // Internal fields below, do not use.
     const char *_source; // Source being interpreted
     const struct bytecode_chunk *_chunk; // Chunk currently being executed
@@ -19,6 +20,7 @@ typedef struct {
     value _stack[STACK_MAX]; // Value stack for instructions to use
     value *_stack_top; // Points to where the next element will be pushed on the value stack
     struct object *_objects; // Head of the linked list of managed objects
+    map _strings; // Interned strings
 } vm;
 
 // Initialises `vm` for use.

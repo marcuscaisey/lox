@@ -53,8 +53,7 @@ static __attribute__((format(printf, 4, 5))) void compiler_report_errorf(compile
     va_start(args, format);
     int size = vasprintf(&msg, format, args);
     if (size < 0) {
-        fprintf(stderr, "compiler: encoding error formatting \"%s\"\n", format);
-        abort();
+        panicf("clox: compiler: encoding error formatting \"%s\"\n", format);
     }
     va_end(args);
     print_invalid_range_error(msg, compiler->_source, start, end);

@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "dynamic_array.h"
+#include "errors.h"
 #include "strings.h"
 
 const char *token_type_string(enum token_type type)
@@ -191,8 +192,7 @@ static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(lexer *lexer, c
     va_start(args, format);
     int size = vasprintf(&result, format, args);
     if (size < 0) {
-        fprintf(stderr, "lexer: encoding error formatting \"%s\"\n", format);
-        abort();
+        panicf("clox: lexer: encoding error formatting \"%s\"\n", format);
     }
     va_end(args);
 
