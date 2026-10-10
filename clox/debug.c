@@ -29,12 +29,18 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     case OP_DEFINE_GLOBAL:
     case OP_GET_GLOBAL:
     case OP_SET_GLOBAL: {
-        uint8_t index = chunk->instructions[offset + 1];
+        uint32_t index = chunk->instructions[offset + 1];
+        int index_bytes = 1;
+        if (index == 0xFF) {
+            index = (chunk->instructions[offset + 2] << 16) +
+                    (chunk->instructions[offset + 3] << 8) + (chunk->instructions[offset + 4]);
+            index_bytes = 4;
+        }
         int width = strlen(instruction_name(OP_DEFINE_GLOBAL));
         printf("%-*s %3d '", width, name, index);
         value_print(chunk->constants.values[index]);
         printf("'\n");
-        return offset + 2;
+        return offset + 1 + index_bytes;
     }
     case OP_NIL:
     case OP_TRUE:

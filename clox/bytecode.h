@@ -8,15 +8,18 @@
 
 // Instruction types supported by the Lox bytecode.
 // Instructions operate on a stack-based virtual machine.
-// The comment on each opcode describes the operation and operands, if any. All operands are a
-// single byte.
-// Push and pop in these descriptions refer to pushing and popping from the virtual machine's value
-// stack.
-// Constants in these descriptions refer to the bytecode chunk's constants.
+//
+// The comment on each opcode describes the operation and operands, if any. "Push" and "pop" refer
+// to pushing and popping from the virtual machine's value stack. "Constants" refer to the bytecode
+// chunk's constants.
+//
+// Constant index operands are encoded as follows:
+//   0 - 254: u8 representing the index value
+//   255 - 16,777,215: u8 value of FF followed by u24 representing the index value
 enum opcode {
     // Pushes a constant
     // Operands:
-    //   1. Index of the constant
+    //   constant_index - index of the constant
     OP_CONSTANT,
     OP_NIL, // Pushes nil
     OP_TRUE, // Pushes true
@@ -24,15 +27,15 @@ enum opcode {
     OP_POP, // Pops a value
     // Pops a value then defines a global variable initialised to that value
     // Operands:
-    //   1. Index of the constant containing the variable name
+    //   constant_index - index of the constant containing the variable name
     OP_DEFINE_GLOBAL,
     // Pushes the value of a global variable
     // Operands:
-    //   1. Index of the constant containing the variable name
+    //   constant_index - index of the constant containing the variable name
     OP_GET_GLOBAL,
     // Sets a global variable to the value on top of the stack
     // Operands:
-    //   1. Index of the constant containing the variable name
+    //   constant_index - index of the constant containing the variable name
     OP_SET_GLOBAL,
     OP_EQUAL, // Pops two numbers then pushes whether they're equal
     OP_NOT_EQUAL, // Pops two numbers then pushes whether they're not equal
@@ -80,6 +83,6 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk);
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);
 
 // Stores `value` in the chunk's constants and returns the index that can be used to retrieve it.
-uint8_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);
+uint32_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);
 
 #endif

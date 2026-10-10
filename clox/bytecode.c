@@ -90,10 +90,10 @@ void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
     chunk->len++;
 }
 
-uint8_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value)
+uint32_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value)
 {
-    int index = chunk->constants.len;
-    assert(index <= 255); // The bytecode only supports byte operands at the moment
+    uint32_t index = chunk->constants.len;
+    assert(index <= (1 << 24) - 1); // The largest constant index operand type is u24
     value_array_write(&chunk->constants, value);
     return index;
 }

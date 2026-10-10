@@ -69,9 +69,24 @@ void vm_free(vm *vm)
 }
 
 // Reads the u8 at the instruction pointer and moves the instruction pointer past it.
-static uint8_t vm_read_byte(vm *vm)
+static uint8_t vm_read_u8(vm *vm)
 {
     return *vm->_ip++;
+}
+
+// Reads the u24 at the instruction pointer and moves the instruction pointer past it.
+static uint32_t vm_read_u24(vm *vm)
+{
+    return (vm_read_u8(vm) << 16) + (vm_read_u8(vm) << 8) + (vm_read_u8(vm));
+}
+
+// Reads the constant index at the instruction pointer and moves the instruction pointer past it.
+static uint32_t vm_read_constant_index(vm *vm)
+{
+    uint8_t index = vm_read_u8(vm);
+    if (index == 0xFF)
+        return vm_read_u24(vm);
+    return index;
 }
 
 #ifdef DEBUG
@@ -130,10 +145,10 @@ static bool vm_execute(vm *vm)
 #endif
 
         int instruction_offset = vm->_ip - vm->_chunk->instructions;
-        enum opcode instruction = vm_read_byte(vm);
+        enum opcode instruction = vm_read_u8(vm);
         switch (instruction) {
         case OP_CONSTANT: {
-            uint8_t index = vm_read_byte(vm);
+            uint32_t index = vm_read_constant_index(vm);
             value value = vm->_chunk->constants.values[index];
             vm_stack_push(vm, value);
             break;
@@ -151,7 +166,7 @@ static bool vm_execute(vm *vm)
             vm_stack_pop(vm);
             break;
         case OP_DEFINE_GLOBAL: {
-            uint8_t index = vm_read_byte(vm);
+            uint32_t index = vm_read_constant_index(vm);
             struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
             // map_set could trigger an allocation causing garbage collection, so don't pop the
             // initialiser until we've set the variable
@@ -161,7 +176,7 @@ static bool vm_execute(vm *vm)
             break;
         }
         case OP_GET_GLOBAL: {
-            uint8_t index = vm_read_byte(vm);
+            uint32_t index = vm_read_constant_index(vm);
             struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
             value value;
             if (!map_get(&vm->_globals, name, &value)) {
@@ -172,7 +187,7 @@ static bool vm_execute(vm *vm)
             break;
         }
         case OP_SET_GLOBAL: {
-            uint8_t index = vm_read_byte(vm);
+            uint32_t index = vm_read_constant_index(vm);
             struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
             value value = vm_stack_peek(vm, 0);
             bool is_new_name = map_set(vm, &vm->_globals, name, value);

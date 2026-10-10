@@ -131,31 +131,34 @@ static void compiler_emit(compiler *compiler, uint8_t byte, int line)
     bytecode_chunk_write(compiler->_out, byte, line);
 }
 
-// Writes `value` corresponding to `line` to the bytecode's constants and emits the corresponding
-// CONSTANT instruction.
-static void compiler_emit_constant(compiler *compiler, value value, int line)
+// Adds `value` corresponding to `line` to the bytecode's constants and writes the corresponding
+// index to the bytecode, encoded appropriately depending on its value.
+static void compiler_emit_constant_index(compiler *compiler, value value, int line)
 {
-    int index = bytecode_chunk_add_constant(compiler->_out, value);
-    compiler_emit(compiler, OP_CONSTANT, line);
-    compiler_emit(compiler, index, line);
+    uint32_t index = bytecode_chunk_add_constant(compiler->_out, value);
+    if (index < 255) {
+        compiler_emit(compiler, index, line);
+    } else {
+        compiler_emit(compiler, 0xFF, line);
+        compiler_emit(compiler, (index >> 16) & 0xFF, line);
+        compiler_emit(compiler, (index >> 8) & 0xFF, line);
+        compiler_emit(compiler, (index >> 0) & 0xFF, line);
+    }
 }
 
-// Adds the identifier at the current token to the bytecode's constants, advances the compiler past
-// it, and returns the index of the added identifier in the bytecode's constants.
-// If the current token is not an identifier, then an error is reported, the compiler is not
-// advanced past it, and -1 is returned.
-static int compiler_parse_ident(compiler *compiler, const char *error_msg)
+// Returns the identifier at the current token and advances the compiler past it.
+// If the current token is not an identifier, then as error is reported, the compiler is not
+// advanced, and `NULL` is returned.
+static struct object_string *compiler_parse_ident(compiler *compiler, const char *error_msg)
 {
     if (compiler->_token.type == TOKEN_IDENT) {
         compiler_advance(compiler);
     } else {
         COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", error_msg);
-        return -1;
+        return NULL;
     }
-    struct object_string *name =
-        object_string_copy(compiler->_vm, compiler->_prev_token.start, compiler->_prev_token.len);
-    uint8_t index = bytecode_chunk_add_constant(compiler->_out, value_string(name));
-    return index;
+    return object_string_copy(compiler->_vm, compiler->_prev_token.start,
+                              compiler->_prev_token.len);
 }
 
 // Precedence levels of the different operators, ordered by increasing precedence.
@@ -243,8 +246,8 @@ static void compiler_compile_keyword_literal_expr(compiler *compiler, enum prece
 // `expr_compiler` for an identifier expression.
 static void compiler_compile_ident_expr(compiler *compiler, enum precedence_level level)
 {
-    int index = compiler_parse_ident(compiler, "expected identifier");
-    if (index < 0)
+    struct object_string *name = compiler_parse_ident(compiler, "expected identifier");
+    if (name == NULL)
         return;
     int line = compiler->_prev_token.line;
     enum opcode instruction = OP_GET_GLOBAL;
@@ -258,7 +261,7 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
         instruction = OP_SET_GLOBAL;
     }
     compiler_emit(compiler, instruction, line);
-    compiler_emit(compiler, index, line);
+    compiler_emit_constant_index(compiler, value_string(name), line);
 }
 
 // `expr_compiler` for a string literal expression.
@@ -270,7 +273,8 @@ static void compiler_compile_string_literal_expr(compiler *compiler, enum preced
     // in
     struct object_string *string = object_string_copy(
         compiler->_vm, compiler->_prev_token.start + 1, compiler->_prev_token.len - 2);
-    compiler_emit_constant(compiler, value_string(string), compiler->_prev_token.line);
+    compiler_emit(compiler, OP_CONSTANT, compiler->_prev_token.line);
+    compiler_emit_constant_index(compiler, value_string(string), compiler->_prev_token.line);
 }
 
 // `expr_compiler` for a number literal expression.
@@ -279,7 +283,8 @@ static void compiler_compile_number_literal_expr(compiler *compiler, enum preced
     (void)level;
     compiler_expect(compiler, TOKEN_NUMBER);
     double number = strtod(compiler->_prev_token.start, NULL);
-    compiler_emit_constant(compiler, value_number(number), compiler->_prev_token.line);
+    compiler_emit(compiler, OP_CONSTANT, compiler->_prev_token.line);
+    compiler_emit_constant_index(compiler, value_number(number), compiler->_prev_token.line);
 }
 
 // `expr_compiler` for a group expression.
@@ -439,8 +444,8 @@ static void compiler_compile_var_decl(compiler *compiler)
 {
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_VAR);
-    int index = compiler_parse_ident(compiler, "expected variable name");
-    if (index < 0)
+    struct object_string *name = compiler_parse_ident(compiler, "expected variable name");
+    if (name == NULL)
         return;
     if (COMPILER_MATCH(compiler, TOKEN_EQUAL))
         compiler_compile_expr(compiler);
@@ -448,7 +453,7 @@ static void compiler_compile_var_decl(compiler *compiler)
         compiler_emit(compiler, OP_NIL, line);
     compiler_expect(compiler, TOKEN_SEMICOLON);
     compiler_emit(compiler, OP_DEFINE_GLOBAL, line);
-    compiler_emit(compiler, index, line);
+    compiler_emit_constant_index(compiler, value_string(name), line);
 }
 
 // Emits the bytecode for the statement starting at the current token and advances the compiler past
