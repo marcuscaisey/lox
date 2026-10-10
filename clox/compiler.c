@@ -2,6 +2,7 @@
 
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -124,6 +125,39 @@ static bool compiler_match(compiler *compiler, enum token_type *types, int count
     return false;
 }
 
+// Writes `byte` corresponding to `line` to the bytecode.
+static void compiler_emit(compiler *compiler, uint8_t byte, int line)
+{
+    bytecode_chunk_write(compiler->_out, byte, line);
+}
+
+// Writes `value` corresponding to `line` to the bytecode's constants and emits the corresponding
+// CONSTANT instruction.
+static void compiler_emit_constant(compiler *compiler, value value, int line)
+{
+    int index = bytecode_chunk_add_constant(compiler->_out, value);
+    compiler_emit(compiler, OP_CONSTANT, line);
+    compiler_emit(compiler, index, line);
+}
+
+// Adds the identifier at the current token to the bytecode's constants, advances the compiler past
+// it, and returns the index of the added identifier in the bytecode's constants.
+// If the current token is not an identifier, then an error is reported, the compiler is not
+// advanced past it, and -1 is returned.
+static int compiler_parse_ident(compiler *compiler, const char *error_msg)
+{
+    if (compiler->_token.type == TOKEN_IDENT) {
+        compiler_advance(compiler);
+    } else {
+        COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", error_msg);
+        return -1;
+    }
+    struct object_string *name =
+        object_string_copy(compiler->_vm, compiler->_prev_token.start, compiler->_prev_token.len);
+    uint8_t index = bytecode_chunk_add_constant(compiler->_out, value_string(name));
+    return index;
+}
+
 // Precedence levels of the different operators, ordered by increasing precedence.
 enum precedence_level {
     // Default value used when a precedence level is expected but none are applicable
@@ -148,8 +182,6 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
     switch (type) {
     // case TOKEN_COMMA:
     //     return PREC_COMMA;
-    // case TOKEN_EQUAL:
-    //     return PREC_ASSIGNMENT;
     // case TOKEN_QUESTION:
     //     return PREC_TERNARY;
     // case TOKEN_OR:
@@ -183,10 +215,17 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
 static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level);
 static void compiler_compile_expr(compiler *compiler);
 
-// Writes the bytecode for the literal keyword in the current token and advances the compiler past
-// it.
-static void compiler_compile_literal_keyword(compiler *compiler)
+// Type of function which emits the bytecode for the expression starting at the current token,
+// consisting only of operators with at least the given precedence `level`, and advances the
+// compiler past it.
+// If an unexpected token is encountered, then an error is reported and the compiler is not advanced
+// past it.
+typedef void (*expr_compiler)(compiler *compiler, enum precedence_level level);
+
+// `expr_compiler` for a keyword literal expression.
+static void compiler_compile_keyword_literal_expr(compiler *compiler, enum precedence_level level)
 {
+    (void)level;
     enum opcode instruction;
     if (COMPILER_MATCH(compiler, TOKEN_NIL)) {
         instruction = OP_NIL;
@@ -198,43 +237,64 @@ static void compiler_compile_literal_keyword(compiler *compiler)
         COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected literal keyword");
         return;
     }
-    bytecode_chunk_write(compiler->_out, instruction, compiler->_prev_token.line);
+    compiler_emit(compiler, instruction, compiler->_prev_token.line);
 }
 
-// Writes the bytecode for the string literal in the current token and advances the compiler past
-// it.
-static void compiler_compile_string(compiler *compiler)
+// `expr_compiler` for an identifier expression.
+static void compiler_compile_ident_expr(compiler *compiler, enum precedence_level level)
 {
+    int index = compiler_parse_ident(compiler, "expected identifier");
+    if (index < 0)
+        return;
+    int line = compiler->_prev_token.line;
+    enum opcode instruction = OP_GET_GLOBAL;
+    if (compiler->_token.type == TOKEN_EQUAL) {
+        if (level > PREC_ASSIGNMENT) {
+            COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "invalid assignment target");
+            return;
+        }
+        compiler_advance(compiler);
+        compiler_compile_expr(compiler);
+        instruction = OP_SET_GLOBAL;
+    }
+    compiler_emit(compiler, instruction, line);
+    compiler_emit(compiler, index, line);
+}
+
+// `expr_compiler` for a string literal expression.
+static void compiler_compile_string_literal_expr(compiler *compiler, enum precedence_level level)
+{
+    (void)level;
     compiler_expect(compiler, TOKEN_STRING);
     // First and last characters are " so discount these from the length and start data 1 character
     // in
     struct object_string *string = object_string_copy(
         compiler->_vm, compiler->_prev_token.start + 1, compiler->_prev_token.len - 2);
-    bytecode_chunk_write_constant(compiler->_out, value_string(string), compiler->_prev_token.line);
+    compiler_emit_constant(compiler, value_string(string), compiler->_prev_token.line);
 }
 
-// Writes the bytecode for the number literal in the current token and advances the compiler past
-// it.
-static void compiler_compile_number(compiler *compiler)
+// `expr_compiler` for a number literal expression.
+static void compiler_compile_number_literal_expr(compiler *compiler, enum precedence_level level)
 {
+    (void)level;
     compiler_expect(compiler, TOKEN_NUMBER);
     double number = strtod(compiler->_prev_token.start, NULL);
-    bytecode_chunk_write_constant(compiler->_out, value_number(number), compiler->_prev_token.line);
+    compiler_emit_constant(compiler, value_number(number), compiler->_prev_token.line);
 }
 
-// Writes the bytecode for the group e_source = source;xpression starting at the current token and advances the
-// compiler past it.
-static void compiler_compile_group_expr(compiler *compiler)
+// `expr_compiler` for a group expression.
+static void compiler_compile_group_expr(compiler *compiler, enum precedence_level level)
 {
+    (void)level;
     compiler_expect(compiler, TOKEN_LEFT_PAREN);
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_RIGHT_PAREN);
 }
 
-// Write the bytecode for the unary expression starting at the current token and advances the
-// compiler past it.
-static void compiler_compile_unary_expr(compiler *compiler)
+// `expr_compiler` for a unary expression.
+static void compiler_compile_unary_expr(compiler *compiler, enum precedence_level level)
 {
+    (void)level;
     int line = compiler->_token.line;
     enum opcode instruction;
     if (COMPILER_MATCH(compiler, TOKEN_MINUS)) {
@@ -246,11 +306,8 @@ static void compiler_compile_unary_expr(compiler *compiler)
         return;
     }
     compiler_compile_expr_at_level(compiler, PREC_UNARY);
-    bytecode_chunk_write(compiler->_out, instruction, line);
+    compiler_emit(compiler, instruction, line);
 }
-
-// Type of function which writes the bytecode for an expression and advances the compiler past it.
-typedef void (*expr_compiler)(compiler *compiler);
 
 // Returns the compiler for a prefix expression starting with a `type` token or `NULL` if there is
 // none.
@@ -260,11 +317,13 @@ static expr_compiler prefix_expr_compiler(enum token_type type)
     case TOKEN_NIL:
     case TOKEN_TRUE:
     case TOKEN_FALSE:
-        return compiler_compile_literal_keyword;
+        return compiler_compile_keyword_literal_expr;
+    case TOKEN_IDENT:
+        return compiler_compile_ident_expr;
     case TOKEN_STRING:
-        return compiler_compile_string;
+        return compiler_compile_string_literal_expr;
     case TOKEN_NUMBER:
-        return compiler_compile_number;
+        return compiler_compile_number_literal_expr;
     case TOKEN_LEFT_PAREN:
         return compiler_compile_group_expr;
     case TOKEN_MINUS:
@@ -275,9 +334,8 @@ static expr_compiler prefix_expr_compiler(enum token_type type)
     }
 }
 
-// Writes the bytecode for the right hand side of a binary expression whose operator is at the
-// current token and advances the compiler past the it.
-static void compiler_compile_binary_expr(compiler *compiler)
+// `expr_compiler` for a binary expression.
+static void compiler_compile_binary_expr(compiler *compiler, enum precedence_level level)
 {
     int line = compiler->_token.line;
     enum opcode instruction;
@@ -305,10 +363,8 @@ static void compiler_compile_binary_expr(compiler *compiler)
         COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected binary operator");
         return;
     }
-    enum precedence_level current_level =
-        infix_operator_precedence_level(compiler->_prev_token.type);
-    compiler_compile_expr_at_level(compiler, current_level + 1);
-    bytecode_chunk_write(compiler->_out, instruction, line);
+    compiler_compile_expr_at_level(compiler, level + 1);
+    compiler_emit(compiler, instruction, line);
 }
 
 // Returns the compiler for an infix expression whose operator is a `type` token or `NULL` is there
@@ -332,8 +388,7 @@ static expr_compiler infix_expr_compiler(enum token_type type)
     }
 }
 
-// Writes the bytecode for the expression starting at the current token consisting only of operators
-// with at least the given precedence `level` and advances the compiler past it.
+// `expr_compiler` for any expression.
 static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level)
 {
     expr_compiler prefix_compiler = prefix_expr_compiler(compiler->_token.type);
@@ -341,27 +396,123 @@ static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_l
         COMPILER_REPORT_TOKEN_ERRORF(compiler, "%s", "expected expression");
         return;
     }
-    prefix_compiler(compiler);
+    prefix_compiler(compiler, level);
 
-    while (infix_operator_precedence_level(compiler->_token.type) >= level) {
+    enum precedence_level infix_level;
+    while ((infix_level = infix_operator_precedence_level(compiler->_token.type)) >= level) {
         expr_compiler infix_compiler = infix_expr_compiler(compiler->_token.type);
-        infix_compiler(compiler);
+        infix_compiler(compiler, infix_level);
     }
 }
 
-// Writes the bytecode for the expression starting the current token and advances the compiler past
+// Emits the bytecode for the expression starting the current token and advances the compiler past
 // it.
 static void compiler_compile_expr(compiler *compiler)
 {
     compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT);
 }
 
-// Writes the bytecode for the program and reports whether compilation was successful.
-static bool compiler_compile(compiler *compiler)
+// Emits the bytecode for the print statement starting at the current token and advances the
+// compiler past it.
+static void compiler_compile_print_stmt(compiler *compiler)
 {
+    int line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_PRINT);
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_SEMICOLON);
-    bytecode_chunk_write(compiler->_out, OP_RETURN, compiler->_token.line);
+    compiler_emit(compiler, OP_PRINT, line);
+}
+
+// Emits the bytecode for the statement starting at the current token and advances the compiler past
+// it.
+static void compiler_compile_expr_stmt(compiler *compiler)
+{
+    int line = compiler->_token.line;
+    compiler_compile_expr(compiler);
+    compiler_expect(compiler, TOKEN_SEMICOLON);
+    compiler_emit(compiler, OP_POP, line);
+}
+
+// Emits the bytecode for the variable declaration starting at the current token and advances the
+// compiler past it.
+static void compiler_compile_var_decl(compiler *compiler)
+{
+    int line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_VAR);
+    int index = compiler_parse_ident(compiler, "expected variable name");
+    if (index < 0)
+        return;
+    if (COMPILER_MATCH(compiler, TOKEN_EQUAL))
+        compiler_compile_expr(compiler);
+    else
+        compiler_emit(compiler, OP_NIL, line);
+    compiler_expect(compiler, TOKEN_SEMICOLON);
+    compiler_emit(compiler, OP_DEFINE_GLOBAL, line);
+    compiler_emit(compiler, index, line);
+}
+
+// Emits the bytecode for the statement starting at the current token and advances the compiler past
+// it.
+static void compiler_compile_stmt(compiler *compiler)
+{
+    switch (compiler->_token.type) {
+    case TOKEN_PRINT:
+        compiler_compile_print_stmt(compiler);
+        break;
+    default:
+        compiler_compile_expr_stmt(compiler);
+        break;
+    }
+}
+
+// Sync advances the compiler until the current token is at the start of a statement.
+static void compiler_sync(compiler *compiler)
+{
+    while (true) {
+        switch (compiler->_token.type) {
+        case TOKEN_PRINT:
+        case TOKEN_VAR:
+        case TOKEN_IF:
+        case TOKEN_WHILE:
+        case TOKEN_FOR:
+        case TOKEN_BREAK:
+        case TOKEN_CONTINUE:
+        case TOKEN_RETURN:
+        case TOKEN_CLASS:
+            return;
+        default:
+            compiler_advance(compiler);
+            if (compiler->_prev_token.type == TOKEN_SEMICOLON)
+                return;
+            break;
+        }
+    }
+}
+
+// Emits the bytecode for the declaration starting at the current token and advances the compiler
+// past it.
+static void compiler_compile_decl(compiler *compiler)
+{
+    switch (compiler->_token.type) {
+    case TOKEN_VAR:
+        compiler_compile_var_decl(compiler);
+        break;
+    default:
+        compiler_compile_stmt(compiler);
+        break;
+    }
+    if (compiler->_in_panic_mode) {
+        compiler_sync(compiler);
+        compiler->_in_panic_mode = false;
+    }
+}
+
+// Emits the bytecode for the program and reports whether compilation was successful.
+static bool compiler_compile(compiler *compiler)
+{
+    while (compiler->_token.type != TOKEN_EOF)
+        compiler_compile_decl(compiler);
+    compiler_emit(compiler, OP_RETURN, compiler->_token.line);
     bool success = !compiler->_had_error;
 #ifdef DEBUG
     if (success)

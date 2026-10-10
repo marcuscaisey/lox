@@ -74,8 +74,9 @@ struct object_string *object_string_copy(vm *vm, const char *data, size_t len)
     struct object_string *interned_string = map_get_key(&vm->_strings, data, len, hash);
     if (interned_string != NULL)
         return interned_string;
-    char *data_copy = vm_malloc(vm, len);
+    char *data_copy = vm_malloc(vm, len + 1);
     memcpy(data_copy, data, len);
+    data_copy[len] = '\0';
     return object_string_create(vm, data_copy, len, hash);
 }
 

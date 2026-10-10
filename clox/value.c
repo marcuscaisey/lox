@@ -103,7 +103,7 @@ void value_print(value value)
         break;
     case VALUE_STRING: {
         struct object_string *string = value_as_string(value);
-        printf("%.*s", (int)(string->len <= INT_MAX ? string->len : INT_MAX), string->data);
+        printf("%s", string->data);
         break;
     }
     }

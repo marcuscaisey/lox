@@ -8,20 +8,32 @@
 
 // Instruction types supported by the Lox bytecode.
 // Instructions operate on a stack-based virtual machine.
-// The comment on each opcode describes the operation and operands, if any. Push and pop in these
-// descriptions refer to pushing and popping from the virtual machine's value stack.
+// The comment on each opcode describes the operation and operands, if any. All operands are a
+// single byte.
+// Push and pop in these descriptions refer to pushing and popping from the virtual machine's value
+// stack.
+// Constants in these descriptions refer to the bytecode chunk's constants.
 enum opcode {
-    // Pushes a constant with index <= 255
+    // Pushes a constant
     // Operands:
-    //   u8 - index of the constant in `bytecode_chunk.constants`
+    //   1. Index of the constant
     OP_CONSTANT,
-    // Pushes a constant with index > 255
-    // Operands:
-    //   u24 - index of the constant in `bytecode_chunk.constants`, encoded in big-endian
-    OP_CONSTANT_LONG,
     OP_NIL, // Pushes nil
     OP_TRUE, // Pushes true
     OP_FALSE, // Pushes false
+    OP_POP, // Pops a value
+    // Pops a value then defines a global variable initialised to that value
+    // Operands:
+    //   1. Index of the constant containing the variable name
+    OP_DEFINE_GLOBAL,
+    // Pushes the value of a global variable
+    // Operands:
+    //   1. Index of the constant containing the variable name
+    OP_GET_GLOBAL,
+    // Sets a global variable to the value on top of the stack
+    // Operands:
+    //   1. Index of the constant containing the variable name
+    OP_SET_GLOBAL,
     OP_EQUAL, // Pops two numbers then pushes whether they're equal
     OP_NOT_EQUAL, // Pops two numbers then pushes whether they're not equal
     OP_LESS, // Pops two numbers b, then a, then pushes a < b
@@ -34,6 +46,7 @@ enum opcode {
     OP_DIVIDE, // Pops two numbers b, then a, then pushes a / b
     OP_NOT, // Pops a value, then pushes whether it is falsey
     OP_NEGATE, // Pops a number, negates it, then pushes it back
+    OP_PRINT, // Pops a value then prints it
     // TODO
     OP_RETURN,
 };
@@ -66,8 +79,7 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk);
 // Writes `byte` into the chunk's instructions. `line` is the line number corresponding to the byte.
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);
 
-// Stores `value` in the chunk's constants and writes the instruction to load it into the chunk's
-// instructions. `line` is the line number corresponding to the value.
-void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, value value, int line);
+// Stores `value` in the chunk's constants and returns the index that can be used to retrieve it.
+uint8_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);
 
 #endif

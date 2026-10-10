@@ -21,6 +21,7 @@ typedef struct vm {
     value *_stack_top; // Points to where the next element will be pushed on the value stack
     struct object *_objects; // Head of the linked list of managed objects
     map _strings; // Interned strings
+    map _globals; // Global variables
 } vm;
 
 // Initialises `vm` for use.

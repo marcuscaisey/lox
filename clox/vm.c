@@ -47,6 +47,7 @@ void vm_init(vm *vm)
     vm_stack_reset(vm);
     vm->_objects = NULL;
     map_init(&vm->_strings);
+    map_init(&vm->_globals);
 }
 
 // Frees the objects managed by the VM and memory associated with them.
@@ -64,18 +65,13 @@ void vm_free(vm *vm)
 {
     vm_destroy_objects(vm);
     map_free(vm, &vm->_strings);
+    map_free(vm, &vm->_globals);
 }
 
 // Reads the u8 at the instruction pointer and moves the instruction pointer past it.
-static uint8_t vm_read_u8(vm *vm)
+static uint8_t vm_read_byte(vm *vm)
 {
     return *vm->_ip++;
-}
-
-// Reads the u24 at the instruction pointer and moves the instruction pointer past it.
-static uint8_t vm_read_u24(vm *vm)
-{
-    return (vm_read_u8(vm) << 16) + (vm_read_u8(vm) << 8) + (vm_read_u8(vm));
 }
 
 #ifdef DEBUG
@@ -117,9 +113,10 @@ static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const vm *vm,
 struct object_string *vm_concat_strings(vm *vm, struct object_string *a, struct object_string *b)
 {
     size_t len = a->len + b->len;
-    char *data = vm_malloc(vm, len);
+    char *data = vm_malloc(vm, len + 1);
     memcpy(data, a->data, a->len);
     memcpy(data + a->len, b->data, b->len);
+    data[len] = '\0';
     return object_string_take(vm, data, len);
 }
 
@@ -133,16 +130,10 @@ static bool vm_execute(vm *vm)
 #endif
 
         int instruction_offset = vm->_ip - vm->_chunk->instructions;
-        enum opcode instruction = vm_read_u8(vm);
+        enum opcode instruction = vm_read_byte(vm);
         switch (instruction) {
         case OP_CONSTANT: {
-            uint8_t index = vm_read_u8(vm);
-            value value = vm->_chunk->constants.values[index];
-            vm_stack_push(vm, value);
-            break;
-        }
-        case OP_CONSTANT_LONG: {
-            uint8_t index = vm_read_u24(vm);
+            uint8_t index = vm_read_byte(vm);
             value value = vm->_chunk->constants.values[index];
             vm_stack_push(vm, value);
             break;
@@ -156,6 +147,42 @@ static bool vm_execute(vm *vm)
         case OP_FALSE:
             vm_stack_push(vm, value_bool(false));
             break;
+        case OP_POP:
+            vm_stack_pop(vm);
+            break;
+        case OP_DEFINE_GLOBAL: {
+            uint8_t index = vm_read_byte(vm);
+            struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
+            // map_set could trigger an allocation causing garbage collection, so don't pop the
+            // initialiser until we've set the variable
+            value initialiser = vm_stack_peek(vm, 0);
+            map_set(vm, &vm->_globals, name, initialiser);
+            vm_stack_pop(vm);
+            break;
+        }
+        case OP_GET_GLOBAL: {
+            uint8_t index = vm_read_byte(vm);
+            struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
+            value value;
+            if (!map_get(&vm->_globals, name, &value)) {
+                vm_report_errorf(vm, instruction_offset, "'%s' has not been declared", name->data);
+                return false;
+            }
+            vm_stack_push(vm, value);
+            break;
+        }
+        case OP_SET_GLOBAL: {
+            uint8_t index = vm_read_byte(vm);
+            struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
+            value value = vm_stack_peek(vm, 0);
+            bool is_new_name = map_set(vm, &vm->_globals, name, value);
+            if (is_new_name) {
+                map_delete(&vm->_globals, name);
+                vm_report_errorf(vm, instruction_offset, "'%s' has not been declared", name->data);
+                return false;
+            }
+            break;
+        }
         case OP_EQUAL: {
             value a = vm_stack_pop(vm);
             value b = vm_stack_pop(vm);
@@ -238,10 +265,13 @@ static bool vm_execute(vm *vm)
             vm_stack_push(vm, value_number(-value_as_number(value)));
             break;
         }
-        case OP_RETURN: {
+        case OP_PRINT: {
             value value = vm_stack_pop(vm);
             value_print(value);
             printf("\n");
+            break;
+        }
+        case OP_RETURN: {
             return true;
         }
         }

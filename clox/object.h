@@ -33,17 +33,17 @@ enum value_type object_value_type(const struct object *object);
 // determine equality.
 struct object_string {
     struct object _object; // Internal field, do not use.
-    // Pointer to the string data.
-    // This is not a null-terminated string, so `len` must be used to read it.
+    // Pointer to the null-terminated string data.
     const char *data;
-    size_t len; // Number of characters in `data`
+    size_t len; // Length of the string
     uint32_t hash; // Hash of the string data
 };
 
-// Allocates and initialises a new string by making a copy of `data`.
+// Allocates and initialises a new string by making a copy of the first `len` bytes of `data`.
 struct object_string *object_string_copy(vm *vm, const char *data, size_t len);
 
-// Allocates and initialises a new string by taking ownership of `data`.
+// Allocates and initialises a new string by taking ownership of `data` which must be
+// null-terminated.
 struct object_string *object_string_take(vm *vm, char *data, size_t len);
 
 value value_string(struct object_string *string);

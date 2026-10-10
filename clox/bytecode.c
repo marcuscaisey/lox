@@ -1,5 +1,6 @@
 #include "bytecode.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -12,14 +13,20 @@ const char *instruction_name(enum opcode opcode)
     switch (opcode) {
     case OP_CONSTANT:
         return "CONSTANT";
-    case OP_CONSTANT_LONG:
-        return "CONSTANT_LONG";
     case OP_NIL:
         return "NIL";
     case OP_TRUE:
         return "TRUE";
     case OP_FALSE:
         return "FALSE";
+    case OP_POP:
+        return "POP";
+    case OP_DEFINE_GLOBAL:
+        return "DEFINE_GLOBAL";
+    case OP_GET_GLOBAL:
+        return "GET_GLOBAL";
+    case OP_SET_GLOBAL:
+        return "SET_GLOBAL";
     case OP_EQUAL:
         return "EQUAL";
     case OP_NOT_EQUAL:
@@ -44,6 +51,8 @@ const char *instruction_name(enum opcode opcode)
         return "NOT";
     case OP_NEGATE:
         return "NEGATE";
+    case OP_PRINT:
+        return "PRINT";
     case OP_RETURN:
         return "RETURN";
     }
@@ -81,18 +90,10 @@ void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
     chunk->len++;
 }
 
-void bytecode_chunk_write_constant(struct bytecode_chunk *chunk, value value, int line)
+uint8_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value)
 {
-    int constant_index = chunk->constants.len;
+    int index = chunk->constants.len;
+    assert(index <= 255); // The bytecode only supports byte operands at the moment
     value_array_write(&chunk->constants, value);
-    int max_constant_index = (1 << (sizeof(*chunk->instructions) * 8)) - 1;
-    if (constant_index <= max_constant_index) {
-        bytecode_chunk_write(chunk, OP_CONSTANT, line);
-        bytecode_chunk_write(chunk, constant_index, line);
-    } else {
-        bytecode_chunk_write(chunk, OP_CONSTANT_LONG, line);
-        bytecode_chunk_write(chunk, (constant_index >> 16) & 0xff, line);
-        bytecode_chunk_write(chunk, (constant_index >> 8) & 0xff, line);
-        bytecode_chunk_write(chunk, (constant_index >> 0) & 0xff, line);
-    }
+    return index;
 }
