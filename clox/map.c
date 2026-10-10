@@ -16,8 +16,8 @@
 
 // Entry is what gets stored in the array. The meanings of `key` and `value` depend on their values.
 //   1. If `key != NULL`, then `value` is the value associated with `key`.
-//   2. If `key == NULL` and `value == value_nil`, then the slot that the entry is stored in is
-//      empty. I.e. there's no value associated with `key`.
+//   2. If `key == NULL` and `value_type(value) == VALUE_BOOL`, then the slot that the entry is
+//      stored in is empty. I.e. there's no value associated with `key`.
 //   3. If `key == NULL` and `value_type(value) == VALUE_BOOL`, then the entry is a tombstone. This
 //      means that the value previously associated with `key` was deleted.
 struct _entry {
@@ -45,12 +45,14 @@ static struct _entry *find_entry(struct _entry *entries, size_t cap, struct obje
     struct _entry *tombstone = NULL;
     for (size_t i = 0; i < cap; i++) {
         struct _entry *entry = &entries[index];
-        if (entry->key == key)
+        if (entry->key == NULL) {
+            if (value_type(entry->value) == VALUE_NIL)
+                return tombstone != NULL ? tombstone : entry;
+            if (value_type(entry->value) == VALUE_BOOL && tombstone == NULL)
+                tombstone = entry;
+        } else if (entry->key == key) {
             return entry;
-        if (value_type(entry->value) == VALUE_NIL)
-            return tombstone != NULL ? tombstone : entry;
-        if (value_type(entry->value) == VALUE_BOOL && tombstone == NULL)
-            tombstone = entry;
+        }
         index = (index + 1) % cap;
     }
     // We end up here if we've iterated over all of the entries and not found either the entry we're
