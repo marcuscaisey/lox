@@ -519,7 +519,7 @@ static bool compiler_compile(compiler *compiler)
         compiler_compile_decl(compiler);
     compiler_emit(compiler, OP_RETURN, compiler->_token.line);
     bool success = !compiler->_had_error;
-#ifdef DEBUG
+#ifdef DEBUG_PRINT_BYTECODE
     if (success)
         disassemble(compiler->_out, "code");
 #endif

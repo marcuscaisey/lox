@@ -5,6 +5,12 @@ CFLAGS := -std=c11 -Wall -Wextra -Wpedantic -Werror
 
 ifdef DEBUG
 	CFLAGS += -O0 -g -DDEBUG
+	ifdef PRINT_BYTECODE
+		CFLAGS += -DDEBUG_PRINT_BYTECODE
+	endif
+	ifdef TRACE_EXECUTION
+		CFLAGS += -DDEBUG_TRACE_EXECUTION
+	endif
 	BUILD_DIR := $(BASE_BUILD_DIR)/debug
 else
 	CFLAGS += -O3 -flto
@@ -35,4 +41,4 @@ objects: $(OBJECTS)
 
 compile_commands.json: Makefile $(SOURCES) $(HEADERS)
 	$(MAKE) clean DEBUG=1
-	bear -- $(MAKE) -k objects DEBUG=1
+	bear -- $(MAKE) -k objects DEBUG=1 PRINT_BYTECODE=1 TRACE_EXECUTION=1

@@ -89,7 +89,7 @@ static uint32_t vm_read_constant_index(vm *vm)
     return index;
 }
 
-#ifdef DEBUG
+#ifdef DEBUG_TRACE_EXECUTION
 // Prints the contents of the value stack and the current instruction.
 static void vm_print_trace_info(const vm *vm)
 {
@@ -140,7 +140,7 @@ struct object_string *vm_concat_strings(vm *vm, struct object_string *a, struct 
 static bool vm_execute(vm *vm)
 {
     while (true) {
-#ifdef DEBUG
+#ifdef DEBUG_TRACE_EXECUTION
         vm_print_trace_info(vm);
 #endif
 
