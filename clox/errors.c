@@ -3,8 +3,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-// Concrete styles
+// Concrete styles. These are used to build semantic styles.
 #define ANSI_RESET "\x1b[0m"
 #define ANSI_BOLD "\x1b[1m"
 #define ANSI_FAINT "\x1b[2m"
@@ -12,17 +13,36 @@
 #define ANSI_YELLOW "\x1b[33m"
 #define ANSI_DEFAULT "\x1b[39m"
 
-// Semantic styles
-static const char *const error_msg_line_style = ANSI_BOLD;
-static const char *const location_style = ANSI_YELLOW;
-static const char *const location_separator_style = ANSI_DEFAULT;
-static const char *const error_style = ANSI_RED;
-static const char *const error_msg_style = ANSI_DEFAULT;
-static const char *const code_snippet_style = ANSI_FAINT;
+// Semantic styles. These are used in messages.
+// These may be modified by `maybe_unset_semantic_styles()` so that function needs to be updated if
+// a new style is added.
+static const char *error_msg_line_style = ANSI_BOLD;
+static const char *location_style = ANSI_YELLOW;
+static const char *location_separator_style = ANSI_DEFAULT;
+static const char *error_style = ANSI_RED;
+static const char *error_msg_style = ANSI_DEFAULT;
+static const char *code_snippet_style = ANSI_FAINT;
+static const char *reset_style = ANSI_RESET;
+
+// Sets all of the semantic styles to empty strings if stderr is not a tty.
+static void maybe_unset_semantic_styles(void)
+{
+    if (!isatty(STDERR_FILENO)) {
+        error_msg_line_style = "";
+        location_style = "";
+        location_separator_style = "";
+        error_style = "";
+        error_msg_style = "";
+        code_snippet_style = "";
+        reset_style = "";
+    }
+}
 
 void print_invalid_range_error(const char *msg, const char *source, const char *start,
                                const char *end)
 {
+    maybe_unset_semantic_styles();
+
     int line = 1;
     // Points to the start of the line that start is on
     const char *start_line_start = source;
@@ -42,7 +62,7 @@ void print_invalid_range_error(const char *msg, const char *source, const char *
     fprintf(stderr, "%s: ", location_separator_style);
     fprintf(stderr, "%serror", error_style);
     fprintf(stderr, "%s: %s", error_msg_style, msg);
-    fprintf(stderr, "%s\n", ANSI_RESET);
+    fprintf(stderr, "%s\n", reset_style);
 
     // Print highlighted lines which look like:
     //   (-1 + 2) * 3 - -4 + print
@@ -61,7 +81,7 @@ void print_invalid_range_error(const char *msg, const char *source, const char *
         for (const char *p = line_start; *p != '\n' && *p != '\0'; p++) {
             fprintf(stderr, "%c", *p);
         }
-        fprintf(stderr, "\n%s", ANSI_RESET);
+        fprintf(stderr, "\n%s", reset_style);
         // Print tildes
         fprintf(stderr, "%s", error_style);
         const char *p;
@@ -69,12 +89,14 @@ void print_invalid_range_error(const char *msg, const char *source, const char *
             fprintf(stderr, start <= p && p < end ? "~" : " ");
         }
         line_start = p + 1;
-        fprintf(stderr, "\n%s", ANSI_RESET);
+        fprintf(stderr, "\n%s", reset_style);
     }
 }
 
 void print_invalid_line_error(const char *msg, const char *source, int line)
 {
+    maybe_unset_semantic_styles();
+
     // Print error message which looks like:
     //   3: error: '+' operator cannot be used with types 'number' and 'bool'
     fprintf(stderr, "%s", error_msg_line_style);
@@ -82,7 +104,7 @@ void print_invalid_line_error(const char *msg, const char *source, int line)
     fprintf(stderr, "%s: ", location_separator_style);
     fprintf(stderr, "%serror", error_style);
     fprintf(stderr, "%s: %s", error_msg_style, msg);
-    fprintf(stderr, "%s\n", ANSI_RESET);
+    fprintf(stderr, "%s\n", reset_style);
 
     const char *line_start = source;
     int current_line = 1;
@@ -100,14 +122,14 @@ void print_invalid_line_error(const char *msg, const char *source, int line)
     for (const char *p = line_start; *p != '\n' && *p != '\0'; p++) {
         fprintf(stderr, "%c", *p);
     }
-    fprintf(stderr, "\n%s", ANSI_RESET);
+    fprintf(stderr, "\n%s", reset_style);
     // Print tildes
     fprintf(stderr, "%s", error_style);
     const char *p;
     for (p = line_start; *p != '\n' && *p != '\0'; p++) {
         fprintf(stderr, "~");
     }
-    fprintf(stderr, "\n%s", ANSI_RESET);
+    fprintf(stderr, "\n%s", reset_style);
 }
 
 void panicf(const char *format, ...)

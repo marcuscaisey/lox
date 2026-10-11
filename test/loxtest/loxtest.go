@@ -159,24 +159,25 @@ func colouriseDiff(diff string) string {
 }
 
 // MustBuildBinary builds a Go binary defined in the github.com/marcuscaisey/lox Go module and returns the path to it.
-// name should be a directory in the root of the module. A binary of the same name is output to the build directory.
+// name should be a directory in the root of the module. A binary of the same name is output to the build directory in
+// the binary's directory.
 func MustBuildBinary(t *testing.T, name string) string {
 	t.Helper()
 
 	rootDir := MustGoModuleRoot(t)
-	buildDir := filepath.Join(rootDir, "build")
+	buildDir := filepath.Join(rootDir, name, "build")
 	if err := os.MkdirAll(buildDir, 0755); err != nil {
 		t.Fatalf("building %s: %s", name, err)
 	}
 
-	loxfmtPath := filepath.Join(buildDir, name)
-	cmd := exec.Command("go", "build", "-o", loxfmtPath, "github.com/marcuscaisey/lox/"+name)
+	binaryPath := filepath.Join(buildDir, name)
+	cmd := exec.Command("go", "build", "-o", binaryPath, "github.com/marcuscaisey/lox/"+name)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("building %s: %s: %v\nOutput:\n%s\n", name, cmd.String(), err, string(output))
 	}
 
-	return loxfmtPath
+	return binaryPath
 }
 
 // MustGoModuleRoot returns the path to the root of the containing Go module. That is, the directory which contains the

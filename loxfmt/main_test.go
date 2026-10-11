@@ -52,12 +52,16 @@ func (r *runner) mustRun(t *testing.T, path string, flags ...string) string {
 	args := append(slices.Clone(flags), path)
 	cmd := exec.Command(r.loxfmtPath, args...)
 
+	relLoxfmtPath, err := filepath.Rel(r.rootDir, r.loxfmtPath)
+	if err != nil {
+		t.Fatalf("making loxfmt path relateive: %s", err)
+	}
 	relPath, err := filepath.Rel(r.rootDir, path)
 	if err != nil {
 		t.Fatalf("making test file path relative: %s", err)
 	}
 	logArgs := append(slices.Clone(flags), relPath)
-	t.Logf("go run ./loxfmt %s", strings.Join(logArgs, " "))
+	t.Logf("%s %s", relLoxfmtPath, strings.Join(logArgs, " "))
 
 	stdout, err := cmd.Output()
 	exitErr := &exec.ExitError{}

@@ -82,11 +82,15 @@ type loxlintResult struct {
 func (r *runner) mustRunLoxlint(t *testing.T, path string) *loxlintResult {
 	cmd := exec.Command(r.loxlintPath, path)
 
+	relLoxlintPath, err := filepath.Rel(r.rootDir, r.loxlintPath)
+	if err != nil {
+		t.Fatalf("making loxlint path relateive: %s", err)
+	}
 	relPath, err := filepath.Rel(r.rootDir, path)
 	if err != nil {
 		t.Fatalf("making test file path relative: %s", err)
 	}
-	t.Logf("go run ./loxlint %s", relPath)
+	t.Logf("%s %s", relLoxlintPath, relPath)
 
 	stdout, err := cmd.Output()
 

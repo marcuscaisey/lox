@@ -486,15 +486,16 @@ static void compiler_sync(compiler *compiler)
 {
     while (true) {
         switch (compiler->_token.type) {
+        case TOKEN_EOF:
         case TOKEN_PRINT:
         case TOKEN_VAR:
-        case TOKEN_IF:
-        case TOKEN_WHILE:
-        case TOKEN_FOR:
-        case TOKEN_BREAK:
-        case TOKEN_CONTINUE:
-        case TOKEN_RETURN:
-        case TOKEN_CLASS:
+        // case TOKEN_IF:
+        // case TOKEN_WHILE:
+        // case TOKEN_FOR:
+        // case TOKEN_BREAK:
+        // case TOKEN_CONTINUE:
+        // case TOKEN_RETURN:
+        // case TOKEN_CLASS:
             return;
         default:
             compiler_advance(compiler);

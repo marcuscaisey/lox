@@ -1,10 +1,10 @@
 # Test Suite
 
-golox, loxlint, and loxfmt are tested against a suite of test files defined under
+clox, golox, loxfmt, and loxlint are tested against a suite of test files defined under
 [testdata](testdata).
 
-golox and loxlint are tested by running each test file and comparing the output with the expected
-output defined in the file.
+clox, golox, and loxlint are tested by running each test file and comparing the output with the
+expected output defined in the file.
 
 loxfmt is tested by formatting each test file and asserting that the contents of the file are
 unchanged.
@@ -13,8 +13,8 @@ unchanged.
 
 Test files are regular Lox files containing comments which describe the expectations of the test:
 
-- `// prints: <value>` defines a string that should be printed to stdout by golox.
-- `// error: <message>` defines an error message that should be printed to stderr by golox.
+- `// prints: <value>` defines a string that should be printed to stdout by clox and golox.
+- `// error: <message>` defines an error message that should be printed to stderr by clox and golox.
 - `// lint error: <message>` defines an error message that should be printed to stderr by loxlint.
 - `// lint warning: <message>` defines a warning message that should be printed to stderr by loxlint.
 - `// lint hint: <message>` defines a hint message that should be printed to stderr by loxlint.
@@ -31,7 +31,7 @@ print 3 % 1.5; // prints: 0
 ```
 
 If a `// syntaxerror` comment appears at the start of a test file, it will be skipped when not
-testing golox.
+testing clox or golox.
 
 ## Running the Tests
 
@@ -41,20 +41,22 @@ Run all tests:
 go test ./...
 ```
 
-Run the golox or loxfmt tests individually:
+Run the clox, golox, loxfmt, or loxlint tests individually:
 
 ```sh
+go test ./clox/test
 go test ./golox
-go test ./loxlint
 go test ./loxfmt
+go test ./loxlint
 ```
 
 Run a specific test:
 
 ```sh
+go test ./clox/test -test.run TestClox/Number/Modulo
 go test ./golox -test.run TestGolox/Number/Modulo
-go test ./loxlint -test.run TestLoxlint/Number/Modulo
 go test ./loxfmt -test.run TestLoxfmt/Number/Modulo
+go test ./loxlint -test.run TestLoxlint/Number/Modulo
 ```
 
 ## Updating the Test Expectations
@@ -63,15 +65,17 @@ The expectations of each test can be updated to match the current implementation
 of the following commands:
 
 ```sh
+go test ./clox/test -update
 go test ./golox -update
-go test ./loxlint -update
 go test ./loxfmt -update
+go test ./loxlint -update
 ```
 
 As with running the tests, you can update the expectations of a specific test as well:
 
 ```sh
+go test ./clox/test -test.run TestClox/Number/Modulo -update
 go test ./golox -test.run TestGolox/Number/Modulo -update
-go test ./loxlint -test.run TestLoxlint/Number/Modulo -update
 go test ./loxfmt -test.run TestLoxfmt/Number/Modulo -update
+go test ./loxlint -test.run TestLoxlint/Number/Modulo -update
 ```
