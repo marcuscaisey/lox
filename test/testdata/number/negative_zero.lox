@@ -1,0 +1,3 @@
+print -0; // prints: -0
+print 0; // prints: 0
+print -0 == 0; // prints: true
