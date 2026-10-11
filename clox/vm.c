@@ -167,7 +167,7 @@ static bool vm_execute(vm *vm)
             break;
         case OP_DEFINE_GLOBAL: {
             uint32_t index = vm_read_constant_index(vm);
-            struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
+            value name = vm->_chunk->constants.values[index];
             // map_set could trigger an allocation causing garbage collection, so don't pop the
             // initialiser until we've set the variable
             value initialiser = vm_stack_peek(vm, 0);
@@ -177,10 +177,11 @@ static bool vm_execute(vm *vm)
         }
         case OP_GET_GLOBAL: {
             uint32_t index = vm_read_constant_index(vm);
-            struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
+            value name = vm->_chunk->constants.values[index];
             value value;
             if (!map_get(&vm->_globals, name, &value)) {
-                vm_report_errorf(vm, instruction_offset, "'%s' has not been declared", name->data);
+                vm_report_errorf(vm, instruction_offset, "'%s' has not been declared",
+                                 value_as_string(name)->data);
                 return false;
             }
             vm_stack_push(vm, value);
@@ -188,12 +189,13 @@ static bool vm_execute(vm *vm)
         }
         case OP_SET_GLOBAL: {
             uint32_t index = vm_read_constant_index(vm);
-            struct object_string *name = value_as_string(vm->_chunk->constants.values[index]);
+            value name = vm->_chunk->constants.values[index];
             value value = vm_stack_peek(vm, 0);
             bool is_new_name = map_set(vm, &vm->_globals, name, value);
             if (is_new_name) {
                 map_delete(&vm->_globals, name);
-                vm_report_errorf(vm, instruction_offset, "'%s' has not been declared", name->data);
+                vm_report_errorf(vm, instruction_offset, "'%s' has not been declared",
+                                 value_as_string(name)->data);
                 return false;
             }
             break;

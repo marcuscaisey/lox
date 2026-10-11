@@ -36,7 +36,7 @@ struct object_string {
     // Pointer to the null-terminated string data.
     const char *data;
     size_t len; // Length of the string
-    uint32_t hash; // Hash of the string data
+    hash_value _hash; // Internal field, do not use. Hash of the string data.
 };
 
 // Allocates and initialises a new string by making a copy of the first `len` bytes of `data`.

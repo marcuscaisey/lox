@@ -2,11 +2,13 @@
 #define CLOX_MAP_H
 
 #include <stddef.h>
+#include <stdint.h>
 
-#include "object.h"
 #include "value.h"
 
-// Map from `struct object_string *` keys to `value` values.
+typedef struct vm vm;
+
+// Map from `value` keys to `value` values.
 // Must be initialised with `map_init()` before use and freed with `map_free()` after use.
 typedef struct {
     // Internal fields below, do not use.
@@ -24,18 +26,18 @@ void map_init(map *map);
 void map_free(vm *vm, map *map);
 
 // Associates `value` with `key` and reports whether this was a new key.
-bool map_set(vm *vm, map *map, struct object_string *key, value value);
+bool map_set(vm *vm, map *map, value key, value value);
 
 // Looks up the value associated with `key` and sets `out` to it if it's found.
 // Reports whether the value was found.
 // If `out == NULL` then it's ignored.
-bool map_get(map *map, struct object_string *key, value *out);
+bool map_get(map *map, value key, value *out);
 
-// Returns the key with data matching the provided parameters or `NULL` if no key is found.
-struct object_string *map_get_key(map *map, const char *data, size_t len, uint32_t hash);
+// Returns the string key with data matching the provided parameters or `NULL` if no key is found.
+struct object_string *map_get_string_key(map *map, const char *data, size_t len, hash_value hash);
 
 // Deletes the value associated with `key` if it's found.
 // Reports whether the value was found.
-bool map_delete(map *map, struct object_string *key);
+bool map_delete(map *map, value key);
 
 #endif

@@ -3,9 +3,12 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // Type of a Lox value.
 enum value_type {
+    // This doesn't corresond to a Lox value type. See `value_none` for what this represents.
+    VALUE_NONE,
     VALUE_NUMBER,
     VALUE_BOOL,
     VALUE_NIL,
@@ -21,7 +24,7 @@ const char *value_type_string(enum value_type type);
 // work with `T` values:
 //   - `value_type(value)` returns the type `T`.
 //   - `value_T(t_value)` constructs a `T` value from `t_value`. Use the constant `value_nil`
-//     instead where a nil value is required.
+//     instead where a `nil` value is required.
 //   - `value_as_T(value)` returns the `T` value represented by `value`. This is not safe to call
 //     unless you've verified (possibly with `value_type()`) that `value` is actually a `T` value.
 //
@@ -31,12 +34,13 @@ typedef struct {
     // Internal fields below, do not use.
     // Members must be equal to their corresponding value_type member apart from _VALUE_OBJECT
     enum _value_type {
+        _VALUE_NONE = VALUE_NONE,
         _VALUE_NUMBER = VALUE_NUMBER,
         _VALUE_BOOL = VALUE_BOOL,
         _VALUE_NIL = VALUE_NIL,
         _VALUE_OBJECT,
     } _type; ///< Indicates which of the union fields holds the actual value unless
-    ///< `_type == _VALUE_NIL`, in which case there is no associated value.
+    ///< it's `_VALUE_EMPTY` or `_VALUE_NIL`, in which case there is no associated value.
     union {
         double _number; // Valid when `_type == _VALUE_NUMBER`.
         bool _bool; // Valid when `_type == _VALUE_BOOL`.
@@ -44,8 +48,10 @@ typedef struct {
     };
 } value;
 
-// Returns the type of `value`.
-enum value_type value_type(value value);
+// Sentinel which represents a `value` with no associated value, similar to `NULL` for a pointer
+// type. The type of this `value` is `VALUE_NONE`.
+// This is distinct from `value_nil` which represents a Lox `nil`.
+const value value_none;
 
 value value_number(double number);
 value value_bool(bool bool_);
@@ -58,8 +64,17 @@ value value_object(struct object *object);
 bool value_is_object(value value);
 struct object *value_as_object(value value);
 
+// Returns the type of `value`.
+enum value_type value_type(value value);
+
 // Reports whether `a` and `b` are equal.
 bool values_are_equal(value a, value b);
+
+// Represents the hash value of a `value`.
+typedef uint32_t hash_value;
+
+// Returns the hash of `value`.
+hash_value value_hash(value value);
 
 // Reports whether `value` is falsey.
 bool value_is_falsey(value value);

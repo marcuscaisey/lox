@@ -26,7 +26,7 @@ enum value_type object_value_type(const struct object *object)
     return (enum value_type)object->_type;
 }
 
-uint32_t hash_string(const char *data, size_t len)
+static hash_value hash_string(const char *data, size_t len)
 {
     // algorithm fnv-1a is
     //     hash := FNV_offset_basis
@@ -34,7 +34,7 @@ uint32_t hash_string(const char *data, size_t len)
     //         hash := hash XOR byte_of_data
     //         hash := hash × FNV_prime
     //     return hash
-    uint32_t hash = 2166136261u;
+    hash_value hash = 2166136261u;
     for (const char *p = data; p < data + len; p++) {
         hash ^= (unsigned char)*p;
         hash *= 16777619;
@@ -44,7 +44,7 @@ uint32_t hash_string(const char *data, size_t len)
 
 // Allocates and initialises a new string, adds it to the VM's set of managed objects, and interns
 // it in the VM.
-struct object_string *object_string_create(vm *vm, const char *data, size_t len, uint32_t hash)
+struct object_string *object_string_create(vm *vm, const char *data, size_t len, hash_value hash)
 {
     struct object_string *string = vm_malloc(vm, sizeof(struct object_string));
     string->_object.next = vm->_objects;
@@ -52,15 +52,15 @@ struct object_string *object_string_create(vm *vm, const char *data, size_t len,
     string->_object._type = _OBJECT_STRING;
     string->data = data;
     string->len = len;
-    string->hash = hash;
-    map_set(vm, &vm->_strings, string, value_nil);
+    string->_hash = hash;
+    map_set(vm, &vm->_strings, value_string(string), value_nil);
     return string;
 }
 
 struct object_string *object_string_take(vm *vm, char *data, size_t len)
 {
-    uint32_t hash = hash_string(data, len);
-    struct object_string *interned_string = map_get_key(&vm->_strings, data, len, hash);
+    hash_value hash = hash_string(data, len);
+    struct object_string *interned_string = map_get_string_key(&vm->_strings, data, len, hash);
     if (interned_string != NULL) {
         vm_mfree(vm, data, len);
         return interned_string;
@@ -70,8 +70,8 @@ struct object_string *object_string_take(vm *vm, char *data, size_t len)
 
 struct object_string *object_string_copy(vm *vm, const char *data, size_t len)
 {
-    uint32_t hash = hash_string(data, len);
-    struct object_string *interned_string = map_get_key(&vm->_strings, data, len, hash);
+    hash_value hash = hash_string(data, len);
+    struct object_string *interned_string = map_get_string_key(&vm->_strings, data, len, hash);
     if (interned_string != NULL)
         return interned_string;
     char *data_copy = vm_malloc(vm, len + 1);

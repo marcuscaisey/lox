@@ -15,13 +15,13 @@
 #include "vm_memory.h"
 
 // Entry is what gets stored in the array. The meanings of `key` and `value` depend on their values.
-//   1. If `key != NULL`, then `value` is the value associated with `key`.
-//   2. If `key == NULL` and `value_type(value) == VALUE_BOOL`, then the slot that the entry is
-//      stored in is empty. I.e. there's no value associated with `key`.
-//   3. If `key == NULL` and `value_type(value) == VALUE_BOOL`, then the entry is a tombstone. This
-//      means that the value previously associated with `key` was deleted.
+//   1. If `key != value_none`, then `value` is the value associated with `key`.
+//   2. If `key == value_none` and `value == value_none`, then the slot that the entry is stored in
+//      is empty. I.e. there's no value associated with `key`.
+//   3. If `key == value_none` and `value == value_nil`, then the entry is a tombstone. This means
+//      that the value previously associated with `key` was deleted.
 struct _entry {
-    struct object_string *key;
+    value key;
     value value;
 };
 
@@ -39,18 +39,18 @@ void map_free(vm *vm, map *map)
 }
 
 // Returns the entry corresponding with `key`. `entries` must be non-empty.
-static struct _entry *find_entry(struct _entry *entries, size_t cap, struct object_string *key)
+static struct _entry *find_entry(struct _entry *entries, size_t cap, value key)
 {
-    size_t index = key->hash % cap;
+    size_t index = value_hash(key) % cap;
     struct _entry *tombstone = NULL;
     for (size_t i = 0; i < cap; i++) {
         struct _entry *entry = &entries[index];
-        if (entry->key == NULL) {
-            if (value_type(entry->value) == VALUE_NIL)
+        if (values_are_equal(entry->key, value_none)) {
+            if (values_are_equal(entry->value, value_none))
                 return tombstone != NULL ? tombstone : entry;
-            if (value_type(entry->value) == VALUE_BOOL && tombstone == NULL)
+            if (values_are_equal(entry->value, value_nil) && tombstone == NULL)
                 tombstone = entry;
-        } else if (entry->key == key) {
+        } else if (values_are_equal(entry->key, key)) {
             return entry;
         }
         index = (index + 1) % cap;
@@ -62,7 +62,7 @@ static struct _entry *find_entry(struct _entry *entries, size_t cap, struct obje
     panicf("clox: map: no empty slot found\n");
 }
 
-struct object_string *map_get_key(map *map, const char *data, size_t len, uint32_t hash)
+struct object_string *map_get_string_key(map *map, const char *data, size_t len, hash_value hash)
 {
     // This is basically the same as find_entry. The two should stay in sync.
     if (map->_cap == 0)
@@ -70,12 +70,15 @@ struct object_string *map_get_key(map *map, const char *data, size_t len, uint32
     size_t index = hash % map->_cap;
     for (size_t i = 0; i < map->_cap; i++) {
         struct _entry *entry = &map->_entries[index];
-        if (entry->key == NULL) {
-            if (value_type(entry->value) == VALUE_NIL)
+        if (values_are_equal(entry->key, value_none)) {
+            if (values_are_equal(entry->value, value_none))
                 return NULL;
-        } else if (entry->key->hash == hash && entry->key->len == len &&
-                   memcmp(entry->key->data, data, len) == 0) {
-            return entry->key;
+        } else if (value_type(entry->key) == VALUE_STRING) {
+            struct object_string *string = value_as_string(entry->key);
+            if (value_hash(entry->key) == hash && string->len == len &&
+                memcmp(string->data, data, len) == 0) {
+                return string;
+            }
         }
         index = (index + 1) % map->_cap;
     }
@@ -92,13 +95,13 @@ void map_grow(vm *vm, map *map, size_t new_cap)
 {
     struct _entry *new_entries = vm_malloc(vm, DYNAMIC_ARRAY_SIZE(new_entries, new_cap));
     for (struct _entry *entry = new_entries; entry < new_entries + new_cap; entry++) {
-        entry->key = NULL;
-        entry->value = value_nil;
+        entry->key = value_none;
+        entry->value = value_none;
     }
 
     map->_count = 0; // Reset since current value includes tombstones which won't be copied over
     for (struct _entry *entry = map->_entries; entry < map->_entries + map->_cap; entry++) {
-        if (entry->key == NULL)
+        if (values_are_equal(entry->key, value_none))
             continue;
         struct _entry *new_entry = find_entry(new_entries, new_cap, entry->key);
         new_entry->key = entry->key;
@@ -128,14 +131,14 @@ void map_grow(vm *vm, map *map, size_t new_cap)
 #define GROWTH_FACTOR_DENOM 1
 #define GROWTH_FACTOR ((double)GROWTH_FACTOR_NUM / GROWTH_FACTOR_DENOM)
 
-bool map_set(vm *vm, map *map, struct object_string *key, value value)
+bool map_set(vm *vm, map *map, value key, value value)
 {
     if ((map->_count + 1) > map->_cap * MAX_LOAD_FACTOR) {
         size_t new_cap = map->_cap > 0 ? map->_cap * GROWTH_FACTOR : INITIAL_CAPACITY;
         map_grow(vm, map, new_cap);
     }
     struct _entry *entry = find_entry(map->_entries, map->_cap, key);
-    bool is_new_key = entry->key == NULL;
+    bool is_new_key = values_are_equal(entry->key, value_none);
     if (is_new_key && value_type(entry->value) == VALUE_NIL)
         map->_count++;
     entry->key = key;
@@ -143,25 +146,25 @@ bool map_set(vm *vm, map *map, struct object_string *key, value value)
     return is_new_key;
 }
 
-bool map_delete(map *map, struct object_string *key)
+bool map_delete(map *map, value key)
 {
     if (map->_cap == 0)
         return false;
     struct _entry *entry = find_entry(map->_entries, map->_cap, key);
-    bool found = entry->key != NULL;
+    bool found = !values_are_equal(entry->key, value_none);
     if (found) {
-        entry->key = NULL;
-        entry->value = value_bool(false);
+        entry->key = value_none;
+        entry->value = value_nil;
     }
     return found;
 }
 
-bool map_get(map *map, struct object_string *key, value *out)
+bool map_get(map *map, value key, value *out)
 {
     if (map->_cap == 0)
         return false;
     struct _entry *entry = find_entry(map->_entries, map->_cap, key);
-    bool found = entry->key != NULL;
+    bool found = !values_are_equal(entry->key, value_none);
     if (found && out != NULL)
         *out = entry->value;
     return found;

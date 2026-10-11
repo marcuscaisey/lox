@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "errors.h"
 #include "lexer.h"
+#include "map.h"
 #include "object.h"
 #include "strings.h"
 #include "value.h"
@@ -25,6 +26,7 @@ typedef struct {
     struct token _prev_token; // Token before `_token` in the source
     lexer _lexer; // Lexer set up to lex the source
     struct bytecode_chunk *_out; // Chunk that bytecode is written to
+    map _constant_indexes; // Map from values to their index in the bytecode's constants
     // Panic mode is entered when a syntax error is encountered and exited once it has been
     // recovered from
     bool _in_panic_mode;
@@ -88,6 +90,7 @@ static void compiler_init(compiler *compiler, vm *vm, const char *source,
     compiler->_next_token = lexer_next(&compiler->_lexer);
     compiler_advance(compiler); // Populate current token
     compiler->_out = out;
+    map_init(&compiler->_constant_indexes);
     compiler->_in_panic_mode = false;
     compiler->_had_error = false;
 }
@@ -96,6 +99,7 @@ static void compiler_init(compiler *compiler, vm *vm, const char *source,
 static void compiler_free(compiler *compiler)
 {
     lexer_free(&compiler->_lexer);
+    map_free(compiler->_vm, &compiler->_constant_indexes);
 }
 
 // Checks whether the current token has `type`. If it does, the compiler is advanced. Otherwise, an
@@ -131,11 +135,18 @@ static void compiler_emit(compiler *compiler, uint8_t byte, int line)
     bytecode_chunk_write(compiler->_out, byte, line);
 }
 
-// Adds `value` corresponding to `line` to the bytecode's constants and writes the corresponding
-// index to the bytecode, encoded appropriately depending on its value.
-static void compiler_emit_constant_index(compiler *compiler, value value, int line)
+// Ensures that value `v` corresponding to `line` is in the bytecode's constants and writes the
+// corresponding index to the bytecode, encoded appropriately depending on its size.
+static void compiler_emit_constant_index(compiler *compiler, value v, int line)
 {
-    uint32_t index = bytecode_chunk_add_constant(compiler->_out, value);
+    value index_value;
+    uint32_t index;
+    if (map_get(&compiler->_constant_indexes, v, &index_value)) {
+        index = value_as_number(index_value);
+    } else {
+        index = bytecode_chunk_add_constant(compiler->_out, v);
+        map_set(compiler->_vm, &compiler->_constant_indexes, v, value_number(index));
+    }
     if (index < 255) {
         compiler_emit(compiler, index, line);
     } else {
