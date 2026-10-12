@@ -27,6 +27,10 @@ const char *instruction_name(enum opcode opcode)
         return "GET_GLOBAL";
     case OP_SET_GLOBAL:
         return "SET_GLOBAL";
+    case OP_GET_LOCAL:
+        return "GET_LOCAL";
+    case OP_SET_LOCAL:
+        return "SET_LOCAL";
     case OP_EQUAL:
         return "EQUAL";
     case OP_NOT_EQUAL:

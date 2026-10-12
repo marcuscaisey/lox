@@ -200,6 +200,18 @@ static bool vm_execute(vm *vm)
             }
             break;
         }
+        case OP_GET_LOCAL: {
+            uint8_t index = vm_read_u8(vm);
+            value value = vm->_stack[index];
+            vm_stack_push(vm, value);
+            break;
+        }
+        case OP_SET_LOCAL: {
+            uint8_t index = vm_read_u8(vm);
+            value value = vm_stack_peek(vm, 0);
+            vm->_stack[index] = value;
+            break;
+        }
         case OP_EQUAL: {
             value a = vm_stack_pop(vm);
             value b = vm_stack_pop(vm);

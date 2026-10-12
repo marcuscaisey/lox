@@ -22,6 +22,11 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         printf("   | ");
     else
         printf("%4d ", line);
+
+    // Width of longest name of instruction which accepts an operand
+    int name_width = strlen(instruction_name(OP_DEFINE_GLOBAL));
+    int operand_width = 4;
+
     enum opcode opcode = chunk->instructions[offset];
     const char *name = instruction_name(opcode);
     switch (opcode) {
@@ -36,11 +41,16 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
                     (chunk->instructions[offset + 3] << 8) + (chunk->instructions[offset + 4]);
             index_bytes = 4;
         }
-        int width = strlen(instruction_name(OP_DEFINE_GLOBAL));
-        printf("%-*s %3d '", width, name, index);
+        printf("%-*s %*d '", name_width, name, operand_width, index);
         value_print(chunk->constants.values[index]);
         printf("'\n");
         return offset + 1 + index_bytes;
+    }
+    case OP_GET_LOCAL:
+    case OP_SET_LOCAL: {
+        uint8_t index = chunk->instructions[offset + 1];
+        printf("%-*s %*d\n", name_width, name, operand_width, index);
+        return offset + 2;
     }
     case OP_NIL:
     case OP_TRUE:

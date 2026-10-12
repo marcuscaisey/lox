@@ -37,6 +37,14 @@ enum opcode {
     // Operands:
     //   constant_index - index of the constant containing the variable name
     OP_SET_GLOBAL,
+    // Pushes a value from the stack
+    // Operands:
+    //   u8 - index of the value in the stack
+    OP_GET_LOCAL,
+    // Sets a value from the stack to the value on top of the stack
+    // Operands:
+    //   u8 - index of the value in the stack
+    OP_SET_LOCAL,
     OP_EQUAL, // Pops two numbers then pushes whether they're equal
     OP_NOT_EQUAL, // Pops two numbers then pushes whether they're not equal
     OP_LESS, // Pops two numbers b, then a, then pushes a < b
@@ -81,6 +89,8 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk);
 
 // Writes `byte` into the chunk's instructions. `line` is the line number corresponding to the byte.
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);
+
+// TODO: add types for indexes like constant index etc
 
 // Stores `value` in the chunk's constants and returns the index that can be used to retrieve it.
 uint32_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);
