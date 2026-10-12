@@ -8,22 +8,6 @@
 #include "dynamic_array.h"
 #include "object.h"
 
-const char *value_type_string(enum value_type type)
-{
-    switch (type) {
-    case VALUE_NONE:
-        return "NONE";
-    case VALUE_NUMBER:
-        return "number";
-    case VALUE_BOOL:
-        return "bool";
-    case VALUE_NIL:
-        return "nil";
-    case VALUE_STRING:
-        return "string";
-    }
-}
-
 const value value_none = (value){ ._type = _VALUE_NONE };
 
 value value_number(double number)
@@ -69,6 +53,22 @@ enum value_type value_type(value value)
         return object_value_type(value_as_object(value));
     // All _value_type members apart from _VALUE_OBJECT are equal their equivalent value_type
     return (enum value_type)value._type;
+}
+
+const char *value_type_string(value value)
+{
+    switch (value_type(value)) {
+    case VALUE_NONE:
+        return "NONE";
+    case VALUE_NUMBER:
+        return "number";
+    case VALUE_BOOL:
+        return "bool";
+    case VALUE_NIL:
+        return "nil";
+    case VALUE_STRING:
+        return "string";
+    }
 }
 
 bool values_are_equal(value a, value b)

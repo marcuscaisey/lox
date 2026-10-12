@@ -214,19 +214,19 @@ static bool vm_execute(vm *vm)
             vm_stack_push(vm, value_bool(result));
             break;
         }
-#define EXECUTE_BINARY_NUMBER_OP(op, construct_result)                                            \
-    do {                                                                                          \
-        value b = vm_stack_peek(vm, 0);                                                           \
-        value a = vm_stack_peek(vm, 1);                                                           \
-        if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {                     \
-            vm_report_errorf(vm, instruction_offset,                                              \
-                             "'%s' operator cannot be used with types '%s' and '%s'", #op,        \
-                             value_type_string(value_type(a)), value_type_string(value_type(b))); \
-            return false;                                                                         \
-        }                                                                                         \
-        vm_stack_pop(vm);                                                                         \
-        vm_stack_pop(vm);                                                                         \
-        vm_stack_push(vm, construct_result(value_as_number(a) op value_as_number(b)));            \
+#define EXECUTE_BINARY_NUMBER_OP(op, construct_result)                                     \
+    do {                                                                                   \
+        value b = vm_stack_peek(vm, 0);                                                    \
+        value a = vm_stack_peek(vm, 1);                                                    \
+        if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {              \
+            vm_report_errorf(vm, instruction_offset,                                       \
+                             "'%s' operator cannot be used with types '%s' and '%s'", #op, \
+                             value_type_string(a), value_type_string(b));                  \
+            return false;                                                                  \
+        }                                                                                  \
+        vm_stack_pop(vm);                                                                  \
+        vm_stack_pop(vm);                                                                  \
+        vm_stack_push(vm, construct_result(value_as_number(a) op value_as_number(b)));     \
     } while (false)
         case OP_LESS:
             EXECUTE_BINARY_NUMBER_OP(<, value_bool);
@@ -260,9 +260,15 @@ static bool vm_execute(vm *vm)
         case OP_MULTIPLY:
             EXECUTE_BINARY_NUMBER_OP(*, value_number);
             break;
-        case OP_DIVIDE:
+        case OP_DIVIDE: {
+            value b = vm_stack_peek(vm, 0);
+            if (value_as_number(b) == 0) {
+                vm_report_errorf(vm, instruction_offset, "cannot divide by 0");
+                return false;
+            }
             EXECUTE_BINARY_NUMBER_OP(/, value_number);
             break;
+        }
 #undef EXECUTE_BINARY_NUMBER_OP
         case OP_NOT: {
             value value = vm_stack_pop(vm);
@@ -275,7 +281,7 @@ static bool vm_execute(vm *vm)
             if (value_type(value) != VALUE_NUMBER) {
                 vm_report_errorf(vm, instruction_offset,
                                  "'-' operator cannot be used with type '%s'",
-                                 value_type_string(value_type(value)));
+                                 value_type_string(value));
                 return false;
             }
             vm_stack_pop(vm);

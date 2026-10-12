@@ -15,9 +15,6 @@ enum value_type {
     VALUE_STRING,
 };
 
-// Returns a string representation of `type`.
-const char *value_type_string(enum value_type type);
-
 // Represents a Lox value of any type.
 //
 // For each Lox value type `T`, use the following families of functions from value.h and object.h to
@@ -66,6 +63,9 @@ struct object *value_as_object(value value);
 
 // Returns the type of `value`.
 enum value_type value_type(value value);
+
+// Returns a string representation of the type of `value`.
+const char *value_type_string(value value);
 
 // Reports whether `a` and `b` are equal.
 bool values_are_equal(value a, value b);
