@@ -14,16 +14,53 @@
 #include "value.h"
 #include "vm_memory.h"
 
-// Entry is what gets stored in the array. The meanings of `key` and `value` depend on their values.
-//   1. If `key != value_none`, then `value` is the value associated with `key`.
-//   2. If `key == value_none` and `value == value_none`, then the slot that the entry is stored in
-//      is empty. I.e. there's no value associated with `key`.
+// Entry is what gets stored in the each slot of the array. The meanings of `key` and `value` depend
+// on their values.
+//   1. If `key != value_none`, then the slot is populated. This means that `value` is the value
+//      associated with `key`.
+//   2. If `key == value_none` and `value == value_none`, then the slot is empty. This means that
+//      there's no value associated with `key`.
 //   3. If `key == value_none` and `value == value_nil`, then the entry is a tombstone. This means
 //      that the value previously associated with `key` was deleted.
+//
+// Use the helpers defined below for working with entries instead of directly working with the
+// representation describe above.
 struct _entry {
     value key;
     value value;
 };
+
+// Marks the slot containing `entry` as empty.
+static void mark_empty_slot(struct _entry *entry)
+{
+    entry->key = value_none;
+    entry->value = value_none;
+}
+
+// Reports whether the slot containing `entry` is populated.
+static bool slot_is_populated(struct _entry entry)
+{
+    return !values_are_equal(entry.key, value_none);
+}
+
+// Reports whether the slot containing `entry` is empty.
+static bool slot_is_empty(struct _entry entry)
+{
+    return values_are_equal(entry.key, value_none) && values_are_equal(entry.value, value_none);
+}
+
+// Marks `entry` as a tombstone.
+static void mark_tombstone(struct _entry *entry)
+{
+    entry->key = value_none;
+    entry->value = value_nil;
+}
+
+// Reports whether `entry` is a tombstone.
+static bool is_tombstone(struct _entry entry)
+{
+    return values_are_equal(entry.key, value_none) && values_are_equal(entry.value, value_nil);
+}
 
 void map_init(map *map)
 {
@@ -45,10 +82,10 @@ static struct _entry *find_entry(struct _entry *entries, size_t cap, value key)
     struct _entry *tombstone = NULL;
     for (size_t i = 0; i < cap; i++) {
         struct _entry *entry = &entries[index];
-        if (values_are_equal(entry->key, value_none)) {
-            if (values_are_equal(entry->value, value_none))
+        if (!slot_is_populated(*entry)) {
+            if (slot_is_empty(*entry))
                 return tombstone != NULL ? tombstone : entry;
-            if (values_are_equal(entry->value, value_nil) && tombstone == NULL)
+            if (is_tombstone(*entry) && tombstone == NULL)
                 tombstone = entry;
         } else if (values_are_equal(entry->key, key)) {
             return entry;
@@ -70,8 +107,8 @@ struct object_string *map_get_string_key(map *map, const char *data, size_t len,
     size_t index = hash % map->_cap;
     for (size_t i = 0; i < map->_cap; i++) {
         struct _entry *entry = &map->_entries[index];
-        if (values_are_equal(entry->key, value_none)) {
-            if (values_are_equal(entry->value, value_none))
+        if (!slot_is_populated(*entry)) {
+            if (slot_is_empty(*entry))
                 return NULL;
         } else if (value_type(entry->key) == VALUE_STRING) {
             struct object_string *string = value_as_string(entry->key);
@@ -95,13 +132,12 @@ void map_grow(vm *vm, map *map, size_t new_cap)
 {
     struct _entry *new_entries = vm_malloc(vm, DYNAMIC_ARRAY_SIZE(new_entries, new_cap));
     for (struct _entry *entry = new_entries; entry < new_entries + new_cap; entry++) {
-        entry->key = value_none;
-        entry->value = value_none;
+        mark_empty_slot(entry);
     }
 
     map->_count = 0; // Reset since current value includes tombstones which won't be copied over
     for (struct _entry *entry = map->_entries; entry < map->_entries + map->_cap; entry++) {
-        if (values_are_equal(entry->key, value_none))
+        if (!slot_is_populated(*entry))
             continue;
         struct _entry *new_entry = find_entry(new_entries, new_cap, entry->key);
         new_entry->key = entry->key;
@@ -138,8 +174,8 @@ bool map_set(vm *vm, map *map, value key, value value)
         map_grow(vm, map, new_cap);
     }
     struct _entry *entry = find_entry(map->_entries, map->_cap, key);
-    bool is_new_key = values_are_equal(entry->key, value_none);
-    if (is_new_key && value_type(entry->value) == VALUE_NIL)
+    bool is_new_key = !slot_is_populated(*entry);
+    if (is_new_key && slot_is_empty(*entry))
         map->_count++;
     entry->key = key;
     entry->value = value;
@@ -151,10 +187,9 @@ bool map_delete(map *map, value key)
     if (map->_cap == 0)
         return false;
     struct _entry *entry = find_entry(map->_entries, map->_cap, key);
-    bool found = !values_are_equal(entry->key, value_none);
+    bool found = slot_is_populated(*entry);
     if (found) {
-        entry->key = value_none;
-        entry->value = value_nil;
+        mark_tombstone(entry);
     }
     return found;
 }
@@ -164,7 +199,7 @@ bool map_get(map *map, value key, value *out)
     if (map->_cap == 0)
         return false;
     struct _entry *entry = find_entry(map->_entries, map->_cap, key);
-    bool found = !values_are_equal(entry->key, value_none);
+    bool found = slot_is_populated(*entry);
     if (found && out != NULL)
         *out = entry->value;
     return found;
