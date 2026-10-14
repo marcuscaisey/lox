@@ -16,5 +16,6 @@ func TestGolox(t *testing.T) {
 	if goloxPath == "" {
 		goloxPath = loxtest.MustBuildBinary(t, "golox")
 	}
-	loxtest.TestInterpreter(t, goloxPath)
+	runner := loxtest.NewInterpreterRunner(t, goloxPath)
+	loxtest.Run(t, runner, loxtest.WithSkipSyntaxErrors(false))
 }
