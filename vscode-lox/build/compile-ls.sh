@@ -11,5 +11,5 @@ if [[ ! -v NO_LOXLS ]]; then
   if [[ "$GOOS" == "windows" ]]; then
     name="$WINDOWS_NAME"
   fi
-  go build -o "out/$name" ../loxls
+  go build -ldflags "-s" -o "out/$name" ../loxls
 fi

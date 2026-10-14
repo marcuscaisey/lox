@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add support for final variables when extra feature are enabled.
 
+### Fixed
+
+- Reduce size of `loxls` binary.
+
 ## [4.4.0] - 2026-02-14
 
 ### Added
