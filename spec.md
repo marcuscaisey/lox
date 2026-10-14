@@ -18,6 +18,7 @@ from the challenges in the book. The extra features are as follows:
 - [`break` statement](#break-statement) - [Control Flow](https://craftinginterpreters.com/control-flow.html#challenges)
 - [`continue` statement](#continue-statement)
 - [Runtime error](#declarations) for accessing uninitialised variable - [Statements and State](https://craftinginterpreters.com/statements-and-state.html#challenges)
+- [Final variable](#final-variable) - [Local Variables](https://craftinginterpreters.com/local-variables.html)
 - [Static method](#static-method) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
 - [Property getter method](#property-accessor) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
 - [Property setter method](#property-accessor)
@@ -501,7 +502,7 @@ var b = 1;
 print b; // prints: 1
 ```
 
-#### Final Variable Declaration
+#### Final Variable
 
 A final variable can be declared by using the `final` keyword instead of `var`. Final variables must
 be assigned a value when they're declared and can't be reassigned after that.
