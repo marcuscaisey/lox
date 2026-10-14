@@ -1,0 +1,21 @@
+final a = "global a";
+final b = "global b";
+
+{
+  print a; // prints: global a
+  final b = "outer b";
+  print b; // prints: outer b
+
+  final c = "outer c";
+  final d = "outer d";
+
+  {
+    print c; // prints: outer c
+    final d = "inner d";
+    print d; // prints: inner d
+  }
+
+  print d; // prints: outer d
+}
+
+print b; // prints: global b

@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.4.0]
+## [Unreleased]
+
+### Added
+
+- Add support for final variables when extra feature are enabled.
+
+## [4.4.0] - 2026-02-14
 
 ### Added
 
@@ -199,8 +205,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renaming
 
 [Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v4.4.0...HEAD
-[4.4.0]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v4.4.0...HEAD
-[4.3.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.2.0/vscode-lox
+[4.4.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.4.0/vscode-lox
+[4.3.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.3.0/vscode-lox
 [4.2.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.2.0/vscode-lox
 [4.1.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.1.0/vscode-lox
 [4.0.2]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.0.2/vscode-lox

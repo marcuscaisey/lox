@@ -1,0 +1,8 @@
+final a = "global a";
+_ = a;
+{
+  // error: 'a' read in its own initialiser
+  // lint error: 'a' read in its own initialiser
+  final a = "shadowed " + a;
+  print a;
+}

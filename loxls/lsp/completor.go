@@ -387,7 +387,7 @@ func (g *identCompletionGenerator) walk(node ast.Node) bool {
 
 func (g *identCompletionGenerator) walkVarDecl(decl *ast.VarDecl) {
 	ast.Walk(decl.Initialiser, g.walk)
-	compl, ok := varCompletion(decl.Name)
+	compl, ok := varCompletion(decl)
 	if !ok {
 		return
 	}
@@ -462,7 +462,7 @@ func (g *identCompletionGenerator) walkFun(fun *ast.Function, extraCompls ...*co
 
 	paramCompls := make([]*completion, 0, len(fun.Params))
 	for _, paramDecl := range fun.Params {
-		compl, ok := varCompletion(paramDecl.Name)
+		compl, ok := varCompletion(paramDecl)
 		if !ok {
 			break
 		}
@@ -816,16 +816,16 @@ func sortPropertyCompletions(compls []*completion) {
 	})
 }
 
-func varCompletion(name *ast.Ident) (*completion, bool) {
-	if !name.IsValid() {
+func varCompletion(decl ast.Decl) (*completion, bool) {
+	if !decl.BoundIdent().IsValid() {
 		return nil, false
 	}
-	detail, ok := varDetail(name)
+	detail, ok := varDetail(decl)
 	if !ok {
 		return nil, false
 	}
 	return &completion{
-		Label:  name.String(),
+		Label:  decl.BoundIdent().String(),
 		Detail: detail,
 		Kind:   protocol.CompletionItemKindVariable,
 	}, true
@@ -890,7 +890,7 @@ func declCompletion(decl ast.Decl) (*completion, bool) {
 	}
 	switch decl := decl.(type) {
 	case *ast.VarDecl:
-		return varCompletion(decl.Name)
+		return varCompletion(decl)
 	case *ast.FunDecl:
 		return funCompletion(decl)
 	case *ast.ClassDecl:

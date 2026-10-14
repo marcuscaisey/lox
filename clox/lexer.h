@@ -9,6 +9,7 @@ enum token_type {
     // Keywords
     TOKEN_PRINT,
     TOKEN_VAR,
+    TOKEN_FINAL,
     TOKEN_TRUE,
     TOKEN_FALSE,
     TOKEN_NIL,

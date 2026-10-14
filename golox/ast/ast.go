@@ -148,21 +148,28 @@ type decl struct {
 
 func (decl) isDecl() {}
 
-// VarDecl is a variable declaration, such as var a = 123 or var b.
+// VarDecl is a variable declaration, such as var a = 123, var b, or final a = 123.
 type VarDecl struct {
-	Var         token.Token
+	Keyword     token.Token
 	Name        *Ident `print:"named"`
 	Initialiser Expr   `print:"named"`
 	Semicolon   token.Token
 	decl
 }
 
-func (v *VarDecl) Start() token.Position { return v.Var.Start() }
-func (v *VarDecl) End() token.Position   { return last(v.Var, v.Name, v.Initialiser, v.Semicolon).End() }
+func (v *VarDecl) Start() token.Position { return v.Keyword.Start() }
+func (v *VarDecl) End() token.Position {
+	return last(v.Keyword, v.Name, v.Initialiser, v.Semicolon).End()
+}
 func (v *VarDecl) IsValid() bool {
-	return v != nil && !v.Var.IsZero() && isValidOptional(v.Initialiser) && isValid(v.Name) && !v.Semicolon.IsZero()
+	return v != nil && !v.Keyword.IsZero() &&
+		((!v.IsFinal() && isValidOptional(v.Initialiser)) || (v.IsFinal() && isValid(v.Initialiser))) &&
+		isValid(v.Name) && !v.Semicolon.IsZero()
 }
 func (v *VarDecl) BoundIdent() *Ident { return v.Name }
+
+// IsFinal reports whether the declaration is a final variable declaration.
+func (v *VarDecl) IsFinal() bool { return v.Keyword.Type == token.Final }
 
 // FunDecl is a function declaration, such as fun add(x, y) { return x + y; }.
 type FunDecl struct {

@@ -1,0 +1,14 @@
+final _ = 1;
+final _ = 2;
+{
+  final _ = 3;
+  final _ = 4;
+}
+
+var value = "original";
+fun updateValue() {
+  value = "updated";
+}
+
+final _ = updateValue();
+print value; // prints: updated

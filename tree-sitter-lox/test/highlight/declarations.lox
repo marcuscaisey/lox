@@ -3,6 +3,11 @@ var foo = 2;
 // <- keyword
 //  ^ variable
 
+// Final Variable Declaration
+final bar = 2;
+// <- keyword
+//    ^ variable
+
 // Function Declaration
 fun add(x, y) {
   // <- keyword.function

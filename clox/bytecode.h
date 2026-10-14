@@ -29,6 +29,10 @@ enum opcode {
     // Operands:
     //   constant_index - index of the constant containing the variable name
     OP_DEFINE_GLOBAL,
+    // Pops a value then defines a global final variable initialised to that value
+    // Operands:
+    //   constant_index - index of the constant containing the variable name
+    OP_DEFINE_GLOBAL_FINAL,
     // Pushes the value of a global variable
     // Operands:
     //   constant_index - index of the constant containing the variable name
@@ -37,11 +41,17 @@ enum opcode {
     // Operands:
     //   constant_index - index of the constant containing the variable name
     OP_SET_GLOBAL,
-    // Pushes a value from the stack
+    // Defines a local variable initialised to the value on top of the stack
+    OP_DEFINE_LOCAL,
+    // Defines a local final variable initialised to the value on top of the stack
+    // Operands:
+    //   constant_index - index of the constant containing the variable name
+    OP_DEFINE_LOCAL_FINAL,
+    // Pushes a local variable from the stack
     // Operands:
     //   u8 - index of the value in the stack
     OP_GET_LOCAL,
-    // Sets a value from the stack to the value on top of the stack
+    // Sets a local variable from the stack to the value on top of the stack
     // Operands:
     //   u8 - index of the value in the stack
     OP_SET_LOCAL,

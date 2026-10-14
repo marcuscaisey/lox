@@ -93,6 +93,7 @@
 [
   "print"
   "var"
+  "final"
   "break"
   "continue"
   "return"

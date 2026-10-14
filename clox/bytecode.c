@@ -23,10 +23,16 @@ const char *instruction_name(enum opcode opcode)
         return "POP";
     case OP_DEFINE_GLOBAL:
         return "DEFINE_GLOBAL";
+    case OP_DEFINE_GLOBAL_FINAL:
+        return "DEFINE_GLOBAL_FINAL";
     case OP_GET_GLOBAL:
         return "GET_GLOBAL";
     case OP_SET_GLOBAL:
         return "SET_GLOBAL";
+    case OP_DEFINE_LOCAL:
+        return "DEFINE_LOCAL";
+    case OP_DEFINE_LOCAL_FINAL:
+        return "DEFINE_LOCAL_FINAL";
     case OP_GET_LOCAL:
         return "GET_LOCAL";
     case OP_SET_LOCAL:

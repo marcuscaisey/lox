@@ -1,0 +1,3 @@
+final a = 1;
+final a = a + 2; // lint hint: 'a' has already been declared
+print a; // prints: 3

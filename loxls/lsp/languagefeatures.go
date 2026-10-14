@@ -144,7 +144,7 @@ func (h *Handler) textDocumentHover(params *protocol.HoverParams) (*protocol.Hov
 		}
 		switch decl := decl.(type) {
 		case *ast.VarDecl, *ast.ParamDecl:
-			header, ok := varDetail(decl.BoundIdent())
+			header, ok := varDetail(decl)
 			if !ok {
 				continue
 			}

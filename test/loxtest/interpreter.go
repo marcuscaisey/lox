@@ -16,28 +16,24 @@ var (
 	argumentsRe = regexp.MustCompile(`// arguments: (.+)`)
 )
 
-// TestInterpreter tests a Lox interpreter using the comments described in test/README.md as
-// expectations.
-func TestInterpreter(t *testing.T, interpreterPath string) {
-	runner := newInterpreterRunner(t, interpreterPath)
-	Run(t, runner, WithSkipSyntaxErrors(false))
-}
-
-type interpreterRunner struct {
+// InterpreterRunner is a [Runner] which tests a Lox interpreter using the comments described in
+// test/README.md as expectations.
+type InterpreterRunner struct {
 	rootDir         string
 	interpreterPath string
 }
 
-func newInterpreterRunner(t *testing.T, interpreterPath string) *interpreterRunner {
+// NewInterpreterRunner creates a new [InterpreterRunner].
+func NewInterpreterRunner(t *testing.T, interpreterPath string) *InterpreterRunner {
 	rootDir := MustGoModuleRoot(t)
-	return &interpreterRunner{
+	return &InterpreterRunner{
 		rootDir:         rootDir,
 		interpreterPath: interpreterPath,
 	}
 }
 
 // Test implements the [Runner] interface.
-func (r *interpreterRunner) Test(t *testing.T, path string) {
+func (r *InterpreterRunner) Test(t *testing.T, path string) {
 	fileContents, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
@@ -68,7 +64,7 @@ type interpreterResult struct {
 	ExitCode int
 }
 
-func (r *interpreterRunner) mustRunInterpreter(t *testing.T, path string, scriptArgs []string) *interpreterResult {
+func (r *InterpreterRunner) mustRunInterpreter(t *testing.T, path string, scriptArgs []string) *interpreterResult {
 	args := append([]string{path}, scriptArgs...)
 	cmd := exec.Command(r.interpreterPath, args...)
 
@@ -103,7 +99,7 @@ func (r *interpreterRunner) mustRunInterpreter(t *testing.T, path string, script
 	}
 }
 
-func (r *interpreterRunner) parseExpectedResult(fileContents []byte) *interpreterResult {
+func (r *InterpreterRunner) parseExpectedResult(fileContents []byte) *interpreterResult {
 	stdoutLines := ParseComments(fileContents, printsRe)
 	stdout := strings.Join(stdoutLines, "\n")
 	if stdout != "" {
@@ -121,7 +117,7 @@ func (r *interpreterRunner) parseExpectedResult(fileContents []byte) *interprete
 }
 
 // Update implements the [Runner] interface.
-func (r *interpreterRunner) Update(t *testing.T, path string) {
+func (r *InterpreterRunner) Update(t *testing.T, path string) {
 	t.Logf("updating expected output for %s", path)
 
 	fileContents, err := os.ReadFile(path)
@@ -166,7 +162,7 @@ func (r *interpreterRunner) Update(t *testing.T, path string) {
 	}
 }
 
-func (r *interpreterRunner) mustParseScriptArguments(t *testing.T, path string, fileContents []byte) []string {
+func (r *InterpreterRunner) mustParseScriptArguments(t *testing.T, path string, fileContents []byte) []string {
 	argumentsLines := ParseComments(fileContents, argumentsRe)
 	var scriptArgs []string
 	switch len(argumentsLines) {

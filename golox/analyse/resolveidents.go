@@ -23,6 +23,7 @@ import (
 //   - used before they are declared (best effort for globals)
 //   - used and not declared (best effort for globals)
 //   - used before they are defined (best effort for globals)
+//   - reassigned if they were declared as a final variable
 //
 // Some checks are best effort for global identifiers as it's not always possible to determine how they're used without
 // running the program. For example, in the following example, whether the program is valid depends on whether the
@@ -372,6 +373,9 @@ func (r *identResolver) resolveIdent(ident *ast.Ident, op identOp) {
 	}
 	for level, scope := range r.scopes.Backward() {
 		if scope.IsDeclared(ident.String()) {
+			if decl, ok := scope.Declaration(ident.String()).(*ast.VarDecl); ok && decl.IsFinal() && op == identOpWrite {
+				r.addErrorf(ident, loxerr.Warning, "final variable %m can't be reassigned", ident)
+			}
 			scope.Use(ident.String())
 			r.identBindings[ident] = append(r.identBindings[ident], scope.Declaration(ident.String()))
 			// If we're in a function which was declared in the same or a deeper scope than the identifier was declared

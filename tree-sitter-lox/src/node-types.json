@@ -2422,6 +2422,20 @@
           }
         ]
       },
+      "kind": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "final",
+            "named": false
+          },
+          {
+            "type": "var",
+            "named": false
+          }
+        ]
+      },
       "name": {
         "multiple": false,
         "required": true,
@@ -2682,6 +2696,10 @@
   },
   {
     "type": "false",
+    "named": false
+  },
+  {
+    "type": "final",
     "named": false
   },
   {

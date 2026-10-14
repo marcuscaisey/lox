@@ -1,0 +1,7 @@
+if (false) {
+  final x = 1;
+  // lint warning: final variable 'x' can't be reassigned
+  x = 2;
+}
+
+print "got here"; // prints: got here

@@ -23,8 +23,7 @@ struct local {
     // This is not a null-terminated string, so `name_len` must be used to read it.
     const char *name;
     size_t name_len;
-    // Depth of the scope that the variable was defined in. See `compiler._scope_depth` for a
-    // description of scope depth.
+    // Depth of the scope that the variable was defined in (see `compiler._scope_depth`)
     int scope_depth;
     bool is_initialising; // Whether the variable is currently being initialised
 };
@@ -586,12 +585,17 @@ static void compiler_compile_stmt(compiler *compiler)
     }
 }
 
-// Emits the bytecode for the variable declaration starting at the current token and advances the
-// compiler past it.
+// Emits the bytecode for the variable declaration (using either var or final) starting at the
+// current token and advances the compiler past it.
 static void compiler_compile_var_decl(compiler *compiler)
 {
     int line = compiler->_token.line;
-    compiler_expect(compiler, TOKEN_VAR);
+    bool is_final = false;
+    if (COMPILER_MATCH(compiler, TOKEN_FINAL))
+        is_final = true;
+    else
+        compiler_expect(compiler, TOKEN_VAR);
+
     struct token ident = compiler->_token;
     struct object_string *name = compiler_parse_ident(compiler, "expected variable name");
     if (name == NULL)
@@ -610,10 +614,17 @@ static void compiler_compile_var_decl(compiler *compiler)
 
     if (compiler->_scope_depth > 0) {
         compiler_finish_initialising_local(compiler, local_index);
-        return;
+        if (is_final) {
+            compiler_emit(compiler, OP_DEFINE_LOCAL_FINAL, line);
+            compiler_emit_constant_index(compiler, value_string(name), line);
+        } else {
+            compiler_emit(compiler, OP_DEFINE_LOCAL, line);
+        }
+    } else {
+        enum opcode instruction = is_final ? OP_DEFINE_GLOBAL_FINAL : OP_DEFINE_GLOBAL;
+        compiler_emit(compiler, instruction, line);
+        compiler_emit_constant_index(compiler, value_string(name), line);
     }
-    compiler_emit(compiler, OP_DEFINE_GLOBAL, line);
-    compiler_emit_constant_index(compiler, value_string(name), line);
 }
 
 // Sync advances the compiler until the current token is at the start of a statement.
@@ -624,6 +635,7 @@ static void compiler_sync(compiler *compiler)
         case TOKEN_EOF:
         case TOKEN_PRINT:
         case TOKEN_VAR:
+        case TOKEN_FINAL:
             // case TOKEN_IF:
             // case TOKEN_WHILE:
             // case TOKEN_FOR:
@@ -647,6 +659,7 @@ static void compiler_compile_decl(compiler *compiler)
 {
     switch (compiler->_token.type) {
     case TOKEN_VAR:
+    case TOKEN_FINAL:
         compiler_compile_var_decl(compiler);
         break;
     default:

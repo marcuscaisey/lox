@@ -37,6 +37,7 @@ const (
 	keywordsStart
 	Print    // print
 	Var      // var
+	Final    // final
 	True     // true
 	False    // false
 	Nil      // nil

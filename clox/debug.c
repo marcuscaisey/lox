@@ -32,6 +32,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     switch (opcode) {
     case OP_CONSTANT:
     case OP_DEFINE_GLOBAL:
+    case OP_DEFINE_GLOBAL_FINAL:
     case OP_GET_GLOBAL:
     case OP_SET_GLOBAL: {
         uint32_t index = chunk->instructions[offset + 1];
@@ -56,6 +57,8 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     case OP_TRUE:
     case OP_FALSE:
     case OP_POP:
+    case OP_DEFINE_LOCAL:
+    case OP_DEFINE_LOCAL_FINAL:
     case OP_EQUAL:
     case OP_NOT_EQUAL:
     case OP_LESS:

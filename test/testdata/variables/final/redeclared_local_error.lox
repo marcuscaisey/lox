@@ -1,0 +1,7 @@
+{
+  final a = 1;
+  _ = a;
+  // error: 'a' has already been declared
+  // lint error: 'a' has already been declared
+  final a = 2;
+}

@@ -35,7 +35,7 @@ module.exports = grammar({
 
     variable_declaration: ($) =>
       seq(
-        "var",
+        field("kind", choice("var", "final")),
         field("name", $.identifier),
         optional(seq("=", field("initialiser", $._expression))),
         ";",

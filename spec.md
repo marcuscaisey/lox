@@ -492,13 +492,24 @@ valid to:
 ### Variable Declaration
 
 A variable declaration declares an identifier which can be assigned a value. Initially variables
-have a value of `nil`. You can optionally assign (define) a different value to the variable.
+have a value of `nil`. You can optionally assign a different value to the variable.
 
 ```lox
 var a;
 print a; // prints: nil
 var b = 1;
 print b; // prints: 1
+```
+
+#### Final Variable Declaration
+
+A final variable can be declared by using the `final` keyword instead of `var`. Final variables must
+be assigned a value when they're declared and can't be reassigned after that.
+
+```lox
+final a = 1;
+print a; // prints: 1
+a = 2; // error: final variable 'a' can't be reassigned
 ```
 
 ### Function Declaration
@@ -757,13 +768,14 @@ form](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form) as descri
 ```ebnf
 program = { decl } , EOF ;
 
-decl        = var_decl | fun_decl | class_decl | stmt ;
-var_decl    = 'var' , IDENT , [ '=' , expr ] , ';' ;
-fun_decl    = 'fun' , function ;
-function    = IDENT , '(' , [ parameters ] , ')' , block ;
-parameters  = IDENT , { ',' , IDENT } ;
-class_decl  = 'class' , IDENT , { '<', IDENT } , '{' , { method_decl } , '}' , ;
-method_decl = [ 'static' ] , [ 'get' | 'set' ] , function ;
+decl           = var_decl | final_var_decl | fun_decl | class_decl | stmt ;
+var_decl       = 'var' , IDENT , [ '=' , expr ] , ';' ;
+final_var_decl = 'final' , IDENT , '=' , expr , ';' ;
+fun_decl       = 'fun' , function ;
+function       = IDENT , '(' , [ parameters ] , ')' , block ;
+parameters     = IDENT , { ',' , IDENT } ;
+class_decl     = 'class' , IDENT , { '<', IDENT } , '{' , { method_decl } , '}' , ;
+method_decl    = [ 'static' ] , [ 'get' | 'set' ] , function ;
 
 stmt          = expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | break_stmt
               | continue_stmt ;

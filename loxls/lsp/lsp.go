@@ -13,11 +13,16 @@ import (
 
 var log *logger
 
-func varDetail(name *ast.Ident) (string, bool) {
+func varDetail(decl ast.Decl) (string, bool) {
+	name := decl.BoundIdent()
 	if !name.IsValid() {
 		return "", false
 	}
-	return fmt.Sprintf("var %s", name), true
+	if varDecl, ok := decl.(*ast.VarDecl); ok && varDecl.IsFinal() {
+		return fmt.Sprintf("final %s", name), true
+	} else {
+		return fmt.Sprintf("var %s", name), true
+	}
 }
 
 func funDetail(decl *ast.FunDecl) (string, bool) {

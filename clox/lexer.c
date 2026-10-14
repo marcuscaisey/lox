@@ -22,6 +22,8 @@ const char *token_type_string(enum token_type type)
         return "print";
     case TOKEN_VAR:
         return "var";
+    case TOKEN_FINAL:
+        return "final";
     case TOKEN_TRUE:
         return "true";
     case TOKEN_FALSE:
@@ -206,7 +208,8 @@ static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(lexer *lexer, c
 // returned.
 static enum token_type ident_type(const char *start, int len)
 {
-    // Returns `keyword_type` if the identifier is equal to `name` starting from `offset`, otherwise `TOKEN_IDENT`
+    // Returns `keyword_type` if the identifier is equal to `name` starting from `offset`, otherwise
+    // `TOKEN_IDENT`
 #define KEYWORD_TYPE_OR_IDENT(keyword_type, name, offset)                                  \
     len == sizeof(name) - 1 && strncmp(start + offset, &name[offset], len - offset) == 0 ? \
         keyword_type :                                                                     \
@@ -234,6 +237,8 @@ static enum token_type ident_type(const char *start, int len)
             switch (start[1]) {
             case 'a':
                 return KEYWORD_TYPE_OR_IDENT(TOKEN_FALSE, "false", 2);
+            case 'i':
+                return KEYWORD_TYPE_OR_IDENT(TOKEN_FINAL, "final", 2);
             case 'o':
                 return KEYWORD_TYPE_OR_IDENT(TOKEN_FOR, "for", 2);
             case 'u':

@@ -34,7 +34,7 @@
       ]
     },
     "variable-declaration": {
-      "begin": "\\b(var)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
+      "begin": "\\b(var|final)\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
       "beginCaptures": {
         "1": {
           "name": "storage.type.variable.lox"

@@ -1,0 +1,4 @@
+final a = 1;
+// error: final variable 'a' can't be reassigned
+// lint warning: final variable 'a' can't be reassigned
+a = 2;

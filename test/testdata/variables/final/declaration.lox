@@ -1,0 +1,3 @@
+final a = 2;
+final b = a + 3;
+print b; // prints: 5

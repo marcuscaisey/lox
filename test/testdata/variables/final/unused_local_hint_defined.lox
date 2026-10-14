@@ -1,0 +1,5 @@
+{
+  final a = "unused"; // lint hint: 'a' has been declared but is never used
+  final b = "used";
+  print b; // prints: used
+}

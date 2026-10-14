@@ -17,6 +17,8 @@ type environment interface {
 	// Declare declares an identifier and returns the updated environment.
 	// This should be used for identifiers that originate from a declaration in code, like a variable declaration.
 	Declare(ident *ast.Ident) environment
+	// DeclareFinal declares an identifier as a final variable and returns the updated environment.
+	DeclareFinalVariable(ident *ast.Ident, value loxValue) environment
 	// Define defines an identifier and returns the updated environment.
 	// This should be used for identifiers that don't originate from a declaration in code, like a function parameter.
 	Define(name string, value loxValue) environment
@@ -31,12 +33,14 @@ type environment interface {
 
 // globalEnvironment is the environment for the global scope.
 type globalEnvironment struct {
-	values map[string]loxValue
+	values    map[string]loxValue
+	finalVars map[string]bool
 }
 
 func newGlobalEnvironment() *globalEnvironment {
 	return &globalEnvironment{
-		values: map[string]loxValue{},
+		values:    map[string]loxValue{},
+		finalVars: map[string]bool{},
 	}
 }
 
@@ -46,6 +50,12 @@ func (e *globalEnvironment) Child() environment {
 
 func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
 	e.values[ident.String()] = loxNil{}
+	return e
+}
+
+func (e *globalEnvironment) DeclareFinalVariable(ident *ast.Ident, value loxValue) environment {
+	e.values[ident.String()] = value
+	e.finalVars[ident.String()] = true
 	return e
 }
 
@@ -66,6 +76,9 @@ func (e *globalEnvironment) Assign(ident *ast.Ident, value loxValue) {
 		panic(fmt.Sprintf("attempt to assign nil to %m", ident))
 	}
 	if _, ok := e.values[ident.String()]; ok {
+		if e.finalVars[ident.String()] {
+			panic(loxerr.Newf(ident, loxerr.Fatal, "final variable %m can't be reassigned", ident))
+		}
 		e.values[ident.String()] = value
 	} else {
 		panic(loxerr.Newf(ident, loxerr.Fatal, "%m has not been declared", ident))
@@ -90,9 +103,10 @@ func (e *globalEnvironment) GetByName(name string) loxValue {
 
 // localEnvironment is the environment for a local scope.
 type localEnvironment struct {
-	parent environment
-	name   string
-	value  loxValue
+	parent     environment
+	name       string
+	value      loxValue
+	isFinalVar bool
 }
 
 func newLocalEnvironment(parent environment, name string, value loxValue) *localEnvironment {
@@ -111,6 +125,12 @@ func (e *localEnvironment) Declare(ident *ast.Ident) environment {
 	return newLocalEnvironment(e, ident.String(), loxNil{})
 }
 
+func (e *localEnvironment) DeclareFinalVariable(ident *ast.Ident, value loxValue) environment {
+	newEnv := newLocalEnvironment(e, ident.String(), value)
+	newEnv.isFinalVar = true
+	return newEnv
+}
+
 func (e *localEnvironment) Define(name string, value loxValue) environment {
 	if value == nil {
 		panic(fmt.Sprintf("attempt to set %q to nil", name))
@@ -123,6 +143,9 @@ func (e *localEnvironment) Assign(ident *ast.Ident, value loxValue) {
 		panic(fmt.Sprintf("attempt to assign nil to %m", ident))
 	}
 	if ident.String() == e.name {
+		if e.isFinalVar {
+			panic(loxerr.Newf(ident, loxerr.Fatal, "final variable %m can't be reassigned", ident))
+		}
 		e.value = value
 	} else if e.parent != nil {
 		e.parent.Assign(ident, value)

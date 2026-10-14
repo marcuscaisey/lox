@@ -48,6 +48,7 @@ void vm_init(vm *vm)
     vm->_objects = NULL;
     map_init(&vm->_strings);
     map_init(&vm->_globals);
+    map_init(&vm->_global_final_vars);
 }
 
 // Frees the objects managed by the VM and memory associated with them.
@@ -66,6 +67,7 @@ void vm_free(vm *vm)
     vm_destroy_objects(vm);
     map_free(vm, &vm->_strings);
     map_free(vm, &vm->_globals);
+    map_free(vm, &vm->_global_final_vars);
 }
 
 // Reads the u8 at the instruction pointer and moves the instruction pointer past it.
@@ -165,19 +167,22 @@ static bool vm_execute(vm *vm)
         case OP_POP:
             vm_stack_pop(vm);
             break;
-        case OP_DEFINE_GLOBAL: {
-            uint32_t index = vm_read_constant_index(vm);
-            value name = vm->_chunk->constants.values[index];
+        case OP_DEFINE_GLOBAL:
+        case OP_DEFINE_GLOBAL_FINAL: {
+            uint32_t name_index = vm_read_constant_index(vm);
+            value name = vm->_chunk->constants.values[name_index];
             // map_set could trigger an allocation causing garbage collection, so don't pop the
             // initialiser until we've set the variable
             value initialiser = vm_stack_peek(vm, 0);
             map_set(vm, &vm->_globals, name, initialiser);
             vm_stack_pop(vm);
+            if (instruction == OP_DEFINE_GLOBAL_FINAL)
+                map_set(vm, &vm->_global_final_vars, name, value_nil);
             break;
         }
         case OP_GET_GLOBAL: {
-            uint32_t index = vm_read_constant_index(vm);
-            value name = vm->_chunk->constants.values[index];
+            uint32_t name_index = vm_read_constant_index(vm);
+            value name = vm->_chunk->constants.values[name_index];
             value value;
             if (!map_get(&vm->_globals, name, &value)) {
                 vm_report_errorf(vm, instruction_offset, "'%s' has not been declared",
@@ -188,8 +193,13 @@ static bool vm_execute(vm *vm)
             break;
         }
         case OP_SET_GLOBAL: {
-            uint32_t index = vm_read_constant_index(vm);
-            value name = vm->_chunk->constants.values[index];
+            uint32_t name_index = vm_read_constant_index(vm);
+            value name = vm->_chunk->constants.values[name_index];
+            if (map_get(&vm->_global_final_vars, name, NULL)) {
+                vm_report_errorf(vm, instruction_offset, "final variable '%s' can't be reassigned",
+                                 value_as_string(name)->data);
+                return false;
+            }
             value value = vm_stack_peek(vm, 0);
             bool is_new_name = map_set(vm, &vm->_globals, name, value);
             if (is_new_name) {
@@ -200,16 +210,34 @@ static bool vm_execute(vm *vm)
             }
             break;
         }
+        case OP_DEFINE_LOCAL: {
+            uint8_t top_stack_index = vm->_stack_top - vm->_stack - 1;
+            vm->_local_final_vars[top_stack_index] = -1;
+            break;
+        }
+        case OP_DEFINE_LOCAL_FINAL: {
+            uint8_t top_stack_index = vm->_stack_top - vm->_stack - 1;
+            uint32_t name_index = vm_read_constant_index(vm);
+            vm->_local_final_vars[top_stack_index] = name_index;
+            break;
+        }
         case OP_GET_LOCAL: {
-            uint8_t index = vm_read_u8(vm);
-            value value = vm->_stack[index];
+            uint8_t stack_index = vm_read_u8(vm);
+            value value = vm->_stack[stack_index];
             vm_stack_push(vm, value);
             break;
         }
         case OP_SET_LOCAL: {
-            uint8_t index = vm_read_u8(vm);
+            uint8_t stack_index = vm_read_u8(vm);
+            int64_t name_index = vm->_local_final_vars[stack_index];
+            if (name_index >= 0) {
+                value name = vm->_chunk->constants.values[name_index];
+                vm_report_errorf(vm, instruction_offset, "final variable '%s' can't be reassigned",
+                                 value_as_string(name)->data);
+                return false;
+            }
             value value = vm_stack_peek(vm, 0);
-            vm->_stack[index] = value;
+            vm->_stack[stack_index] = value;
             break;
         }
         case OP_EQUAL: {

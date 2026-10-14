@@ -1,0 +1,6 @@
+fun printX() {
+  x = 2;
+}
+
+final x = 1;
+printX(); // error: final variable 'x' can't be reassigned

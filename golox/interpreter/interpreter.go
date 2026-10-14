@@ -138,17 +138,18 @@ func (i *Interpreter) execStmt(env environment, stmt ast.Stmt) (stmtResult, envi
 }
 
 func (i *Interpreter) execVarDecl(env environment, stmt *ast.VarDecl) environment {
-	var value loxValue
+	var value loxValue = loxNil{}
 	if stmt.Initialiser != nil {
 		value = i.evalExpr(env, stmt.Initialiser)
 	}
 	if stmt.Name.String() == token.IdentBlank {
 		return env
 	}
-	newEnv := env.Declare(stmt.Name)
-	if stmt.Initialiser != nil {
-		newEnv.Assign(stmt.Name, value)
+	if stmt.IsFinal() {
+		return env.DeclareFinalVariable(stmt.Name, value)
 	}
+	newEnv := env.Declare(stmt.Name)
+	newEnv.Assign(stmt.Name, value)
 	return newEnv
 }
 

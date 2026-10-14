@@ -164,7 +164,8 @@ func (p *parser) sync() token.Token {
 			if p.scopeDepth > 0 {
 				return p.prevTok
 			}
-		case token.EOF, token.Print, token.Var, token.If, token.While, token.For, token.Break, token.Continue, token.Return, token.Class, token.LeftBrace:
+		case token.EOF, token.Print, token.Var, token.Final, token.If, token.While, token.For,
+			token.Break, token.Continue, token.Return, token.Class, token.LeftBrace:
 			return finalTok
 		default:
 		}
@@ -181,7 +182,7 @@ func (p *parser) parseDecl() (ast.Stmt, bool) {
 		stmt = p.parseComment(tok)
 	case p.scopeDepth == p.classBodyScopeDepth && p.match(token.Ident, token.Static, token.Get, token.Set):
 		stmt, ok = p.parseMethodDecl(tok)
-	case p.match(token.Var):
+	case p.match(token.Var, token.Final):
 		stmt, ok = p.parseVarDecl(tok)
 	case p.tok.Type == token.Fun && p.nextTok.Type == token.Ident:
 		p.match(token.Fun)
@@ -214,13 +215,22 @@ func (p *parser) parseComment(commentTok token.Token) *ast.Comment {
 	return &ast.Comment{Comment: commentTok}
 }
 
-func (p *parser) parseVarDecl(varTok token.Token) (*ast.VarDecl, bool) {
-	decl := &ast.VarDecl{Var: varTok}
+func (p *parser) parseVarDecl(keywordTok token.Token) (*ast.VarDecl, bool) {
+	decl := &ast.VarDecl{Keyword: keywordTok}
 	var ok bool
 	if decl.Name, ok = p.parseIdent("expected variable name"); !ok {
 		return decl, false
 	}
-	if p.match(token.Equal) {
+	if keywordTok.Type == token.Var {
+		if p.match(token.Equal) {
+			if decl.Initialiser, ok = p.parseExpr(); !ok {
+				return decl, false
+			}
+		}
+	} else {
+		if !p.expect(token.Equal) {
+			return decl, false
+		}
 		if decl.Initialiser, ok = p.parseExpr(); !ok {
 			return decl, false
 		}

@@ -22,6 +22,11 @@ typedef struct vm {
     struct object *_objects; // Head of the linked list of managed objects
     map _strings; // Interned strings
     map _globals; // Global variables
+    map _global_final_vars; // Set of the global final variables
+    // Each element stores whether the local variable (if any) at the same index in the value stack
+    // is a final variable. If it is, then the element is the index of the constant containing the
+    // variable name. Otherwise, the element is -1.
+    int64_t _local_final_vars[STACK_MAX];
 } vm;
 
 // Initialises `vm` for use.

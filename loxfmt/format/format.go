@@ -124,9 +124,9 @@ func formatCommentedStmt(stmt *ast.CommentedStmt) string {
 
 func formatVarDecl(decl *ast.VarDecl) string {
 	if decl.Initialiser != nil {
-		return fmt.Sprint(token.Var, " ", Node(decl.Name), " ", token.Equal, " ", Node(decl.Initialiser), token.Semicolon)
+		return fmt.Sprint(decl.Keyword.Type, " ", Node(decl.Name), " ", token.Equal, " ", Node(decl.Initialiser), token.Semicolon)
 	} else {
-		return fmt.Sprint(token.Var, " ", Node(decl.Name), token.Semicolon)
+		return fmt.Sprint(decl.Keyword.Type, " ", Node(decl.Name), token.Semicolon)
 	}
 }
 

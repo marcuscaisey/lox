@@ -1,0 +1,4 @@
+// error: 'a' has not been declared
+// lint warning: 'a' has been used before its declaration
+final a = a;
+print a;
