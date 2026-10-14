@@ -172,7 +172,7 @@ static void compiler_emit(compiler *compiler, uint8_t byte, int line)
 static void compiler_emit_constant_index(compiler *compiler, value v, int line)
 {
     value index_value;
-    uint32_t index;
+    constant_index index;
     if (map_get(&compiler->_constant_indexes, v, &index_value)) {
         index = value_as_number(index_value);
     } else {

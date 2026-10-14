@@ -84,9 +84,6 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk)
     bytecode_chunk_init(chunk);
 }
 
-// TODO: feels like we should just have a single function which takes in an opcode and operands, or
-// multiple functions for writing instructions with each possible number of operands?
-
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
 {
     size_t original_cap = chunk->_cap;
@@ -100,10 +97,10 @@ void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
     chunk->len++;
 }
 
-uint32_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value)
+constant_index bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value)
 {
-    uint32_t index = chunk->constants.len;
-    assert(index <= (1 << 24) - 1); // The largest constant index operand type is u24
+    constant_index index = chunk->constants.len;
+    assert(index <= MAX_CONSTANT_INDEX);
     value_array_write(&chunk->constants, value);
     return index;
 }

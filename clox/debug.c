@@ -35,7 +35,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     case OP_DEFINE_GLOBAL_FINAL:
     case OP_GET_GLOBAL:
     case OP_SET_GLOBAL: {
-        uint32_t index = chunk->instructions[offset + 1];
+        constant_index index = chunk->instructions[offset + 1];
         int index_bytes = 1;
         if (index == 0xFF) {
             index = (chunk->instructions[offset + 2] << 16) +
@@ -49,7 +49,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     }
     case OP_GET_LOCAL:
     case OP_SET_LOCAL: {
-        uint8_t index = chunk->instructions[offset + 1];
+        stack_index index = chunk->instructions[offset + 1];
         printf("%-*s %*d\n", name_width, name, operand_width, index);
         return offset + 2;
     }

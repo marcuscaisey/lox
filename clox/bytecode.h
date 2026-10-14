@@ -6,6 +6,9 @@
 
 #include "value.h"
 
+// Represents an index into the VM's value stack.
+typedef uint8_t stack_index;
+
 // Instruction types supported by the Lox bytecode.
 // Instructions operate on a stack-based virtual machine.
 //
@@ -100,9 +103,13 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk);
 // Writes `byte` into the chunk's instructions. `line` is the line number corresponding to the byte.
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);
 
-// TODO: add types for indexes like constant index etc
+// Represents an index into a bytecode chunk's constants.
+typedef uint32_t constant_index;
+
+// The largest constant index operand type is u24, so the max constant index is the largest u24
+#define MAX_CONSTANT_INDEX ((1 << 24) - 1)
 
 // Stores `value` in the chunk's constants and returns the index that can be used to retrieve it.
-uint32_t bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);
+constant_index bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);
 
 #endif
