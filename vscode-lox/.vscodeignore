@@ -4,6 +4,7 @@
 .vscodeignore
 TODO
 build/**
+demos/**
 eslint.config.mjs
 node_modules/**
 src/**
