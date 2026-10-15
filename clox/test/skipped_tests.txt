@@ -9,7 +9,6 @@ TestClox/Bool/Type
 TestClox/Classes
 TestClox/For
 TestClox/Functions
-TestClox/If
 TestClox/List
 TestClox/Nil/InvalidPropertyAccessError
 TestClox/Nil/InvalidPropertyAssignmentError

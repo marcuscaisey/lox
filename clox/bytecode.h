@@ -6,17 +6,23 @@
 
 #include "value.h"
 
-// Unsigned type representing an index into a bytecode chunk's constants.
+// Unsigned integer representing an index into a bytecode chunk's constants.
 typedef uint32_t constant_index;
 
 // The largest possible constant index.
 #define MAX_CONSTANT_INDEX ((1 << 24) - 1)
 
-// Unsigned type representing an index into the VM's value stack.
+// Unsigned integer representing an index into the VM's value stack.
 typedef uint32_t stack_index;
 
 // The largest possible stack index.
 #define MAX_STACK_INDEX ((1 << 24) - 1)
+
+// Unsigned integer representing the number of bytes for a jump instruction to jump forwards in the
+// bytecode.
+typedef uint16_t jump_offset;
+
+#define MAX_JUMP_OFFSET UINT16_MAX
 
 // Instruction types supported by the Lox bytecode.
 // Instructions operate on a stack-based virtual machine.
@@ -25,9 +31,18 @@ typedef uint32_t stack_index;
 // to pushing and popping from the virtual machine's value stack. "Constants" refer to the bytecode
 // chunk's constants.
 //
-// Constant and stack index operands are encoded as follows:
-//   0 - 254: u8 representing the index value
-//   255 - 16,777,215: u8 value of FF followed by u24 representing the index value
+// Operand types
+//   constant_index
+//     0 - 254: u8 representing the index value
+//     255 - 16,777,215: u8 value of FF followed by u24 representing the index value
+//   stack_index
+//     0 - 254: u8 representing the index value
+//     255 - 16,777,215: u8 value of FF followed by u24 representing the index value
+//   jump_offset
+//     u16
+//
+//   When an operand larger than a u8 is used, the bytes are encoded in big-endian order. I.e. `v`
+//   encoded as a u16 is the byte `(v >> 8) & 0xFF` followed by the byte `v & 0xFF`.
 enum opcode {
     // Pushes a constant
     // Operands:
@@ -80,6 +95,16 @@ enum opcode {
     OP_NOT, // Pops a value, then pushes whether it is falsey
     OP_NEGATE, // Pops a number, negates it, then pushes it back
     OP_PRINT, // Pops a value then prints it
+    // Jumps forward in the bytecode
+    // Operands:
+    //   jump_offset - number of bytes to jump starting at the end of the instruction including its
+    //                 operands
+    OP_JUMP,
+    // Jumps forward in the bytecode if the value on top of the stack is falsey
+    // Operands:
+    //   jump_offset - number of bytes to jump starting at the end of the instruction including its
+    //                 operands
+    OP_JUMP_IF_FALSE,
     // TODO
     OP_RETURN,
 };
@@ -101,7 +126,7 @@ struct bytecode_chunk {
     //     `{I1_OPCODE, I1_OPERAND_1, I2_OPCODE, I2_OPERAND_1, I2_OPERAND_2, ...}`
     // Must only be appended to via the `bytecode_write_*()` functions.
     uint8_t *instructions;
-    int *offset_lines; // Line numbers associated with each offset
+    int *offset_lines; // Line numbers associated with each bytecode offset
     size_t len; // Number of elements in `instructions` and `offset_lines`
     // Internal field, do not use.
     // Number of elements that space has been allocated for in `instructions` and `offset_lines`.

@@ -1,5 +1,6 @@
 #include "compiler.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -183,7 +184,7 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int lin
         compiler->_out->max_stack_depth = compiler->_stack_depth;
 }
 
-// Writes `opreand` corresponding to `line` to the bytecode.
+// Writes `operand` corresponding to `line` to the bytecode.
 static void compiler_emit_operand(compiler *compiler, uint8_t operand, int line)
 {
     bytecode_chunk_write(compiler->_out, operand, line);
@@ -224,6 +225,42 @@ static void compiler_emit_stack_index(compiler *compiler, stack_index index, int
         compiler_emit_operand(compiler, (index >> 8) & 0xFF, line);
         compiler_emit_operand(compiler, (index >> 0) & 0xFF, line);
     }
+}
+
+static bool is_jump_opcode(enum opcode opcode)
+{
+    return opcode == OP_JUMP || opcode == OP_JUMP_IF_FALSE;
+}
+
+// Writes a jump instruction using `opcode` corresponding to `line` to the bytecode and returns the
+// offset of the written instruction in the bytecode.
+// A placeholder jump offset operand is written which can be set later by passing the returned
+// bytecode offset to `compiler_set_jump_offset()`.
+static size_t compiler_emit_jump(compiler *compiler, enum opcode opcode, int line)
+{
+    // 1 2 3 4 5 6 7
+    // 0 1 2 3 4 5 6
+    assert(is_jump_opcode(opcode));
+    size_t bytecode_offset = compiler->_out->len;
+    compiler_emit_opcode(compiler, opcode, line);
+    compiler_emit_operand(compiler, 0xFF, line);
+    compiler_emit_operand(compiler, 0xFF, line);
+    return bytecode_offset;
+}
+
+// Sets the jump offset operand of the jump instruction at `bytecode_offset` so that it jumps to the
+// next bytecode offset written to. That is, if this function is called just before another which
+// emits some bytecode, the jump instruction will jump to that emitted bytecode.
+static void compiler_set_jump_offset(compiler *compiler, size_t bytecode_offset)
+{
+    enum opcode opcode = compiler->_out->instructions[bytecode_offset];
+    assert(is_jump_opcode(opcode));
+    // The bytecode offset is the offset of the jump opcode which is then followed by two bytes for
+    // the operand. The jump offset starts at the offset after the operand bytes so we need to take
+    // away another 3.
+    size_t jump_offset = compiler->_out->len - bytecode_offset - 3;
+    compiler->_out->instructions[bytecode_offset + 1] = (jump_offset >> 8) & 0xFF;
+    compiler->_out->instructions[bytecode_offset + 2] = (jump_offset >> 0) & 0xFF;
 }
 
 // Returns the identifier at the current token and advances the compiler past it.
@@ -327,6 +364,11 @@ enum precedence_level {
     PREC_POSTFIX, // () [] .
 };
 
+static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level);
+static void compiler_compile_expr(compiler *compiler);
+static void compiler_compile_stmt(compiler *compiler);
+static void compiler_compile_decl(compiler *compiler);
+
 // Returns the precedence level of `type` as an infix operator or `PREC_NONE` if `type` is not an
 // infix operator.
 static enum precedence_level infix_operator_precedence_level(enum token_type type)
@@ -363,9 +405,6 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
         return PREC_NONE;
     }
 }
-
-static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level);
-static void compiler_compile_expr(compiler *compiler);
 
 // Type of function which emits the bytecode for the expression starting at the current token,
 // consisting only of operators with at least the given precedence `level`, and advances the
@@ -589,7 +628,24 @@ static void compiler_compile_print_stmt(compiler *compiler)
     compiler_emit_opcode(compiler, OP_PRINT, line);
 }
 
-static void compiler_compile_decl(compiler *compiler);
+// Emits the bytecode for the if statement starting at the current token and advances the compiler
+// past it.
+static void compiler_compile_if_stmt(compiler *compiler)
+{
+    int line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_IF);
+    compiler_compile_expr(compiler);
+    size_t else_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP_IF_FALSE, line);
+    compiler_emit_opcode(compiler, OP_POP, line);
+    compiler_compile_stmt(compiler);
+    size_t else_end_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP, line);
+    compiler_set_jump_offset(compiler, else_bytecode_offset);
+    compiler_emit_opcode(compiler, OP_POP, line);
+    if (COMPILER_MATCH(compiler, TOKEN_ELSE)) {
+        compiler_compile_stmt(compiler);
+    }
+    compiler_set_jump_offset(compiler, else_end_bytecode_offset);
+}
 
 // Emits the bytecode for the block starting at the current token and advances the compiler past it.
 static void compiler_compile_block(compiler *compiler)
@@ -619,6 +675,9 @@ static void compiler_compile_stmt(compiler *compiler)
     switch (compiler->_token.type) {
     case TOKEN_PRINT:
         compiler_compile_print_stmt(compiler);
+        break;
+    case TOKEN_IF:
+        compiler_compile_if_stmt(compiler);
         break;
     case TOKEN_LEFT_BRACE:
         compiler_compile_block(compiler);

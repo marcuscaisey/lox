@@ -78,10 +78,16 @@ static uint8_t vm_read_u8(vm *vm)
     return *vm->_ip++;
 }
 
+// Reads the u16 at the instruction pointer and moves the instruction pointer past it.
+static uint16_t vm_read_u16(vm *vm)
+{
+    return (vm_read_u8(vm) << 8) | (vm_read_u8(vm));
+}
+
 // Reads the u24 at the instruction pointer and moves the instruction pointer past it.
 static uint32_t vm_read_u24(vm *vm)
 {
-    return (vm_read_u8(vm) << 16) + (vm_read_u8(vm) << 8) + (vm_read_u8(vm));
+    return (vm_read_u8(vm) << 16) | (vm_read_u8(vm) << 8) | (vm_read_u8(vm));
 }
 
 // Reads the constant index at the instruction pointer and moves the instruction pointer past it.
@@ -100,6 +106,12 @@ static stack_index vm_read_stack_index(vm *vm)
     if (index == 0xFF)
         return vm_read_u24(vm);
     return index;
+}
+
+// Reads the jump offset at the instruction pointer and moves the instruction pointer past it.
+static jump_offset vm_read_jump_offset(vm *vm)
+{
+    return vm_read_u16(vm);
 }
 
 #ifdef DEBUG_TRACE_EXECUTION
@@ -343,6 +355,18 @@ static bool vm_execute(vm *vm)
             value value = vm_stack_pop(vm);
             value_print(value);
             printf("\n");
+            break;
+        }
+        case OP_JUMP: {
+            jump_offset offset = vm_read_jump_offset(vm);
+            vm->_ip += offset;
+            break;
+        }
+        case OP_JUMP_IF_FALSE: {
+            jump_offset offset = vm_read_jump_offset(vm);
+            value top_value = vm_stack_peek(vm, 0);
+            if (value_is_falsey(top_value))
+                vm->_ip += offset;
             break;
         }
         case OP_RETURN: {

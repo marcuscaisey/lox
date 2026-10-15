@@ -24,7 +24,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         printf("%4d ", line);
 
     // Width of longest name of instruction which accepts an operand
-    int name_width = strlen(instruction_name(OP_DEFINE_GLOBAL));
+    int name_width = strlen(instruction_name(OP_DEFINE_GLOBAL_FINAL));
     int operand_width = 4;
 
     enum opcode opcode = chunk->instructions[offset];
@@ -39,8 +39,8 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         constant_index index = chunk->instructions[offset + 1];
         int index_bytes = 1;
         if (index == 0xFF) {
-            index = (chunk->instructions[offset + 2] << 16) +
-                    (chunk->instructions[offset + 3] << 8) + (chunk->instructions[offset + 4]);
+            index = (chunk->instructions[offset + 2] << 16) |
+                    (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
             index_bytes = 4;
         }
         printf("%-*s %*d '", name_width, name, operand_width, index);
@@ -53,12 +53,19 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         stack_index index = chunk->instructions[offset + 1];
         int index_bytes = 1;
         if (index == 0xFF) {
-            index = (chunk->instructions[offset + 2] << 16) +
-                    (chunk->instructions[offset + 3] << 8) + (chunk->instructions[offset + 4]);
+            index = (chunk->instructions[offset + 2] << 16) |
+                    (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
             index_bytes = 4;
         }
         printf("%-*s %*d\n", name_width, name, operand_width, index);
         return offset + 1 + index_bytes;
+    }
+    case OP_JUMP:
+    case OP_JUMP_IF_FALSE: {
+        jump_offset jump_offset = (chunk->instructions[offset + 1] << 8) |
+                                  (chunk->instructions[offset + 2]);
+        printf("%-*s %*d\n", name_width, name, operand_width, jump_offset);
+        return offset + 3;
     }
     case OP_NIL:
     case OP_TRUE:
