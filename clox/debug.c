@@ -61,6 +61,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         return offset + 1 + index_bytes;
     }
     case OP_JUMP:
+    case OP_JUMP_BACK:
     case OP_JUMP_IF_TRUE:
     case OP_JUMP_IF_FALSE: {
         jump_offset jump_offset = (chunk->instructions[offset + 1] << 8) |

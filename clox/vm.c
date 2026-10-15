@@ -362,6 +362,11 @@ static bool vm_execute(vm *vm)
             vm->_ip += offset;
             break;
         }
+        case OP_JUMP_BACK: {
+            jump_offset offset = vm_read_jump_offset(vm);
+            vm->_ip -= offset;
+            break;
+        }
         case OP_JUMP_IF_TRUE: {
             jump_offset offset = vm_read_jump_offset(vm);
             value top_value = vm_stack_peek(vm, 0);

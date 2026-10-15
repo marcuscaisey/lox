@@ -97,18 +97,19 @@ enum opcode {
     OP_PRINT, // Pops a value then prints it
     // Jumps forward in the bytecode
     // Operands:
-    //   jump_offset - number of bytes to jump starting at the end of the instruction including its
-    //                 operands
+    //   jump_offset - number of bytes to jump starting after the operand
     OP_JUMP,
+    // Jumps backward in the bytecode
+    // Operands:
+    //   jump_offset - number of bytes to jump starting after the operand
+    OP_JUMP_BACK,
     // Jumps forward in the bytecode if the value on top of the stack is truthy
     // Operands:
-    //   jump_offset - number of bytes to jump starting at the end of the instruction including its
-    //                 operands
+    //   jump_offset - number of bytes to jump starting after the operand
     OP_JUMP_IF_TRUE,
     // Jumps forward in the bytecode if the value on top of the stack is falsey
     // Operands:
-    //   jump_offset - number of bytes to jump starting at the end of the instruction including its
-    //                 operands
+    //   jump_offset - number of bytes to jump starting after the operand
     OP_JUMP_IF_FALSE,
     // TODO
     OP_RETURN,

@@ -65,6 +65,8 @@ const char *instruction_name(enum opcode opcode)
         return "PRINT";
     case OP_JUMP:
         return "JUMP";
+    case OP_JUMP_BACK:
+        return "JUMP_BACK";
     case OP_JUMP_IF_TRUE:
         return "JUMP_IF_TRUE";
     case OP_JUMP_IF_FALSE:
@@ -106,6 +108,7 @@ int instruction_stack_depth_effect(enum opcode opcode)
     case OP_NOT:
     case OP_NEGATE:
     case OP_JUMP:
+    case OP_JUMP_BACK:
     case OP_JUMP_IF_TRUE:
     case OP_JUMP_IF_FALSE:
     case OP_RETURN: // TODO

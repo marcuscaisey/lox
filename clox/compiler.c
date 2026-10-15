@@ -175,6 +175,12 @@ static void compiler_expect(compiler *compiler, enum token_type type)
                                      token_type_string(type));
 }
 
+// Returns the current offset in the output bytecode.
+static size_t compiler_bytecode_offset(compiler *compiler)
+{
+    return compiler->_out->len;
+}
+
 // Writes `opcode` corresponding to `line` to the bytecode.
 static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int line)
 {
@@ -227,19 +233,19 @@ static void compiler_emit_stack_index(compiler *compiler, stack_index index, int
     }
 }
 
-static bool is_jump_opcode(enum opcode opcode)
+static bool is_forward_jump_opcode(enum opcode opcode)
 {
     return opcode == OP_JUMP || opcode == OP_JUMP_IF_TRUE || opcode == OP_JUMP_IF_FALSE;
 }
 
-// Writes a jump instruction using `opcode` corresponding to `line` to the bytecode and returns the
-// offset of the written instruction in the bytecode.
+// Writes a forward jump instruction using `opcode` corresponding to `line` to the bytecode and
+// returns the offset of the written instruction in the bytecode.
 // A placeholder jump offset operand is written which can be set later by passing the returned
 // bytecode offset to `compiler_set_jump_offset()`.
-static size_t compiler_emit_jump(compiler *compiler, enum opcode opcode, int line)
+static size_t compiler_emit_forward_jump(compiler *compiler, enum opcode opcode, int line)
 {
-    assert(is_jump_opcode(opcode));
-    size_t bytecode_offset = compiler->_out->len;
+    assert(is_forward_jump_opcode(opcode));
+    size_t bytecode_offset = compiler_bytecode_offset(compiler);
     compiler_emit_opcode(compiler, opcode, line);
     compiler_emit_operand(compiler, 0xFF, line);
     compiler_emit_operand(compiler, 0xFF, line);
@@ -247,18 +253,34 @@ static size_t compiler_emit_jump(compiler *compiler, enum opcode opcode, int lin
 }
 
 // Sets the jump offset operand of the jump instruction at `bytecode_offset` so that it jumps to the
-// next bytecode offset written to. That is, if this function is called just before another which
-// emits some bytecode, the jump instruction will jump to that emitted bytecode.
-static void compiler_set_jump_offset(compiler *compiler, size_t bytecode_offset)
+// next bytecode offset written to. I.e. if this function is called just before another which emits
+// some bytecode, the jump instruction will jump to that emitted bytecode.
+static void compiler_set_forward_jump_offset(compiler *compiler, size_t bytecode_offset)
 {
     enum opcode opcode = compiler->_out->instructions[bytecode_offset];
-    assert(is_jump_opcode(opcode));
-    // The bytecode offset is the offset of the jump opcode which is then followed by two bytes for
-    // the operand. The jump offset starts at the offset after the operand bytes so we need to take
-    // away another 3.
-    size_t jump_offset = compiler->_out->len - bytecode_offset - 3;
+    assert(is_forward_jump_opcode(opcode));
+    // The bytecode offset is the offset of the jump opcode which is then followed by 2 bytes for
+    // the operand. The jump offset counts from the offset after the operand bytes we need to take
+    // discount this from the result (1 for the opcode, 2 for the operand).
+    size_t jump_offset = compiler_bytecode_offset(compiler) - bytecode_offset - 3;
+    if (jump_offset > MAX_JUMP_OFFSET)
+        panicf("maximum jump offset (%lu) exceeded", (size_t)MAX_JUMP_OFFSET);
     compiler->_out->instructions[bytecode_offset + 1] = (jump_offset >> 8) & 0xFF;
     compiler->_out->instructions[bytecode_offset + 2] = (jump_offset >> 0) & 0xFF;
+}
+
+// Writes a backward jump instruction corresponding to `line` to the bytecode so that it jumps back
+// to `bytecode_offset`.
+static void compiler_emit_backward_jump(compiler *compiler, size_t bytecode_offset, int line)
+{
+    compiler_emit_opcode(compiler, OP_JUMP_BACK, line);
+    // The jump offset counts from the offset after the 2 operand bytes which we haven't written yet
+    // so we need we need to add this to the result.
+    size_t jump_offset = compiler_bytecode_offset(compiler) - bytecode_offset + 2;
+    if (jump_offset > MAX_JUMP_OFFSET)
+        panicf("maximum jump offset (%lu) exceeded", (size_t)MAX_JUMP_OFFSET);
+    compiler_emit_operand(compiler, (jump_offset >> 8) & 0xFF, line);
+    compiler_emit_operand(compiler, (jump_offset >> 0) & 0xFF, line);
 }
 
 // Returns the identifier at the current token and advances the compiler past it.
@@ -546,10 +568,10 @@ static void compiler_compile_or_expr(compiler *compiler, enum precedence_level l
 {
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_OR);
-    size_t end_jump_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP_IF_TRUE, line);
+    size_t end_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP_IF_TRUE, line);
     compiler_emit_opcode(compiler, OP_POP, line);
     compiler_compile_expr_at_level(compiler, level + 1);
-    compiler_set_jump_offset(compiler, end_jump_bytecode_offset);
+    compiler_set_forward_jump_offset(compiler, end_jump_bytecode_offset);
 }
 
 // `infix_expr_compiler` for an and expression.
@@ -557,10 +579,10 @@ static void compiler_compile_and_expr(compiler *compiler, enum precedence_level 
 {
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_AND);
-    size_t end_jump_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP_IF_FALSE, line);
+    size_t end_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
     compiler_emit_opcode(compiler, OP_POP, line);
     compiler_compile_expr_at_level(compiler, level + 1);
-    compiler_set_jump_offset(compiler, end_jump_bytecode_offset);
+    compiler_set_forward_jump_offset(compiler, end_jump_bytecode_offset);
 }
 
 // `infix_expr_compiler` for a binary expression.
@@ -662,18 +684,45 @@ static void compiler_compile_print_stmt(compiler *compiler)
 static void compiler_compile_if_stmt(compiler *compiler)
 {
     int line = compiler->_token.line;
+
     compiler_expect(compiler, TOKEN_IF);
+    compiler_expect(compiler, TOKEN_LEFT_PAREN);
     compiler_compile_expr(compiler);
-    size_t else_jump_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP_IF_FALSE, line);
+    compiler_expect(compiler, TOKEN_RIGHT_PAREN);
+    size_t else_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
+
     compiler_emit_opcode(compiler, OP_POP, line);
     compiler_compile_stmt(compiler);
-    size_t end_jump_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP, line);
-    compiler_set_jump_offset(compiler, else_jump_bytecode_offset);
+    size_t end_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP, line);
+
+    compiler_set_forward_jump_offset(compiler, else_jump_bytecode_offset);
     compiler_emit_opcode(compiler, OP_POP, line);
     if (COMPILER_MATCH(compiler, TOKEN_ELSE)) {
         compiler_compile_stmt(compiler);
     }
-    compiler_set_jump_offset(compiler, end_jump_bytecode_offset);
+
+    compiler_set_forward_jump_offset(compiler, end_jump_bytecode_offset);
+}
+
+// Emits the bytecode for the if statement starting at the current token and advances the compiler
+// past it.
+static void compiler_compile_while_stmt(compiler *compiler)
+{
+    int line = compiler->_token.line;
+    size_t loop_start_bytecode_offset = compiler_bytecode_offset(compiler);
+
+    compiler_expect(compiler, TOKEN_WHILE);
+    compiler_expect(compiler, TOKEN_LEFT_PAREN);
+    compiler_compile_expr(compiler);
+    compiler_expect(compiler, TOKEN_RIGHT_PAREN);
+    size_t end_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
+
+    compiler_emit_opcode(compiler, OP_POP, line);
+    compiler_compile_stmt(compiler);
+    compiler_emit_backward_jump(compiler, loop_start_bytecode_offset, line);
+
+    compiler_set_forward_jump_offset(compiler, end_jump_bytecode_offset);
+    compiler_emit_opcode(compiler, OP_POP, line);
 }
 
 // Emits the bytecode for the block starting at the current token and advances the compiler past it.
@@ -707,6 +756,9 @@ static void compiler_compile_stmt(compiler *compiler)
         break;
     case TOKEN_IF:
         compiler_compile_if_stmt(compiler);
+        break;
+    case TOKEN_WHILE:
+        compiler_compile_while_stmt(compiler);
         break;
     case TOKEN_LEFT_BRACE:
         compiler_compile_block(compiler);
@@ -767,8 +819,8 @@ static void compiler_sync(compiler *compiler)
         case TOKEN_PRINT:
         case TOKEN_VAR:
         case TOKEN_FINAL:
-            // case TOKEN_IF:
-            // case TOKEN_WHILE:
+        case TOKEN_IF:
+        case TOKEN_WHILE:
             // case TOKEN_FOR:
             // case TOKEN_BREAK:
             // case TOKEN_CONTINUE:
