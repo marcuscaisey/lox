@@ -6,8 +6,17 @@
 
 #include "value.h"
 
-// Represents an index into the VM's value stack.
-typedef uint8_t stack_index;
+// Unsigned type representing an index into a bytecode chunk's constants.
+typedef uint32_t constant_index;
+
+// The largest possible constant index.
+#define MAX_CONSTANT_INDEX ((1 << 24) - 1)
+
+// Unsigned type representing an index into the VM's value stack.
+typedef uint32_t stack_index;
+
+// The largest possible stack index.
+#define MAX_STACK_INDEX ((1 << 24) - 1)
 
 // Instruction types supported by the Lox bytecode.
 // Instructions operate on a stack-based virtual machine.
@@ -16,7 +25,7 @@ typedef uint8_t stack_index;
 // to pushing and popping from the virtual machine's value stack. "Constants" refer to the bytecode
 // chunk's constants.
 //
-// Constant index operands are encoded as follows:
+// Constant and stack index operands are encoded as follows:
 //   0 - 254: u8 representing the index value
 //   255 - 16,777,215: u8 value of FF followed by u24 representing the index value
 enum opcode {
@@ -52,11 +61,11 @@ enum opcode {
     OP_DEFINE_LOCAL_FINAL,
     // Pushes a local variable from the stack
     // Operands:
-    //   u8 - index of the value in the stack
+    //   stack_index - index of the value in the stack
     OP_GET_LOCAL,
     // Sets a local variable from the stack to the value on top of the stack
     // Operands:
-    //   u8 - index of the value in the stack
+    //   stack_index - index of the value in the stack
     OP_SET_LOCAL,
     OP_EQUAL, // Pops two numbers then pushes whether they're equal
     OP_NOT_EQUAL, // Pops two numbers then pushes whether they're not equal
@@ -78,6 +87,12 @@ enum opcode {
 // Returns the name of the instruction corresponding to `opcode`.
 const char *instruction_name(enum opcode opcode);
 
+// Returns the positive or negative amount that the instruction corresponding to `opcode` has on the
+// depth of the VM's value stack. For example:
+//   - If an instruction pushes a value onto the stack, then 1 is returned.
+//   - If an instruction pops two values, then pushes another, then -1 is returned.
+int instruction_stack_depth_effect(enum opcode opcode);
+
 // Represents a sequence of bytecode instructions.
 // Must be initialised with `bytecode_chunk_init()` before use and freed with
 // `bytecode_chunk_free()` after use.
@@ -92,6 +107,8 @@ struct bytecode_chunk {
     // Number of elements that space has been allocated for in `instructions` and `offset_lines`.
     size_t _cap;
     struct value_array constants; // Pool of constants referenced by the bytecode
+    // Maximum number of values that will be on the VM's value stack during execution
+    size_t max_stack_depth;
 };
 
 // Initialises `chunk` for use.
@@ -102,12 +119,6 @@ void bytecode_chunk_free(struct bytecode_chunk *chunk);
 
 // Writes `byte` into the chunk's instructions. `line` is the line number corresponding to the byte.
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);
-
-// Represents an index into a bytecode chunk's constants.
-typedef uint32_t constant_index;
-
-// The largest constant index operand type is u24, so the max constant index is the largest u24
-#define MAX_CONSTANT_INDEX ((1 << 24) - 1)
 
 // Stores `value` in the chunk's constants and returns the index that can be used to retrieve it.
 constant_index bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);

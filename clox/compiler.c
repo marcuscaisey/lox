@@ -10,6 +10,7 @@
 
 #include "bytecode.h"
 #include "debug.h"
+#include "dynamic_array.h"
 #include "errors.h"
 #include "lexer.h"
 #include "map.h"
@@ -54,13 +55,21 @@ typedef struct {
     // Map from constant values to their index in the bytecode's constants.
     // Don't use directly, use `compiler_emit_constant_index()` instead.
     map _constant_indexes;
-    // Local variables in scope at the current token's position, ordered by the position of their
-    // declaration in the source.
+    // Array of local variables in scope at the current token's position, ordered by the position of
+    // their declaration in the source.
     // Don't use directly, use `compiler_add_local()` and `compiler_resolve_local()` instead.
-    struct local _locals[256];
+    struct local *_locals;
     // Number of local variables in scope at the current token's position
     // Don't use directly, use `compiler_add_local()` and `compiler_resolve_local()` instead.
     size_t _locals_count;
+    // Number of elements space has been allocated for in the locals array.
+    // Don't use directly.
+    size_t _locals_cap;
+    // Number of elements in the value stack at the current token's position.
+    // This is increased or decreased when the opcode for an instruction which increases or
+    // decreases the number of elements in the stack is emitted.
+    // Don't use directly.
+    stack_index _stack_depth;
 } compiler;
 
 // Calls `compiler_report_errorf()` with a range spanning the provided token.
@@ -125,7 +134,10 @@ static void compiler_init(compiler *compiler, vm *vm, const char *source,
     compiler->_had_error = false;
 
     map_init(&compiler->_constant_indexes);
+    compiler->_locals = NULL;
     compiler->_locals_count = 0;
+    compiler->_locals_cap = 0;
+    compiler->_stack_depth = 0;
 }
 
 // Frees the memory associated with `compiler`.
@@ -133,6 +145,7 @@ static void compiler_free(compiler *compiler)
 {
     lexer_free(&compiler->_lexer);
     map_free(compiler->_vm, &compiler->_constant_indexes);
+    free(compiler->_locals);
 }
 
 // Calls `compiler_match()` with a variable number of arguments.
@@ -161,14 +174,23 @@ static void compiler_expect(compiler *compiler, enum token_type type)
                                      token_type_string(type));
 }
 
-// Writes `byte` corresponding to `line` to the bytecode.
-static void compiler_emit(compiler *compiler, uint8_t byte, int line)
+// Writes `opcode` corresponding to `line` to the bytecode.
+static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int line)
 {
-    bytecode_chunk_write(compiler->_out, byte, line);
+    bytecode_chunk_write(compiler->_out, opcode, line);
+    compiler->_stack_depth += instruction_stack_depth_effect(opcode);
+    if (compiler->_stack_depth > compiler->_out->max_stack_depth)
+        compiler->_out->max_stack_depth = compiler->_stack_depth;
 }
 
-// Ensures that value `v` corresponding to `line` is in the bytecode's constants and writes the
-// corresponding index to the bytecode, encoded appropriately depending on its size.
+// Writes `opreand` corresponding to `line` to the bytecode.
+static void compiler_emit_operand(compiler *compiler, uint8_t operand, int line)
+{
+    bytecode_chunk_write(compiler->_out, operand, line);
+}
+
+// Ensures that value `v` corresponding to `line` is in the bytecode's constants, encodes the
+// corresponding index, and writes it to the bytecode.
 static void compiler_emit_constant_index(compiler *compiler, value v, int line)
 {
     value index_value;
@@ -177,15 +199,30 @@ static void compiler_emit_constant_index(compiler *compiler, value v, int line)
         index = value_as_number(index_value);
     } else {
         index = bytecode_chunk_add_constant(compiler->_out, v);
+        if (index > MAX_CONSTANT_INDEX)
+            panicf("maximum number of constants (%lu) used", (size_t)MAX_CONSTANT_INDEX + 1);
         map_set(compiler->_vm, &compiler->_constant_indexes, v, value_number(index));
     }
     if (index < 255) {
-        compiler_emit(compiler, index, line);
+        compiler_emit_operand(compiler, index, line);
     } else {
-        compiler_emit(compiler, 0xFF, line);
-        compiler_emit(compiler, (index >> 16) & 0xFF, line);
-        compiler_emit(compiler, (index >> 8) & 0xFF, line);
-        compiler_emit(compiler, (index >> 0) & 0xFF, line);
+        compiler_emit_operand(compiler, 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 16) & 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 8) & 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 0) & 0xFF, line);
+    }
+}
+
+// Encodes and writes `index` to the bytecode.
+static void compiler_emit_stack_index(compiler *compiler, stack_index index, int line)
+{
+    if (index < 255) {
+        compiler_emit_operand(compiler, index, line);
+    } else {
+        compiler_emit_operand(compiler, 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 16) & 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 8) & 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 0) & 0xFF, line);
     }
 }
 
@@ -213,15 +250,15 @@ static void compiler_end_scope(compiler *compiler, int line)
 {
     for (ptrdiff_t i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
-        compiler_emit(compiler, OP_POP, line);
+        compiler_emit_opcode(compiler, OP_POP, line);
         compiler->_locals_count--;
     }
     compiler->_scope_depth--;
 }
 
-// Returns the index in the VM's value stack of the local variable that `ident` refers to or -1 if
-// one is not found.
-static int compiler_resolve_local(compiler *compiler, struct token ident)
+// Returns the index in the VM's value stack of the local variable that `ident` refers to or
+// `MAX_STACK_INDEX + 1` if one is not found.
+static stack_index compiler_resolve_local(compiler *compiler, struct token ident)
 {
     for (ptrdiff_t i = compiler->_locals_count - 1; i >= 0; i--) {
         struct local local = compiler->_locals[i];
@@ -232,8 +269,12 @@ static int compiler_resolve_local(compiler *compiler, struct token ident)
             return i;
         }
     }
-    return -1;
+    return MAX_STACK_INDEX + 1;
 }
+
+// Ensures that when MAX_STACK_INDEX + 1 is a valid value to return from
+_Static_assert((constant_index)-1 > 0, "stack_index must be unsigned");
+_Static_assert(MAX_STACK_INDEX < (stack_index)-1, "MAX_STACK_INDEX must be < max(stack_index)");
 
 // Declares the local variable corresponding to `ident` or reports an error if one has already been
 // declared at the current scope depth.
@@ -242,7 +283,7 @@ static int compiler_resolve_local(compiler *compiler, struct token ident)
 // The variable starts in an initialising state. This function returns its index in the VM's value
 // stack which should be passed to `compiler_finish_initialising_local()` once the declaration
 // introducing the variable has been compiled.
-static size_t compiler_declare_local(compiler *compiler, struct token ident)
+static stack_index compiler_declare_local(compiler *compiler, struct token ident)
 {
     for (ptrdiff_t i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
@@ -251,7 +292,10 @@ static size_t compiler_declare_local(compiler *compiler, struct token ident)
             COMPILER_REPORT_TOKEN_ERRORF(compiler, ident, "'%.*s' has already been declared",
                                          (int)ident.len, ident.start);
     }
-    size_t index = compiler->_locals_count;
+    stack_index index = compiler->_locals_count;
+    DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
+    if (index > MAX_STACK_INDEX)
+        panicf("maximum number of local variables (%lu) used", (size_t)MAX_STACK_INDEX + 1);
     struct local *local = &compiler->_locals[compiler->_locals_count++];
     local->name = ident.start;
     local->name_len = ident.len;
@@ -345,7 +389,7 @@ static void compiler_compile_keyword_literal_expr(compiler *compiler, enum prece
         COMPILER_REPORT_TOKEN_ERRORF(compiler, compiler->_token, "%s", "expected literal keyword");
         return;
     }
-    compiler_emit(compiler, instruction, compiler->_prev_token.line);
+    compiler_emit_opcode(compiler, instruction, compiler->_prev_token.line);
 }
 
 // `expr_compiler` for an identifier expression.
@@ -369,14 +413,14 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
         is_get = false;
     }
 
-    int index = compiler_resolve_local(compiler, ident);
-    if (index >= 0) {
+    stack_index index = compiler_resolve_local(compiler, ident);
+    if (index <= MAX_STACK_INDEX) {
         enum opcode instruction = is_get ? OP_GET_LOCAL : OP_SET_LOCAL;
-        compiler_emit(compiler, instruction, line);
-        compiler_emit(compiler, index, line);
+        compiler_emit_opcode(compiler, instruction, line);
+        compiler_emit_stack_index(compiler, index, line);
     } else {
         enum opcode instruction = is_get ? OP_GET_GLOBAL : OP_SET_GLOBAL;
-        compiler_emit(compiler, instruction, line);
+        compiler_emit_opcode(compiler, instruction, line);
         compiler_emit_constant_index(compiler, value_string(name), line);
     }
 }
@@ -390,7 +434,7 @@ static void compiler_compile_string_literal_expr(compiler *compiler, enum preced
     // in
     struct object_string *string = object_string_copy(
         compiler->_vm, compiler->_prev_token.start + 1, compiler->_prev_token.len - 2);
-    compiler_emit(compiler, OP_CONSTANT, compiler->_prev_token.line);
+    compiler_emit_opcode(compiler, OP_CONSTANT, compiler->_prev_token.line);
     compiler_emit_constant_index(compiler, value_string(string), compiler->_prev_token.line);
 }
 
@@ -400,7 +444,7 @@ static void compiler_compile_number_literal_expr(compiler *compiler, enum preced
     (void)level;
     compiler_expect(compiler, TOKEN_NUMBER);
     double number = strtod(compiler->_prev_token.start, NULL);
-    compiler_emit(compiler, OP_CONSTANT, compiler->_prev_token.line);
+    compiler_emit_opcode(compiler, OP_CONSTANT, compiler->_prev_token.line);
     compiler_emit_constant_index(compiler, value_number(number), compiler->_prev_token.line);
 }
 
@@ -428,7 +472,7 @@ static void compiler_compile_unary_expr(compiler *compiler, enum precedence_leve
         return;
     }
     compiler_compile_expr_at_level(compiler, PREC_UNARY);
-    compiler_emit(compiler, instruction, line);
+    compiler_emit_opcode(compiler, instruction, line);
 }
 
 // Returns the compiler for a prefix expression starting with a `type` token or `NULL` if there is
@@ -486,7 +530,7 @@ static void compiler_compile_binary_expr(compiler *compiler, enum precedence_lev
         return;
     }
     compiler_compile_expr_at_level(compiler, level + 1);
-    compiler_emit(compiler, instruction, line);
+    compiler_emit_opcode(compiler, instruction, line);
 }
 
 // Returns the compiler for an infix expression whose operator is a `type` token or `NULL` is there
@@ -542,7 +586,7 @@ static void compiler_compile_print_stmt(compiler *compiler)
     compiler_expect(compiler, TOKEN_PRINT);
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_SEMICOLON);
-    compiler_emit(compiler, OP_PRINT, line);
+    compiler_emit_opcode(compiler, OP_PRINT, line);
 }
 
 static void compiler_compile_decl(compiler *compiler);
@@ -565,7 +609,7 @@ static void compiler_compile_expr_stmt(compiler *compiler)
     int line = compiler->_token.line;
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_SEMICOLON);
-    compiler_emit(compiler, OP_POP, line);
+    compiler_emit_opcode(compiler, OP_POP, line);
 }
 
 // Emits the bytecode for the statement starting at the current token and advances the compiler past
@@ -601,28 +645,27 @@ static void compiler_compile_var_decl(compiler *compiler)
     if (name == NULL)
         return;
 
-    size_t local_index;
-    if (compiler->_scope_depth > 0) {
+    stack_index local_index;
+    if (compiler->_scope_depth > 0)
         local_index = compiler_declare_local(compiler, ident);
-    }
 
     if (COMPILER_MATCH(compiler, TOKEN_EQUAL))
         compiler_compile_expr(compiler);
     else
-        compiler_emit(compiler, OP_NIL, line);
+        compiler_emit_opcode(compiler, OP_NIL, line);
     compiler_expect(compiler, TOKEN_SEMICOLON);
 
     if (compiler->_scope_depth > 0) {
         compiler_finish_initialising_local(compiler, local_index);
         if (is_final) {
-            compiler_emit(compiler, OP_DEFINE_LOCAL_FINAL, line);
+            compiler_emit_opcode(compiler, OP_DEFINE_LOCAL_FINAL, line);
             compiler_emit_constant_index(compiler, value_string(name), line);
         } else {
-            compiler_emit(compiler, OP_DEFINE_LOCAL, line);
+            compiler_emit_opcode(compiler, OP_DEFINE_LOCAL, line);
         }
     } else {
         enum opcode instruction = is_final ? OP_DEFINE_GLOBAL_FINAL : OP_DEFINE_GLOBAL;
-        compiler_emit(compiler, instruction, line);
+        compiler_emit_opcode(compiler, instruction, line);
         compiler_emit_constant_index(compiler, value_string(name), line);
     }
 }
@@ -677,7 +720,7 @@ static bool compiler_compile(compiler *compiler)
 {
     while (compiler->_token.type != TOKEN_EOF)
         compiler_compile_decl(compiler);
-    compiler_emit(compiler, OP_RETURN, compiler->_token.line);
+    compiler_emit_opcode(compiler, OP_RETURN, compiler->_token.line);
     bool success = !compiler->_had_error;
 #ifdef DEBUG_PRINT_BYTECODE
     if (success)

@@ -11,12 +11,48 @@
 #include "bytecode.h"
 #include "compiler.h"
 #include "debug.h"
+#include "dynamic_array.h"
 #include "errors.h"
 #include "map.h"
+#include "memory.h"
 #include "object.h"
 #include "strings.h"
 #include "value.h"
 #include "vm_memory.h"
+
+void vm_init(vm *vm)
+{
+    // vm_stack_reset(vm);
+    vm->_stack = NULL;
+    vm->_stack_cap = 0;
+    vm->_stack_top = NULL;
+    vm->_objects = NULL;
+    map_init(&vm->_strings);
+    map_init(&vm->_globals);
+    map_init(&vm->_global_final_vars);
+    vm->_local_final_vars = NULL;
+}
+
+// Frees the objects managed by the VM and memory associated with them.
+void vm_destroy_objects(vm *vm)
+{
+    struct object *object = vm->_objects;
+    while (object != NULL) {
+        struct object *next = object->next;
+        object_destroy(vm, object);
+        object = next;
+    }
+}
+
+void vm_free(vm *vm)
+{
+    free(vm->_stack);
+    vm_destroy_objects(vm);
+    map_free(vm, &vm->_strings);
+    map_free(vm, &vm->_globals);
+    map_free(vm, &vm->_global_final_vars);
+    free(vm->_local_final_vars);
+}
 
 // Adds an element to the top of the stack.
 static void vm_stack_push(vm *vm, value value)
@@ -36,40 +72,6 @@ static value vm_stack_peek(vm *vm, int distance)
     return vm->_stack_top[-1 - distance];
 }
 
-// Empties the stack so that the next element added with `vm_stack_push()` will be the first one.
-static void vm_stack_reset(vm *vm)
-{
-    vm->_stack_top = vm->_stack;
-}
-
-void vm_init(vm *vm)
-{
-    vm_stack_reset(vm);
-    vm->_objects = NULL;
-    map_init(&vm->_strings);
-    map_init(&vm->_globals);
-    map_init(&vm->_global_final_vars);
-}
-
-// Frees the objects managed by the VM and memory associated with them.
-void vm_destroy_objects(vm *vm)
-{
-    struct object *object = vm->_objects;
-    while (object != NULL) {
-        struct object *next = object->next;
-        object_destroy(vm, object);
-        object = next;
-    }
-}
-
-void vm_free(vm *vm)
-{
-    vm_destroy_objects(vm);
-    map_free(vm, &vm->_strings);
-    map_free(vm, &vm->_globals);
-    map_free(vm, &vm->_global_final_vars);
-}
-
 // Reads the u8 at the instruction pointer and moves the instruction pointer past it.
 static uint8_t vm_read_u8(vm *vm)
 {
@@ -84,6 +86,15 @@ static uint32_t vm_read_u24(vm *vm)
 
 // Reads the constant index at the instruction pointer and moves the instruction pointer past it.
 static constant_index vm_read_constant_index(vm *vm)
+{
+    uint8_t index = vm_read_u8(vm);
+    if (index == 0xFF)
+        return vm_read_u24(vm);
+    return index;
+}
+
+// Reads the stack index at the instruction pointer and moves the instruction pointer past it.
+static stack_index vm_read_stack_index(vm *vm)
 {
     uint8_t index = vm_read_u8(vm);
     if (index == 0xFF)
@@ -222,14 +233,14 @@ static bool vm_execute(vm *vm)
             break;
         }
         case OP_GET_LOCAL: {
-            stack_index stack_index = vm_read_u8(vm);
+            stack_index stack_index = vm_read_stack_index(vm);
             value value = vm->_stack[stack_index];
             vm_stack_push(vm, value);
             break;
         }
         case OP_SET_LOCAL: {
-            stack_index stack_index = vm_read_u8(vm);
-            int64_t name_index = vm->_local_final_vars[stack_index];
+            stack_index stack_index = vm_read_stack_index(vm);
+            constant_index name_index = vm->_local_final_vars[stack_index];
             if (name_index <= MAX_CONSTANT_INDEX) {
                 value name = vm->_chunk->constants.values[name_index];
                 vm_report_errorf(vm, instruction_offset, "final variable '%s' can't be reassigned",
@@ -341,6 +352,22 @@ static bool vm_execute(vm *vm)
     }
 }
 
+// Ensures that there's enough space in the value stack so that it can hold `n` elements by
+// reallocating more space if necessary. If the stack already has enough space, then this is a
+// no-op. If the stack was grown, then the local final variables array will be as well.
+static void vm_stack_grow(vm *vm, size_t n)
+{
+    if (vm->_stack_cap < n) {
+        ptrdiff_t current_stack_depth = vm->_stack_top - vm->_stack;
+        size_t stack_size = DYNAMIC_ARRAY_SIZE(vm->_stack, n);
+        size_t local_final_var_size = DYNAMIC_ARRAY_SIZE(vm->_local_final_vars, n);
+        vm->_stack = xrealloc(vm->_stack, stack_size);
+        vm->_local_final_vars = xrealloc(vm->_local_final_vars, local_final_var_size);
+        vm->_stack_cap = n;
+        vm->_stack_top = vm->_stack + current_stack_depth;
+    }
+}
+
 bool vm_interpret(vm *vm, const char *source)
 {
     bool success = true;
@@ -357,6 +384,9 @@ bool vm_interpret(vm *vm, const char *source)
     vm->_source = source;
     vm->_chunk = &chunk;
     vm->_ip = chunk.instructions;
+
+    vm_stack_grow(vm, chunk.max_stack_depth);
+
     success = vm_execute(vm);
 
 out_chunk_free:
