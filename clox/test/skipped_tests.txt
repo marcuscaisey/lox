@@ -30,7 +30,6 @@ TestClox/Number/TimesNonIntListError
 TestClox/Number/TimesNonIntStringError
 TestClox/Number/Truthiness
 TestClox/Number/Type
-TestClox/Operators/Logical
 TestClox/Operators/Precedence
 TestClox/Result
 TestClox/String/EscapeBackslash

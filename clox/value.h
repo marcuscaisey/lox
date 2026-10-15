@@ -76,8 +76,8 @@ typedef uint32_t hash_value;
 // Returns the hash of `value`.
 hash_value value_hash(value value);
 
-// Reports whether `value` is falsey.
-bool value_is_falsey(value value);
+// Reports whether `value` is truthy.
+bool value_is_truthy(value value);
 
 // Prints `value` in the format of the Lox `print` statement with no trailing newline.
 void value_print(value value);

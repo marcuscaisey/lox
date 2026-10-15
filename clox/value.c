@@ -135,10 +135,16 @@ hash_value value_hash(value value)
     }
 }
 
-bool value_is_falsey(value value)
+bool value_is_truthy(value value)
 {
-    return (value_type(value) == VALUE_BOOL && !value_as_bool(value)) ||
-           value_type(value) == VALUE_NIL;
+    switch (value_type(value)) {
+    case VALUE_BOOL:
+        return value_as_bool(value);
+    case VALUE_NIL:
+        return false;
+    default:
+        return true;
+    }
 }
 
 void value_print(value value)

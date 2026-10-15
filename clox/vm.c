@@ -335,7 +335,7 @@ static bool vm_execute(vm *vm)
 #undef EXECUTE_BINARY_NUMBER_OP
         case OP_NOT: {
             value value = vm_stack_pop(vm);
-            bool result = value_is_falsey(value);
+            bool result = !value_is_truthy(value);
             vm_stack_push(vm, value_bool(result));
             break;
         }
@@ -362,10 +362,17 @@ static bool vm_execute(vm *vm)
             vm->_ip += offset;
             break;
         }
+        case OP_JUMP_IF_TRUE: {
+            jump_offset offset = vm_read_jump_offset(vm);
+            value top_value = vm_stack_peek(vm, 0);
+            if (value_is_truthy(top_value))
+                vm->_ip += offset;
+            break;
+        }
         case OP_JUMP_IF_FALSE: {
             jump_offset offset = vm_read_jump_offset(vm);
             value top_value = vm_stack_peek(vm, 0);
-            if (value_is_falsey(top_value))
+            if (!value_is_truthy(top_value))
                 vm->_ip += offset;
             break;
         }

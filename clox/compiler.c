@@ -229,7 +229,7 @@ static void compiler_emit_stack_index(compiler *compiler, stack_index index, int
 
 static bool is_jump_opcode(enum opcode opcode)
 {
-    return opcode == OP_JUMP || opcode == OP_JUMP_IF_FALSE;
+    return opcode == OP_JUMP || opcode == OP_JUMP_IF_TRUE || opcode == OP_JUMP_IF_FALSE;
 }
 
 // Writes a jump instruction using `opcode` corresponding to `line` to the bytecode and returns the
@@ -238,8 +238,6 @@ static bool is_jump_opcode(enum opcode opcode)
 // bytecode offset to `compiler_set_jump_offset()`.
 static size_t compiler_emit_jump(compiler *compiler, enum opcode opcode, int line)
 {
-    // 1 2 3 4 5 6 7
-    // 0 1 2 3 4 5 6
     assert(is_jump_opcode(opcode));
     size_t bytecode_offset = compiler->_out->len;
     compiler_emit_opcode(compiler, opcode, line);
@@ -378,10 +376,10 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
     //     return PREC_COMMA;
     // case TOKEN_QUESTION:
     //     return PREC_TERNARY;
-    // case TOKEN_OR:
-    //     return PREC_LOGICAL_OR;
-    // case TOKEN_AND:
-    //     return PREC_LOGICAL_AND;
+    case TOKEN_OR:
+        return PREC_LOGICAL_OR;
+    case TOKEN_AND:
+        return PREC_LOGICAL_AND;
     case TOKEN_EQUAL_EQUAL:
     case TOKEN_BANG_EQUAL:
         return PREC_EQUALITY;
@@ -406,12 +404,17 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
     }
 }
 
-// Type of function which emits the bytecode for the expression starting at the current token,
+// Type of function that emits the bytecode for the expression starting at the current token
 // consisting only of operators with at least the given precedence `level`, and advances the
 // compiler past it.
 // If an unexpected token is encountered, then an error is reported and the compiler is not advanced
 // past it.
 typedef void (*expr_compiler)(compiler *compiler, enum precedence_level level);
+
+// Type of function which behaves in the same way as `expr_compiler` except it compiles the infix
+// expression whose first operand has already been compiled. That is, it expects the current token
+// to be the infix operator.
+typedef void (*infix_expr_compiler)(compiler *compiler, enum precedence_level level);
 
 // `expr_compiler` for a keyword literal expression.
 static void compiler_compile_keyword_literal_expr(compiler *compiler, enum precedence_level level)
@@ -514,9 +517,8 @@ static void compiler_compile_unary_expr(compiler *compiler, enum precedence_leve
     compiler_emit_opcode(compiler, instruction, line);
 }
 
-// Returns the compiler for a prefix expression starting with a `type` token or `NULL` if there is
-// none.
-static expr_compiler prefix_expr_compiler(enum token_type type)
+// Returns the compiler for an expression starting with a `type` token or `NULL` if there is none.
+static expr_compiler expr_compiler_for_prefix(enum token_type type)
 {
     switch (type) {
     case TOKEN_NIL:
@@ -539,7 +541,29 @@ static expr_compiler prefix_expr_compiler(enum token_type type)
     }
 }
 
-// `expr_compiler` for a binary expression.
+// `infix_expr_compiler` for an or expression.
+static void compiler_compile_or_expr(compiler *compiler, enum precedence_level level)
+{
+    int line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_OR);
+    size_t end_jump_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP_IF_TRUE, line);
+    compiler_emit_opcode(compiler, OP_POP, line);
+    compiler_compile_expr_at_level(compiler, level + 1);
+    compiler_set_jump_offset(compiler, end_jump_bytecode_offset);
+}
+
+// `infix_expr_compiler` for an and expression.
+static void compiler_compile_and_expr(compiler *compiler, enum precedence_level level)
+{
+    int line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_AND);
+    size_t end_jump_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP_IF_FALSE, line);
+    compiler_emit_opcode(compiler, OP_POP, line);
+    compiler_compile_expr_at_level(compiler, level + 1);
+    compiler_set_jump_offset(compiler, end_jump_bytecode_offset);
+}
+
+// `infix_expr_compiler` for a binary expression.
 static void compiler_compile_binary_expr(compiler *compiler, enum precedence_level level)
 {
     int line = compiler->_token.line;
@@ -572,11 +596,15 @@ static void compiler_compile_binary_expr(compiler *compiler, enum precedence_lev
     compiler_emit_opcode(compiler, instruction, line);
 }
 
-// Returns the compiler for an infix expression whose operator is a `type` token or `NULL` is there
+// Returns the compiler for an infix expression whose operator is a `type` token or `NULL` if there
 // is none.
-static expr_compiler infix_expr_compiler(enum token_type type)
+static infix_expr_compiler infix_expr_compiler_for_operator(enum token_type type)
 {
     switch (type) {
+    case TOKEN_OR:
+        return compiler_compile_or_expr;
+    case TOKEN_AND:
+        return compiler_compile_and_expr;
     case TOKEN_PLUS:
     case TOKEN_MINUS:
     case TOKEN_ASTERISK:
@@ -596,7 +624,7 @@ static expr_compiler infix_expr_compiler(enum token_type type)
 // `expr_compiler` for any expression.
 static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level)
 {
-    expr_compiler prefix_compiler = prefix_expr_compiler(compiler->_token.type);
+    expr_compiler prefix_compiler = expr_compiler_for_prefix(compiler->_token.type);
     if (prefix_compiler == NULL) {
         COMPILER_REPORT_TOKEN_ERRORF(compiler, compiler->_token, "%s", "expected expression");
         return;
@@ -605,7 +633,8 @@ static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_l
 
     enum precedence_level infix_level;
     while ((infix_level = infix_operator_precedence_level(compiler->_token.type)) >= level) {
-        expr_compiler infix_compiler = infix_expr_compiler(compiler->_token.type);
+        infix_expr_compiler infix_compiler =
+            infix_expr_compiler_for_operator(compiler->_token.type);
         infix_compiler(compiler, infix_level);
     }
 }
@@ -635,16 +664,16 @@ static void compiler_compile_if_stmt(compiler *compiler)
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_IF);
     compiler_compile_expr(compiler);
-    size_t else_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP_IF_FALSE, line);
+    size_t else_jump_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP_IF_FALSE, line);
     compiler_emit_opcode(compiler, OP_POP, line);
     compiler_compile_stmt(compiler);
-    size_t else_end_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP, line);
-    compiler_set_jump_offset(compiler, else_bytecode_offset);
+    size_t end_jump_bytecode_offset = compiler_emit_jump(compiler, OP_JUMP, line);
+    compiler_set_jump_offset(compiler, else_jump_bytecode_offset);
     compiler_emit_opcode(compiler, OP_POP, line);
     if (COMPILER_MATCH(compiler, TOKEN_ELSE)) {
         compiler_compile_stmt(compiler);
     }
-    compiler_set_jump_offset(compiler, else_end_bytecode_offset);
+    compiler_set_jump_offset(compiler, end_jump_bytecode_offset);
 }
 
 // Emits the bytecode for the block starting at the current token and advances the compiler past it.
