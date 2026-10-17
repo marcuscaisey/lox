@@ -399,12 +399,8 @@ TestClox/String/EscapeIncompleteError
 TestClox/String/EscapeInvalidSequenceError
 TestClox/String/EscapeNewline
 TestClox/String/EscapeTab
-TestClox/String/Greater
-TestClox/String/GreaterEqual
 TestClox/String/InvalidPropertyAccessError
 TestClox/String/InvalidPropertyAssignmentError
-TestClox/String/Less
-TestClox/String/LessEqual
 TestClox/String/NotCallableError
 TestClox/String/NotIndexableAssignmentError
 TestClox/String/NotIndexableError
