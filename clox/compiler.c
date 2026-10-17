@@ -487,14 +487,15 @@ static void compiler_finish_initialising_local(compiler *compiler, stack_index i
     compiler->_locals[i].is_initialising = false;
 }
 
-// Emits the bytecode for the loop jump statement with `type` starting at the current token and
-// advances the compiler past it.
+// Emits the bytecode for the loop jump statement starting at the current `type `token and advances
+// the compiler past it.
 // A loop jump statement can't be compiled completely until the point in the loop that the statement
 // should jump past has been compiled. Once this has been done, pass the returned `struct
 // loop_jump_statement` to `compiler_finish_compiling_loop_jump_stmt()`.
 static struct loop_jump_statement compiler_compile_loop_jump_stmt(compiler *compiler,
                                                                   enum token_type type)
 {
+    assert(type == TOKEN_BREAK || type == TOKEN_CONTINUE);
     int line = compiler->_token.line;
     compiler_expect(compiler, type);
     compiler_expect(compiler, TOKEN_SEMICOLON);
@@ -544,8 +545,8 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
     switch (type) {
     // case TOKEN_COMMA:
     //     return PREC_COMMA;
-    // case TOKEN_QUESTION:
-    //     return PREC_TERNARY;
+    case TOKEN_QUESTION:
+        return PREC_TERNARY;
     case TOKEN_OR:
         return PREC_LOGICAL_OR;
     case TOKEN_AND:
@@ -718,6 +719,22 @@ static expr_compiler expr_compiler_for_prefix(enum token_type type)
     }
 }
 
+// `infix_expr_compiler` for a ternary expression.
+static void compiler_compile_ternary_expr(compiler *compiler, enum precedence_level level)
+{
+    int line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_QUESTION);
+    bytecode_offset else_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
+    compiler_emit_pops(compiler, 1, line);
+    compiler_compile_expr(compiler);
+    bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
+    compiler_expect(compiler, TOKEN_COLON);
+    compiler_set_forward_jump_offset(compiler, else_jump);
+    compiler_emit_pops(compiler, 1, line);
+    compiler_compile_expr_at_level(compiler, level);
+    compiler_set_forward_jump_offset(compiler, end_jump);
+}
+
 // `infix_expr_compiler` for an or expression.
 static void compiler_compile_or_expr(compiler *compiler, enum precedence_level level)
 {
@@ -780,6 +797,8 @@ static void compiler_compile_binary_expr(compiler *compiler, enum precedence_lev
 static infix_expr_compiler infix_expr_compiler_for_operator(enum token_type type)
 {
     switch (type) {
+    case TOKEN_QUESTION:
+        return compiler_compile_ternary_expr;
     case TOKEN_OR:
         return compiler_compile_or_expr;
     case TOKEN_AND:

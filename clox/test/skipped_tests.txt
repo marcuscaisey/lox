@@ -7,7 +7,6 @@ TestClox/Bool/InvalidPropertyAssignmentError
 TestClox/Bool/NotCallableError
 TestClox/Bool/NotIndexableAssignmentError
 TestClox/Bool/NotIndexableError
-TestClox/Bool/Truthiness
 TestClox/Bool/Type
 TestClox/Classes/BlankName
 TestClox/Classes/BlankPropertyAccessError
@@ -371,7 +370,6 @@ TestClox/Nil/InvalidPropertyAssignmentError
 TestClox/Nil/NotCallableError
 TestClox/Nil/NotIndexableAssignmentError
 TestClox/Nil/NotIndexableError
-TestClox/Nil/Truthiness
 TestClox/Number/InvalidPropertyAccessError
 TestClox/Number/InvalidPropertyAssignmentError
 TestClox/Number/NotCallableError
@@ -382,7 +380,6 @@ TestClox/Number/TimesNegativeIntListError
 TestClox/Number/TimesNegativeIntStringError
 TestClox/Number/TimesNonIntListError
 TestClox/Number/TimesNonIntStringError
-TestClox/Number/Truthiness
 TestClox/Number/Type
 TestClox/Operators/Precedence
 TestClox/Result/Equal
@@ -416,7 +413,6 @@ TestClox/String/NotIndexableError
 TestClox/String/Times
 TestClox/String/TimesStringNegativeIntError
 TestClox/String/TimesStringNonIntError
-TestClox/String/Truthiness
 TestClox/String/Type
 TestClox/SyntaxErrors/BreakOutsideLoop
 TestClox/SyntaxErrors/ContinueOutsideLoop
