@@ -95,6 +95,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     case OP_SUBTRACT:
     case OP_MULTIPLY:
     case OP_DIVIDE:
+    case OP_MODULO:
     case OP_NOT:
     case OP_NEGATE:
     case OP_PRINT:

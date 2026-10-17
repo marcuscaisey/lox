@@ -59,6 +59,8 @@ const char *instruction_name(enum opcode opcode)
         return "MULTIPLY";
     case OP_DIVIDE:
         return "DIVIDE";
+    case OP_MODULO:
+        return "MODULO";
     case OP_NOT:
         return "NOT";
     case OP_NEGATE:

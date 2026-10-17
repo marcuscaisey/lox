@@ -242,6 +242,7 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int lin
     case OP_SUBTRACT:
     case OP_MULTIPLY:
     case OP_DIVIDE:
+    case OP_MODULO:
     case OP_PRINT:
         compiler->_stack_depth--;
         break;
@@ -515,7 +516,7 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
         return PREC_ADDITIVE;
     case TOKEN_ASTERISK:
     case TOKEN_SLASH:
-        // case TOKEN_PERCENT:
+    case TOKEN_PERCENT:
         return PREC_MULTIPLICATIVE;
     // case TOKEN_LEFT_PAREN:
     // case TOKEN_LEFT_BRACK:
@@ -698,6 +699,8 @@ static void compiler_compile_binary_expr(compiler *compiler, enum precedence_lev
         instruction = OP_MULTIPLY;
     } else if (COMPILER_MATCH(compiler, TOKEN_SLASH)) {
         instruction = OP_DIVIDE;
+    } else if (COMPILER_MATCH(compiler, TOKEN_PERCENT)) {
+        instruction = OP_MODULO;
     } else if (COMPILER_MATCH(compiler, TOKEN_LESS)) {
         instruction = OP_LESS;
     } else if (COMPILER_MATCH(compiler, TOKEN_LESS_EQUAL)) {
@@ -731,6 +734,7 @@ static infix_expr_compiler infix_expr_compiler_for_operator(enum token_type type
     case TOKEN_MINUS:
     case TOKEN_ASTERISK:
     case TOKEN_SLASH:
+    case TOKEN_PERCENT:
     case TOKEN_LESS:
     case TOKEN_LESS_EQUAL:
     case TOKEN_GREATER:

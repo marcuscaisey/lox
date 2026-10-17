@@ -1,5 +1,6 @@
 #include "vm.h"
 
+#include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -353,6 +354,24 @@ static bool vm_execute(vm *vm)
             break;
         }
 #undef EXECUTE_BINARY_NUMBER_OP
+        case OP_MODULO: {
+            value b = vm_stack_peek(vm, 0);
+            value a = vm_stack_peek(vm, 1);
+            if (value_as_number(b) == 0) {
+                vm_report_errorf(vm, instruction_offset, "cannot modulo by 0");
+                return false;
+            }
+            if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {
+                vm_report_errorf(vm, instruction_offset,
+                                 "'%%' operator cannot be used with types '%s' and '%s'",
+                                 value_type_string(a), value_type_string(b));
+                return false;
+            }
+            vm_stack_pop(vm);
+            vm_stack_pop(vm);
+            vm_stack_push(vm, value_number(fmod(value_as_number(a), value_as_number(b))));
+            break;
+        }
         case OP_NOT: {
             value value = vm_stack_pop(vm);
             bool result = !value_is_truthy(value);

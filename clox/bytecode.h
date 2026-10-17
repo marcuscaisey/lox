@@ -107,6 +107,7 @@ enum opcode {
     OP_SUBTRACT, // Pops two numbers b, then a, then pushes a - b
     OP_MULTIPLY, // Pops two numbers then pushes their product
     OP_DIVIDE, // Pops two numbers b, then a, then pushes a / b
+    OP_MODULO, // Pops two numbers b, then a, then pushes a % b
     OP_NOT, // Pops a value, then pushes whether it is falsey
     OP_NEGATE, // Pops a number, negates it, then pushes it back
     OP_PRINT, // Pops a value then prints it

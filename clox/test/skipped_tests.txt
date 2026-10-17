@@ -386,8 +386,6 @@ TestClox/Nil/NotIndexableError
 TestClox/Nil/Truthiness
 TestClox/Number/InvalidPropertyAccessError
 TestClox/Number/InvalidPropertyAssignmentError
-TestClox/Number/Modulo
-TestClox/Number/ModuloByZeroError
 TestClox/Number/NotCallableError
 TestClox/Number/NotIndexableAssignmentError
 TestClox/Number/NotIndexableError
