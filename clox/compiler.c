@@ -30,6 +30,23 @@ struct local {
     bool is_initialising; // Whether the variable is currently being initialised
 };
 
+// Represents a break or continue statement that has been compiled.
+struct loop_jump_statement {
+    // Where the corresponding forward jump instruction was written to in the bytecode chunk
+    bytecode_offset instruction;
+    // Number of local variables in scope at the statements position
+    size_t locals_count;
+    int line; // Line that the statement appeared on
+};
+
+// Contains state related to the compilation of a loop.
+struct loop_state {
+    // Array of break statements compiled since compilation of the loop started
+    struct loop_jump_statement *break_stmts;
+    size_t break_stmts_len; // Number of elements in `_break_stmts`
+    size_t break_stmts_cap; // Number of elements space has been allocated for in `_break_stmts`
+};
+
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
 // chunk.
 // Must be initialised with `compiler_init()` and freed with `compiler_free()` after use.
@@ -39,39 +56,56 @@ typedef struct {
     const char *_source; // Source being compiled
     lexer _lexer; // Lexer set up to lex the source
     struct bytecode_chunk *_out; // Chunk that bytecode is written to
-
-    // Public runtime state - use these fields directly
-    struct token _token; // Token currently being considered
-    struct token _next_token; // Token after current token in the source
-    struct token _prev_token; // Token before current token in the source
+    // Token currently being considered.
+    // Don't modify outside of `compiler_advance()`.
+    struct token _token;
+    // Token after current token in the source.
+    // Don't modify outside of `compiler_advance()`.
+    struct token _next_token;
+    // Token before current token in the source.
+    // Don't modify outside of `compiler_advance()`.
+    struct token _prev_token;
     // Scope depth of the current token. 0 is global scope, 1 is inside a block at global scope, 2
     // is inside a block in that block, etc.
-    // Don't modify directly, use `compiler_begin_scope()` and `compiler_end_scope()` instead.
+    // Don't modify outside of `compiler_begin_scope()` and `compiler_end_scope()`.
     int _scope_depth;
-    bool _in_panic_mode; // Indicates that an error has been encountered which needs recovering from
-    bool _had_error; // Whether the compiler has encountered any errors
-
-    // Private runtime state - don't use these fields directly
-
-    // Map from constant values to their index in the bytecode's constants.
-    // Don't use directly, use `compiler_emit_constant_index()` instead.
+    // Indicates that an error has been encountered which needs recovering from.
+    // Don't enable outside of `compiler_report_errorf()`.
+    bool _in_panic_mode;
+    // Whether the compiler has encountered any errors.
+    // Don't modify outside of `compiler_report_errorf()`.
+    bool _had_error;
+    // Map from constant values to their index in the bytecode chunk's constants.
+    // Don't use outside of `compiler_emit_constant_index()`.
     map _constant_indexes;
     // Array of local variables in scope at the current token's position, ordered by the position of
     // their declaration in the source.
-    // Don't use directly, use `compiler_add_local()` and `compiler_resolve_local()` instead.
+    // Don't use outside of `compiler_end_scope()`, `compiler_add_local()`,
+    // `compiler_resolve_local()`, and `compiler_finish_initialising_local()`.
     struct local *_locals;
-    // Number of local variables in scope at the current token's position
-    // Don't use directly, use `compiler_add_local()` and `compiler_resolve_local()` instead.
+    // Number of local variables in scope at the current token's position.
+    // Don't modify outside of `compiler_end_scope()` and `compiler_declare_local()`.
     size_t _locals_count;
     // Number of elements space has been allocated for in the locals array.
-    // Don't use directly.
+    // Don't use outside of `compiler_declare_local()`.
     size_t _locals_cap;
-    // Number of elements in the value stack at the current token's position.
+    // Number of elements that would be in the value stack if execution reached the current token's
+    // position.
     // This is increased or decreased when the opcode for an instruction which increases or
     // decreases the number of elements in the stack is emitted.
-    // Don't use directly.
+    // Don't use outside of `compiler_emit_opcode()` and `compiler_emit_pops()`.
     stack_index _stack_depth;
+    // State of the loop currently being compiled.
+    // Don't use outside of `compiler_begin_loop()`, `compiler_end_loop()`,
+    // `compiler_compile_break_stmt()`, or `compiler_finish_compiling_break_stmts()`.
+    struct loop_state _loop_state;
 } compiler;
+
+static void compiler_compile_decl(compiler *compiler);
+static void compiler_compile_expr(compiler *compiler);
+static void compiler_compile_expr_stmt(compiler *compiler);
+static void compiler_compile_stmt(compiler *compiler);
+static void compiler_compile_var_decl(compiler *compiler);
 
 // Calls `compiler_report_errorf()` with a range spanning the provided token.
 #define COMPILER_REPORT_TOKEN_ERRORF(compiler, token, format, ...)                           \
@@ -139,6 +173,7 @@ static void compiler_init(compiler *compiler, vm *vm, const char *source,
     compiler->_locals_count = 0;
     compiler->_locals_cap = 0;
     compiler->_stack_depth = 0;
+    compiler->_loop_state = (struct loop_state){ 0 };
 }
 
 // Frees the memory associated with `compiler`.
@@ -175,29 +210,69 @@ static void compiler_expect(compiler *compiler, enum token_type type)
                                      token_type_string(type));
 }
 
-// Returns the current offset in the output bytecode.
-static size_t compiler_bytecode_offset(compiler *compiler)
+// Returns the offset which will be written to next in the output bytecode chunk.
+static bytecode_offset compiler_bytecode_offset(compiler *compiler)
 {
     return compiler->_out->len;
 }
 
-// Writes `opcode` corresponding to `line` to the bytecode.
+// Writes `opcode` corresponding to `line` to the output bytecode chunk.
 static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int line)
 {
     bytecode_chunk_write(compiler->_out, opcode, line);
-    compiler->_stack_depth += instruction_stack_depth_effect(opcode);
+    switch (opcode) {
+    case OP_CONSTANT:
+    case OP_NIL:
+    case OP_TRUE:
+    case OP_FALSE:
+    case OP_GET_GLOBAL:
+    case OP_GET_LOCAL:
+        compiler->_stack_depth++;
+        break;
+    case OP_POP:
+    case OP_DEFINE_GLOBAL:
+    case OP_DEFINE_GLOBAL_FINAL:
+    case OP_EQUAL:
+    case OP_NOT_EQUAL:
+    case OP_LESS:
+    case OP_LESS_EQUAL:
+    case OP_GREATER:
+    case OP_GREATER_EQUAL:
+    case OP_ADD:
+    case OP_SUBTRACT:
+    case OP_MULTIPLY:
+    case OP_DIVIDE:
+    case OP_PRINT:
+        compiler->_stack_depth--;
+        break;
+    case OP_POP_N:
+        // This reduces the stack depth by n but we don't know what n is until the operand has been
+        // written, so we reduce the stack size in `compiler_emit_pops()` instead.
+    case OP_SET_GLOBAL:
+    case OP_DEFINE_LOCAL:
+    case OP_DEFINE_LOCAL_FINAL:
+    case OP_SET_LOCAL:
+    case OP_NOT:
+    case OP_NEGATE:
+    case OP_JUMP:
+    case OP_JUMP_BACK:
+    case OP_JUMP_IF_TRUE:
+    case OP_JUMP_IF_FALSE:
+    case OP_RETURN: // TODO
+        break;
+    }
     if (compiler->_stack_depth > compiler->_out->max_stack_depth)
         compiler->_out->max_stack_depth = compiler->_stack_depth;
 }
 
-// Writes `operand` corresponding to `line` to the bytecode.
+// Writes `operand` corresponding to `line` to the output bytecode chunk.
 static void compiler_emit_operand(compiler *compiler, uint8_t operand, int line)
 {
     bytecode_chunk_write(compiler->_out, operand, line);
 }
 
-// Ensures that value `v` corresponding to `line` is in the bytecode's constants, encodes the
-// corresponding index, and writes it to the bytecode.
+// Ensures that value `v` corresponding to `line` is in the output bytecode chunk's constants,
+// encodes the corresponding index, and writes it to the chunk.
 static void compiler_emit_constant_index(compiler *compiler, value v, int line)
 {
     value index_value;
@@ -207,7 +282,7 @@ static void compiler_emit_constant_index(compiler *compiler, value v, int line)
     } else {
         index = bytecode_chunk_add_constant(compiler->_out, v);
         if (index > MAX_CONSTANT_INDEX)
-            panicf("maximum number of constants (%lu) used", (size_t)MAX_CONSTANT_INDEX + 1);
+            panicf("maximum number of constants (%llu) used", (uint64_t)MAX_CONSTANT_INDEX + 1);
         map_set(compiler->_vm, &compiler->_constant_indexes, v, value_number(index));
     }
     if (index < 255) {
@@ -220,7 +295,7 @@ static void compiler_emit_constant_index(compiler *compiler, value v, int line)
     }
 }
 
-// Encodes and writes `index` to the bytecode.
+// Encodes and writes `index` to the output bytecode chunk.
 static void compiler_emit_stack_index(compiler *compiler, stack_index index, int line)
 {
     if (index < 255) {
@@ -238,47 +313,73 @@ static bool is_forward_jump_opcode(enum opcode opcode)
     return opcode == OP_JUMP || opcode == OP_JUMP_IF_TRUE || opcode == OP_JUMP_IF_FALSE;
 }
 
-// Writes a forward jump instruction using `opcode` corresponding to `line` to the bytecode and
-// returns the offset of the written instruction in the bytecode.
+// Writes a forward jump instruction using `opcode` corresponding to `line` to the output bytecode
+// chunk and returns the offset of the written instruction in the chunk.
 // A placeholder jump offset operand is written which can be set later by passing the returned
 // bytecode offset to `compiler_set_jump_offset()`.
-static size_t compiler_emit_forward_jump(compiler *compiler, enum opcode opcode, int line)
+static bytecode_offset compiler_emit_forward_jump(compiler *compiler, enum opcode opcode, int line)
 {
     assert(is_forward_jump_opcode(opcode));
-    size_t bytecode_offset = compiler_bytecode_offset(compiler);
+    bytecode_offset jump = compiler_bytecode_offset(compiler);
     compiler_emit_opcode(compiler, opcode, line);
     compiler_emit_operand(compiler, 0xFF, line);
     compiler_emit_operand(compiler, 0xFF, line);
-    return bytecode_offset;
+    return jump;
 }
 
-// Sets the jump offset operand of the jump instruction at `bytecode_offset` so that it jumps to the
-// next bytecode offset written to. I.e. if this function is called just before another which emits
-// some bytecode, the jump instruction will jump to that emitted bytecode.
-static void compiler_set_forward_jump_offset(compiler *compiler, size_t bytecode_offset)
+// Writes a pop instruction corresponding to `line` to the output bytecode that pops `count` values
+// from the stack.
+static void compiler_emit_pops(compiler *compiler, pop_count count, int line)
 {
-    enum opcode opcode = compiler->_out->instructions[bytecode_offset];
-    assert(is_forward_jump_opcode(opcode));
-    // The bytecode offset is the offset of the jump opcode which is then followed by 2 bytes for
-    // the operand. The jump offset counts from the offset after the operand bytes we need to take
-    // discount this from the result (1 for the opcode, 2 for the operand).
-    size_t jump_offset = compiler_bytecode_offset(compiler) - bytecode_offset - 3;
-    if (jump_offset > MAX_JUMP_OFFSET)
-        panicf("maximum jump offset (%lu) exceeded", (size_t)MAX_JUMP_OFFSET);
-    compiler->_out->instructions[bytecode_offset + 1] = (jump_offset >> 8) & 0xFF;
-    compiler->_out->instructions[bytecode_offset + 2] = (jump_offset >> 0) & 0xFF;
+    if (count == 0)
+        return;
+    if (count == 1) {
+        compiler_emit_opcode(compiler, OP_POP, line);
+    } else {
+        compiler_emit_opcode(compiler, OP_POP_N, line);
+        if (count < 255) {
+            compiler_emit_operand(compiler, count, line);
+        } else {
+            compiler_emit_operand(compiler, 0xFF, line);
+            compiler_emit_operand(compiler, (count >> 16) & 0xFF, line);
+            compiler_emit_operand(compiler, (count >> 8) & 0xFF, line);
+            compiler_emit_operand(compiler, (count >> 0) & 0xFF, line);
+        }
+        // This is decremented in `compiler_emit_opcode()` for all other instructions. We need to
+        // handle this one here because the effect on the stack depth is not static. We don't need
+        // to worry about updating the output bytecode's max stack depth this instruction will
+        // always decrease the current stack depth.
+        compiler->_stack_depth -= count;
+    }
 }
 
-// Writes a backward jump instruction corresponding to `line` to the bytecode so that it jumps back
-// to `bytecode_offset`.
-static void compiler_emit_backward_jump(compiler *compiler, size_t bytecode_offset, int line)
+// Sets the operand of the forward jump instruction at offset `target` in the output bytecode chunk
+// so that it jumps to the next offset written to. I.e. if this function is called just before
+// another which emits some bytecode, the jump instruction will jump to that emitted bytecode.
+static void compiler_set_forward_jump_offset(compiler *compiler, bytecode_offset target)
+{
+    enum opcode opcode = compiler->_out->instructions[target];
+    assert(is_forward_jump_opcode(opcode));
+    // `target` is the offset of the jump opcode which is then followed by 2 bytes for the operand.
+    // The jump offset counts from the offset after the operand bytes we need to take this away from
+    // the result (1 for the opcode, 2 for the operand).
+    uint64_t jump_offset = compiler_bytecode_offset(compiler) - target - 3;
+    if (jump_offset > MAX_JUMP_OFFSET)
+        panicf("maximum jump offset (%llu) exceeded", (uint64_t)MAX_JUMP_OFFSET);
+    compiler->_out->instructions[target + 1] = (jump_offset >> 8) & 0xFF;
+    compiler->_out->instructions[target + 2] = (jump_offset >> 0) & 0xFF;
+}
+
+// Writes a backward jump instruction corresponding to `line` to the output bytecode chunk that
+// jumps back to `target`.
+static void compiler_emit_backward_jump(compiler *compiler, bytecode_offset target, int line)
 {
     compiler_emit_opcode(compiler, OP_JUMP_BACK, line);
     // The jump offset counts from the offset after the 2 operand bytes which we haven't written yet
     // so we need we need to add this to the result.
-    size_t jump_offset = compiler_bytecode_offset(compiler) - bytecode_offset + 2;
+    uint64_t jump_offset = compiler_bytecode_offset(compiler) - target + 2;
     if (jump_offset > MAX_JUMP_OFFSET)
-        panicf("maximum jump offset (%lu) exceeded", (size_t)MAX_JUMP_OFFSET);
+        panicf("maximum jump offset (%llu) exceeded", (uint64_t)MAX_JUMP_OFFSET);
     compiler_emit_operand(compiler, (jump_offset >> 8) & 0xFF, line);
     compiler_emit_operand(compiler, (jump_offset >> 0) & 0xFF, line);
 }
@@ -305,11 +406,13 @@ static void compiler_begin_scope(compiler *compiler)
 // Signals that a lexical scope has been exited on `line`.
 static void compiler_end_scope(compiler *compiler, int line)
 {
+    size_t start_locals_count = compiler->_locals_count;
     for (ptrdiff_t i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
-        compiler_emit_opcode(compiler, OP_POP, line);
         compiler->_locals_count--;
     }
+    size_t locals_in_scope = start_locals_count - compiler->_locals_count;
+    compiler_emit_pops(compiler, locals_in_scope, line);
     compiler->_scope_depth--;
 }
 
@@ -352,7 +455,7 @@ static stack_index compiler_declare_local(compiler *compiler, struct token ident
     stack_index index = compiler->_locals_count;
     DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
     if (index > MAX_STACK_INDEX)
-        panicf("maximum number of local variables (%lu) used", (size_t)MAX_STACK_INDEX + 1);
+        panicf("maximum number of local variables (%llu) used", (uint64_t)MAX_STACK_INDEX + 1);
     struct local *local = &compiler->_locals[compiler->_locals_count++];
     local->name = ident.start;
     local->name_len = ident.len;
@@ -362,7 +465,7 @@ static stack_index compiler_declare_local(compiler *compiler, struct token ident
 }
 
 // Marks the local variable stored at index `i` in the VM's value stack as initialised.
-static void compiler_finish_initialising_local(compiler *compiler, size_t i)
+static void compiler_finish_initialising_local(compiler *compiler, stack_index i)
 {
     compiler->_locals[i].is_initialising = false;
 }
@@ -385,9 +488,6 @@ enum precedence_level {
 };
 
 static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level);
-static void compiler_compile_expr(compiler *compiler);
-static void compiler_compile_stmt(compiler *compiler);
-static void compiler_compile_decl(compiler *compiler);
 
 // Returns the precedence level of `type` as an infix operator or `PREC_NONE` if `type` is not an
 // infix operator.
@@ -568,10 +668,10 @@ static void compiler_compile_or_expr(compiler *compiler, enum precedence_level l
 {
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_OR);
-    size_t end_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP_IF_TRUE, line);
-    compiler_emit_opcode(compiler, OP_POP, line);
+    bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_TRUE, line);
+    compiler_emit_pops(compiler, 1, line);
     compiler_compile_expr_at_level(compiler, level + 1);
-    compiler_set_forward_jump_offset(compiler, end_jump_bytecode_offset);
+    compiler_set_forward_jump_offset(compiler, end_jump);
 }
 
 // `infix_expr_compiler` for an and expression.
@@ -579,10 +679,10 @@ static void compiler_compile_and_expr(compiler *compiler, enum precedence_level 
 {
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_AND);
-    size_t end_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
-    compiler_emit_opcode(compiler, OP_POP, line);
+    bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
+    compiler_emit_pops(compiler, 1, line);
     compiler_compile_expr_at_level(compiler, level + 1);
-    compiler_set_forward_jump_offset(compiler, end_jump_bytecode_offset);
+    compiler_set_forward_jump_offset(compiler, end_jump);
 }
 
 // `infix_expr_compiler` for a binary expression.
@@ -683,46 +783,177 @@ static void compiler_compile_print_stmt(compiler *compiler)
 // past it.
 static void compiler_compile_if_stmt(compiler *compiler)
 {
-    int line = compiler->_token.line;
-
+    int if_line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_IF);
     compiler_expect(compiler, TOKEN_LEFT_PAREN);
+
+    // Condition
+    int condition_line = compiler->_token.line;
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_RIGHT_PAREN);
-    size_t else_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
+    bytecode_offset else_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, if_line);
 
-    compiler_emit_opcode(compiler, OP_POP, line);
+    // Then branch
+    compiler_emit_pops(compiler, 1, condition_line);
     compiler_compile_stmt(compiler);
-    size_t end_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP, line);
+    bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP, if_line);
 
-    compiler_set_forward_jump_offset(compiler, else_jump_bytecode_offset);
-    compiler_emit_opcode(compiler, OP_POP, line);
+    // Else branch
+    compiler_set_forward_jump_offset(compiler, else_jump);
+    compiler_emit_pops(compiler, 1, condition_line);
     if (COMPILER_MATCH(compiler, TOKEN_ELSE)) {
         compiler_compile_stmt(compiler);
     }
-
-    compiler_set_forward_jump_offset(compiler, end_jump_bytecode_offset);
+    compiler_set_forward_jump_offset(compiler, end_jump);
 }
 
-// Emits the bytecode for the if statement starting at the current token and advances the compiler
-// past it.
+// Signals that compilation of a loop has started.
+// Must be called before any bytecode for the loop is emitted.
+// Returns the state of the loop previously being compiled which must be passed to
+// `compiler_end_loop()` after all bytecode for the loop has been emitted.
+static struct loop_state compiler_begin_loop(compiler *compiler)
+{
+    struct loop_state prev_loop_state = compiler->_loop_state;
+    compiler->_loop_state.break_stmts = NULL;
+    compiler->_loop_state.break_stmts_len = 0;
+    compiler->_loop_state.break_stmts_cap = 0;
+    return prev_loop_state;
+}
+
+// Signals that compilation of a loop has ended.
+// Must be called after all bytecode for the loop has been emitted and passed the state of the
+// previous loop being compiled returned by `compiler_begin_loop()`.
+static void compiler_end_loop(compiler *compiler, struct loop_state prev_loop_state)
+{
+    free(compiler->_loop_state.break_stmts);
+    compiler->_loop_state = prev_loop_state;
+}
+
+// Finishes the compilation of any break statements encountered since compilation of the current
+// loop started.
+// Must be called directly after all bytecode for the loop has been emitted.
+static void compiler_finish_compiling_break_stmts(compiler *compiler)
+{
+    // For every break statement encountered, we will have emitted a forward jump instruction whose
+    // offset we need to update to point after the loop. If a break statement came after some local
+    // variables had been declared, the jump will skip over the instructions popping those variables
+    // from the stack, so we need to do that as well.
+    for (size_t i = 0; i < compiler->_loop_state.break_stmts_len; i++) {
+        struct loop_jump_statement break_stmt = compiler->_loop_state.break_stmts[i];
+        compiler_set_forward_jump_offset(compiler, break_stmt.instruction);
+        size_t locals_declared_before_break = break_stmt.locals_count - compiler->_locals_count;
+        compiler_emit_pops(compiler, locals_declared_before_break, break_stmt.line);
+    }
+}
+
+// Emits the bytecode for the while statement starting at the current token and advances the
+// compiler past it.
 static void compiler_compile_while_stmt(compiler *compiler)
 {
-    int line = compiler->_token.line;
-    size_t loop_start_bytecode_offset = compiler_bytecode_offset(compiler);
+    struct loop_state prev_loop_state = compiler_begin_loop(compiler);
 
+    bytecode_offset loop_start = compiler_bytecode_offset(compiler);
+    int while_line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_WHILE);
     compiler_expect(compiler, TOKEN_LEFT_PAREN);
+
+    // Condition
+    int condition_line = compiler->_token.line;
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_RIGHT_PAREN);
-    size_t end_jump_bytecode_offset = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
+    bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, while_line);
 
-    compiler_emit_opcode(compiler, OP_POP, line);
+    // Body
+    compiler_emit_pops(compiler, 1, condition_line);
     compiler_compile_stmt(compiler);
-    compiler_emit_backward_jump(compiler, loop_start_bytecode_offset, line);
+    compiler_emit_backward_jump(compiler, loop_start, while_line);
+    compiler_set_forward_jump_offset(compiler, end_jump);
+    compiler_emit_pops(compiler, 1, condition_line);
+    compiler_finish_compiling_break_stmts(compiler);
 
-    compiler_set_forward_jump_offset(compiler, end_jump_bytecode_offset);
-    compiler_emit_opcode(compiler, OP_POP, line);
+    compiler_end_loop(compiler, prev_loop_state);
+}
+
+// Emits the bytecode for the for statement starting at the current token and advances the
+// compiler past it.
+static void compiler_compile_for_stmt(compiler *compiler)
+{
+    struct loop_state prev_loop_state = compiler_begin_loop(compiler);
+    compiler_begin_scope(compiler);
+
+    int for_line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_FOR);
+    compiler_expect(compiler, TOKEN_LEFT_PAREN);
+
+    // Initialiser
+    if (COMPILER_MATCH(compiler, TOKEN_SEMICOLON))
+        ;
+    else if (compiler->_token.type == TOKEN_VAR)
+        compiler_compile_var_decl(compiler);
+    else
+        compiler_compile_expr_stmt(compiler);
+
+    // Condition
+    bool has_condition = !COMPILER_MATCH(compiler, TOKEN_SEMICOLON);
+    bytecode_offset condition_start = compiler_bytecode_offset(compiler);
+    int condition_line = compiler->_token.line;
+    bytecode_offset end_jump;
+    if (has_condition) {
+        compiler_compile_expr(compiler);
+        compiler_expect(compiler, TOKEN_SEMICOLON);
+        end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, for_line);
+        compiler_emit_pops(compiler, 1, condition_line);
+    }
+
+    // Increment
+    bool has_increment = !COMPILER_MATCH(compiler, TOKEN_RIGHT_PAREN);
+    bytecode_offset increment_start;
+    int increment_line = compiler->_token.line;
+    bytecode_offset increment_body_jump;
+    if (has_increment) {
+        increment_body_jump = compiler_emit_forward_jump(compiler, OP_JUMP, for_line);
+        increment_start = compiler_bytecode_offset(compiler);
+        compiler_compile_expr(compiler);
+        compiler_expect(compiler, TOKEN_RIGHT_PAREN);
+        compiler_emit_pops(compiler, 1, increment_line);
+        if (has_condition)
+            compiler_emit_backward_jump(compiler, condition_start, for_line);
+    }
+
+    // Body
+    if (has_increment)
+        compiler_set_forward_jump_offset(compiler, increment_body_jump);
+    compiler_compile_stmt(compiler);
+    bytecode_offset body_jump_back_target = has_increment ? increment_start : condition_start;
+    compiler_emit_backward_jump(compiler, body_jump_back_target, for_line);
+    if (has_condition) {
+        compiler_set_forward_jump_offset(compiler, end_jump);
+        compiler_emit_pops(compiler, 1, condition_line);
+    }
+    compiler_finish_compiling_break_stmts(compiler);
+
+    compiler_end_scope(compiler, compiler->_prev_token.line);
+    compiler_end_loop(compiler, prev_loop_state);
+}
+
+// Emits the bytecode for the break statement starting at the current token and advances the
+// compiler past it.
+// A break statement can't be compiled completely until the whole loop that contains it has been
+// compiled. Once this has been done, call `compiler_finish_compiling_break_stmts()`.
+static void compiler_compile_break_stmt(compiler *compiler)
+{
+    int line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_BREAK);
+    compiler_expect(compiler, TOKEN_SEMICOLON);
+    bytecode_offset jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
+    DYNAMIC_ARRAY_GROW(compiler->_loop_state.break_stmts, compiler->_loop_state.break_stmts_cap,
+                       compiler->_loop_state.break_stmts_len + 1);
+    struct loop_jump_statement break_stmt = {
+        .instruction = jump,
+        .locals_count = compiler->_locals_count,
+        .line = line,
+    };
+    compiler->_loop_state.break_stmts[compiler->_loop_state.break_stmts_len++] = break_stmt;
 }
 
 // Emits the bytecode for the block starting at the current token and advances the compiler past it.
@@ -743,7 +974,7 @@ static void compiler_compile_expr_stmt(compiler *compiler)
     int line = compiler->_token.line;
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_SEMICOLON);
-    compiler_emit_opcode(compiler, OP_POP, line);
+    compiler_emit_pops(compiler, 1, line);
 }
 
 // Emits the bytecode for the statement starting at the current token and advances the compiler past
@@ -759,6 +990,12 @@ static void compiler_compile_stmt(compiler *compiler)
         break;
     case TOKEN_WHILE:
         compiler_compile_while_stmt(compiler);
+        break;
+    case TOKEN_FOR:
+        compiler_compile_for_stmt(compiler);
+        break;
+    case TOKEN_BREAK:
+        compiler_compile_break_stmt(compiler);
         break;
     case TOKEN_LEFT_BRACE:
         compiler_compile_block(compiler);
@@ -821,8 +1058,8 @@ static void compiler_sync(compiler *compiler)
         case TOKEN_FINAL:
         case TOKEN_IF:
         case TOKEN_WHILE:
-            // case TOKEN_FOR:
-            // case TOKEN_BREAK:
+        case TOKEN_FOR:
+        case TOKEN_BREAK:
             // case TOKEN_CONTINUE:
             // case TOKEN_RETURN:
             // case TOKEN_CLASS:

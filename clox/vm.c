@@ -66,6 +66,12 @@ static value vm_stack_pop(vm *vm)
     return *(--vm->_stack_top);
 }
 
+// Removes `count` elements from the top of the stack.
+static void vm_stack_pop_n(vm *vm, pop_count count)
+{
+    vm->_stack_top -= count;
+}
+
 // Returns the element `distance` places from the top of the stack.
 static value vm_stack_peek(vm *vm, int distance)
 {
@@ -97,6 +103,15 @@ static constant_index vm_read_constant_index(vm *vm)
     if (index == 0xFF)
         return vm_read_u24(vm);
     return index;
+}
+
+// Reads the pop count at the instruction pointer and moves the instruction pointer past it.
+static pop_count vm_read_pop_count(vm *vm)
+{
+    uint8_t count = vm_read_u8(vm);
+    if (count == 0xFF)
+        return vm_read_u24(vm);
+    return count;
 }
 
 // Reads the stack index at the instruction pointer and moves the instruction pointer past it.
@@ -132,9 +147,9 @@ static void vm_print_trace_info(const vm *vm)
 }
 #endif
 
-// Prints an error relating to the bytecode offset `offset` with a formatted message.
-static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const vm *vm, int offset,
-                                                                   const char *format, ...)
+// Prints an error relating to `offset` with a formatted message.
+static __attribute__((format(printf, 3, 4))) void
+vm_report_errorf(const vm *vm, bytecode_offset offset, const char *format, ...)
 {
     char *msg;
     va_list args;
@@ -169,7 +184,7 @@ static bool vm_execute(vm *vm)
         vm_print_trace_info(vm);
 #endif
 
-        int instruction_offset = vm->_ip - vm->_chunk->instructions;
+        bytecode_offset instruction_offset = vm->_ip - vm->_chunk->instructions;
         enum opcode instruction = vm_read_u8(vm);
         switch (instruction) {
         case OP_CONSTANT: {
@@ -190,6 +205,11 @@ static bool vm_execute(vm *vm)
         case OP_POP:
             vm_stack_pop(vm);
             break;
+        case OP_POP_N: {
+            pop_count count = vm_read_pop_count(vm);
+            vm_stack_pop_n(vm, count);
+            break;
+        }
         case OP_DEFINE_GLOBAL:
         case OP_DEFINE_GLOBAL_FINAL: {
             constant_index name_index = vm_read_constant_index(vm);

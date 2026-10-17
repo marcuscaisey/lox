@@ -21,6 +21,8 @@ const char *instruction_name(enum opcode opcode)
         return "FALSE";
     case OP_POP:
         return "POP";
+    case OP_POP_N:
+        return "POP_N";
     case OP_DEFINE_GLOBAL:
         return "DEFINE_GLOBAL";
     case OP_DEFINE_GLOBAL_FINAL:
@@ -73,46 +75,6 @@ const char *instruction_name(enum opcode opcode)
         return "JUMP_IF_FALSE";
     case OP_RETURN:
         return "RETURN";
-    }
-}
-
-int instruction_stack_depth_effect(enum opcode opcode)
-{
-    switch (opcode) {
-    case OP_CONSTANT:
-    case OP_NIL:
-    case OP_TRUE:
-    case OP_FALSE:
-    case OP_GET_GLOBAL:
-    case OP_GET_LOCAL:
-        return 1;
-    case OP_POP:
-    case OP_DEFINE_GLOBAL:
-    case OP_DEFINE_GLOBAL_FINAL:
-    case OP_EQUAL:
-    case OP_NOT_EQUAL:
-    case OP_LESS:
-    case OP_LESS_EQUAL:
-    case OP_GREATER:
-    case OP_GREATER_EQUAL:
-    case OP_ADD:
-    case OP_SUBTRACT:
-    case OP_MULTIPLY:
-    case OP_DIVIDE:
-    case OP_PRINT:
-        return -1;
-    case OP_SET_GLOBAL:
-    case OP_DEFINE_LOCAL:
-    case OP_DEFINE_LOCAL_FINAL:
-    case OP_SET_LOCAL:
-    case OP_NOT:
-    case OP_NEGATE:
-    case OP_JUMP:
-    case OP_JUMP_BACK:
-    case OP_JUMP_IF_TRUE:
-    case OP_JUMP_IF_FALSE:
-    case OP_RETURN: // TODO
-        return 0;
     }
 }
 

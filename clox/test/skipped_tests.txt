@@ -239,17 +239,11 @@ TestClox/Classes/NotIndexableError
 TestClox/Classes/Print
 TestClox/Classes/TooManyArgsError
 TestClox/Classes/Type
-TestClox/For/AssignInitialiser
-TestClox/For/Break
 TestClox/For/BreakInsideNestedAnonymousFunctionError
 TestClox/For/BreakInsideNestedFunctionError
 TestClox/For/Continue
 TestClox/For/ContinueInsideNestedAnonymousFunctionError
 TestClox/For/ContinueInsideNestedFunctionError
-TestClox/For/For
-TestClox/For/Nested
-TestClox/For/NoBlock
-TestClox/For/OptionalParts
 TestClox/For/Scoping
 TestClox/Functions/AccessGlobalDeclaredAfterFunDeclaration
 TestClox/Functions/AccessGlobalDefinedAfterFunDeclaration
@@ -463,7 +457,6 @@ TestClox/Variables/UndeclaredAccessErrorGlobalDefinedAfterFunctionCall
 TestClox/Variables/UndeclaredAssignmentErrorGlobalDeclaredAfterFunctionCall
 TestClox/Variables/UndefinedAccessGlobalDeclaredAfterFunctionDeclaration
 TestClox/Variables/UndefinedAccessGlobalDeclaredBeforeFunctionDeclaration
-TestClox/While/Break
 TestClox/While/BreakInsideNestedAnonymousFunctionError
 TestClox/While/BreakInsideNestedFunctionError
 TestClox/While/Continue

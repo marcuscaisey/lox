@@ -6,7 +6,7 @@
 #include "bytecode.h"
 #include "vm.h"
 
-// Writes bytecode that can be executed by `vm` for the Lox `source` into `out` and reports whether
+// Writes bytecode to be executed by `vm` for the Lox `source` into `out` and reports whether
 // compilation was successful. If complication was unsuccessful, errors are printed to stderr.
 bool compile(vm *vm, const char *source, struct bytecode_chunk *out);
 

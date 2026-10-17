@@ -10,7 +10,7 @@
 void disassemble(const struct bytecode_chunk *chunk, const char *name)
 {
     printf("== %s ==\n", name);
-    for (size_t offset = 0; offset < chunk->len;)
+    for (bytecode_offset offset = 0; offset < chunk->len;)
         offset = disassemble_instruction(chunk, offset);
 }
 
@@ -47,6 +47,17 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         value_print(chunk->constants.values[index]);
         printf("'\n");
         return offset + 1 + index_bytes;
+    }
+    case OP_POP_N: {
+        pop_count count = chunk->instructions[offset + 1];
+        int count_bytes = 1;
+        if (count == 0xFF) {
+            count = (chunk->instructions[offset + 2] << 16) |
+                    (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
+            count_bytes = 4;
+        }
+        printf("%-*s %*d\n", name_width, name, operand_width, count);
+        return offset + 1 + count_bytes;
     }
     case OP_GET_LOCAL:
     case OP_SET_LOCAL: {

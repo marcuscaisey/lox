@@ -2,6 +2,7 @@ package main_test
 
 import (
 	_ "embed"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -11,9 +12,34 @@ import (
 )
 
 func TestClox(t *testing.T) {
+	// We stat all of cloxes sources so that they'll be tracked by go test.
+	//
+	// Since clox is not written in Go, its sources are not tracked by go test. This means that when
+	// a source file changes, go test might output results from its cache.
+	// From 'go help test':
+	//   Tests that open files within the package's module or that consult environment variables
+	//   only match future runs in which the files and environment variables are unchanged.
+	// Therefore we just need to stat all of them.
+	statCloxSources(t)
+
 	cloxPath := mustBuildClox(t)
 	runner := newRunner(t, cloxPath)
 	loxtest.Run(t, runner, loxtest.WithSkipSyntaxErrors(false))
+}
+
+func statCloxSources(t *testing.T) {
+	t.Helper()
+	for _, pattern := range []string{"../*.c", "../*.h", "../Makefile"} {
+		files, err := filepath.Glob(pattern)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, file := range files {
+			if _, err := os.Stat(file); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
 }
 
 // runner like [loxtest.InterpreterRunner] except it skips tests whose prefix is listed in

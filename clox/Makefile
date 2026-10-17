@@ -19,13 +19,13 @@ endif
 
 clox: $(BUILD_DIR)/clox
 	ln -sf $< $@
-	@ printf "\x1b[32m$< linked to clox\x1b[0m\n"
+	@printf "\x1b[32m$< linked to clox\x1b[0m\n"
 
 SOURCES := $(wildcard *.c)
 OBJECTS := $(addprefix $(BUILD_DIR)/, $(patsubst %.c, %.o, $(SOURCES)))
 
 $(BUILD_DIR)/clox: $(OBJECTS)
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@
 
 HEADERS := $(wildcard *.h)
@@ -37,7 +37,7 @@ $(BUILD_DIR)/.cflags: FORCE
 	@printf '%s\n' '$(CC) $(CFLAGS)' | cmp -s - $@ || printf '%s\n' '$(CC) $(CFLAGS)' > $@
 
 $(BUILD_DIR)/%.o: %.c $(HEADERS) $(BUILD_DIR)/.cflags
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 clean:

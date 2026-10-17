@@ -19,3 +19,16 @@ for (var j = 0; j < 3; j = j + 1) {
     print j;
   }
 }
+
+for (var l = 0;; l = l + 1) {
+  if (l > 5) {
+    break;
+  }
+  // prints: 0
+  // prints: 1
+  // prints: 2
+  print l;
+  if (l >= 2) {
+    break;
+  }
+}

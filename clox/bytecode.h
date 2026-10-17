@@ -12,14 +12,22 @@ typedef uint32_t constant_index;
 // The largest possible constant index.
 #define MAX_CONSTANT_INDEX ((1 << 24) - 1)
 
+// Unsigned integer representing a number of values to pop from the VM's value stack.
+typedef uint32_t pop_count;
+
+// The largest possible pop count.
+#define MAX_POP_COUNT ((1 << 24) - 1)
+
 // Unsigned integer representing an index into the VM's value stack.
 typedef uint32_t stack_index;
 
 // The largest possible stack index.
-#define MAX_STACK_INDEX ((1 << 24) - 1)
+// 1 less than `MAX_POP_COUNT` so that it's possible to pop every value from the stack with one
+// POP_N instruction.
+#define MAX_STACK_INDEX (MAX_POP_COUNT - 1)
 
-// Unsigned integer representing the number of bytes for a jump instruction to jump forwards in the
-// bytecode.
+// Unsigned integer representing the number of bytes for a jump instruction to jump in the bytecode
+// chunk.
 typedef uint16_t jump_offset;
 
 #define MAX_JUMP_OFFSET UINT16_MAX
@@ -35,9 +43,12 @@ typedef uint16_t jump_offset;
 //   constant_index
 //     0 - 254: u8 representing the index value
 //     255 - 16,777,215: u8 value of FF followed by u24 representing the index value
-//   stack_index
+//   pop_count
 //     0 - 254: u8 representing the index value
 //     255 - 16,777,215: u8 value of FF followed by u24 representing the index value
+//   stack_index
+//     0 - 254: u8 representing the index value
+//     255 - 16,777,214: u8 value of FF followed by u24 representing the index value
 //   jump_offset
 //     u16
 //
@@ -52,6 +63,10 @@ enum opcode {
     OP_TRUE, // Pushes true
     OP_FALSE, // Pushes false
     OP_POP, // Pops a value
+    // Pops multiple values
+    // Operands:
+    //   pop_count - number of values to pop
+    OP_POP_N,
     // Pops a value then defines a global variable initialised to that value
     // Operands:
     //   constant_index - index of the constant containing the variable name
@@ -95,19 +110,19 @@ enum opcode {
     OP_NOT, // Pops a value, then pushes whether it is falsey
     OP_NEGATE, // Pops a number, negates it, then pushes it back
     OP_PRINT, // Pops a value then prints it
-    // Jumps forward in the bytecode
+    // Jumps forward in the bytecode chunk
     // Operands:
     //   jump_offset - number of bytes to jump starting after the operand
     OP_JUMP,
-    // Jumps backward in the bytecode
+    // Jumps backward in the bytecode chunk
     // Operands:
     //   jump_offset - number of bytes to jump starting after the operand
     OP_JUMP_BACK,
-    // Jumps forward in the bytecode if the value on top of the stack is truthy
+    // Jumps forward in the bytecode chunk if the value on top of the stack is truthy
     // Operands:
     //   jump_offset - number of bytes to jump starting after the operand
     OP_JUMP_IF_TRUE,
-    // Jumps forward in the bytecode if the value on top of the stack is falsey
+    // Jumps forward in the bytecode chunk if the value on top of the stack is falsey
     // Operands:
     //   jump_offset - number of bytes to jump starting after the operand
     OP_JUMP_IF_FALSE,
@@ -118,11 +133,8 @@ enum opcode {
 // Returns the name of the instruction corresponding to `opcode`.
 const char *instruction_name(enum opcode opcode);
 
-// Returns the positive or negative amount that the instruction corresponding to `opcode` has on the
-// depth of the VM's value stack. For example:
-//   - If an instruction pushes a value onto the stack, then 1 is returned.
-//   - If an instruction pops two values, then pushes another, then -1 is returned.
-int instruction_stack_depth_effect(enum opcode opcode);
+// Unsigned integer representing an absolute offset into a bytecode chunk's instructions.
+typedef size_t bytecode_offset;
 
 // Represents a sequence of bytecode instructions.
 // Must be initialised with `bytecode_chunk_init()` before use and freed with
@@ -137,7 +149,7 @@ struct bytecode_chunk {
     // Internal field, do not use.
     // Number of elements that space has been allocated for in `instructions` and `offset_lines`.
     size_t _cap;
-    struct value_array constants; // Pool of constants referenced by the bytecode
+    struct value_array constants; // Pool of constants referenced by the chunk
     // Maximum number of values that will be on the VM's value stack during execution
     size_t max_stack_depth;
 };
