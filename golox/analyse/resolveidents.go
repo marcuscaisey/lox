@@ -774,7 +774,7 @@ func (r *identResolver) walkPropertySetExpr(expr *ast.PropertySetExpr) {
 func (r *identResolver) addThisPropIdent(classDecl *ast.ClassDecl, propType propertyType, name string, ident *ast.Ident) {
 	thisPropIdentsByNameByPropType, ok := r.thisPropIdentsByNameByPropTypeByClassDecl[classDecl]
 	if !ok {
-		thisPropIdentsByNameByPropType = map[propertyType]map[string][]*ast.Ident{}
+		thisPropIdentsByNameByPropType = map[propertyType]map[string][]*ast.Ident{} //nolint:exhaustive
 		r.thisPropIdentsByNameByPropTypeByClassDecl[classDecl] = thisPropIdentsByNameByPropType
 	}
 	thisPropIdentsByName, ok := thisPropIdentsByNameByPropType[propType]
