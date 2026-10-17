@@ -241,7 +241,6 @@ TestClox/Classes/TooManyArgsError
 TestClox/Classes/Type
 TestClox/For/BreakInsideNestedAnonymousFunctionError
 TestClox/For/BreakInsideNestedFunctionError
-TestClox/For/Continue
 TestClox/For/ContinueInsideNestedAnonymousFunctionError
 TestClox/For/ContinueInsideNestedFunctionError
 TestClox/For/Scoping
@@ -457,6 +456,5 @@ TestClox/Variables/UndefinedAccessGlobalDeclaredAfterFunctionDeclaration
 TestClox/Variables/UndefinedAccessGlobalDeclaredBeforeFunctionDeclaration
 TestClox/While/BreakInsideNestedAnonymousFunctionError
 TestClox/While/BreakInsideNestedFunctionError
-TestClox/While/Continue
 TestClox/While/ContinueInsideNestedAnonymousFunctionError
 TestClox/While/ContinueInsideNestedFunctionError

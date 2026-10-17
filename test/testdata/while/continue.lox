@@ -24,3 +24,17 @@ while (j < 3) {
   }
   j = j + 1;
 }
+
+var k = 0;
+while (k < 5) {
+  k = k + 1;
+  if (k % 6 == 5) {
+    continue;
+  }
+  if (k % 2 == 1) {
+    continue;
+  }
+  // prints: 2
+  // prints: 4
+  print k;
+}

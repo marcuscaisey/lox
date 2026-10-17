@@ -43,8 +43,12 @@ struct loop_jump_statement {
 struct loop_state {
     // Array of break statements compiled since compilation of the loop started
     struct loop_jump_statement *break_stmts;
-    size_t break_stmts_len; // Number of elements in `_break_stmts`
-    size_t break_stmts_cap; // Number of elements space has been allocated for in `_break_stmts`
+    size_t break_stmts_len; // Number of elements in `break_stmts`
+    size_t break_stmts_cap; // Number of elements space has been allocated for in `break_stmts`
+    // Array of continue statements compiled since compilation of the loop started
+    struct loop_jump_statement *continue_stmts;
+    size_t continue_stmts_len; // Number of elements in `continue_stmts`
+    size_t continue_stmts_cap; // Number of elements space has been allocated for in `continue_stmts`
 };
 
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
@@ -97,15 +101,20 @@ typedef struct {
     stack_index _stack_depth;
     // State of the loop currently being compiled.
     // Don't use outside of `compiler_begin_loop()`, `compiler_end_loop()`,
-    // `compiler_compile_break_stmt()`, or `compiler_finish_compiling_break_stmts()`.
+    // `compiler_compile_break_stmt()`, `compiler_finish_compiling_break_stmts()`,
+    // `compiler_compile_continue_stmt()`, or `compiler_finish_compiling_continue_stmts()`.
     struct loop_state _loop_state;
 } compiler;
 
-static void compiler_compile_decl(compiler *compiler);
-static void compiler_compile_expr(compiler *compiler);
-static void compiler_compile_expr_stmt(compiler *compiler);
-static void compiler_compile_stmt(compiler *compiler);
-static void compiler_compile_var_decl(compiler *compiler);
+static struct loop_state compiler_begin_loop(compiler *);
+static void compiler_compile_decl(compiler *);
+static void compiler_compile_expr(compiler *);
+static void compiler_compile_expr_stmt(compiler *);
+static void compiler_compile_stmt(compiler *);
+static void compiler_compile_var_decl(compiler *);
+static void compiler_end_loop(compiler *, struct loop_state);
+static void compiler_finish_compiling_break_stmts(compiler *);
+static void compiler_finish_compiling_continue_stmts(compiler *);
 
 // Calls `compiler_report_errorf()` with a range spanning the provided token.
 #define COMPILER_REPORT_TOKEN_ERRORF(compiler, token, format, ...)                           \
@@ -471,6 +480,37 @@ static void compiler_finish_initialising_local(compiler *compiler, stack_index i
     compiler->_locals[i].is_initialising = false;
 }
 
+// Emits the bytecode for the loop jump statement with `type` starting at the current token and
+// advances the compiler past it.
+// A loop jump statement can't be compiled completely until the point in the loop that the statement
+// should jump past has been compiled. Once this has been done, pass the returned `struct
+// loop_jump_statement` to `compiler_finish_compiling_loop_jump_stmt()`.
+static struct loop_jump_statement compiler_compile_loop_jump_stmt(compiler *compiler,
+                                                                  enum token_type type)
+{
+    int line = compiler->_token.line;
+    compiler_expect(compiler, type);
+    compiler_expect(compiler, TOKEN_SEMICOLON);
+    bytecode_offset jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
+    return (struct loop_jump_statement){ .instruction = jump,
+                                         .locals_count = compiler->_locals_count,
+                                         .line = line };
+}
+
+// Finishes the compilation of `stmt`.
+// Must be called straight after all bytecode that the statement should jump past has been emitted.
+static void compiler_finish_compiling_loop_jump_stmt(compiler *compiler,
+                                                     struct loop_jump_statement stmt)
+{
+    // For every loop jump statement, we will have emitted a forward jump instruction whose offset
+    // we need to update so that it points to the next bytecode offset written to. If the statement
+    // came after some local variables had been declared, the jump will skip over the instructions
+    // popping those variables from the stack, so we need to do that as well.
+    compiler_set_forward_jump_offset(compiler, stmt.instruction);
+    size_t locals_declared_before_break = stmt.locals_count - compiler->_locals_count;
+    compiler_emit_pops(compiler, locals_declared_before_break, stmt.line);
+}
+
 // Precedence levels of the different operators, ordered by increasing precedence.
 enum precedence_level {
     // Default value used when a precedence level is expected but none are applicable
@@ -488,7 +528,7 @@ enum precedence_level {
     PREC_POSTFIX, // () [] .
 };
 
-static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_level level);
+static void compiler_compile_expr_at_level(compiler *, enum precedence_level);
 
 // Returns the precedence level of `type` as an infix operator or `PREC_NONE` if `type` is not an
 // infix operator.
@@ -811,45 +851,6 @@ static void compiler_compile_if_stmt(compiler *compiler)
     compiler_set_forward_jump_offset(compiler, end_jump);
 }
 
-// Signals that compilation of a loop has started.
-// Must be called before any bytecode for the loop is emitted.
-// Returns the state of the loop previously being compiled which must be passed to
-// `compiler_end_loop()` after all bytecode for the loop has been emitted.
-static struct loop_state compiler_begin_loop(compiler *compiler)
-{
-    struct loop_state prev_loop_state = compiler->_loop_state;
-    compiler->_loop_state.break_stmts = NULL;
-    compiler->_loop_state.break_stmts_len = 0;
-    compiler->_loop_state.break_stmts_cap = 0;
-    return prev_loop_state;
-}
-
-// Signals that compilation of a loop has ended.
-// Must be called after all bytecode for the loop has been emitted and passed the state of the
-// previous loop being compiled returned by `compiler_begin_loop()`.
-static void compiler_end_loop(compiler *compiler, struct loop_state prev_loop_state)
-{
-    free(compiler->_loop_state.break_stmts);
-    compiler->_loop_state = prev_loop_state;
-}
-
-// Finishes the compilation of any break statements encountered since compilation of the current
-// loop started.
-// Must be called directly after all bytecode for the loop has been emitted.
-static void compiler_finish_compiling_break_stmts(compiler *compiler)
-{
-    // For every break statement encountered, we will have emitted a forward jump instruction whose
-    // offset we need to update to point after the loop. If a break statement came after some local
-    // variables had been declared, the jump will skip over the instructions popping those variables
-    // from the stack, so we need to do that as well.
-    for (size_t i = 0; i < compiler->_loop_state.break_stmts_len; i++) {
-        struct loop_jump_statement break_stmt = compiler->_loop_state.break_stmts[i];
-        compiler_set_forward_jump_offset(compiler, break_stmt.instruction);
-        size_t locals_declared_before_break = break_stmt.locals_count - compiler->_locals_count;
-        compiler_emit_pops(compiler, locals_declared_before_break, break_stmt.line);
-    }
-}
-
 // Emits the bytecode for the while statement starting at the current token and advances the
 // compiler past it.
 static void compiler_compile_while_stmt(compiler *compiler)
@@ -870,6 +871,7 @@ static void compiler_compile_while_stmt(compiler *compiler)
     // Body
     compiler_emit_pops(compiler, 1, condition_line);
     compiler_compile_stmt(compiler);
+    compiler_finish_compiling_continue_stmts(compiler);
     compiler_emit_backward_jump(compiler, loop_start, while_line);
     compiler_set_forward_jump_offset(compiler, end_jump);
     compiler_emit_pops(compiler, 1, condition_line);
@@ -928,6 +930,7 @@ static void compiler_compile_for_stmt(compiler *compiler)
     if (has_increment)
         compiler_set_forward_jump_offset(compiler, increment_body_jump);
     compiler_compile_stmt(compiler);
+    compiler_finish_compiling_continue_stmts(compiler);
     bytecode_offset body_jump_back_target = has_increment ? increment_start : condition_start;
     compiler_emit_backward_jump(compiler, body_jump_back_target, for_line);
     if (has_condition) {
@@ -940,24 +943,73 @@ static void compiler_compile_for_stmt(compiler *compiler)
     compiler_end_loop(compiler, prev_loop_state);
 }
 
+// Signals that compilation of a loop has started.
+// Must be called before any bytecode for the loop is emitted.
+// Returns the state of the loop previously being compiled which must be passed to
+// `compiler_end_loop()` after all bytecode for the loop has been emitted.
+static struct loop_state compiler_begin_loop(compiler *compiler)
+{
+    struct loop_state prev_loop_state = compiler->_loop_state;
+    compiler->_loop_state.break_stmts = NULL;
+    compiler->_loop_state.break_stmts_len = 0;
+    compiler->_loop_state.break_stmts_cap = 0;
+    compiler->_loop_state.continue_stmts = NULL;
+    compiler->_loop_state.continue_stmts_len = 0;
+    compiler->_loop_state.continue_stmts_cap = 0;
+    return prev_loop_state;
+}
+
+// Signals that compilation of a loop has ended.
+// Must be called after all bytecode for the loop has been emitted and passed the state of the
+// previous loop being compiled returned by `compiler_begin_loop()`.
+static void compiler_end_loop(compiler *compiler, struct loop_state prev_loop_state)
+{
+    free(compiler->_loop_state.break_stmts);
+    free(compiler->_loop_state.continue_stmts);
+    compiler->_loop_state = prev_loop_state;
+}
+
 // Emits the bytecode for the break statement starting at the current token and advances the
 // compiler past it.
 // A break statement can't be compiled completely until the whole loop that contains it has been
 // compiled. Once this has been done, call `compiler_finish_compiling_break_stmts()`.
 static void compiler_compile_break_stmt(compiler *compiler)
 {
-    int line = compiler->_token.line;
-    compiler_expect(compiler, TOKEN_BREAK);
-    compiler_expect(compiler, TOKEN_SEMICOLON);
-    bytecode_offset jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
+    struct loop_jump_statement stmt = compiler_compile_loop_jump_stmt(compiler, TOKEN_BREAK);
     DYNAMIC_ARRAY_GROW(compiler->_loop_state.break_stmts, compiler->_loop_state.break_stmts_cap,
                        compiler->_loop_state.break_stmts_len + 1);
-    struct loop_jump_statement break_stmt = {
-        .instruction = jump,
-        .locals_count = compiler->_locals_count,
-        .line = line,
-    };
-    compiler->_loop_state.break_stmts[compiler->_loop_state.break_stmts_len++] = break_stmt;
+    compiler->_loop_state.break_stmts[compiler->_loop_state.break_stmts_len++] = stmt;
+}
+
+// Finishes the compilation of any break statements encountered since compilation of the current
+// loop started.
+// Must be called straight after all bytecode for the loop has been emitted.
+static void compiler_finish_compiling_break_stmts(compiler *compiler)
+{
+    for (size_t i = 0; i < compiler->_loop_state.break_stmts_len; i++)
+        compiler_finish_compiling_loop_jump_stmt(compiler, compiler->_loop_state.break_stmts[i]);
+}
+
+// Emits the bytecode for the continue statement starting at the current token and advances the
+// compiler past it.
+// A continue statement can't be compiled completely until the whole loop that contains it has been
+// compiled. Once this has been done, call `compiler_finish_compiling_continue_stmts()`.
+static void compiler_compile_continue_stmt(compiler *compiler)
+{
+    struct loop_jump_statement stmt = compiler_compile_loop_jump_stmt(compiler, TOKEN_CONTINUE);
+    DYNAMIC_ARRAY_GROW(compiler->_loop_state.continue_stmts,
+                       compiler->_loop_state.continue_stmts_cap,
+                       compiler->_loop_state.continue_stmts_len + 1);
+    compiler->_loop_state.continue_stmts[compiler->_loop_state.continue_stmts_len++] = stmt;
+}
+
+// Finishes the compilation of any continue statements encountered since compilation of the current
+// loop started.
+// Must be called straight after the bytecode for the loop body statement has been emitted.
+static void compiler_finish_compiling_continue_stmts(compiler *compiler)
+{
+    for (size_t i = 0; i < compiler->_loop_state.continue_stmts_len; i++)
+        compiler_finish_compiling_loop_jump_stmt(compiler, compiler->_loop_state.continue_stmts[i]);
 }
 
 // Emits the bytecode for the block starting at the current token and advances the compiler past it.
@@ -1000,6 +1052,9 @@ static void compiler_compile_stmt(compiler *compiler)
         break;
     case TOKEN_BREAK:
         compiler_compile_break_stmt(compiler);
+        break;
+    case TOKEN_CONTINUE:
+        compiler_compile_continue_stmt(compiler);
         break;
     case TOKEN_LEFT_BRACE:
         compiler_compile_block(compiler);
@@ -1064,7 +1119,7 @@ static void compiler_sync(compiler *compiler)
         case TOKEN_WHILE:
         case TOKEN_FOR:
         case TOKEN_BREAK:
-            // case TOKEN_CONTINUE:
+        case TOKEN_CONTINUE:
             // case TOKEN_RETURN:
             // case TOKEN_CLASS:
             return;

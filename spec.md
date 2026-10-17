@@ -16,7 +16,7 @@ from the challenges in the book. The extra features are as follows:
 - [Function expression](#function-expression) - [Functions](https://craftinginterpreters.com/functions.html#challenges)
 - [`try` expression](#try-expression)
 - [`break` statement](#break-statement) - [Control Flow](https://craftinginterpreters.com/control-flow.html#challenges)
-- [`continue` statement](#continue-statement)
+- [`continue` statement](#continue-statement) - [Jumping Back and Forth](https://craftinginterpreters.com/jumping-back-and-forth.html#challenges)
 - [Final variable](#final-variable) - [Local Variables](https://craftinginterpreters.com/local-variables.html)
 - [Static method](#static-method) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
 - [Property getter method](#property-accessor) - [Classes](https://craftinginterpreters.com/classes.html#challenges)
