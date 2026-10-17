@@ -446,6 +446,12 @@ static stack_index compiler_resolve_local(compiler *compiler, struct token ident
 _Static_assert((constant_index)-1 > 0, "stack_index must be unsigned");
 _Static_assert(MAX_STACK_INDEX < (stack_index)-1, "MAX_STACK_INDEX must be < max(stack_index)");
 
+// Reports whether the string `s` of `len` characters is the blank identifier `_`.
+static bool is_blank_ident(const char *s, size_t len)
+{
+    return len == 1 && s[0] == '_';
+}
+
 // Declares the local variable corresponding to `ident` or reports an error if one has already been
 // declared at the current scope depth.
 // A declared local variable name can later be resolved to its index in the VM's value stack with
@@ -458,7 +464,8 @@ static stack_index compiler_declare_local(compiler *compiler, struct token ident
     for (ptrdiff_t i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
         struct local local = compiler->_locals[i];
-        if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
+        if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0 &&
+            !is_blank_ident(local.name, local.name_len))
             COMPILER_REPORT_TOKEN_ERRORF(compiler, ident, "'%.*s' has already been declared",
                                          (int)ident.len, ident.start);
     }
@@ -616,6 +623,13 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
         compiler_advance(compiler);
         compiler_compile_expr(compiler);
         is_get = false;
+    }
+
+    if (is_blank_ident(name->data, name->len)) {
+        if (is_get)
+            COMPILER_REPORT_TOKEN_ERRORF(compiler, ident, "%s", "'_' cannot be used as a value");
+        else
+            return;
     }
 
     stack_index index = compiler_resolve_local(compiler, ident);
@@ -1090,6 +1104,9 @@ static void compiler_compile_var_decl(compiler *compiler)
     else
         compiler_emit_opcode(compiler, OP_NIL, line);
     compiler_expect(compiler, TOKEN_SEMICOLON);
+
+    if (is_blank_ident(name->data, name->len))
+        return;
 
     if (compiler->_scope_depth > 0) {
         compiler_finish_initialising_local(compiler, local_index);

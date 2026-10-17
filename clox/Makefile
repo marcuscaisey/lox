@@ -55,7 +55,7 @@ compile_commands.json: Makefile $(SOURCES) $(HEADERS) $(BUILD_DIR)/.cflags
 	bear -- $(MAKE) -k objects DEBUG=1 PRINT_BYTECODE=1 TRACE_EXECUTION=1
 
 test/skipped_tests.txt:
-	# The jq filter selects only failing tests whose names are not a prefix of another
+	@# The jq filter selects only failing tests whose names are not a prefix of another
 	@go test ./test -json | jq --raw-output --slurp ' \
 		[.[] | select(.Action == "fail" and .Test != null)] | . as $$failures \
 		| .[] | select( \

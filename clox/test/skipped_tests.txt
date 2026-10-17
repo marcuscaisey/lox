@@ -235,7 +235,6 @@ TestClox/For/BreakInsideNestedAnonymousFunctionError
 TestClox/For/BreakInsideNestedFunctionError
 TestClox/For/ContinueInsideNestedAnonymousFunctionError
 TestClox/For/ContinueInsideNestedFunctionError
-TestClox/For/Scoping
 TestClox/Functions/AccessGlobalDeclaredAfterFunDeclaration
 TestClox/Functions/AccessGlobalDefinedAfterFunDeclaration
 TestClox/Functions/AccessLocalDefinedAfterFunDeclaration
@@ -428,8 +427,6 @@ TestClox/SyntaxErrors/ReturnOutsideFunction
 TestClox/Try/Failure
 TestClox/Try/PrintResult
 TestClox/Try/Success
-TestClox/Variables/AssignmentBlank
-TestClox/Variables/BlankAccessError
 TestClox/Variables/DeclarationBlank
 TestClox/Variables/Final/DeclarationBlank
 TestClox/Variables/Final/ReassignmentErrorGlobalDefinedBeforeFunctionCall
