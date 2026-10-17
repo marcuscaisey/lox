@@ -17,9 +17,14 @@ else
 	BUILD_DIR := $(BASE_BUILD_DIR)/release
 endif
 
-clox: $(BUILD_DIR)/clox
+
+clox: $(BUILD_DIR)/clox $(BASE_BUILD_DIR)/.makeflags
 	ln -sf $< $@
 	@printf "\x1b[32m$< linked to clox\x1b[0m\n"
+
+$(BASE_BUILD_DIR)/.makeflags: FORCE
+	@mkdir -p $(dir $@)
+	@printf '%s\n' '$(DEBUG)' | cmp -s - $@ || printf '%s\n' '$(DEBUG)' > $@
 
 SOURCES := $(wildcard *.c)
 OBJECTS := $(addprefix $(BUILD_DIR)/, $(patsubst %.c, %.o, $(SOURCES)))
