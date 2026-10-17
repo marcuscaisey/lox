@@ -176,6 +176,17 @@ struct object_string *vm_concat_strings(vm *vm, struct object_string *a, struct 
     return object_string_take(vm, data, len);
 }
 
+// Returns a new string created by repeating `s` `n` times.
+struct object_string *vm_repeat_string(vm *vm, struct object_string *s, int64_t n)
+{
+    size_t len = s->len * n;
+    char *data = vm_malloc(vm, len + 1);
+    for (int i = 0; i < n; i++)
+        memcpy(data + s->len * i, s->data, s->len);
+    data[len] = '\0';
+    return object_string_take(vm, data, len);
+}
+
 // Executes the chunk of instructions stored in `_chunk`, starting from the instruction pointer
 // `_ip`, and reports whether execution was successful.
 static bool vm_execute(vm *vm)
@@ -341,9 +352,43 @@ static bool vm_execute(vm *vm)
         case OP_SUBTRACT:
             EXECUTE_BINARY_NUMBER_OP(-, value_number);
             break;
-        case OP_MULTIPLY:
-            EXECUTE_BINARY_NUMBER_OP(*, value_number);
+        case OP_MULTIPLY: {
+            value b = vm_stack_peek(vm, 0);
+            value a = vm_stack_peek(vm, 1);
+            enum value_type a_type = value_type(a);
+            enum value_type b_type = value_type(b);
+            if ((a_type == VALUE_NUMBER && b_type == VALUE_STRING) ||
+                (a_type == VALUE_STRING && b_type == VALUE_NUMBER)) {
+                vm_stack_pop(vm);
+                vm_stack_pop(vm);
+                value n_value = a;
+                value string_value = b;
+                if (a_type == VALUE_STRING) {
+                    n_value = b;
+                    string_value = a;
+                }
+                double n_double = value_as_number(n_value);
+                int64_t n = trunc(n_double);
+                if (n != n_double) {
+                    vm_report_errorf(vm, instruction_offset,
+                                     "cannot multiply '%s' by non-integer '%s'",
+                                     value_type_string(string_value), value_type_string(n_value));
+                    return false;
+                }
+                if (n < 0) {
+                    vm_report_errorf(vm, instruction_offset,
+                                     "cannot multiply '%s' by negative '%s'",
+                                     value_type_string(string_value), value_type_string(n_value));
+                    return false;
+                }
+                struct object_string *result =
+                    vm_repeat_string(vm, value_as_string(string_value), n);
+                vm_stack_push(vm, value_string(result));
+            } else {
+                EXECUTE_BINARY_NUMBER_OP(*, value_number);
+            }
             break;
+        }
         case OP_DIVIDE: {
             value b = vm_stack_peek(vm, 0);
             if (value_as_number(b) == 0) {

@@ -377,9 +377,7 @@ TestClox/Number/NotIndexableAssignmentError
 TestClox/Number/NotIndexableError
 TestClox/Number/Times
 TestClox/Number/TimesNegativeIntListError
-TestClox/Number/TimesNegativeIntStringError
 TestClox/Number/TimesNonIntListError
-TestClox/Number/TimesNonIntStringError
 TestClox/Number/Type
 TestClox/Operators/Precedence
 TestClox/Result/Equal
@@ -410,9 +408,6 @@ TestClox/String/LessEqual
 TestClox/String/NotCallableError
 TestClox/String/NotIndexableAssignmentError
 TestClox/String/NotIndexableError
-TestClox/String/Times
-TestClox/String/TimesStringNegativeIntError
-TestClox/String/TimesStringNonIntError
 TestClox/String/Type
 TestClox/SyntaxErrors/BreakOutsideLoop
 TestClox/SyntaxErrors/ContinueOutsideLoop
