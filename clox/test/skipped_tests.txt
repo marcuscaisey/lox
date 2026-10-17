@@ -15,7 +15,6 @@ TestClox/Classes/BlankPropertyAssignmentError
 TestClox/Classes/Doc
 TestClox/Classes/Equal
 TestClox/Classes/FieldAssignment
-TestClox/Classes/Inheritance
 TestClox/Classes/Inheritance/AccessFieldSetBySubclassMethod
 TestClox/Classes/Inheritance/AccessFieldSetBySuperclassMethod
 TestClox/Classes/Inheritance/AccessFieldSetOnInstance
@@ -31,7 +30,6 @@ TestClox/Classes/Inheritance/ReadWritePropertyOverriddenBySubclassReadOnlyProper
 TestClox/Classes/Inheritance/ReadWritePropertyOverriddenBySubclassReadOnlyPropertyAssignmentError
 TestClox/Classes/Inheritance/ReadWritePropertyOverriddenBySubclassWriteOnlyPropertyError
 TestClox/Classes/Inheritance/SelfReferentialSuperclassError
-TestClox/Classes/Inheritance/Static
 TestClox/Classes/Inheritance/Static/AccessFieldSetBySubclassMethod
 TestClox/Classes/Inheritance/Static/AccessFieldSetBySuperclassMethod
 TestClox/Classes/Inheritance/Static/AccessFieldSetOnInstance
@@ -73,7 +71,6 @@ TestClox/Classes/Inheritance/SuperOutsideMethodError
 TestClox/Classes/Inheritance/SuperReturnClosure
 TestClox/Classes/Inheritance/SuperStoreBoundMethodInField
 TestClox/Classes/Inheritance/SuperStoreBoundMethodInVariable
-TestClox/Classes/Instance
 TestClox/Classes/Instance/BlankPropertyAccessError
 TestClox/Classes/Instance/BlankPropertyAssignmentError
 TestClox/Classes/Instance/Equal
@@ -90,7 +87,6 @@ TestClox/Classes/Instance/ThisMissingPropertyError
 TestClox/Classes/Instance/Type
 TestClox/Classes/InvalidBinaryOpError
 TestClox/Classes/InvalidUnaryOpError
-TestClox/Classes/Methods
 TestClox/Classes/Methods/AccessGlobalDeclaredAfterClassDeclaration
 TestClox/Classes/Methods/AccessGlobalDefinedAfterClassDeclaration
 TestClox/Classes/Methods/AccessLocalDefinedAfterClassDeclaration
@@ -103,7 +99,6 @@ TestClox/Classes/Methods/DuplicateError
 TestClox/Classes/Methods/DuplicateParamsError
 TestClox/Classes/Methods/Equal
 TestClox/Classes/Methods/FieldShadowsMethod
-TestClox/Classes/Methods/Init
 TestClox/Classes/Methods/Init/AccessGlobalDefinedAfterClassDeclaration
 TestClox/Classes/Methods/Init/BlankParameters
 TestClox/Classes/Methods/Init/CalledOnInstance
@@ -153,7 +148,6 @@ TestClox/Classes/Methods/NotIndexableAssignmentError
 TestClox/Classes/Methods/NotIndexableError
 TestClox/Classes/Methods/Params
 TestClox/Classes/Methods/Print
-TestClox/Classes/Methods/PropertyAccessors
 TestClox/Classes/Methods/PropertyAccessors/ClashingMethodReadOnlyError
 TestClox/Classes/Methods/PropertyAccessors/ClashingMethodReadWriteError
 TestClox/Classes/Methods/PropertyAccessors/ClashingMethodWriteOnlyError
@@ -171,7 +165,6 @@ TestClox/Classes/Methods/Return
 TestClox/Classes/Methods/ReturnClosure
 TestClox/Classes/Methods/Scoping
 TestClox/Classes/Methods/SetFields
-TestClox/Classes/Methods/Static
 TestClox/Classes/Methods/Static/AccessFromInstanceError
 TestClox/Classes/Methods/Static/AccessGlobalDefinedAfterClassDeclaration
 TestClox/Classes/Methods/Static/BlankName
@@ -198,7 +191,6 @@ TestClox/Classes/Methods/Static/NotIndexableAssignmentError
 TestClox/Classes/Methods/Static/NotIndexableError
 TestClox/Classes/Methods/Static/Params
 TestClox/Classes/Methods/Static/Print
-TestClox/Classes/Methods/Static/PropertyAccessors
 TestClox/Classes/Methods/Static/PropertyAccessors/ClashingMethodReadOnlyError
 TestClox/Classes/Methods/Static/PropertyAccessors/ClashingMethodReadWriteError
 TestClox/Classes/Methods/Static/PropertyAccessors/ClashingMethodWriteOnlyError
@@ -247,7 +239,6 @@ TestClox/For/Scoping
 TestClox/Functions/AccessGlobalDeclaredAfterFunDeclaration
 TestClox/Functions/AccessGlobalDefinedAfterFunDeclaration
 TestClox/Functions/AccessLocalDefinedAfterFunDeclaration
-TestClox/Functions/Anonymous
 TestClox/Functions/Anonymous/AccessGlobalDeclaredAfterFunExpression
 TestClox/Functions/Anonymous/AccessGlobalDefinedAfterFunExpression
 TestClox/Functions/Anonymous/AccessLocalDefinedAfterFunExpression
@@ -280,7 +271,6 @@ TestClox/Functions/Anonymous/Type
 TestClox/Functions/Anonymous/UnusedParameterHint
 TestClox/Functions/BlankName
 TestClox/Functions/BlankParameters
-TestClox/Functions/Builtin
 TestClox/Functions/Builtin/Clock
 TestClox/Functions/Builtin/Equal
 TestClox/Functions/Builtin/Error
@@ -441,7 +431,6 @@ TestClox/Try/Success
 TestClox/Variables/AssignmentBlank
 TestClox/Variables/BlankAccessError
 TestClox/Variables/DeclarationBlank
-TestClox/Variables/Final
 TestClox/Variables/Final/DeclarationBlank
 TestClox/Variables/Final/ReassignmentErrorGlobalDefinedBeforeFunctionCall
 TestClox/Variables/Final/RedeclaredGlobalDeclaredAfterFunctionDeclarationHint

@@ -1,4 +1,4 @@
-.PHONY: clean objects FORCE
+.PHONY: clean objects FORCE test/skipped_tests.txt
 
 BASE_BUILD_DIR := build
 CFLAGS := -std=c11 -Wall -Wextra -Wpedantic -Werror
@@ -53,3 +53,13 @@ objects: $(OBJECTS)
 compile_commands.json: Makefile $(SOURCES) $(HEADERS) $(BUILD_DIR)/.cflags
 	$(MAKE) clean DEBUG=1
 	bear -- $(MAKE) -k objects DEBUG=1 PRINT_BYTECODE=1 TRACE_EXECUTION=1
+
+test/skipped_tests.txt:
+	# The jq filter selects only failing tests whose names are not a prefix of another
+	@go test ./test -json | jq --raw-output --slurp ' \
+		[.[] | select(.Action == "fail" and .Test != null)] | . as $$failures \
+		| .[] | select( \
+			. as $$parent | all($$failures[]; .Test | startswith($$parent.Test + "/") | not) \
+		) \
+		| .Test \
+	' | sort > $@
