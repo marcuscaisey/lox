@@ -543,8 +543,8 @@ static void compiler_compile_expr_at_level(compiler *, enum precedence_level);
 static enum precedence_level infix_operator_precedence_level(enum token_type type)
 {
     switch (type) {
-    // case TOKEN_COMMA:
-    //     return PREC_COMMA;
+    case TOKEN_COMMA:
+        return PREC_COMMA;
     case TOKEN_QUESTION:
         return PREC_TERNARY;
     case TOKEN_OR:
@@ -622,7 +622,7 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
             return;
         }
         compiler_advance(compiler);
-        compiler_compile_expr(compiler);
+        compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT);
         is_get = false;
     }
 
@@ -719,9 +719,21 @@ static expr_compiler expr_compiler_for_prefix(enum token_type type)
     }
 }
 
+// `infix_expr_compiler` for a comma expression.
+static void compiler_compile_comma_expr(compiler *compiler, enum precedence_level level)
+{
+    (void)level;
+    int line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_COMMA);
+    compiler_compile_expr_at_level(compiler, PREC_COMMA);
+    compiler_emit_pops(compiler, 1, line);
+}
+
+
 // `infix_expr_compiler` for a ternary expression.
 static void compiler_compile_ternary_expr(compiler *compiler, enum precedence_level level)
 {
+    (void)level;
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_QUESTION);
     bytecode_offset else_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
@@ -731,7 +743,7 @@ static void compiler_compile_ternary_expr(compiler *compiler, enum precedence_le
     compiler_expect(compiler, TOKEN_COLON);
     compiler_set_forward_jump_offset(compiler, else_jump);
     compiler_emit_pops(compiler, 1, line);
-    compiler_compile_expr_at_level(compiler, level);
+    compiler_compile_expr_at_level(compiler, PREC_TERNARY);
     compiler_set_forward_jump_offset(compiler, end_jump);
 }
 
@@ -797,6 +809,8 @@ static void compiler_compile_binary_expr(compiler *compiler, enum precedence_lev
 static infix_expr_compiler infix_expr_compiler_for_operator(enum token_type type)
 {
     switch (type) {
+    case TOKEN_COMMA:
+        return compiler_compile_comma_expr;
     case TOKEN_QUESTION:
         return compiler_compile_ternary_expr;
     case TOKEN_OR:
@@ -842,7 +856,7 @@ static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_l
 // it.
 static void compiler_compile_expr(compiler *compiler)
 {
-    compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT);
+    compiler_compile_expr_at_level(compiler, PREC_COMMA);
 }
 
 // Emits the bytecode for the print statement starting at the current token and advances the

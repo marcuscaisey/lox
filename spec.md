@@ -792,8 +792,8 @@ return_stmt   = 'return' , [ expression ] , ';' ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr , { ',' , assignment_expr } ;
-assignment_expr     = ( { postfix_expr , '.' } , IDENT | '[' , expr , ']' )
-                    , '=' , assignment_expr | ternary_expr ;
+assignment_expr     = ( { postfix_expr , '.' } , IDENT | '[' , expr , ']' ) , '=' , assignment_expr
+                    | ternary_expr ;
 ternary_expr        = logical_or_expr , [ '?' , expr , ':' , ternary_expr ] ;
 logical_or_expr     = logical_and_expr , { 'or' , logical_and_expr } ;
 logical_and_expr    = equality_expr , { 'and' , equality_expr } ;
