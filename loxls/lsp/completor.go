@@ -16,9 +16,23 @@ import (
 
 var (
 	expressionKeywords = []string{"true", "false", "nil"}
-	statementKeywords  = []string{"print", "var", "if", "else", "while", "for", "break", "continue", "fun", "return", "class"}
-	statementSnippets  = []snippet{
+	statementKeywords  = []string{
+		"print",
+		"var",
+		"final",
+		"if",
+		"else",
+		"while",
+		"for",
+		"break",
+		"continue",
+		"fun",
+		"return",
+		"class",
+	}
+	statementSnippets = []snippet{
 		{"var", "var ${1:name} = ${2:value};$0", "Snippet for a variable"},
+		{"final", "final ${1:name} = ${2:value};$0", "Snippet for a final variable"},
 		{"if", "if ($1) {\n  $0\n}", "Snippet for an if statement"},
 		{"while", "while ($1) {\n  $0\n}", "Snippet for a while loop"},
 		{"for", "for (var ${1:i} = ${2:0}; $1 < ${3:n}; $1 = $1 + 1) {\n  $0\n}", "Snippet for a for loop"},
