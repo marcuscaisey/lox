@@ -20,6 +20,23 @@ if (1 < 2) {
   print 4;
 }
 
+// Switch Statement
+switch (1) {
+// <- keyword.conditional
+//     ^ punctuation.bracket
+//       ^ punctuation.bracket
+//         ^ punctuation.bracket
+  case 1:
+// ^ keyword.conditional
+//      ^ punctuation.delimiter
+    print 1;
+  default:
+// ^ keyword.conditional
+//       ^ punctuation.delimiter
+    print "default";
+}
+// <- punctuation.bracket
+
 // While Statement
 while (1 < 2) {
   // <- keyword.repeat

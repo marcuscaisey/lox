@@ -156,7 +156,17 @@ func (l *lexer) Next() token.Token {
 		ident := l.consumeIdent()
 		tok.EndPos = l.pos
 		tok.Type = token.IdentType(ident)
-		if !l.extraFeatures && slices.Contains([]token.Type{token.Final, token.Break, token.Continue, token.Static, token.Get, token.Set}, tok.Type) {
+		if !l.extraFeatures && slices.Contains([]token.Type{
+			token.Final,
+			token.Switch,
+			token.Case,
+			token.Default,
+			token.Break,
+			token.Continue,
+			token.Static,
+			token.Get,
+			token.Set,
+		}, tok.Type) {
 			tok.Type = token.Ident
 		}
 		tok.Lexeme = ident

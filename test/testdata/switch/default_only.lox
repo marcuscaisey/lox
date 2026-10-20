@@ -1,0 +1,5 @@
+var x = 1;
+switch (x) {
+  default:
+    print "default"; // prints: default
+}

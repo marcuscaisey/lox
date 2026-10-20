@@ -23,6 +23,8 @@ const char *instruction_name(enum opcode opcode)
         return "POP";
     case OP_POP_N:
         return "POP_N";
+    case OP_DUP:
+        return "DUP";
     case OP_DEFINE_GLOBAL:
         return "DEFINE_GLOBAL";
     case OP_DEFINE_GLOBAL_FINAL:

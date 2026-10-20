@@ -100,6 +100,7 @@ module.exports = grammar({
         $.print_statement,
         $.block,
         $.if_statement,
+        $.switch_statement,
         $.while_statement,
         $.for_statement,
         $.break_statement,
@@ -125,6 +126,19 @@ module.exports = grammar({
           optional(seq("else", field("else", $._statement))),
         ),
       ),
+
+    switch_statement: ($) =>
+      seq("switch", "(", field("value", $._expression), ")", "{", optional($.switch_body), "}"),
+
+    switch_body: ($) =>
+      choice(seq(repeat1($.switch_case), optional($.switch_default)), $.switch_default),
+
+    switch_case: ($) =>
+      seq("case", field("value", $._expression), ":", optional($.switch_case_body)),
+
+    switch_case_body: ($) => repeat1($._statement),
+
+    switch_default: ($) => seq("default", ":", repeat($._statement)),
 
     while_statement: ($) =>
       seq("while", "(", field("condition", $._expression), ")", field("body", $._statement)),

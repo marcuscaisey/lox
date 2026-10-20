@@ -1,0 +1,7 @@
+var x = 2;
+switch (x) {
+  case 1:
+    print x + 1;
+  case 2:
+    print x + 2; // prints: 4
+}

@@ -70,6 +70,7 @@ enum opcode {
     // Pops a value then defines a global variable initialised to that value
     // Operands:
     //   constant_index - index of the constant containing the variable name
+    OP_DUP, // Pushes the value on top of the stack
     OP_DEFINE_GLOBAL,
     // Pops a value then defines a global final variable initialised to that value
     // Operands:

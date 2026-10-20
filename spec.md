@@ -368,6 +368,30 @@ if (1 > 2) {
 }
 ```
 
+### Switch Statement
+
+A switch statement evaluates an expression and compares it with a list of cases. If the expression
+matches one of the case, then the corresponding list of statements are executed. An optional default
+case can be provided which is executed if none of the cases are matched.
+
+```lox
+switch (2) {
+  case 1:
+    print 1;
+  case 2:
+    print 2; // prints: 2
+}
+
+switch (3) {
+  case 1:
+    print 1;
+  case 2:
+    print 2;
+  default:
+    print "default"; // prints: default
+}
+```
+
 ### While Statement
 
 A while statement repeatedly executes a statement while the provided expression is truthy.
@@ -777,18 +801,21 @@ parameters     = IDENT , { ',' , IDENT } ;
 class_decl     = 'class' , IDENT , { '<', IDENT } , '{' , { method_decl } , '}' , ;
 method_decl    = [ 'static' ] , [ 'get' | 'set' ] , function ;
 
-stmt          = expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | break_stmt
-              | continue_stmt ;
-expr_stmt     = expr , ';' ;
-print_stmt    = 'print' , expr , ';' ;
-block         = '{' , { decl } , '}' ;
-if_stmt       = 'if' , '(' , expr , ')' , stmt , [ 'else' , stmt ] ;
-while_stmt    = 'while' , '(' , expr , ')' , stmt ;
-for_stmt      = 'for' , '(' , ( var_decl | expr_stmt | ';' ) , [ expr ] , ';' , [ expr ] , ')'
-              , stmt ;
-break_stmt    = 'break' , ';' ;
-continue_stmt = 'continue' , ';' ;
-return_stmt   = 'return' , [ expression ] , ';' ;
+stmt            = expr_stmt | print_stmt | block | if_stmt | while_stmt | for_stmt | break_stmt
+                | continue_stmt ;
+expr_stmt       = expr , ';' ;
+print_stmt      = 'print' , expr , ';' ;
+block           = '{' , { decl } , '}' ;
+if_stmt         = 'if' , '(' , expr , ')' , stmt , [ 'else' , stmt ] ;
+switch_stmt     = 'switch' , '(' , expr , ')' , '{' , { switch_case } , [ switch_default ] , '}' ;
+switch_case     = 'case' , expr , ':' , { stmt } ;
+switch_default  = 'default' , ':' , { stmt } ;
+while_stmt      = 'while' , '(' , expr , ')' , stmt ;
+for_stmt        = 'for' , '(' , ( var_decl | expr_stmt | ';' ) , [ expr ] , ';' , [ expr ] , ')'
+                , stmt ;
+break_stmt      = 'break' , ';' ;
+continue_stmt   = 'continue' , ';' ;
+return_stmt     = 'return' , [ expression ] , ';' ;
 
 expr                = comma_expr ;
 comma_expr          = assignment_expr , { ',' , assignment_expr } ;

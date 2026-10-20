@@ -1,0 +1,19 @@
+print "before"; // prints: before
+
+var x = 2;
+switch (x) {
+  case 1:
+    print 1;
+  case 2:
+}
+
+var y = 3;
+switch (y) {
+  case 1:
+    print 1;
+  case 2:
+    print 2;
+  default:
+}
+
+print "after"; // prints: after

@@ -58,6 +58,14 @@ func WalkChildren[T Node](node Node, f func(T) bool) {
 		Walk(node.Condition, f)
 		Walk(node.Then, f)
 		Walk(node.Else, f)
+	case *SwitchStmt:
+		Walk(node.Value, f)
+		Walk(node.Body, f)
+	case *SwitchCase:
+		Walk(node.Value, f)
+		walkSlice(node.Body, f)
+	case *SwitchDefault:
+		walkSlice(node.Body, f)
 	case *WhileStmt:
 		Walk(node.Condition, f)
 		Walk(node.Body, f)

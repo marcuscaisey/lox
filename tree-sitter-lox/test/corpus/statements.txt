@@ -208,6 +208,419 @@ if (1 < 2)
         (number)))))
 
 ================================================================================
+Switch Statement
+================================================================================
+
+var x = 2;
+switch (x) {
+  case 1:
+    print x + 1;
+  case 2:
+    print x + 2;
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number))))))))
+
+================================================================================
+Switch Statement - Default
+================================================================================
+
+var x = 3;
+switch (x) {
+  case 1:
+    print x + 1;
+  case 2:
+    print x + 2;
+  default:
+    print "default";
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_default
+        (print_statement
+          (string
+            (string_content)))))))
+
+================================================================================
+Switch Statement - Empty Case
+================================================================================
+
+var x = 2;
+switch (x) {
+  case 1:
+    print 1;
+  case 2:
+}
+
+var y = 3;
+switch (y) {
+  case 1:
+    print 1;
+  case 2:
+    print 2;
+  default:
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (number))))
+      (switch_case
+        value: (number))))
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (number))))
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (number))))
+      (switch_default))))
+
+================================================================================
+Switch Statement - Multiple Statements
+================================================================================
+
+var x = 2;
+switch (x) {
+  case 1:
+    print x + 1;
+  case 2:
+    print x + 2;
+    print x + 3;
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number))))))))
+
+================================================================================
+Switch Statement - Empty
+================================================================================
+
+var x = 1;
+switch (x) {}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)))
+
+================================================================================
+Switch Statement - Default Only
+================================================================================
+
+var x = 1;
+switch (x) {
+  default:
+    print "default";
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_default
+        (print_statement
+          (string
+            (string_content)))))))
+
+================================================================================
+Switch Statement - Nested
+================================================================================
+
+var x = 2;
+switch (x) {
+  case 1:
+    print x + 1;
+  case 2:
+    switch (x + 2) {
+      case 3:
+        print x + 3;
+      case 4:
+        print x + 4;
+    }
+}
+
+var y = 2.5;
+switch (y) {
+  case 1:
+    print y + 1;
+  case 2:
+    print y + 2;
+  default:
+    switch (y) {
+      case 1.5:
+        print y + 1.5;
+      case 2.5:
+        print y + 2.5;
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (switch_statement
+            value: (binary_expression
+              left: (identifier)
+              right: (number))
+            (switch_body
+              (switch_case
+                value: (number)
+                (switch_case_body
+                  (print_statement
+                    (binary_expression
+                      left: (identifier)
+                      right: (number)))))
+              (switch_case
+                value: (number)
+                (switch_case_body
+                  (print_statement
+                    (binary_expression
+                      left: (identifier)
+                      right: (number)))))))))))
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_default
+        (switch_statement
+          value: (identifier)
+          (switch_body
+            (switch_case
+              value: (number)
+              (switch_case_body
+                (print_statement
+                  (binary_expression
+                    left: (identifier)
+                    right: (number)))))
+            (switch_case
+              value: (number)
+              (switch_case_body
+                (print_statement
+                  (binary_expression
+                    left: (identifier)
+                    right: (number)))))))))))
+
+================================================================================
+Switch Statement - Block
+================================================================================
+
+var x = 2;
+var a = "outer a";
+switch (x) {
+  case 1:
+    print x + 1;
+  case 2: {
+    var a = "inner a";
+    print a;
+  }
+}
+
+var y = 2;
+var b = "outer b";
+switch (y) {
+  case 1:
+    print y + 1;
+  case 2:
+    print y + 2;
+  default: {
+    var b = "inner b";
+    print b;
+  }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (variable_declaration
+    name: (identifier)
+    initialiser: (string
+      (string_content)))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (block
+            (variable_declaration
+              name: (identifier)
+              initialiser: (string
+                (string_content)))
+            (print_statement
+              (identifier)))))))
+  (variable_declaration
+    name: (identifier)
+    initialiser: (number))
+  (variable_declaration
+    name: (identifier)
+    initialiser: (string
+      (string_content)))
+  (switch_statement
+    value: (identifier)
+    (switch_body
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_case
+        value: (number)
+        (switch_case_body
+          (print_statement
+            (binary_expression
+              left: (identifier)
+              right: (number)))))
+      (switch_default
+        (block
+          (variable_declaration
+            name: (identifier)
+            initialiser: (string
+              (string_content)))
+          (print_statement
+            (identifier)))))))
+
+================================================================================
 While Statement
 ================================================================================
 

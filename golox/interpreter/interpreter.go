@@ -121,6 +121,8 @@ func (i *Interpreter) execStmt(env environment, stmt ast.Stmt) (stmtResult, envi
 		result = i.execBlock(env, stmt)
 	case *ast.IfStmt:
 		result = i.execIfStmt(env, stmt)
+	case *ast.SwitchStmt:
+		result = i.execSwitchStmt(env, stmt)
 	case *ast.WhileStmt:
 		result = i.execWhileStmt(env, stmt)
 	case *ast.ForStmt:
@@ -131,7 +133,8 @@ func (i *Interpreter) execStmt(env environment, stmt ast.Stmt) (stmtResult, envi
 		result = i.execContinueStmt()
 	case *ast.ReturnStmt:
 		result = i.execReturnStmt(env, stmt)
-	case *ast.IllegalStmt, *ast.Comment, *ast.CommentedStmt, *ast.ParamDecl, *ast.MethodDecl:
+	case *ast.IllegalStmt, *ast.Comment, *ast.CommentedStmt, *ast.ParamDecl, *ast.MethodDecl,
+		*ast.SwitchCase, *ast.SwitchDefault:
 		panic(fmt.Sprintf("unexpected statement type: %T", stmt))
 	}
 	return result, newEnv
@@ -221,6 +224,25 @@ func (i *Interpreter) execIfStmt(env environment, stmt *ast.IfStmt) stmtResult {
 	} else {
 		return stmtResultNone{}
 	}
+}
+
+func (i *Interpreter) execSwitchStmt(env environment, stmt *ast.SwitchStmt) stmtResult {
+	value := i.evalExpr(env, stmt.Value)
+	for _, caseStmt := range stmt.Body.Stmts {
+		//nolint:gochecksumtype // These are the only two case body statement types
+		switch caseStmt := caseStmt.(type) {
+		case *ast.SwitchCase:
+			caseValue := i.evalExpr(env, caseStmt.Value)
+			if caseValue.Equals(value) {
+				return i.executeBlock(env, caseStmt.Body)
+			}
+		case *ast.SwitchDefault:
+			return i.executeBlock(env, caseStmt.Body)
+		default:
+			panic(fmt.Sprintf("unexpected switch body statement type: %T", caseStmt))
+		}
+	}
+	return stmtResultNone{}
 }
 
 func (i *Interpreter) execWhileStmt(env environment, stmt *ast.WhileStmt) stmtResult {

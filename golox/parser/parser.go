@@ -49,9 +49,10 @@ func Parse(r io.Reader, filename string, opts ...Option) (*ast.Program, error) {
 	}
 
 	p := &parser{
-		extraFeatures:       true,
-		lexer:               lexer,
-		classBodyScopeDepth: -1,
+		extraFeatures:        true,
+		lexer:                lexer,
+		classBodyScopeDepth:  -1,
+		switchBodyScopeDepth: -1,
 	}
 	lexer.SetErrorHandler(func(tok token.Token, format string, args ...any) {
 		p.addErrorf(tok, format, args...)
@@ -73,10 +74,11 @@ type parser struct {
 	tok     token.Token // token currently being considered
 	nextTok token.Token
 
-	scopeDepth          int
-	classBodyScopeDepth int
-	curClassDecl        *ast.ClassDecl
-	midStmtComments     []*ast.Comment
+	scopeDepth           int
+	classBodyScopeDepth  int
+	curClassDecl         *ast.ClassDecl
+	switchBodyScopeDepth int
+	midStmtComments      []*ast.Comment
 
 	errs       loxerr.Errors
 	lastErrPos token.Position
@@ -164,8 +166,9 @@ func (p *parser) sync() token.Token {
 			if p.scopeDepth > 0 {
 				return p.prevTok
 			}
-		case token.EOF, token.Print, token.Var, token.Final, token.If, token.While, token.For,
-			token.Break, token.Continue, token.Return, token.Class, token.LeftBrace:
+		case token.EOF, token.Print, token.Var, token.Final, token.If, token.Switch, token.Case,
+			token.Default, token.While, token.For, token.Break, token.Continue, token.Return,
+			token.Class, token.LeftBrace:
 			return finalTok
 		default:
 		}
@@ -282,6 +285,9 @@ func (p *parser) parseClassDecl(classTok token.Token) (*ast.ClassDecl, bool) {
 	}
 	decl.Body, ok = p.parseBlock(leftBrace)
 	for i, stmt := range slices.Backward(decl.Body.Stmts) {
+		if commentedStmt, ok := stmt.(*ast.CommentedStmt); ok {
+			stmt = commentedStmt.Stmt
+		}
 		switch stmt.(type) {
 		case *ast.MethodDecl, *ast.Comment:
 		default:
@@ -368,6 +374,12 @@ func (p *parser) parseStmt() (ast.Stmt, bool) {
 		stmt, ok = p.parseBlock(tok)
 	case p.match(token.If):
 		stmt, ok = p.parseIfStmt(tok)
+	case p.match(token.Switch):
+		stmt, ok = p.parseSwitchStmt(tok)
+	case p.scopeDepth == p.switchBodyScopeDepth && p.match(token.Case):
+		stmt, ok = p.parseSwitchCase(tok)
+	case p.scopeDepth == p.switchBodyScopeDepth && p.match(token.Default):
+		stmt, ok = p.parseSwitchDefault(tok)
 	case p.match(token.While):
 		stmt, ok = p.parseWhileStmt(tok)
 	case p.match(token.For):
@@ -467,6 +479,103 @@ func (p *parser) parseIfStmt(ifTok token.Token) (*ast.IfStmt, bool) {
 		}
 	}
 	return stmt, true
+}
+
+func (p *parser) parseSwitchStmt(switchTok token.Token) (*ast.SwitchStmt, bool) {
+	prevSwitchBodyScopeDepth := p.switchBodyScopeDepth
+	p.switchBodyScopeDepth = p.scopeDepth + 1
+	defer func() { p.switchBodyScopeDepth = prevSwitchBodyScopeDepth }()
+
+	stmt := &ast.SwitchStmt{Switch: switchTok}
+	var ok bool
+	if !p.expect(token.LeftParen) {
+		return stmt, false
+	}
+	if stmt.Value, ok = p.parseExpr(); !ok {
+		return stmt, false
+	}
+	if !p.expect(token.RightParen) {
+		return stmt, false
+	}
+
+	leftBrace, ok := p.expect2(token.LeftBrace)
+	if !ok {
+		return stmt, false
+	}
+	defaultSeen := false
+	caseSeen := false
+	stmt.Body, ok = p.parseBlock(leftBrace)
+	for i, bodyStmt := range slices.Backward(stmt.Body.Stmts) {
+		if commentedStmt, ok := bodyStmt.(*ast.CommentedStmt); ok {
+			bodyStmt = commentedStmt.Stmt
+		}
+		switch bodyStmt.(type) {
+		case *ast.SwitchCase:
+			caseSeen = true
+		case *ast.SwitchDefault:
+			if defaultSeen {
+				p.addErrorf(switchTok, "switch statement can only have one default case")
+			}
+			if caseSeen {
+				p.addErrorf(switchTok, "switch statement default case must come last")
+			}
+			defaultSeen = true
+		case *ast.Comment:
+		default:
+			stmt.Body.Stmts = slices.Delete(stmt.Body.Stmts, i, i+1)
+			p.addErrorf(switchTok, "switch statement body can only contain cases and comments")
+		}
+	}
+	return stmt, ok
+}
+
+func (p *parser) parseSwitchCase(caseTok token.Token) (*ast.SwitchCase, bool) {
+	stmt := &ast.SwitchCase{Case: caseTok}
+	var ok bool
+	if stmt.Value, ok = p.parseExpr(); !ok {
+		return stmt, false
+	}
+	if stmt.Colon, ok = p.expect2(token.Colon); !ok {
+		return stmt, false
+	}
+	if stmt.Body, ok = p.parseSwitchCaseBody(); !ok {
+		return stmt, false
+	}
+	return stmt, true
+}
+
+func (p *parser) parseSwitchDefault(defaultTok token.Token) (*ast.SwitchDefault, bool) {
+	stmt := &ast.SwitchDefault{Default: defaultTok}
+	var ok bool
+	if stmt.Colon, ok = p.expect2(token.Colon); !ok {
+		return stmt, false
+	}
+	if stmt.Body, ok = p.parseSwitchCaseBody(); !ok {
+		return stmt, false
+	}
+	return stmt, true
+}
+
+func (p *parser) parseSwitchCaseBody() ([]ast.Stmt, bool) {
+	var body []ast.Stmt
+	for !slices.Contains([]token.Type{
+		token.Case,
+		token.Default,
+		token.RightBrace,
+	}, p.tok.Type) {
+		if p.match(token.Comment) {
+			body = append(body, p.parseComment(p.prevTok))
+			continue
+		}
+		bodyStmt, ok := p.parseStmt()
+		if bodyStmt != nil {
+			body = append(body, bodyStmt)
+		}
+		if !ok {
+			return body, false
+		}
+	}
+	return body, true
 }
 
 func (p *parser) parseWhileStmt(whileTok token.Token) (*ast.WhileStmt, bool) {

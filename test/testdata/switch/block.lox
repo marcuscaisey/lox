@@ -1,0 +1,25 @@
+var x = 2;
+var a = "outer a";
+switch (x) {
+  case 1:
+    print x + 1;
+  case 2: {
+    var a = "inner a";
+    print a; // prints: inner a
+  }
+}
+print a; // prints: outer a
+
+var y = 3;
+var b = "outer b";
+switch (y) {
+  case 1:
+    print y + 1;
+  case 2:
+    print y + 2;
+  default: {
+    var b = "inner b";
+    print b; // prints: inner b
+  }
+}
+print b; // prints: outer b

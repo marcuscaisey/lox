@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add support for switch statements when extra feature are enabled.
+
 ### Fixed
 
 - Suggest final variable snippet.

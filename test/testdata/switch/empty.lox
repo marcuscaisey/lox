@@ -1,0 +1,4 @@
+print "before"; // prints: before
+var x = 1;
+switch (x) {}
+print "after"; // prints: after

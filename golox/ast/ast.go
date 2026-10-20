@@ -382,7 +382,6 @@ func (b *Block) IsValid() bool {
 //	if (a == 123) {
 //	    print "abc";
 //	} else {
-//
 //	    print "def";
 //	}
 type IfStmt struct {
@@ -397,6 +396,61 @@ func (i *IfStmt) Start() token.Position { return i.If.Start() }
 func (i *IfStmt) End() token.Position   { return last(i.If, i.Condition, i.Then, i.Else).End() }
 func (i *IfStmt) IsValid() bool {
 	return i != nil && !i.If.IsZero() && isValid(i.Condition) && isValid(i.Then) && isValidOptional(i.Else)
+}
+
+// SwitchStmt is a switch statement, such as
+//
+//	var x = 3;
+//	switch (x) {
+//	  case 1:
+//	    print x + 1;
+//	  case 2:
+//	    print x + 2;
+//	  default:
+//	    print "default";
+//	}
+type SwitchStmt struct {
+	Switch token.Token
+	Value  Expr   `print:"named"`
+	Body   *Block `print:"named"`
+	stmt
+}
+
+func (s *SwitchStmt) Start() token.Position { return s.Switch.Start() }
+func (s *SwitchStmt) End() token.Position   { return last(s.Switch, s.Value, s.Body).End() }
+func (s *SwitchStmt) IsValid() bool {
+	return s != nil && !s.Switch.IsZero() && isValid(s.Value) && isValid(s.Body)
+}
+
+// SwitchCase is a switch case.
+type SwitchCase struct {
+	Case  token.Token
+	Value Expr `print:"named"`
+	Colon token.Token
+	Body  []Stmt `print:"named"`
+	stmt
+}
+
+func (s *SwitchCase) Start() token.Position { return s.Case.Start() }
+func (s *SwitchCase) End() token.Position {
+	return last(s.Case, s.Value, lastSlice(s.Body)).End()
+}
+func (s *SwitchCase) IsValid() bool {
+	return s != nil && !s.Case.IsZero() && isValid(s.Value) && isValidSlice(s.Body)
+}
+
+// SwitchDefault is default switch case.
+type SwitchDefault struct {
+	Default token.Token
+	Colon   token.Token
+	Body    []Stmt `print:"named"`
+	stmt
+}
+
+func (s *SwitchDefault) Start() token.Position { return s.Default.Start() }
+func (s *SwitchDefault) End() token.Position   { return last(s.Default, lastSlice(s.Body)).End() }
+func (s *SwitchDefault) IsValid() bool {
+	return s != nil && !s.Default.IsZero() && isValidSlice(s.Body)
 }
 
 // WhileStmt is a while statement, such as
@@ -815,6 +869,12 @@ func isNil(node Node) bool {
 	case *Block:
 		return node == nil
 	case *IfStmt:
+		return node == nil
+	case *SwitchStmt:
+		return node == nil
+	case *SwitchCase:
+		return node == nil
+	case *SwitchDefault:
 		return node == nil
 	case *WhileStmt:
 		return node == nil

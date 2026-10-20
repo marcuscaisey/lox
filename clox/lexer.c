@@ -34,6 +34,12 @@ const char *token_type_string(enum token_type type)
         return "if";
     case TOKEN_ELSE:
         return "else";
+    case TOKEN_SWITCH:
+        return "switch";
+    case TOKEN_CASE:
+        return "case";
+    case TOKEN_DEFAULT:
+        return "default";
     case TOKEN_AND:
         return "and";
     case TOKEN_OR:
@@ -223,6 +229,8 @@ static enum token_type ident_type(const char *start, int len)
     case 'c':
         if (len > 1) {
             switch (start[1]) {
+            case 'a':
+                return KEYWORD_TYPE_OR_IDENT(TOKEN_CASE, "case", 2);
             case 'l':
                 return KEYWORD_TYPE_OR_IDENT(TOKEN_CLASS, "class", 2);
             case 'o':
@@ -230,6 +238,8 @@ static enum token_type ident_type(const char *start, int len)
             }
         }
         break;
+    case 'd':
+        return KEYWORD_TYPE_OR_IDENT(TOKEN_DEFAULT, "default", 1);
     case 'e':
         return KEYWORD_TYPE_OR_IDENT(TOKEN_ELSE, "else", 1);
     case 'f':
@@ -267,6 +277,8 @@ static enum token_type ident_type(const char *start, int len)
                 return KEYWORD_TYPE_OR_IDENT(TOKEN_STATIC, "static", 2);
             case 'u':
                 return KEYWORD_TYPE_OR_IDENT(TOKEN_SUPER, "super", 2);
+            case 'w':
+                return KEYWORD_TYPE_OR_IDENT(TOKEN_SWITCH, "switch", 2);
             }
         }
         break;

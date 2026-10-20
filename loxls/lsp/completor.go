@@ -22,20 +22,25 @@ var (
 		"final",
 		"if",
 		"else",
+		"switch",
 		"while",
 		"for",
 		"break",
 		"continue",
-		"fun",
 		"return",
-		"class",
 	}
-	statementSnippets = []snippet{
+	switchCaseSnippet    = snippet{"case", "case ${1:value}:\n  $0", "Snippet for a switch case"}
+	switchDefaultSnippet = snippet{"default", "default:\n  $0", "Snippet for a default switch case"}
+	statementSnippets    = []snippet{
 		{"var", "var ${1:name} = ${2:value};$0", "Snippet for a variable"},
 		{"final", "final ${1:name} = ${2:value};$0", "Snippet for a final variable"},
 		{"if", "if ($1) {\n  $0\n}", "Snippet for an if statement"},
+		{"switch", "switch ($1) {\n  $0\n}", "Snippet for a switch statement"},
 		{"while", "while ($1) {\n  $0\n}", "Snippet for a while loop"},
 		{"for", "for (var ${1:i} = ${2:0}; $1 < ${3:n}; $1 = $1 + 1) {\n  $0\n}", "Snippet for a for loop"},
+	}
+	declarationKeywords = []string{"fun", "class"}
+	declarationSnippets = []snippet{
 		{"fun", "fun ${1:name}($2) {\n  $0\n}", "Snippet for a function"},
 		{"class", "class ${1:name} {\n  $0\n}", "Snippet for a class"},
 	}
@@ -52,29 +57,34 @@ var (
 
 // completor provides completions of text that is being typed in a program.
 type completor struct {
-	program            *ast.Program
-	classBodyCompletor *classBodyCompletor
-	identCompletor     *identCompletor
-	keywordCompletor   *keywordCompletor
-	builtinCompls      []*completion
-	propertyCompletor  *propertyCompletor
+	program                  *ast.Program
+	switchBodyStartCompletor *switchBodyStartCompletor
+	classBodyCompletor       *classBodyCompletor
+	identCompletor           *identCompletor
+	keywordCompletor         *keywordCompletor
+	builtinCompls            []*completion
+	propertyCompletor        *propertyCompletor
 }
 
 // newCompletor returns a [completor] which provides completions inside the given program.
 // builtins is a list of built-in declarations which are available in the global scope.
 func newCompletor(program *ast.Program, identBindings map[*ast.Ident][]ast.Binding, builtins []ast.Decl) *completor {
 	return &completor{
-		program:            program,
-		classBodyCompletor: newClassBodyCompletor(program),
-		identCompletor:     newIdentCompletor(program),
-		keywordCompletor:   newKeywordCompletor(program),
-		builtinCompls:      declCompletions(builtins),
-		propertyCompletor:  newPropertyCompletor(program, identBindings, builtins),
+		program:                  program,
+		switchBodyStartCompletor: newSwitchBodyCompletor(program),
+		classBodyCompletor:       newClassBodyCompletor(program),
+		identCompletor:           newIdentCompletor(program),
+		keywordCompletor:         newKeywordCompletor(program),
+		builtinCompls:            declCompletions(builtins),
+		propertyCompletor:        newPropertyCompletor(program, identBindings, builtins),
 	}
 }
 
 // Complete returns the completions which should be suggested at a position.
 func (c *completor) Complete(pos *protocol.Position) (compls []*completion, isIncomplete bool) {
+	if compls, ok := c.switchBodyStartCompletor.Complete(pos); ok {
+		return compls, false
+	}
 	if compls, isIncomplete, ok := c.classBodyCompletor.Complete(pos); ok {
 		return compls, isIncomplete
 	}
@@ -86,6 +96,75 @@ func (c *completor) Complete(pos *protocol.Position) (compls []*completion, isIn
 		c.keywordCompletor.Complete(pos),
 		c.builtinCompls,
 	), false
+}
+
+// switchBodyStartCompletor provides completions at the start of a switch body.
+type switchBodyStartCompletor struct {
+	program *ast.Program
+}
+
+func newSwitchBodyCompletor(program *ast.Program) *switchBodyStartCompletor {
+	return &switchBodyStartCompletor{program: program}
+}
+
+func (s *switchBodyStartCompletor) Complete(pos *protocol.Position) (compls []*completion, ok bool) {
+	switchStmt, ok := inSwitchBody(s.program, pos)
+	if !ok {
+		return nil, false
+	}
+
+	noCases := true
+	for _, stmt := range switchStmt.Body.Stmts {
+		if commentedStmt, ok := stmt.(*ast.CommentedStmt); ok {
+			stmt = commentedStmt.Stmt
+		}
+		switch stmt.(type) {
+		case *ast.SwitchCase, *ast.SwitchDefault:
+		default:
+			continue
+		}
+		if inRangePositions(pos, stmt.Start(), switchStmt.End()) {
+			return nil, false
+		}
+		noCases = false
+		break
+	}
+
+	snippets := []snippet{switchCaseSnippet}
+	if noCases {
+		snippets = append(snippets, switchDefaultSnippet)
+	}
+	keywords := []string{"case"}
+	if noCases {
+		keywords = append(keywords, "default")
+	}
+
+	compls = make([]*completion, 0, len(snippets)+len(keywords))
+	for _, snippet := range snippets {
+		compls = append(compls, snippet.ToCompletion())
+	}
+	for _, keyword := range keywords {
+		compls = append(compls, &completion{
+			Label: keyword,
+			Kind:  protocol.CompletionItemKindKeyword,
+		})
+	}
+	return compls, true
+}
+
+func inSwitchBody(program *ast.Program, pos *protocol.Position) (*ast.SwitchStmt, bool) {
+	switchStmt, ok := innermostNodeAt[*ast.SwitchStmt](program, pos)
+	if !ok {
+		return nil, false
+	}
+	if switchStmt.Body == nil || switchStmt.Body.LeftBrace.IsZero() ||
+		switchStmt.Body.RightBrace.IsZero() {
+		return nil, false
+	}
+	if !inRangePositions(pos, switchStmt.Body.LeftBrace.End(), switchStmt.Body.RightBrace.End()) {
+		return nil, false
+	}
+	return switchStmt, true
 }
 
 type classBodyCompletor struct {
@@ -188,21 +267,80 @@ func newKeywordCompletor(program *ast.Program) *keywordCompletor {
 
 // Complete returns completions for keywords which are valid at the given position.
 func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
-	compls := make([]*completion, 0, len(expressionKeywords))
+	var keywords []string
+	var snippets []snippet
 
 	if c.validStatementPosition(pos) {
-		for _, snippet := range statementSnippets {
-			compls = append(compls, snippet.ToCompletion())
+		declIsAllowed := true
+		atEndOfSwitchCase := false
+		atEndOfLastSwitchCase := false
+		switchHasDefaultCase := false
+		if switchStmt, ok := inSwitchBody(c.program, pos); ok {
+			declIsAllowed = false
+			caseStmts := make([]ast.Stmt, 0, len(switchStmt.Body.Stmts))
+			for _, stmt := range switchStmt.Body.Stmts {
+				if commentedStmt, ok := stmt.(*ast.CommentedStmt); ok {
+					stmt = commentedStmt.Stmt
+				}
+				switch stmt.(type) {
+				case *ast.SwitchCase:
+				case *ast.SwitchDefault:
+					switchHasDefaultCase = true
+				default:
+					continue
+				}
+				if _, ok := outermostNodeAt[*ast.Block](stmt, pos); ok {
+					declIsAllowed = true
+					break
+				}
+				caseStmts = append(caseStmts, stmt)
+			}
+
+			for i, caseStmt := range caseStmts {
+				endPos := switchStmt.End()
+				if i < len(caseStmts)-1 {
+					endPos = caseStmts[i+1].Start()
+				}
+				if inRangePositions(pos, caseStmt.End(), endPos) {
+					if _, ok := caseStmt.(*ast.SwitchCase); ok {
+						atEndOfSwitchCase = true
+						atEndOfLastSwitchCase = i == len(caseStmts)-1
+					}
+					break
+				}
+			}
 		}
-		for _, keyword := range statementKeywords {
-			compls = append(compls, &completion{
-				Label: keyword,
-				Kind:  protocol.CompletionItemKindKeyword,
-			})
+
+		if atEndOfSwitchCase {
+			snippets = append(snippets, switchCaseSnippet)
+			if !switchHasDefaultCase && atEndOfLastSwitchCase {
+				snippets = append(snippets, switchDefaultSnippet)
+			}
 		}
+		if declIsAllowed {
+			snippets = append(snippets, declarationSnippets...)
+		}
+		snippets = append(snippets, statementSnippets...)
+
+		if atEndOfSwitchCase {
+			keywords = append(keywords, "case")
+			if !switchHasDefaultCase && atEndOfLastSwitchCase {
+				keywords = append(keywords, "default")
+			}
+		}
+		if declIsAllowed {
+			keywords = append(keywords, declarationKeywords...)
+		}
+		keywords = append(keywords, statementKeywords...)
 	}
 
-	for _, keyword := range expressionKeywords {
+	keywords = append(keywords, expressionKeywords...)
+
+	compls := make([]*completion, 0, len(snippets)+len(keywords))
+	for _, snippet := range snippets {
+		compls = append(compls, snippet.ToCompletion())
+	}
+	for _, keyword := range keywords {
 		compls = append(compls, &completion{
 			Label: keyword,
 			Kind:  protocol.CompletionItemKindKeyword,
@@ -212,13 +350,16 @@ func (c *keywordCompletor) Complete(pos *protocol.Position) []*completion {
 	return compls
 }
 
-// validStatementPosition reports whether it's valid to suggest a statement at the given position. This is when either:
+// validStatementPosition reports whether it's valid to suggest a statement at the given position.
+// This is when either:
 //  1. Only whitespace precedes it.
 //  2. It's immediately preceded by a valid statement.
 //  3. It's immediately preceded by the opening of a block.
+//  4. It's immediately preceded by the colon of a switch case.
+//  5. It's immediately preceded by the colon of a default switch case.
 //
-// If the position is contained by an identifier, then the above conditions are applied to the start position of the
-// identifier.
+// If the position is contained by an identifier, then the above conditions are applied to the start
+// position of the identifier.
 func (c *keywordCompletor) validStatementPosition(pos *protocol.Position) bool {
 	startPos := pos
 	if containingIdentRange, ok := containingIdentRange(c.program, pos); ok {
@@ -233,6 +374,16 @@ func (c *keywordCompletor) validStatementPosition(pos *protocol.Position) bool {
 	result := false
 	ast.Walk(c.program, func(n ast.Stmt) bool {
 		if block, ok := n.(*ast.Block); ok && !block.LeftBrace.IsZero() && equalPositions(prevCharEnd, block.LeftBrace.End()) {
+			result = true
+			return false
+		}
+		if switchCase, ok := n.(*ast.SwitchCase); ok && !switchCase.Colon.IsZero() &&
+			equalPositions(prevCharEnd, switchCase.Colon.End()) {
+			result = true
+			return false
+		}
+		if switchDefault, ok := n.(*ast.SwitchDefault); ok && !switchDefault.Colon.IsZero() &&
+			equalPositions(prevCharEnd, switchDefault.Colon.End()) {
 			result = true
 			return false
 		}
@@ -361,11 +512,11 @@ func (g *identCompletionGenerator) Generate(program *ast.Program) *completionSco
 
 func (g *identCompletionGenerator) readGlobalCompletionLocations(program *ast.Program) []*completionLocation {
 	var locs []*completionLocation
-	for _, stmt := range program.Stmts {
-		if commentedStmt, ok := stmt.(*ast.CommentedStmt); ok {
-			stmt = commentedStmt.Stmt
+	for _, caseStmt := range program.Stmts {
+		if commentedStmt, ok := caseStmt.(*ast.CommentedStmt); ok {
+			caseStmt = commentedStmt.Stmt
 		}
-		decl, ok := stmt.(ast.Decl)
+		decl, ok := caseStmt.(ast.Decl)
 		if !ok {
 			continue
 		}

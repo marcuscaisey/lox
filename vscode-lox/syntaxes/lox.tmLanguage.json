@@ -20,6 +20,12 @@
           "include": "#class-declaration"
         },
         {
+          "include": "#switch-case"
+        },
+        {
+          "include": "#switch-default"
+        },
+        {
           "include": "#comment"
         },
         {
@@ -147,6 +153,36 @@
           "include": "#block"
         }
       ]
+    },
+    "switch-case": {
+      "begin": "\\bcase\\b",
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.conditional.lox"
+        }
+      },
+      "end": "(:)",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.separator.lox"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#expressions"
+        }
+      ]
+    },
+    "switch-default": {
+      "match": "\\b(default)\\b\\s*(:)",
+      "captures": {
+        "1": {
+          "name": "keyword.control.conditional.lox"
+        },
+        "2": {
+          "name": "punctuation.separator.lox"
+        }
+      }
     },
     "comment": {
       "name": "comment.line.double-slash.lox",
@@ -391,7 +427,7 @@
         },
         {
           "name": "keyword.control.conditional.lox",
-          "match": "\\b(?:if|else)\\b"
+          "match": "\\b(?:if|else|switch)\\b"
         },
         {
           "name": "keyword.control.lox",

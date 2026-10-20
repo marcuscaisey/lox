@@ -234,6 +234,7 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int lin
     case OP_NIL:
     case OP_TRUE:
     case OP_FALSE:
+    case OP_DUP:
     case OP_GET_GLOBAL:
     case OP_GET_LOCAL:
         compiler->_stack_depth++;
@@ -487,7 +488,7 @@ static void compiler_finish_initialising_local(compiler *compiler, stack_index i
     compiler->_locals[i].is_initialising = false;
 }
 
-// Emits the bytecode for the loop jump statement starting at the current `type `token and advances
+// Emits the bytecode for the loop jump statement starting at the current `type` token and advances
 // the compiler past it.
 // A loop jump statement can't be compiled completely until the point in the loop that the statement
 // should jump past has been compiled. Once this has been done, pass the returned `struct
@@ -515,8 +516,8 @@ static void compiler_finish_compiling_loop_jump_stmt(compiler *compiler,
     // came after some local variables had been declared, the jump will skip over the instructions
     // popping those variables from the stack, so we need to do that as well.
     compiler_set_forward_jump_offset(compiler, stmt.instruction);
-    size_t locals_declared_before_break = stmt.locals_count - compiler->_locals_count;
-    compiler_emit_pops(compiler, locals_declared_before_break, stmt.line);
+    size_t locals_declared_before_stmt = stmt.locals_count - compiler->_locals_count;
+    compiler_emit_pops(compiler, locals_declared_before_stmt, stmt.line);
 }
 
 // Precedence levels of the different operators, ordered by increasing precedence.
@@ -622,7 +623,7 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
             return;
         }
         compiler_advance(compiler);
-        compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT);
+        compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT); // Initialiser
         is_get = false;
     }
 
@@ -725,10 +726,9 @@ static void compiler_compile_comma_expr(compiler *compiler, enum precedence_leve
     (void)level;
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_COMMA);
-    compiler_compile_expr_at_level(compiler, PREC_COMMA);
-    compiler_emit_pops(compiler, 1, line);
+    compiler_compile_expr_at_level(compiler, PREC_COMMA); // Right operand
+    compiler_emit_pops(compiler, 1, line); // Right operand
 }
-
 
 // `infix_expr_compiler` for a ternary expression.
 static void compiler_compile_ternary_expr(compiler *compiler, enum precedence_level level)
@@ -737,13 +737,13 @@ static void compiler_compile_ternary_expr(compiler *compiler, enum precedence_le
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_QUESTION);
     bytecode_offset else_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
-    compiler_emit_pops(compiler, 1, line);
-    compiler_compile_expr(compiler);
+    compiler_emit_pops(compiler, 1, line); // Condition
+    compiler_compile_expr(compiler); // Then value
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
     compiler_expect(compiler, TOKEN_COLON);
     compiler_set_forward_jump_offset(compiler, else_jump);
-    compiler_emit_pops(compiler, 1, line);
-    compiler_compile_expr_at_level(compiler, PREC_TERNARY);
+    compiler_emit_pops(compiler, 1, line); // Condition
+    compiler_compile_expr_at_level(compiler, PREC_TERNARY); // Else value
     compiler_set_forward_jump_offset(compiler, end_jump);
 }
 
@@ -753,8 +753,8 @@ static void compiler_compile_or_expr(compiler *compiler, enum precedence_level l
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_OR);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_TRUE, line);
-    compiler_emit_pops(compiler, 1, line);
-    compiler_compile_expr_at_level(compiler, level + 1);
+    compiler_emit_pops(compiler, 1, line); // Left operand
+    compiler_compile_expr_at_level(compiler, level + 1); // Right operand
     compiler_set_forward_jump_offset(compiler, end_jump);
 }
 
@@ -764,8 +764,8 @@ static void compiler_compile_and_expr(compiler *compiler, enum precedence_level 
     int line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_AND);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
-    compiler_emit_pops(compiler, 1, line);
-    compiler_compile_expr_at_level(compiler, level + 1);
+    compiler_emit_pops(compiler, 1, line); // Left operand
+    compiler_compile_expr_at_level(compiler, level + 1); // Right operand
     compiler_set_forward_jump_offset(compiler, end_jump);
 }
 
@@ -800,7 +800,7 @@ static void compiler_compile_binary_expr(compiler *compiler, enum precedence_lev
         COMPILER_REPORT_TOKEN_ERRORF(compiler, compiler->_token, "%s", "expected binary operator");
         return;
     }
-    compiler_compile_expr_at_level(compiler, level + 1);
+    compiler_compile_expr_at_level(compiler, level + 1); // Right operand
     compiler_emit_opcode(compiler, instruction, line);
 }
 
@@ -876,26 +876,84 @@ static void compiler_compile_if_stmt(compiler *compiler)
 {
     int if_line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_IF);
-    compiler_expect(compiler, TOKEN_LEFT_PAREN);
 
     // Condition
+    compiler_expect(compiler, TOKEN_LEFT_PAREN);
     int condition_line = compiler->_token.line;
-    compiler_compile_expr(compiler);
+    compiler_compile_expr(compiler); // Condition
     compiler_expect(compiler, TOKEN_RIGHT_PAREN);
     bytecode_offset else_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, if_line);
 
     // Then branch
-    compiler_emit_pops(compiler, 1, condition_line);
-    compiler_compile_stmt(compiler);
+    compiler_emit_pops(compiler, 1, condition_line); // Condition
+    compiler_compile_stmt(compiler); // Then body
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP, if_line);
 
     // Else branch
     compiler_set_forward_jump_offset(compiler, else_jump);
-    compiler_emit_pops(compiler, 1, condition_line);
+    compiler_emit_pops(compiler, 1, condition_line); // Condition
     if (COMPILER_MATCH(compiler, TOKEN_ELSE)) {
-        compiler_compile_stmt(compiler);
+        compiler_compile_stmt(compiler); // Else body
     }
     compiler_set_forward_jump_offset(compiler, end_jump);
+}
+
+// Emits the bytecode for the switch statement starting at the current token and advances the
+// compiler past it.
+static void compiler_compile_switch_stmt(compiler *compiler)
+{
+    int switch_line = compiler->_token.line;
+    compiler_expect(compiler, TOKEN_SWITCH);
+
+    // Switch value
+    compiler_expect(compiler, TOKEN_LEFT_PAREN);
+    compiler_compile_expr(compiler); // Switch value
+    compiler_expect(compiler, TOKEN_RIGHT_PAREN);
+    compiler_expect(compiler, TOKEN_LEFT_BRACE);
+
+    bytecode_offset *end_jumps = NULL;
+    size_t end_jumps_len = 0;
+    size_t end_jumps_cap = 0;
+
+    // Non-default cases
+    while (COMPILER_MATCH(compiler, TOKEN_CASE)) {
+        int line = compiler->_prev_token.line;
+
+        // Compare switch value against case value
+        compiler_emit_opcode(compiler, OP_DUP, line); // Switch value
+        compiler_compile_expr(compiler); // Case value
+        compiler_expect(compiler, TOKEN_COLON);
+        compiler_emit_opcode(compiler, OP_EQUAL, line);
+        bytecode_offset next_case_jump =
+            compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
+
+        // Case body
+        compiler_emit_pops(compiler, 2, line); // EQUAL result and switch value
+        while (compiler->_token.type != TOKEN_CASE && compiler->_token.type != TOKEN_DEFAULT &&
+               compiler->_token.type != TOKEN_RIGHT_BRACE && compiler->_token.type != TOKEN_EOF)
+            compiler_compile_stmt(compiler); // Case body
+        bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
+        DYNAMIC_ARRAY_GROW(end_jumps, end_jumps_cap, end_jumps_len + 1);
+        end_jumps[end_jumps_len++] = end_jump;
+
+        // Jump to next case
+        compiler_set_forward_jump_offset(compiler, next_case_jump);
+        compiler_emit_pops(compiler, 1, line); // EQUAL result
+    }
+
+    compiler_emit_pops(compiler, 1, switch_line); // Switch value
+
+    // Default case
+    if (COMPILER_MATCH(compiler, TOKEN_DEFAULT)) {
+        compiler_expect(compiler, TOKEN_COLON);
+        while (compiler->_token.type != TOKEN_RIGHT_BRACE)
+            compiler_compile_stmt(compiler); // Default body
+    }
+
+    compiler_expect(compiler, TOKEN_RIGHT_BRACE);
+
+    for (size_t i = 0; i < end_jumps_len; i++)
+        compiler_set_forward_jump_offset(compiler, end_jumps[i]);
 }
 
 // Emits the bytecode for the while statement starting at the current token and advances the
@@ -907,21 +965,21 @@ static void compiler_compile_while_stmt(compiler *compiler)
     bytecode_offset loop_start = compiler_bytecode_offset(compiler);
     int while_line = compiler->_token.line;
     compiler_expect(compiler, TOKEN_WHILE);
-    compiler_expect(compiler, TOKEN_LEFT_PAREN);
 
     // Condition
+    compiler_expect(compiler, TOKEN_LEFT_PAREN);
     int condition_line = compiler->_token.line;
-    compiler_compile_expr(compiler);
+    compiler_compile_expr(compiler); // Condition
     compiler_expect(compiler, TOKEN_RIGHT_PAREN);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, while_line);
 
     // Body
-    compiler_emit_pops(compiler, 1, condition_line);
-    compiler_compile_stmt(compiler);
+    compiler_emit_pops(compiler, 1, condition_line); // Condition
+    compiler_compile_stmt(compiler); // Body
     compiler_finish_compiling_continue_stmts(compiler);
     compiler_emit_backward_jump(compiler, loop_start, while_line);
     compiler_set_forward_jump_offset(compiler, end_jump);
-    compiler_emit_pops(compiler, 1, condition_line);
+    compiler_emit_pops(compiler, 1, condition_line); // Condition
     compiler_finish_compiling_break_stmts(compiler);
 
     compiler_end_loop(compiler, prev_loop_state);
@@ -952,13 +1010,13 @@ static void compiler_compile_for_stmt(compiler *compiler)
     int condition_line = compiler->_token.line;
     bytecode_offset end_jump;
     if (has_condition) {
-        compiler_compile_expr(compiler);
+        compiler_compile_expr(compiler); // Condition
         compiler_expect(compiler, TOKEN_SEMICOLON);
         end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, for_line);
-        compiler_emit_pops(compiler, 1, condition_line);
+        compiler_emit_pops(compiler, 1, condition_line); // Condition
     }
 
-    // Increment
+    // Increment expression
     bool has_increment = !COMPILER_MATCH(compiler, TOKEN_RIGHT_PAREN);
     bytecode_offset increment_start;
     int increment_line = compiler->_token.line;
@@ -966,9 +1024,9 @@ static void compiler_compile_for_stmt(compiler *compiler)
     if (has_increment) {
         increment_body_jump = compiler_emit_forward_jump(compiler, OP_JUMP, for_line);
         increment_start = compiler_bytecode_offset(compiler);
-        compiler_compile_expr(compiler);
+        compiler_compile_expr(compiler); // Increment expression
         compiler_expect(compiler, TOKEN_RIGHT_PAREN);
-        compiler_emit_pops(compiler, 1, increment_line);
+        compiler_emit_pops(compiler, 1, increment_line); // Increment expression value
         if (has_condition)
             compiler_emit_backward_jump(compiler, condition_start, for_line);
     }
@@ -976,13 +1034,13 @@ static void compiler_compile_for_stmt(compiler *compiler)
     // Body
     if (has_increment)
         compiler_set_forward_jump_offset(compiler, increment_body_jump);
-    compiler_compile_stmt(compiler);
+    compiler_compile_stmt(compiler); // Body
     compiler_finish_compiling_continue_stmts(compiler);
     bytecode_offset body_jump_back_target = has_increment ? increment_start : condition_start;
     compiler_emit_backward_jump(compiler, body_jump_back_target, for_line);
     if (has_condition) {
         compiler_set_forward_jump_offset(compiler, end_jump);
-        compiler_emit_pops(compiler, 1, condition_line);
+        compiler_emit_pops(compiler, 1, condition_line); // Condition
     }
     compiler_finish_compiling_break_stmts(compiler);
 
@@ -1077,7 +1135,7 @@ static void compiler_compile_expr_stmt(compiler *compiler)
     int line = compiler->_token.line;
     compiler_compile_expr(compiler);
     compiler_expect(compiler, TOKEN_SEMICOLON);
-    compiler_emit_pops(compiler, 1, line);
+    compiler_emit_pops(compiler, 1, line); // Expression value
 }
 
 // Emits the bytecode for the statement starting at the current token and advances the compiler past
@@ -1090,6 +1148,9 @@ static void compiler_compile_stmt(compiler *compiler)
         break;
     case TOKEN_IF:
         compiler_compile_if_stmt(compiler);
+        break;
+    case TOKEN_SWITCH:
+        compiler_compile_switch_stmt(compiler);
         break;
     case TOKEN_WHILE:
         compiler_compile_while_stmt(compiler);

@@ -44,6 +44,12 @@ func Node(node ast.Node) string {
 		return formatBlockStmt(node)
 	case *ast.IfStmt:
 		return formatIfStmt(node)
+	case *ast.SwitchStmt:
+		return formatSwitchStmt(node)
+	case *ast.SwitchCase:
+		return formatSwitchCase(node)
+	case *ast.SwitchDefault:
+		return formatSwitchDefault(node)
 	case *ast.WhileStmt:
 		return formatWhileStmt(node)
 	case *ast.ForStmt:
@@ -221,6 +227,37 @@ func formatIfStmt(stmt *ast.IfStmt) string {
 			fmt.Fprint(b, token.Else, " ", Node(stmt.Else))
 		default:
 			fmt.Fprint(b, token.Else, "\n", indent(Node(stmt.Else)))
+		}
+	}
+	return b.String()
+}
+
+func formatSwitchStmt(stmt *ast.SwitchStmt) string {
+	return fmt.Sprint(token.Switch, " ", token.LeftParen, Node(stmt.Value), token.RightParen,
+		" ", Node(stmt.Body))
+}
+
+func formatSwitchCase(switchCase *ast.SwitchCase) string {
+	b := new(strings.Builder)
+	fmt.Fprint(b, token.Case, " ", Node(switchCase.Value), token.Colon)
+	if bodyLen := len(switchCase.Body); bodyLen > 0 {
+		if _, ok := switchCase.Body[0].(*ast.Block); ok && bodyLen == 1 {
+			fmt.Fprint(b, " ", Node(switchCase.Body[0]))
+		} else {
+			fmt.Fprint(b, "\n", indent(formatStmts(switchCase.Body)))
+		}
+	}
+	return b.String()
+}
+
+func formatSwitchDefault(switchDefault *ast.SwitchDefault) string {
+	b := new(strings.Builder)
+	fmt.Fprint(b, token.Default, "", token.Colon)
+	if bodyLen := len(switchDefault.Body); bodyLen > 0 {
+		if _, ok := switchDefault.Body[0].(*ast.Block); ok && bodyLen == 1 {
+			fmt.Fprint(b, " ", Node(switchDefault.Body[0]))
+		} else {
+			fmt.Fprint(b, "\n", indent(formatStmts(switchDefault.Body)))
 		}
 	}
 	return b.String()

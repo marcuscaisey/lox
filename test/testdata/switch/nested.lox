@@ -1,0 +1,27 @@
+var x = 2;
+switch (x) {
+  case 1:
+    print x + 1;
+  case 2:
+    switch (x + 2) {
+      case 3:
+        print x + 3;
+      case 4:
+        print x + 4; // prints: 6
+    }
+}
+
+var y = 2.5;
+switch (y) {
+  case 1:
+    print y + 1;
+  case 2:
+    print y + 2;
+  default:
+    switch (y) {
+      case 1.5:
+        print y + 1.5;
+      case 2.5:
+        print y + 2.5; // prints: 5
+    }
+}

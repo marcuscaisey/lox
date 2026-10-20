@@ -160,8 +160,8 @@ func isAlphaNumeric(r rune) bool {
 }
 
 // outermostNodeAt returns the outermost node of a [*ast.Program] which has type T and contains a [*protocol.Position].
-func outermostNodeAt[T ast.Node](program *ast.Program, pos *protocol.Position) (T, bool) {
-	return ast.Find(program, func(node T) bool {
+func outermostNodeAt[T ast.Node](node ast.Node, pos *protocol.Position) (T, bool) {
+	return ast.Find(node, func(node T) bool {
 		return inRange(pos, node)
 	})
 }

@@ -84,6 +84,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     case OP_TRUE:
     case OP_FALSE:
     case OP_POP:
+    case OP_DUP:
     case OP_DEFINE_LOCAL:
     case OP_EQUAL:
     case OP_NOT_EQUAL:

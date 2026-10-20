@@ -43,6 +43,9 @@ const (
 	Nil      // nil
 	If       // if
 	Else     // else
+	Switch   // switch
+	Case     // case
+	Default  // default
 	And      // and
 	Or       // or
 	While    // while

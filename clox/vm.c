@@ -222,6 +222,11 @@ static bool vm_execute(vm *vm)
             vm_stack_pop_n(vm, count);
             break;
         }
+        case OP_DUP: {
+            value value = vm_stack_peek(vm, 0);
+            vm_stack_push(vm, value);
+            break;
+        }
         case OP_DEFINE_GLOBAL:
         case OP_DEFINE_GLOBAL_FINAL: {
             constant_index name_index = vm_read_constant_index(vm);

@@ -123,18 +123,24 @@
 [
   "if"
   "else"
+  "switch"
+  "case"
+  "default"
 ] @keyword.conditional
 
 [
   "?"
-  ":"
 ] @keyword.conditional.ternary
 
 [
   ","
   "."
   ";"
+  ":"
 ] @punctuation.delimiter
+
+(ternary_expression
+  ":" @keyword.conditional.ternary)
 
 [
   "("
