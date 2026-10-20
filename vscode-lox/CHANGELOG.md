@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2026-10-20
+
 ### Added
 
 - Add support for switch statements when extra feature are enabled.
@@ -220,7 +222,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Formatting
 - Renaming
 
-[Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v4.5.0...HEAD
+[Unreleased]: https://github.com/marcuscaisey/lox/compare/vscode-lox/v4.6.0...HEAD
+[4.6.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.6.0/vscode-lox
 [4.5.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.5.0/vscode-lox
 [4.4.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.4.0/vscode-lox
 [4.3.0]: https://github.com/marcuscaisey/lox/tree/vscode-lox/v4.3.0/vscode-lox
