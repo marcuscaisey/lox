@@ -42,9 +42,8 @@ static hash_value hash_string(const char *data, size_t len)
     return hash;
 }
 
-// Allocates and initialises a new string, adds it to the VM's set of managed objects, and interns
-// it in the VM.
-struct object_string *object_string_create(vm *vm, const char *data, size_t len, hash_value hash)
+// Allocates, initialises a new string, and interns it in the VM.
+struct object_string *object_string_new(vm *vm, const char *data, size_t len, hash_value hash)
 {
     struct object_string *string = vm_malloc(vm, sizeof(struct object_string));
     string->_object.next = vm->_objects;
@@ -65,7 +64,7 @@ struct object_string *object_string_take(vm *vm, char *data, size_t len)
         vm_mfree(vm, data, len);
         return interned_string;
     }
-    return object_string_create(vm, data, len, hash);
+    return object_string_new(vm, data, len, hash);
 }
 
 struct object_string *object_string_copy(vm *vm, const char *data, size_t len)
