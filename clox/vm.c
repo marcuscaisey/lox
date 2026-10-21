@@ -35,12 +35,12 @@ void vm_init(vm *vm)
 }
 
 // Frees the objects managed by the VM and memory associated with them.
-void vm_destroy_objects(vm *vm)
+void vm_free_objects(vm *vm)
 {
     struct object *object = vm->_objects;
     while (object != NULL) {
         struct object *next = object->next;
-        object_destroy(vm, object);
+        object_free(vm, object);
         object = next;
     }
 }
@@ -48,7 +48,7 @@ void vm_destroy_objects(vm *vm)
 void vm_deinit(vm *vm)
 {
     free(vm->_stack);
-    vm_destroy_objects(vm);
+    vm_free_objects(vm);
     map_deinit(vm, &vm->_strings);
     map_deinit(vm, &vm->_globals);
     map_deinit(vm, &vm->_global_final_vars);

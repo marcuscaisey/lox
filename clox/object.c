@@ -9,7 +9,7 @@
 #include "value.h"
 #include "vm_memory.h"
 
-void object_destroy(vm *vm, struct object *object)
+void object_free(vm *vm, struct object *object)
 {
     switch (object->_type) {
     case _OBJECT_STRING: {

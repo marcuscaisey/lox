@@ -21,13 +21,13 @@ struct object {
 };
 
 // Frees `object` and the memory associated with it.
-void object_destroy(vm *vm, struct object *object);
+void object_free(vm *vm, struct object *object);
 
 // Returns the type of `object`.
 enum value_type object_value_type(const struct object *object);
 
 // Represents a Lox string.
-// Must be created with one of the `object_string_*()` functions and freed with `object_destroy()`.
+// Must be created with one of the `object_string_*()` functions and freed with `object_free()`.
 // The `object_string_*()` functions ensure that every call which creates a string with the same
 // data will return the same string object, so pointers to created strings can be compared to
 // determine equality.
