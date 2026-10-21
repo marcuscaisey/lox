@@ -45,13 +45,13 @@ void vm_destroy_objects(vm *vm)
     }
 }
 
-void vm_free(vm *vm)
+void vm_deinit(vm *vm)
 {
     free(vm->_stack);
     vm_destroy_objects(vm);
-    map_free(vm, &vm->_strings);
-    map_free(vm, &vm->_globals);
-    map_free(vm, &vm->_global_final_vars);
+    map_deinit(vm, &vm->_strings);
+    map_deinit(vm, &vm->_globals);
+    map_deinit(vm, &vm->_global_final_vars);
     free(vm->_local_final_vars);
 }
 
@@ -529,6 +529,6 @@ bool vm_interpret(vm *vm, const char *source)
     success = vm_execute(vm);
 
 out_chunk_free:
-    bytecode_chunk_free(&chunk);
+    bytecode_chunk_deinit(&chunk);
     return success;
 }

@@ -92,10 +92,10 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk)
     chunk->max_stack_depth = 0;
 }
 
-void bytecode_chunk_free(struct bytecode_chunk *chunk)
+void bytecode_chunk_deinit(struct bytecode_chunk *chunk)
 {
     free(chunk->instructions);
-    value_array_free(&chunk->constants);
+    value_array_deinit(&chunk->constants);
     bytecode_chunk_init(chunk);
 }
 

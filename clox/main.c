@@ -22,7 +22,7 @@ static int run_repl(void)
         vm_interpret(&vm, line);
     }
 
-    vm_free(&vm);
+    vm_deinit(&vm);
 
     if (ferror(stdin)) {
         fprintf(stderr, "clox: reading from stdin: %s\n", strerror(errno));
@@ -77,7 +77,7 @@ static int run_file(const char *filename)
 
     bool success = vm_interpret(&vm, source);
 
-    vm_free(&vm);
+    vm_deinit(&vm);
     free(source);
 
     return success ? 0 : 1;

@@ -137,7 +137,7 @@ void lexer_init(lexer *lexer, const char *source)
     lexer->_strs_cap = 0;
 }
 
-void lexer_free(lexer *lexer)
+void lexer_deinit(lexer *lexer)
 {
     for (char **s = lexer->_strs; s < lexer->_strs + lexer->_strs_len; s++)
         free(*s);
@@ -191,7 +191,7 @@ static void lexer_skip_ignored(lexer *lexer)
 }
 
 // Works like `sprintf()`, except a new string is allocated for the output which will be freed when
-// `lexer_free()` is called.
+// `lexer_deinit()` is called.
 static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(lexer *lexer, const char *format,
                                                                  ...)
 {

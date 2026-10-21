@@ -69,7 +69,7 @@ void map_init(map *map)
     map->_cap = 0;
 }
 
-void map_free(vm *vm, map *map)
+void map_deinit(vm *vm, map *map)
 {
     vm_mfree(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
     map_init(map);

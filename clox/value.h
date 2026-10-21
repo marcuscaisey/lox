@@ -84,7 +84,7 @@ void value_print(value value);
 
 // Array of `values`. Elements can be accessed directly through `values` but must only be appended
 // via `value_array_write()`.
-// Must be initialised with `value_array_init()` before use and freed with `value_array_free()`
+// Must be initialised with `value_array_init()` before use and freed with `value_array_deinit()`
 // after use.
 struct value_array {
     value *values;
@@ -97,7 +97,7 @@ struct value_array {
 void value_array_init(struct value_array *array);
 
 // Frees the memory associated with `array`.
-void value_array_free(struct value_array *array);
+void value_array_deinit(struct value_array *array);
 
 // Writes `value` into `array`.
 void value_array_write(struct value_array *array, value value);

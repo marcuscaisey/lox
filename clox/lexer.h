@@ -69,7 +69,7 @@ enum token_type {
 const char *token_type_string(enum token_type type);
 
 // A lexical token produced by the lexer.
-// Pointers contained in a token remain valid until `lexer_free()` has been called.
+// Pointers contained in a token remain valid until `lexer_deinit()` has been called.
 struct token {
     enum token_type type;
     // Pointer to the start of the lexeme in the source.
@@ -81,7 +81,7 @@ struct token {
 };
 
 // Lexer which reads Lox source code and produces lexical tokens.
-// Must be initialised with `lexer_init()` before use and freed with `lexer_free()` after use.
+// Must be initialised with `lexer_init()` before use and freed with `lexer_deinit()` after use.
 typedef struct {
     // Internal fields, do not use.
     const char *_source_start; // Points to start of source
@@ -93,11 +93,11 @@ typedef struct {
 } lexer;
 
 // Initialises `lexer` for lexing `source`.
-// `source` must remain valid until `lexer_free()` is called.
+// `source` must remain valid until `lexer_deinit()` is called.
 void lexer_init(lexer *lexer, const char *source);
 
 // Frees the memory associated with `lexer`.
-void lexer_free(lexer *lexer);
+void lexer_deinit(lexer *lexer);
 
 // Returns the next token from the source.
 // Once the end of the source has been reached, this function will always return a `TOKEN_EOF`

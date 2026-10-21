@@ -140,7 +140,7 @@ typedef size_t bytecode_offset;
 
 // Represents a sequence of bytecode instructions.
 // Must be initialised with `bytecode_chunk_init()` before use and freed with
-// `bytecode_chunk_free()` after use.
+// `bytecode_chunk_deinit()` after use.
 struct bytecode_chunk {
     // Array of bytecode instructions of the form
     //     `{I1_OPCODE, I1_OPERAND_1, I2_OPCODE, I2_OPERAND_1, I2_OPERAND_2, ...}`
@@ -160,7 +160,7 @@ struct bytecode_chunk {
 void bytecode_chunk_init(struct bytecode_chunk *chunk);
 
 // Frees the memory associated with `chunk`.
-void bytecode_chunk_free(struct bytecode_chunk *chunk);
+void bytecode_chunk_deinit(struct bytecode_chunk *chunk);
 
 // Writes `byte` into the chunk's instructions. `line` is the line number corresponding to the byte.
 void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);

@@ -183,7 +183,7 @@ void value_array_write(struct value_array *array, value value)
     array->values[array->len++] = value;
 }
 
-void value_array_free(struct value_array *array)
+void value_array_deinit(struct value_array *array)
 {
     free(array->values);
     value_array_init(array);

@@ -53,7 +53,7 @@ struct loop_state {
 
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
 // chunk.
-// Must be initialised with `compiler_init()` and freed with `compiler_free()` after use.
+// Must be initialised with `compiler_init()` and freed with `compiler_deinit()` after use.
 typedef struct {
     // Dependencies
     vm *_vm; // VM the source is being compiled for
@@ -160,7 +160,7 @@ static void compiler_advance(compiler *compiler)
 }
 
 // Initialises `compiler` for compiling `source` and writing the compiled bytecode into `out`.
-// `source` and `out` must remain valid until `compiler_free()` is called.
+// `source` and `out` must remain valid until `compiler_deinit()` is called.
 static void compiler_init(compiler *compiler, vm *vm, const char *source,
                           struct bytecode_chunk *out)
 {
@@ -186,10 +186,10 @@ static void compiler_init(compiler *compiler, vm *vm, const char *source,
 }
 
 // Frees the memory associated with `compiler`.
-static void compiler_free(compiler *compiler)
+static void compiler_deinit(compiler *compiler)
 {
-    lexer_free(&compiler->_lexer);
-    map_free(compiler->_vm, &compiler->_constant_indexes);
+    lexer_deinit(&compiler->_lexer);
+    map_deinit(compiler->_vm, &compiler->_constant_indexes);
     free(compiler->_locals);
 }
 
@@ -1281,6 +1281,6 @@ bool compile(vm *vm, const char *source, struct bytecode_chunk *out)
     compiler compiler;
     compiler_init(&compiler, vm, source, out);
     bool success = compiler_compile(&compiler);
-    compiler_free(&compiler);
+    compiler_deinit(&compiler);
     return success;
 }

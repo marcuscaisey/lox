@@ -10,7 +10,7 @@
 #include "value.h"
 
 // A virtual machine which interprets Lox code.
-// Must be initialised with `vm_init()` before use and freed with `vm_free()` after use.
+// Must be initialised with `vm_init()` before use and freed with `vm_deinit()` after use.
 typedef struct vm {
     // Internal fields below, do not use.
     const char *_source; // Source being interpreted
@@ -39,7 +39,7 @@ _Static_assert(MAX_CONSTANT_INDEX < (constant_index)-1,
 void vm_init(vm *vm);
 
 // Frees the memory associated with `vm`.
-void vm_free(vm *vm);
+void vm_deinit(vm *vm);
 
 // Interprets the given Lox `source` and reports whether interpretation was successful.
 // This function can be called multiple times with different sources and the state will be
