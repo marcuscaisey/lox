@@ -13,6 +13,7 @@ enum value_type {
     VALUE_BOOL,
     VALUE_NIL,
     VALUE_STRING,
+    VALUE_FUNCTION,
 };
 
 // Represents a Lox value of any type.
@@ -84,8 +85,8 @@ void value_print(value value);
 
 // Array of `values`. Elements can be accessed directly through `values` but must only be appended
 // via `value_array_write()`.
-// Must be initialised with `value_array_init()` before use and freed with `value_array_deinit()`
-// after use.
+// Must be initialised with `value_array_init()` before use and deinitialised with
+// `value_array_deinit()` after use.
 struct value_array {
     value *values;
     size_t len; // Number of elements in `values`

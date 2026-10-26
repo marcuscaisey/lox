@@ -81,7 +81,8 @@ struct token {
 };
 
 // Lexer which reads Lox source code and produces lexical tokens.
-// Must be initialised with `lexer_init()` before use and freed with `lexer_deinit()` after use.
+// Must be initialised with `lexer_init()` before use and deinitialised with `lexer_deinit()` after
+// use.
 typedef struct {
     // Internal fields, do not use.
     const char *_source_start; // Points to start of source

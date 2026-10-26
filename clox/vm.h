@@ -7,16 +7,29 @@
 
 #include "bytecode.h"
 #include "map.h"
+#include "object.h"
 #include "value.h"
 
+// Runtime representation of a frame as defined in bytecode.h.
+// Internal type, do not use.
+struct _frame {
+    const struct bytecode_chunk *chunk; // Bytecode chunk being executed
+    uint8_t *ip; // Pointer to the next instruction to be executed (instruction pointer)
+    size_t stack_offset; // Index in the VM's value stack where this frame's value stack begins
+};
+
 // A virtual machine which interprets Lox code.
-// Must be initialised with `vm_init()` before use and freed with `vm_deinit()` after use.
+// Must be initialised with `vm_init()` before use and deinitialised with `vm_deinit()` after use.
 typedef struct vm {
     // Internal fields below, do not use.
     const char *_source; // Source being interpreted
-    const struct bytecode_chunk *_chunk; // Chunk currently being executed
-    uint8_t *_ip; // Instruction pointer pointing to the instruction to be executed next
-    value *_stack; // Array used as value stack for instructions to use
+    struct _frame *_frames; // Stack of frames for active bytecode executions
+    size_t _frames_len; // Number of active frames
+    size_t _frames_cap; // Number of actives frames space has been allocated for
+    // Value stack shared by all active frames.
+    // Each frame uses a contiguous region of the stack, starting at the index recorded in its
+    // `stack_offset` field.
+    value *_stack;
     size_t _stack_cap; // Number of elements space has been allocated for in the value stack
     value *_stack_top; // Points to where the next element will be pushed on the value stack
     struct object *_objects; // Head of the linked list of managed objects

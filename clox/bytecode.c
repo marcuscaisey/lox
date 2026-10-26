@@ -77,6 +77,8 @@ const char *instruction_name(enum opcode opcode)
         return "JUMP_IF_TRUE";
     case OP_JUMP_IF_FALSE:
         return "JUMP_IF_FALSE";
+    case OP_CALL:
+        return "CALL";
     case OP_RETURN:
         return "RETURN";
     }

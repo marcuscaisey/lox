@@ -19,6 +19,7 @@
 #include "strings.h"
 #include "value.h"
 
+// TODO: if the modes only correspond to the type of function being compiled, this should be renamed
 // Mode that a compiler can operate in.
 enum compiler_mode {
     COMPILER_MODE_SCRIPT, // Compiling a top level script
@@ -57,24 +58,24 @@ struct loop_state {
     size_t continue_stmts_cap; // Number of elements space has been allocated for in `continue_stmts`
 };
 
-// Reads a stream of tokens from a source and tracks whether syntax errors have occurred while
-// parsing them.
+// Reads a stream of tokens from a source and tracks whether errors have been reported while parsing
+// them.
 // All public fields are read-only.
 // Must be initialised with `parser_init()` and deinitialised with `parser_deinit()`.
 struct parser {
     struct token token; // Current token in the stream
     struct token next_token; // Token after current token in the source
     struct token prev_token; // Token before current token in the source
-    // Indicates that a syntax error has occurred. Use `parser_sync()` to recover from it.
+    // Indicates that a syntax error has been reported. Use `parser_sync()` to recover from it.
     bool in_panic_mode;
-    bool had_error; // Whether any syntax errors have occurred
+    bool had_error; // Whether any errors have been reported
     // Internal fields below, do not use.
     const char *_source;
     lexer _lexer; // Lexer set up to lex the source
 };
 
 // Calls `parser_report_errorf()` with a range spanning the provided token.
-#define PARSER_REPORT_TOKEN_ERRORF(parser, token, format, ...)                           \
+#define PARSER_REPORT_ERRORF(parser, token, format, ...)                                 \
     parser_report_errorf((parser), (token).start, (token).start + (token).len, (format), \
                          __VA_ARGS__)
 
@@ -83,9 +84,6 @@ static __attribute__((format(printf, 4, 0))) void
 parser_report_errorvf(struct parser *parser, const char *start, const char *end, const char *format,
                       va_list args)
 {
-    if (parser->in_panic_mode)
-        return;
-    parser->in_panic_mode = true;
     parser->had_error = true;
     char *msg;
     int size = vasprintf(&msg, format, args);
@@ -97,9 +95,7 @@ parser_report_errorvf(struct parser *parser, const char *start, const char *end,
     free(msg);
 }
 
-// Prints a syntax error relating to the source range `[start, end)` with a formatted message and
-// enters panic mode. If the parser is already in panic mode, then this is a no-op. See
-// `print_invalid_range_error()` for how the error is printed.
+// Prints an error relating to the source range `[start, end)` with a formatted message.
 static __attribute__((format(printf, 4, 5))) void parser_report_errorf(struct parser *parser,
                                                                        const char *start,
                                                                        const char *end,
@@ -108,6 +104,35 @@ static __attribute__((format(printf, 4, 5))) void parser_report_errorf(struct pa
     va_list args;
     va_start(args, format);
     parser_report_errorvf(parser, start, end, format, args);
+    va_end(args);
+}
+
+// Calls `parser_report_syntax_errorf()` with a range spanning the provided token.
+#define PARSER_REPORT_SYNTAX_ERRORF(parser, token, format, ...)                                 \
+    parser_report_syntax_errorf((parser), (token).start, (token).start + (token).len, (format), \
+                                __VA_ARGS__)
+
+// Works like `parser_report_syntax_errorf()`, except it accepts a `va_list` instead of variadic
+// arguments.
+static __attribute__((format(printf, 4, 0))) void
+parser_report_syntax_errorvf(struct parser *parser, const char *start, const char *end,
+                             const char *format, va_list args)
+{
+    if (parser->in_panic_mode)
+        return;
+    parser->in_panic_mode = true;
+    parser_report_errorvf(parser, start, end, format, args);
+}
+
+// Prints an error relating to the source range `[start, end)` with a formatted message and enters
+// panic mode. If the parser is already in panic mode, then this is a no-op
+static __attribute__((format(printf, 4, 5))) void
+parser_report_syntax_errorf(struct parser *parser, const char *start, const char *end,
+                            const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    parser_report_syntax_errorvf(parser, start, end, format, args);
     va_end(args);
 }
 
@@ -121,7 +146,7 @@ static void parser_advance(struct parser *parser)
         parser->next_token = lexer_next(&parser->_lexer);
         if (parser->token.type != TOKEN_ERROR)
             break;
-        PARSER_REPORT_TOKEN_ERRORF(parser, parser->token, "%s", parser->token.error_msg);
+        PARSER_REPORT_SYNTAX_ERRORF(parser, parser->token, "%s", parser->token.error_msg);
     }
 }
 
@@ -164,8 +189,7 @@ static bool parser_match(struct parser *parser, enum token_type *types, int coun
     return false;
 }
 
-// Advances the parser until the current token is at the start of a statement and disables panic
-// mode.
+// Advances the parser until the current token is at the start of a statement and exits panic mode.
 static void parser_sync(struct parser *parser)
 {
     while (true) {
@@ -179,7 +203,7 @@ static void parser_sync(struct parser *parser)
         case TOKEN_FOR:
         case TOKEN_BREAK:
         case TOKEN_CONTINUE:
-            // case TOKEN_RETURN:
+        case TOKEN_RETURN:
             // case TOKEN_CLASS:
             return;
         default:
@@ -196,14 +220,15 @@ static void parser_sync(struct parser *parser)
 // error's message.
 static bool parser_expectf(struct parser *parser, enum token_type type, const char *format, ...)
 {
-    va_list args;
-    va_start(args, format);
     bool result = true;
     if (!PARSER_MATCH(parser, type)) {
-        PARSER_REPORT_TOKEN_ERRORF(parser, parser->token, "expected '%s'", token_type_string(type));
+        va_list args;
+        va_start(args, format);
+        parser_report_syntax_errorvf(parser, parser->token.start,
+                                     parser->token.start + parser->token.len, format, args);
+        va_end(args);
         result = false;
     }
-    va_end(args);
     return result;
 }
 
@@ -217,12 +242,14 @@ static bool parser_expect(struct parser *parser, enum token_type type)
 
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
 // chunk.
-// Must be initialised with `compiler_init()` and deinitialised with `compiler_deinit()` after use.
+// Must be initialised with `compiler_init()` or `compiler_init_child()` before use and
+// deinitialised with `compiler_deinit()` after use.
 typedef struct {
     // Internal fields below, do not use.
     vm *_vm; // VM that will execute the output bytecode
     struct parser *_parser;
     struct bytecode_chunk *_out; // Chunk that bytecode is written to
+    enum opcode _last_instruction; // Last instruction emitted
     enum compiler_mode _mode;
     // Scope depth of the current token. 0 is global scope, 1 is inside a block at global scope, 2
     // is inside a block in that block, etc.
@@ -243,16 +270,15 @@ typedef struct {
 } compiler;
 
 static struct loop_state compiler_begin_loop(compiler *);
-static void compiler_compile_decl(compiler *);
+static void compiler_compile_block(compiler *compiler);
 static void compiler_compile_expr(compiler *);
 static void compiler_compile_expr_stmt(compiler *);
 static void compiler_compile_stmt(compiler *);
-static void compiler_compile_var_decl(compiler *);
 static void compiler_end_loop(compiler *, struct loop_state);
 static void compiler_finish_compiling_break_stmts(compiler *);
 static void compiler_finish_compiling_continue_stmts(compiler *);
 
-// Initialises `compiler` to compile using `parser` and writing the compiled bytecode into `out`.
+// Initialises `compiler` to compile using `parser` and write the compiled bytecode into `out`.
 // `parser` and `out` must remain valid until `compiler_deinit()` is called.
 static void compiler_init(compiler *compiler, vm *vm, struct parser *parser,
                           struct bytecode_chunk *out)
@@ -260,6 +286,7 @@ static void compiler_init(compiler *compiler, vm *vm, struct parser *parser,
     compiler->_vm = vm;
     compiler->_parser = parser;
     compiler->_out = out;
+    compiler->_last_instruction = -1;
     compiler->_mode = COMPILER_MODE_SCRIPT;
     compiler->_scope_depth = 0;
     map_init(&compiler->_constant_indexes);
@@ -270,6 +297,17 @@ static void compiler_init(compiler *compiler, vm *vm, struct parser *parser,
     compiler->_loop_state = (struct loop_state){ 0 };
 }
 
+// Initialises `compiler_` as a child of `parent` that parses in `mode` and writes the comppiled
+// bytecode into `out`.
+// Parent and child compilers share the same parser. All other state is independent.
+// `parent` and `out` must remain valid until `compiler_deinit()` is called.
+static void compiler_init_child(compiler *compiler_, compiler *parent, enum compiler_mode mode,
+                                struct bytecode_chunk *out)
+{
+    compiler_init(compiler_, parent->_vm, parent->_parser, out);
+    compiler_->_mode = mode;
+}
+
 // Frees the memory associated with `compiler`.
 static void compiler_deinit(compiler *compiler)
 {
@@ -278,7 +316,7 @@ static void compiler_deinit(compiler *compiler)
 }
 
 // Returns the offset which will be written to next in the output bytecode chunk.
-static bytecode_offset compiler_bytecode_offset(compiler *compiler)
+static bytecode_offset compiler_bytecode_offset(const compiler *compiler)
 {
     return compiler->_out->len;
 }
@@ -287,6 +325,7 @@ static bytecode_offset compiler_bytecode_offset(compiler *compiler)
 static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int line)
 {
     bytecode_chunk_write(compiler->_out, opcode, line);
+    compiler->_last_instruction = opcode;
     switch (opcode) {
     case OP_CONSTANT:
     case OP_NIL:
@@ -312,6 +351,7 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int lin
     case OP_DIVIDE:
     case OP_MODULO:
     case OP_PRINT:
+    case OP_RETURN:
         compiler->_stack_depth--;
         break;
     case OP_POP_N:
@@ -327,7 +367,9 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int lin
     case OP_JUMP_BACK:
     case OP_JUMP_IF_TRUE:
     case OP_JUMP_IF_FALSE:
-    case OP_RETURN: // TODO
+    case OP_CALL:
+        // This reduces the stack depth by n but we don't know what n is until the operand has been
+        // written, so we reduce the stack size in `compile_compile_call_expr()` instead.
         break;
     }
     if (compiler->_stack_depth > compiler->_out->max_stack_depth)
@@ -335,7 +377,7 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int lin
 }
 
 // Writes `operand` corresponding to `line` to the output bytecode chunk.
-static void compiler_emit_operand(compiler *compiler, uint8_t operand, int line)
+static void compiler_emit_operand(const compiler *compiler, uint8_t operand, int line)
 {
     bytecode_chunk_write(compiler->_out, operand, line);
 }
@@ -365,7 +407,7 @@ static void compiler_emit_constant_index(compiler *compiler, value v, int line)
 }
 
 // Encodes and writes `index` to the output bytecode chunk.
-static void compiler_emit_stack_index(compiler *compiler, stack_index index, int line)
+static void compiler_emit_stack_index(const compiler *compiler, stack_index index, int line)
 {
     if (index < 255) {
         compiler_emit_operand(compiler, index, line);
@@ -416,8 +458,8 @@ static void compiler_emit_pops(compiler *compiler, pop_count count, int line)
         }
         // This is decremented in `compiler_emit_opcode()` for all other instructions. We need to
         // handle this one here because the effect on the stack depth is not static. We don't need
-        // to worry about updating the output bytecode's max stack depth this instruction will
-        // always decrease the current stack depth.
+        // to worry about updating the output bytecode's max stack depth because this instruction
+        // will always decrease the current stack depth.
         compiler->_stack_depth -= count;
     }
 }
@@ -425,7 +467,7 @@ static void compiler_emit_pops(compiler *compiler, pop_count count, int line)
 // Sets the operand of the forward jump instruction at offset `target` in the output bytecode chunk
 // so that it jumps to the next offset written to. I.e. if this function is called just before
 // another which emits some bytecode, the jump instruction will jump to that emitted bytecode.
-static void compiler_set_forward_jump_offset(compiler *compiler, bytecode_offset target)
+static void compiler_set_forward_jump_offset(const compiler *compiler, bytecode_offset target)
 {
     enum opcode opcode = compiler->_out->instructions[target];
     assert(is_forward_jump_opcode(opcode));
@@ -453,17 +495,6 @@ static void compiler_emit_backward_jump(compiler *compiler, bytecode_offset targ
     compiler_emit_operand(compiler, (jump_offset >> 0) & 0xFF, line);
 }
 
-// Returns the identifier at the current token and advances the parser past it.
-// If the current token is not an identifier, then an error is reported, the parser is not advanced,
-// and `NULL` is returned.
-static struct object_string *compiler_parse_ident(compiler *compiler, const char *error_msg)
-{
-    if (!parser_expectf(compiler->_parser, TOKEN_IDENT, "%s", error_msg))
-        return NULL;
-    struct token token = compiler->_parser->prev_token;
-    return object_string_copy(compiler->_vm, token.start, token.len);
-}
-
 // Signals that a new lexical scope has been entered.
 static void compiler_begin_scope(compiler *compiler)
 {
@@ -483,17 +514,76 @@ static void compiler_end_scope(compiler *compiler, int line)
     compiler->_scope_depth--;
 }
 
-// Returns the index in the VM's value stack of the local variable that `ident` refers to or
+// Reports whether the string `s` of `len` characters is the blank identifier `_`.
+static bool is_blank_ident(const char *s, size_t len)
+{
+    return len == 1 && s[0] == '_';
+}
+
+// Reports whether the current token is in the global scope.
+static bool in_global_scope(const compiler *compiler)
+{
+    return compiler->_scope_depth == 0 && compiler->_mode == COMPILER_MODE_SCRIPT;
+}
+
+// Declares the variable corresponding to `ident`.
+// A declared local variable can later be resolved to its index in the value stack with
+// `compiler_resolve_local_variable()`.
+static void compiler_declare_variable(compiler *compiler, struct token ident)
+{
+    if (in_global_scope(compiler))
+        return;
+    for (ptrdiff_t i = compiler->_locals_count - 1;
+         i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
+        struct local local = compiler->_locals[i];
+        if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0 &&
+            !is_blank_ident(local.name, local.name_len))
+            PARSER_REPORT_ERRORF(compiler->_parser, ident, "'%.*s' has already been declared",
+                                 (int)ident.len, ident.start);
+    }
+    stack_index index = compiler->_locals_count;
+    DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
+    if (index > MAX_STACK_INDEX)
+        panicf("maximum number of local variables (%llu) used", (uint64_t)MAX_STACK_INDEX + 1);
+    struct local *local = &compiler->_locals[compiler->_locals_count++];
+    local->name = ident.start;
+    local->name_len = ident.len;
+    local->scope_depth = compiler->_scope_depth;
+    local->is_initialising = false;
+}
+
+// Writes the instruction to define the variable corresponding to `ident` to the output bytecode
+// chunk.
+// Must be called straight after the bytecode pushing the initialiser onto the value stack has been
+// emitted.
+static void compiler_emit_variable_definition(compiler *compiler, struct token ident, bool is_final)
+{
+    if (in_global_scope(compiler)) {
+        enum opcode instruction = is_final ? OP_DEFINE_GLOBAL_FINAL : OP_DEFINE_GLOBAL;
+        compiler_emit_opcode(compiler, instruction, ident.line);
+        struct object_string *name_string =
+            object_string_copy(compiler->_vm, ident.start, ident.len);
+        compiler_emit_constant_index(compiler, value_string(name_string), ident.line);
+    } else if (is_final) {
+        compiler_emit_opcode(compiler, OP_DEFINE_LOCAL_FINAL, ident.line);
+        struct object_string *name_string =
+            object_string_copy(compiler->_vm, ident.start, ident.len);
+        compiler_emit_constant_index(compiler, value_string(name_string), ident.line);
+    } else {
+        compiler_emit_opcode(compiler, OP_DEFINE_LOCAL, ident.line);
+    }
+}
+
+// Returns the index in the value stack of the local variable that `ident` refers to or
 // `MAX_STACK_INDEX + 1` if one is not found.
-static stack_index compiler_resolve_local(compiler *compiler, struct token ident)
+static stack_index compiler_resolve_local_variable(const compiler *compiler, struct token ident)
 {
     for (ptrdiff_t i = compiler->_locals_count - 1; i >= 0; i--) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0) {
             if (local.is_initialising)
-                PARSER_REPORT_TOKEN_ERRORF(compiler->_parser, ident,
-                                           "'%.*s' read in its own initialiser", (int)ident.len,
-                                           ident.start);
+                PARSER_REPORT_ERRORF(compiler->_parser, ident, "'%.*s' read in its own initialiser",
+                                     (int)ident.len, ident.start);
             return i;
         }
     }
@@ -504,45 +594,27 @@ static stack_index compiler_resolve_local(compiler *compiler, struct token ident
 _Static_assert((constant_index)-1 > 0, "stack_index must be unsigned");
 _Static_assert(MAX_STACK_INDEX < (stack_index)-1, "MAX_STACK_INDEX must be < max(stack_index)");
 
-// Reports whether the string `s` of `len` characters is the blank identifier `_`.
-static bool is_blank_ident(const char *s, size_t len)
-{
-    return len == 1 && s[0] == '_';
-}
-
-// Declares the local variable corresponding to `ident` or reports an error if one has already been
-// declared at the current scope depth.
-// A declared local variable name can later be resolved to its index in the VM's value stack with
-// `compiler_resolve_local()`.
-// The variable starts in an initialising state. This function returns its index in the VM's value
-// stack which should be passed to `compiler_finish_initialising_local()` once the declaration
-// introducing the variable has been compiled.
-static stack_index compiler_declare_local(compiler *compiler, struct token ident)
+// Marks the variable corresponding to `ident` as initialising. An error is reported if a local
+// variable is resolved while it's initialising.
+static void compiler_start_initialising_variable(const compiler *compiler, struct token ident)
 {
     for (ptrdiff_t i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
         struct local local = compiler->_locals[i];
-        if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0 &&
-            !is_blank_ident(local.name, local.name_len))
-            PARSER_REPORT_TOKEN_ERRORF(compiler->_parser, ident, "'%.*s' has already been declared",
-                                       (int)ident.len, ident.start);
+        if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
+            compiler->_locals[i].is_initialising = true;
     }
-    stack_index index = compiler->_locals_count;
-    DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
-    if (index > MAX_STACK_INDEX)
-        panicf("maximum number of local variables (%llu) used", (uint64_t)MAX_STACK_INDEX + 1);
-    struct local *local = &compiler->_locals[compiler->_locals_count++];
-    local->name = ident.start;
-    local->name_len = ident.len;
-    local->scope_depth = compiler->_scope_depth;
-    local->is_initialising = true;
-    return index;
 }
 
-// Marks the local variable stored at index `i` in the VM's value stack as initialised.
-static void compiler_finish_initialising_local(compiler *compiler, stack_index i)
+// Marks the variable corresponding to `ident` as initialised.
+static void compiler_finish_initialising_variable(const compiler *compiler, struct token ident)
 {
-    compiler->_locals[i].is_initialising = false;
+    for (ptrdiff_t i = compiler->_locals_count - 1;
+         i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
+        struct local local = compiler->_locals[i];
+        if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
+            compiler->_locals[i].is_initialising = false;
+    }
 }
 
 // Emits the bytecode for the loop jump statement starting at the current `type` token and advances
@@ -624,10 +696,10 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
     case TOKEN_SLASH:
     case TOKEN_PERCENT:
         return PREC_MULTIPLICATIVE;
-    // case TOKEN_LEFT_PAREN:
-    // case TOKEN_LEFT_BRACK:
-    // case TOKEN_DOT:
-    //     return PREC_POSTFIX;
+    case TOKEN_LEFT_PAREN:
+        // case TOKEN_LEFT_BRACK:
+        // case TOKEN_DOT:
+        return PREC_POSTFIX;
     default:
         return PREC_NONE;
     }
@@ -640,7 +712,7 @@ static enum precedence_level infix_operator_precedence_level(enum token_type typ
 // past it.
 typedef void (*expr_compiler)(compiler *compiler, enum precedence_level level);
 
-// Type of function which behaves in the same way as `expr_compiler` except it compiles the infix
+// Type of function that behaves in the same way as `expr_compiler` except it compiles the infix
 // expression whose first operand has already been compiled. That is, it expects the current token
 // to be the infix operator.
 typedef void (*infix_expr_compiler)(compiler *compiler, enum precedence_level level);
@@ -657,8 +729,8 @@ static void compiler_compile_keyword_literal_expr(compiler *compiler, enum prece
     } else if (PARSER_MATCH(compiler->_parser, TOKEN_FALSE)) {
         instruction = OP_FALSE;
     } else {
-        PARSER_REPORT_TOKEN_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
-                                   "expected literal keyword");
+        PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
+                                    "expected literal keyword");
         return;
     }
     compiler_emit_opcode(compiler, instruction, compiler->_parser->prev_token.line);
@@ -668,16 +740,15 @@ static void compiler_compile_keyword_literal_expr(compiler *compiler, enum prece
 static void compiler_compile_ident_expr(compiler *compiler, enum precedence_level level)
 {
     int line = compiler->_parser->token.line;
-    struct token ident = compiler->_parser->token;
-    struct object_string *name = compiler_parse_ident(compiler, "expected identifier");
-    if (name == NULL)
+    struct token name = compiler->_parser->token;
+    if (!parser_expectf(compiler->_parser, TOKEN_IDENT, "expected identifier"))
         return;
 
     bool is_get = true;
     if (compiler->_parser->token.type == TOKEN_EQUAL) {
         if (level > PREC_ASSIGNMENT) {
-            PARSER_REPORT_TOKEN_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
-                                       "invalid assignment target");
+            PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
+                                        "invalid assignment target");
             return;
         }
         parser_advance(compiler->_parser);
@@ -685,15 +756,15 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
         is_get = false;
     }
 
-    if (is_blank_ident(name->data, name->len)) {
+    if (is_blank_ident(name.start, name.len)) {
         if (is_get)
-            PARSER_REPORT_TOKEN_ERRORF(compiler->_parser, ident, "%s",
-                                       "'_' cannot be used as a value");
+            PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, name, "%s",
+                                        "'_' cannot be used as a value");
         else
             return;
     }
 
-    stack_index index = compiler_resolve_local(compiler, ident);
+    stack_index index = compiler_resolve_local_variable(compiler, name);
     if (index <= MAX_STACK_INDEX) {
         enum opcode instruction = is_get ? OP_GET_LOCAL : OP_SET_LOCAL;
         compiler_emit_opcode(compiler, instruction, line);
@@ -701,7 +772,8 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
     } else {
         enum opcode instruction = is_get ? OP_GET_GLOBAL : OP_SET_GLOBAL;
         compiler_emit_opcode(compiler, instruction, line);
-        compiler_emit_constant_index(compiler, value_string(name), line);
+        struct object_string *name_string = object_string_copy(compiler->_vm, name.start, name.len);
+        compiler_emit_constant_index(compiler, value_string(name_string), line);
     }
 }
 
@@ -751,8 +823,8 @@ static void compiler_compile_unary_expr(compiler *compiler, enum precedence_leve
     } else if (PARSER_MATCH(compiler->_parser, TOKEN_BANG)) {
         instruction = OP_NOT;
     } else {
-        PARSER_REPORT_TOKEN_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
-                                   "expected unary operator");
+        PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
+                                    "expected unary operator");
         return;
     }
     compiler_compile_expr_at_level(compiler, PREC_UNARY);
@@ -860,12 +932,44 @@ static void compiler_compile_binary_expr(compiler *compiler, enum precedence_lev
     } else if (PARSER_MATCH(compiler->_parser, TOKEN_BANG_EQUAL)) {
         instruction = OP_NOT_EQUAL;
     } else {
-        PARSER_REPORT_TOKEN_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
-                                   "expected binary operator");
+        PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
+                                    "expected binary operator");
         return;
     }
     compiler_compile_expr_at_level(compiler, level + 1); // Right operand
     compiler_emit_opcode(compiler, instruction, line);
+}
+
+// `infix_expr_compiler` for a call expression.
+static void compiler_compile_call_expr(compiler *compiler, enum precedence_level level)
+{
+    (void)level;
+    int line = compiler->_parser->token.line;
+    parser_expect(compiler->_parser, TOKEN_LEFT_PAREN);
+
+    argument_count args = 0;
+    if (!PARSER_MATCH(compiler->_parser, TOKEN_RIGHT_PAREN)) {
+        do {
+            args++;
+            compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT);
+        } while (PARSER_MATCH(compiler->_parser, TOKEN_COMMA));
+        parser_expect(compiler->_parser, TOKEN_RIGHT_PAREN);
+    }
+
+    compiler_emit_opcode(compiler, OP_CALL, line);
+    if (args < 255) {
+        compiler_emit_operand(compiler, args, line);
+    } else {
+        compiler_emit_operand(compiler, 0xFF, line);
+        compiler_emit_operand(compiler, (args >> 16) & 0xFF, line);
+        compiler_emit_operand(compiler, (args >> 8) & 0xFF, line);
+        compiler_emit_operand(compiler, (args >> 0) & 0xFF, line);
+    }
+    // This is decremented in `compiler_emit_opcode()` for all other instructions. We need to
+    // handle this one here because the effect on the stack depth is not static. We don't need
+    // to worry about updating the output bytecode's max stack depth because this instruction will
+    // always decrease the current stack depth.
+    compiler->_stack_depth -= args;
 }
 
 // Returns the compiler for an infix expression whose operator is a `type` token or `NULL` if there
@@ -893,6 +997,8 @@ static infix_expr_compiler infix_expr_compiler_for_operator(enum token_type type
     case TOKEN_EQUAL_EQUAL:
     case TOKEN_BANG_EQUAL:
         return compiler_compile_binary_expr;
+    case TOKEN_LEFT_PAREN:
+        return compiler_compile_call_expr;
     default:
         return NULL;
     }
@@ -903,8 +1009,8 @@ static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_l
 {
     expr_compiler prefix_compiler = expr_compiler_for_prefix(compiler->_parser->token.type);
     if (prefix_compiler == NULL) {
-        PARSER_REPORT_TOKEN_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
-                                   "expected expression");
+        PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
+                                    "expected expression");
         return;
     }
     prefix_compiler(compiler, level);
@@ -923,6 +1029,118 @@ static void compiler_compile_expr_at_level(compiler *compiler, enum precedence_l
 static void compiler_compile_expr(compiler *compiler)
 {
     compiler_compile_expr_at_level(compiler, PREC_COMMA);
+}
+
+// Emits the bytecode for the variable declaration (using either var or final) starting at the
+// current token and advances the compiler past it.
+static void compiler_compile_var_decl(compiler *compiler)
+{
+    int line = compiler->_parser->token.line;
+    bool is_final = false;
+    if (PARSER_MATCH(compiler->_parser, TOKEN_FINAL))
+        is_final = true;
+    else
+        parser_expect(compiler->_parser, TOKEN_VAR);
+
+    struct token name = compiler->_parser->token;
+    if (!parser_expectf(compiler->_parser, TOKEN_IDENT, "expected variable name"))
+        return;
+    compiler_declare_variable(compiler, name);
+
+    compiler_start_initialising_variable(compiler, name);
+    if (PARSER_MATCH(compiler->_parser, TOKEN_EQUAL))
+        compiler_compile_expr(compiler);
+    else
+        compiler_emit_opcode(compiler, OP_NIL, line);
+    parser_expect(compiler->_parser, TOKEN_SEMICOLON);
+    compiler_finish_initialising_variable(compiler, name);
+
+    if (is_blank_ident(name.start, name.len))
+        return;
+
+    compiler_emit_variable_definition(compiler, name, is_final);
+}
+
+// Emits the bytecode for the function declaration starting at the current token and advances the
+// compiler past it.
+static void compiler_compile_fun_decl(compiler *compiler_)
+{
+    int line = compiler_->_parser->token.line;
+    parser_expect(compiler_->_parser, TOKEN_FUN);
+    struct token name = compiler_->_parser->token;
+    if (!parser_expectf(compiler_->_parser, TOKEN_IDENT, "expected function name"))
+        return;
+    compiler_declare_variable(compiler_, name);
+
+    struct bytecode_chunk body;
+    bytecode_chunk_init(&body);
+    compiler fun_compiler;
+    compiler_init_child(&fun_compiler, compiler_, COMPILER_MODE_FUNCTION, &body);
+
+    argument_count arity = 0;
+    parser_expect(fun_compiler._parser, TOKEN_LEFT_PAREN);
+    if (!PARSER_MATCH(fun_compiler._parser, TOKEN_RIGHT_PAREN)) {
+        do {
+            arity++;
+            struct token param = fun_compiler._parser->token;
+            if (!parser_expectf(fun_compiler._parser, TOKEN_IDENT, "expected parameter name"))
+                goto out_fun_compiler_deinit;
+            compiler_declare_variable(&fun_compiler, param);
+        } while (PARSER_MATCH(fun_compiler._parser, TOKEN_COMMA));
+        parser_expect(fun_compiler._parser, TOKEN_RIGHT_PAREN);
+    }
+    compiler_compile_block(&fun_compiler);
+    if (fun_compiler._last_instruction != OP_RETURN) {
+        compiler_emit_opcode(&fun_compiler, OP_NIL, fun_compiler._parser->prev_token.line);
+        compiler_emit_opcode(&fun_compiler, OP_RETURN, fun_compiler._parser->prev_token.line);
+    }
+
+    struct object_function *function =
+        object_function_new(compiler_->_vm, name.start, name.len, body, arity);
+    compiler_emit_opcode(compiler_, OP_CONSTANT, line);
+    compiler_emit_constant_index(compiler_, value_function(function), line);
+    bool is_final = false;
+    compiler_emit_variable_definition(compiler_, name, is_final);
+
+#ifdef DEBUG_PRINT_BYTECODE
+    disassemble(&body, function->name->data);
+#endif
+
+out_fun_compiler_deinit:
+    compiler_deinit(&fun_compiler);
+}
+
+// Emits the bytecode for the declaration starting at the current token and advances the compiler
+// past it.
+static void compiler_compile_decl(compiler *compiler)
+{
+    switch (compiler->_parser->token.type) {
+    case TOKEN_VAR:
+    case TOKEN_FINAL:
+        compiler_compile_var_decl(compiler);
+        break;
+    case TOKEN_FUN:
+        compiler_compile_fun_decl(compiler);
+        break;
+    default:
+        compiler_compile_stmt(compiler);
+        break;
+    }
+    if (compiler->_parser->in_panic_mode) {
+        parser_sync(compiler->_parser);
+    }
+}
+
+// Emits the bytecode for the block starting at the current token and advances the compiler past it.
+// If the declarations inside the block should be defined in a new scope, then
+// `compiler_begin_scope()` and `compiler_end_scope()` must be called before and after this.
+static void compiler_compile_block(compiler *compiler)
+{
+    parser_expect(compiler->_parser, TOKEN_LEFT_BRACE);
+    while (compiler->_parser->token.type != TOKEN_RIGHT_BRACE &&
+           compiler->_parser->token.type != TOKEN_EOF)
+        compiler_compile_decl(compiler);
+    parser_expect(compiler->_parser, TOKEN_RIGHT_BRACE);
 }
 
 // Emits the bytecode for the print statement starting at the current token and advances the
@@ -1185,20 +1403,24 @@ static void compiler_finish_compiling_continue_stmts(compiler *compiler)
         compiler_finish_compiling_loop_jump_stmt(compiler, compiler->_loop_state.continue_stmts[i]);
 }
 
-// Emits the bytecode for the block starting at the current token and advances the compiler past it.
-static void compiler_compile_block(compiler *compiler)
+// Emits the bytecode for the return statement starting at the current token and advances the
+// compiler past it.
+static void compiler_compile_return_stmt(compiler *compiler)
 {
-    compiler_begin_scope(compiler);
-    parser_expect(compiler->_parser, TOKEN_LEFT_BRACE);
-    while (compiler->_parser->token.type != TOKEN_RIGHT_BRACE &&
-           compiler->_parser->token.type != TOKEN_EOF)
-        compiler_compile_decl(compiler);
-    parser_expect(compiler->_parser, TOKEN_RIGHT_BRACE);
-    compiler_end_scope(compiler, compiler->_parser->prev_token.line);
+    // TODO: add typedef for line number
+    int line = compiler->_parser->token.line;
+    parser_expect(compiler->_parser, TOKEN_RETURN);
+    if (PARSER_MATCH(compiler->_parser, TOKEN_SEMICOLON)) {
+        compiler_emit_opcode(compiler, OP_NIL, line);
+    } else {
+        compiler_compile_expr(compiler);
+        parser_expect(compiler->_parser, TOKEN_SEMICOLON);
+    }
+    compiler_emit_opcode(compiler, OP_RETURN, line);
 }
 
-// Emits the bytecode for the statement starting at the current token and advances the compiler past
-// it.
+// Emits the bytecode for the expression statement starting at the current token and advances the
+// compiler past it.
 static void compiler_compile_expr_stmt(compiler *compiler)
 {
     int line = compiler->_parser->token.line;
@@ -1233,100 +1455,17 @@ static void compiler_compile_stmt(compiler *compiler)
     case TOKEN_CONTINUE:
         compiler_compile_continue_stmt(compiler);
         break;
+    case TOKEN_RETURN:
+        compiler_compile_return_stmt(compiler);
+        break;
     case TOKEN_LEFT_BRACE:
+        compiler_begin_scope(compiler);
         compiler_compile_block(compiler);
+        compiler_end_scope(compiler, compiler->_parser->prev_token.line);
         break;
     default:
         compiler_compile_expr_stmt(compiler);
         break;
-    }
-}
-
-// Emits the bytecode for the variable declaration (using either var or final) starting at the
-// current token and advances the compiler past it.
-static void compiler_compile_var_decl(compiler *compiler)
-{
-    int line = compiler->_parser->token.line;
-    bool is_final = false;
-    if (PARSER_MATCH(compiler->_parser, TOKEN_FINAL))
-        is_final = true;
-    else
-        parser_expect(compiler->_parser, TOKEN_VAR);
-
-    struct token ident = compiler->_parser->token;
-    struct object_string *name = compiler_parse_ident(compiler, "expected variable name");
-    if (name == NULL)
-        return;
-
-    stack_index local_index;
-    if (compiler->_scope_depth > 0)
-        local_index = compiler_declare_local(compiler, ident);
-
-    if (PARSER_MATCH(compiler->_parser, TOKEN_EQUAL))
-        compiler_compile_expr(compiler);
-    else
-        compiler_emit_opcode(compiler, OP_NIL, line);
-    parser_expect(compiler->_parser, TOKEN_SEMICOLON);
-
-    if (is_blank_ident(name->data, name->len))
-        return;
-
-    if (compiler->_scope_depth > 0) {
-        compiler_finish_initialising_local(compiler, local_index);
-        if (is_final) {
-            compiler_emit_opcode(compiler, OP_DEFINE_LOCAL_FINAL, line);
-            compiler_emit_constant_index(compiler, value_string(name), line);
-        } else {
-            compiler_emit_opcode(compiler, OP_DEFINE_LOCAL, line);
-        }
-    } else {
-        enum opcode instruction = is_final ? OP_DEFINE_GLOBAL_FINAL : OP_DEFINE_GLOBAL;
-        compiler_emit_opcode(compiler, instruction, line);
-        compiler_emit_constant_index(compiler, value_string(name), line);
-    }
-}
-
-// Sync advances the compiler until the current token is at the start of a statement.
-static void compiler_sync(compiler *compiler)
-{
-    while (true) {
-        switch (compiler->_token.type) {
-        case TOKEN_EOF:
-        case TOKEN_PRINT:
-        case TOKEN_VAR:
-        case TOKEN_FINAL:
-        case TOKEN_IF:
-        case TOKEN_WHILE:
-        case TOKEN_FOR:
-        case TOKEN_BREAK:
-        case TOKEN_CONTINUE:
-            // case TOKEN_RETURN:
-            // case TOKEN_CLASS:
-            return;
-        default:
-            compiler_advance(compiler);
-            if (compiler->_prev_token.type == TOKEN_SEMICOLON)
-                return;
-            break;
-        }
-    }
-}
-
-// Emits the bytecode for the declaration starting at the current token and advances the compiler
-// past it.
-static void compiler_compile_decl(compiler *compiler)
-{
-    switch (compiler->_parser->token.type) {
-    case TOKEN_VAR:
-    case TOKEN_FINAL:
-        compiler_compile_var_decl(compiler);
-        break;
-    default:
-        compiler_compile_stmt(compiler);
-        break;
-    }
-    if (compiler->_parser->in_panic_mode) {
-        parser_sync(compiler->_parser);
     }
 }
 
@@ -1335,11 +1474,12 @@ static bool compiler_compile(compiler *compiler)
 {
     while (compiler->_parser->token.type != TOKEN_EOF)
         compiler_compile_decl(compiler);
+    compiler_emit_opcode(compiler, OP_NIL, compiler->_parser->token.line);
     compiler_emit_opcode(compiler, OP_RETURN, compiler->_parser->token.line);
     bool success = !compiler->_parser->had_error;
 #ifdef DEBUG_PRINT_BYTECODE
     if (success)
-        disassemble(compiler->_out, "code");
+        disassemble(compiler->_out, "script");
 #endif
     return success;
 }

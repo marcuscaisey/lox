@@ -9,7 +9,7 @@
 typedef struct vm vm;
 
 // Map from `value` keys to `value` values.
-// Must be initialised with `map_init()` before use and freed with `map_deinit()` after use.
+// Must be initialised with `map_init()` before use and deinitialised with `map_deinit()` after use.
 typedef struct {
     // Internal fields below, do not use.
     // Map is implemented as an open addressing hash table.

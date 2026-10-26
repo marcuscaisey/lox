@@ -1,5 +1,6 @@
 #include "value.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,6 +69,8 @@ const char *value_type_string(value value)
         return "nil";
     case VALUE_STRING:
         return "string";
+    case VALUE_FUNCTION:
+        return "function";
     }
 }
 
@@ -84,6 +87,7 @@ bool values_are_equal(value a, value b)
     case VALUE_NIL:
         return true;
     case VALUE_STRING:
+    case VALUE_FUNCTION:
         return value_as_object(a) == value_as_object(b);
     }
 }
@@ -117,6 +121,25 @@ hash_value hash_number(double value)
     return hash;
 }
 
+hash_value hash_pointer(void *value)
+{
+    // algorithm fnv-1a is
+    //     hash := FNV_offset_basis
+    //     for each byte_of_data to be hashed do
+    //         hash := hash XOR byte_of_data
+    //         hash := hash × FNV_prime
+    //     return hash
+    hash_value hash = 2166136261u;
+    uint64_t bits;
+    memcpy(&bits, &value, sizeof(value));
+    for (int i = sizeof(value) - 1; i >= 0; i--) {
+        unsigned char byte = (bits >> (i * 8)) & 0xFF;
+        hash ^= byte;
+        hash *= 16777619;
+    }
+    return hash;
+}
+
 hash_value value_hash(value value)
 {
     switch (value_type(value)) {
@@ -132,6 +155,8 @@ hash_value value_hash(value value)
         struct object_string *string = value_as_string(value);
         return string->_hash;
     }
+    default:
+        return hash_pointer(value_as_object(value));
     }
 }
 
@@ -165,6 +190,11 @@ void value_print(value value)
     case VALUE_STRING: {
         struct object_string *string = value_as_string(value);
         printf("%s", string->data);
+        break;
+    }
+    case VALUE_FUNCTION: {
+        struct object_function *function = value_as_function(value);
+        printf("[function %s]", function->name->data);
         break;
     }
     }

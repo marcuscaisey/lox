@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bytecode.h"
 #include "map.h"
 #include "value.h"
 #include "vm_memory.h"
@@ -16,6 +17,13 @@ void object_free(vm *vm, struct object *object)
         struct object_string *string = (struct object_string *)object;
         vm_mfree(vm, (void *)string->data, string->len);
         vm_mfree(vm, string, sizeof(struct object_string));
+        break;
+    }
+    case _OBJECT_FUNCTION: {
+        struct object_function *function = (struct object_function *)object;
+        bytecode_chunk_deinit(&function->body);
+        vm_mfree(vm, function, sizeof(struct object_function));
+        break;
     }
     }
 }
@@ -42,13 +50,26 @@ static hash_value hash_string(const char *data, size_t len)
     return hash;
 }
 
-// Allocates, initialises a new string, and interns it in the VM.
-struct object_string *object_string_new(vm *vm, const char *data, size_t len, hash_value hash)
+// Allocates space for the struct with `name` corresponding to the `enum _object_type` `type` and
+// initialises its object field.
+#define OBJECT_NEW(vm, name, type) (struct name *)object_new(vm, sizeof(struct name), (type))
+
+// Allocates `size` bytes of memory and initialises it with an object of the given `type`.
+// Use the `OBJECT_NEW()` macro instead.
+static struct object *object_new(vm *vm, size_t size, enum _object_type type)
 {
-    struct object_string *string = vm_malloc(vm, sizeof(struct object_string));
-    string->_object.next = vm->_objects;
-    vm->_objects = &string->_object;
-    string->_object._type = _OBJECT_STRING;
+    struct object *object = vm_malloc(vm, size);
+    object->next = vm->_objects;
+    vm->_objects = object;
+    object->_type = type;
+    return object;
+}
+
+// Allocates a new string, initialises it, and interns it in the VM.
+static struct object_string *object_string_new(vm *vm, const char *data, size_t len,
+                                               hash_value hash)
+{
+    struct object_string *string = OBJECT_NEW(vm, object_string, _OBJECT_STRING);
     string->data = data;
     string->len = len;
     string->_hash = hash;
@@ -76,7 +97,7 @@ struct object_string *object_string_copy(vm *vm, const char *data, size_t len)
     char *data_copy = vm_malloc(vm, len + 1);
     memcpy(data_copy, data, len);
     data_copy[len] = '\0';
-    return object_string_create(vm, data_copy, len, hash);
+    return object_string_new(vm, data_copy, len, hash);
 }
 
 value value_string(struct object_string *string)
@@ -87,4 +108,24 @@ value value_string(struct object_string *string)
 struct object_string *value_as_string(value value)
 {
     return (struct object_string *)value_as_object(value);
+}
+
+struct object_function *object_function_new(vm *vm, const char *name, size_t name_len,
+                                            struct bytecode_chunk body, argument_count arity)
+{
+    struct object_function *function = OBJECT_NEW(vm, object_function, _OBJECT_FUNCTION);
+    function->name = object_string_copy(vm, name, name_len);
+    function->body = body;
+    function->arity = arity;
+    return function;
+}
+
+value value_function(struct object_function *function)
+{
+    return value_object((struct object *)function);
+}
+
+struct object_function *value_as_function(value value)
+{
+    return (struct object_function *)value_as_object(value);
 }

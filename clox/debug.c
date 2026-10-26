@@ -80,6 +80,17 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         printf("%-*s %*d\n", name_width, name, operand_width, jump_offset);
         return offset + 3;
     }
+    case OP_CALL: {
+        argument_count count = chunk->instructions[offset + 1];
+        int count_bytes = 1;
+        if (count == 0xFF) {
+            count = (chunk->instructions[offset + 2] << 16) |
+                    (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
+            count_bytes = 4;
+        }
+        printf("%-*s %*d\n", name_width, name, operand_width, count);
+        return offset + 1 + count_bytes;
+    }
     case OP_NIL:
     case OP_TRUE:
     case OP_FALSE:

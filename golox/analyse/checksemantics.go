@@ -9,11 +9,6 @@ import (
 	"github.com/marcuscaisey/lox/golox/token"
 )
 
-const (
-	maxParams = 255
-	maxArgs   = maxParams
-)
-
 // CheckSemantics checks that the following rules have been followed:
 //   - Write-only properties are not allowed
 //   - break and continue can only be used inside a loop
@@ -28,8 +23,6 @@ const (
 //   - super properties cannot be assigned to
 //   - property getter cannot have parameters
 //   - property setter must have exactly one parameter
-//   - functions cannot have more than 255 parameters
-//   - function calls cannot have more than 255 arguments
 //   - classes cannot inherit from themselves
 //   - classes cannot have two methods with the same name and modifiers
 //   - classes cannot have a property accessor and method with the same name
@@ -93,8 +86,6 @@ func (c *semanticChecker) walk(node ast.Node) bool {
 	case *ast.SuperExpr:
 		c.checkSuperInMethod(node)
 		c.checkSuperInSubclass(node)
-	case *ast.CallExpr:
-		c.checkNumArgs(node.Args)
 	case *ast.PropertyExpr:
 		c.checkNoBlankPropertyAccess(node.Name)
 	case *ast.PropertySetExpr:
@@ -109,8 +100,6 @@ func (c *semanticChecker) walkFun(fun *ast.Function, funType funType) {
 	if fun == nil {
 		return
 	}
-
-	c.checkNumParams(fun.Params)
 
 	// Break and continue are not allowed to jump out of a function so reset the loop depth to catch any invalid uses.
 	prevInLoop := c.inLoop
@@ -201,12 +190,6 @@ func (c *semanticChecker) checkMethods(decls []*ast.MethodDecl) {
 		if !getters[methodKey] {
 			c.errs.Addf(setterIdent, loxerr.Fatal, "write-only properties are not allowed")
 		}
-	}
-}
-
-func (c *semanticChecker) checkNumParams(params []*ast.ParamDecl) {
-	if len(params) > maxParams {
-		c.errs.Addf(params[maxParams], loxerr.Fatal, "cannot define more than %d function parameters", maxParams)
 	}
 }
 
@@ -317,12 +300,6 @@ func (c *semanticChecker) checkSuperInMethod(expr *ast.SuperExpr) {
 func (c *semanticChecker) checkSuperInSubclass(expr *ast.SuperExpr) {
 	if c.curClassDecl != nil && !c.curClassDecl.Superclass.IsValid() {
 		c.errs.Addf(expr.Super, loxerr.Fatal, "%m can only be used inside a subclass", token.Super)
-	}
-}
-
-func (c *semanticChecker) checkNumArgs(args []ast.Expr) {
-	if len(args) > maxArgs {
-		c.errs.Addf(args[maxArgs], loxerr.Fatal, "cannot pass more than %d arguments to function", maxArgs)
 	}
 }
 

@@ -6,7 +6,9 @@
             "type": "shell",
             "command": "make",
             "args": [
-                "DEBUG=1"
+                "DEBUG=1",
+                "PRINT_BYTECODE=1",
+                "TRACE_EXECUTION=1"
             ],
             "group": {
                 "kind": "build"

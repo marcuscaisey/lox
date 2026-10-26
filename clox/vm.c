@@ -21,9 +21,72 @@
 #include "value.h"
 #include "vm_memory.h"
 
+// Reads the u8 at the instruction pointer and moves the instruction pointer past it.
+static uint8_t frame_read_u8(struct _frame *frame)
+{
+    return *frame->ip++;
+}
+
+// Reads the u16 at the instruction pointer and moves the instruction pointer past it.
+static uint16_t frame_read_u16(struct _frame *frame)
+{
+    return (frame_read_u8(frame) << 8) | (frame_read_u8(frame));
+}
+
+// Reads the u24 at the instruction pointer and moves the instruction pointer past it.
+static uint32_t frame_read_u24(struct _frame *frame)
+{
+    return (frame_read_u8(frame) << 16) | (frame_read_u8(frame) << 8) | (frame_read_u8(frame));
+}
+
+// Reads the constant index at the instruction pointer and moves the instruction pointer past it.
+static constant_index frame_read_constant_index(struct _frame *frame)
+{
+    uint8_t index = frame_read_u8(frame);
+    if (index == 0xFF)
+        return frame_read_u24(frame);
+    return index;
+}
+
+// Reads the pop count at the instruction pointer and moves the instruction pointer past it.
+static pop_count frame_read_pop_count(struct _frame *frame)
+{
+    uint8_t count = frame_read_u8(frame);
+    if (count == 0xFF)
+        return frame_read_u24(frame);
+    return count;
+}
+
+// Reads the stack index at the instruction pointer and moves the instruction pointer past it.
+static stack_index frame_read_stack_index(struct _frame *frame)
+{
+    uint8_t index = frame_read_u8(frame);
+    if (index == 0xFF)
+        return frame_read_u24(frame);
+    return index;
+}
+
+// Reads the jump offset at the instruction pointer and moves the instruction pointer past it.
+static jump_offset frame_read_jump_offset(struct _frame *frame)
+{
+    return frame_read_u16(frame);
+}
+
+// Reads the argument count at the instruction pointer and moves the instruction pointer past it.
+static argument_count frame_read_argument_count(struct _frame *frame)
+{
+    uint8_t count = frame_read_u8(frame);
+    if (count == 0xFF)
+        return frame_read_u24(frame);
+    return count;
+}
+
 void vm_init(vm *vm)
 {
-    // vm_stack_reset(vm);
+    // vm_stack_reset(vm); // TODO call this at some point
+    vm->_frames = NULL;
+    vm->_frames_len = 0;
+    vm->_frames_cap = 0;
     vm->_stack = NULL;
     vm->_stack_cap = 0;
     vm->_stack_top = NULL;
@@ -55,6 +118,22 @@ void vm_deinit(vm *vm)
     free(vm->_local_final_vars);
 }
 
+// Ensures that there's enough space in the value stack so that it can hold `n` elements by
+// reallocating more space if necessary. If the stack already has enough space, then this is a
+// no-op. If the stack was grown, then the local final variables array will be as well.
+static void vm_stack_grow(vm *vm, size_t n)
+{
+    if (vm->_stack_cap < n) {
+        ptrdiff_t current_stack_depth = vm->_stack_top - vm->_stack;
+        size_t stack_size = DYNAMIC_ARRAY_SIZE(vm->_stack, n);
+        size_t local_final_var_size = DYNAMIC_ARRAY_SIZE(vm->_local_final_vars, n);
+        vm->_stack = xrealloc(vm->_stack, stack_size);
+        vm->_local_final_vars = xrealloc(vm->_local_final_vars, local_final_var_size);
+        vm->_stack_cap = n;
+        vm->_stack_top = vm->_stack + current_stack_depth;
+    }
+}
+
 // Adds an element to the top of the stack.
 static void vm_stack_push(vm *vm, value value)
 {
@@ -79,63 +158,12 @@ static value vm_stack_peek(vm *vm, int distance)
     return vm->_stack_top[-1 - distance];
 }
 
-// Reads the u8 at the instruction pointer and moves the instruction pointer past it.
-static uint8_t vm_read_u8(vm *vm)
-{
-    return *vm->_ip++;
-}
-
-// Reads the u16 at the instruction pointer and moves the instruction pointer past it.
-static uint16_t vm_read_u16(vm *vm)
-{
-    return (vm_read_u8(vm) << 8) | (vm_read_u8(vm));
-}
-
-// Reads the u24 at the instruction pointer and moves the instruction pointer past it.
-static uint32_t vm_read_u24(vm *vm)
-{
-    return (vm_read_u8(vm) << 16) | (vm_read_u8(vm) << 8) | (vm_read_u8(vm));
-}
-
-// Reads the constant index at the instruction pointer and moves the instruction pointer past it.
-static constant_index vm_read_constant_index(vm *vm)
-{
-    uint8_t index = vm_read_u8(vm);
-    if (index == 0xFF)
-        return vm_read_u24(vm);
-    return index;
-}
-
-// Reads the pop count at the instruction pointer and moves the instruction pointer past it.
-static pop_count vm_read_pop_count(vm *vm)
-{
-    uint8_t count = vm_read_u8(vm);
-    if (count == 0xFF)
-        return vm_read_u24(vm);
-    return count;
-}
-
-// Reads the stack index at the instruction pointer and moves the instruction pointer past it.
-static stack_index vm_read_stack_index(vm *vm)
-{
-    uint8_t index = vm_read_u8(vm);
-    if (index == 0xFF)
-        return vm_read_u24(vm);
-    return index;
-}
-
-// Reads the jump offset at the instruction pointer and moves the instruction pointer past it.
-static jump_offset vm_read_jump_offset(vm *vm)
-{
-    return vm_read_u16(vm);
-}
-
 #ifdef DEBUG_TRACE_EXECUTION
-// Prints the contents of the value stack and the current instruction.
-static void vm_print_trace_info(const vm *vm)
+// Prints the contents of the value stack and the frame's current instruction.
+static void vm_print_trace_info(const vm *vm, const struct _frame *frame)
 {
     // Lines up the start of the stack with the start of the instruction in the
-    // disassemble_instruction output
+    // `disassemble_instruction()` output
     printf("          ");
     for (const value *p = vm->_stack; p < vm->_stack_top; p++) {
         printf("[ ");
@@ -143,14 +171,17 @@ static void vm_print_trace_info(const vm *vm)
         printf(" ]");
     }
     printf("\n");
-    int offset = vm->_ip - vm->_chunk->instructions;
-    disassemble_instruction(vm->_chunk, offset);
+    int offset = frame->ip - frame->chunk->instructions;
+    disassemble_instruction(frame->chunk, offset);
 }
 #endif
 
-// Prints an error relating to `offset` with a formatted message.
-static __attribute__((format(printf, 3, 4))) void
-vm_report_errorf(const vm *vm, bytecode_offset offset, const char *format, ...)
+// TODO: can the signature of this be simplified?
+// Prints an error relating to `offset` of `frame's` chunk with a formatted message.
+static __attribute__((format(printf, 4, 5))) void vm_report_errorf(const vm *vm,
+                                                                   const struct _frame *frame,
+                                                                   bytecode_offset offset,
+                                                                   const char *format, ...)
 {
     char *msg;
     va_list args;
@@ -160,7 +191,7 @@ vm_report_errorf(const vm *vm, bytecode_offset offset, const char *format, ...)
         panicf("clox: compiler: encoding error formatting \"%s\"\n", format);
     }
     va_end(args);
-    int line = vm->_chunk->offset_lines[offset];
+    int line = frame->chunk->offset_lines[offset];
     print_invalid_line_error(msg, vm->_source, line);
     free(msg);
 }
@@ -187,21 +218,35 @@ struct object_string *vm_repeat_string(vm *vm, struct object_string *s, int64_t 
     return object_string_take(vm, data, len);
 }
 
-// Executes the chunk of instructions stored in `_chunk`, starting from the instruction pointer
-// `_ip`, and reports whether execution was successful.
-static bool vm_execute(vm *vm)
+// Number of active frames that space will initially be allocated for
+#define INITIAL_FRAMES_CAPACITY 64
+
+// Number of values in that space will initially be allocated for in the value stack
+// This will allow for a stack of `INITIAL_FRAME_CAPACITY` calls using up to 256 simultaneous values
+#define INITIAL_STACK_CAPACITY (INITIAL_FRAMES_CAPACITY * 256)
+
+// Executes `chunk` and reports whether execution was successful.
+static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
 {
+    DYNAMIC_ARRAY_GROW(vm->_frames, vm->_frames_cap, INITIAL_FRAMES_CAPACITY);
+    vm_stack_grow(vm, INITIAL_STACK_CAPACITY);
+
+    struct _frame *frame = &vm->_frames[vm->_frames_len++];
+    frame->chunk = chunk;
+    frame->ip = chunk->instructions;
+    frame->stack_offset = 0;
+
     while (true) {
 #ifdef DEBUG_TRACE_EXECUTION
-        vm_print_trace_info(vm);
+        vm_print_trace_info(vm, frame);
 #endif
 
-        bytecode_offset instruction_offset = vm->_ip - vm->_chunk->instructions;
-        enum opcode instruction = vm_read_u8(vm);
+        bytecode_offset instruction_offset = frame->ip - frame->chunk->instructions;
+        enum opcode instruction = frame_read_u8(frame);
         switch (instruction) {
         case OP_CONSTANT: {
-            constant_index index = vm_read_constant_index(vm);
-            value value = vm->_chunk->constants.values[index];
+            constant_index index = frame_read_constant_index(frame);
+            value value = frame->chunk->constants.values[index];
             vm_stack_push(vm, value);
             break;
         }
@@ -218,7 +263,7 @@ static bool vm_execute(vm *vm)
             vm_stack_pop(vm);
             break;
         case OP_POP_N: {
-            pop_count count = vm_read_pop_count(vm);
+            pop_count count = frame_read_pop_count(frame);
             vm_stack_pop_n(vm, count);
             break;
         }
@@ -229,8 +274,8 @@ static bool vm_execute(vm *vm)
         }
         case OP_DEFINE_GLOBAL:
         case OP_DEFINE_GLOBAL_FINAL: {
-            constant_index name_index = vm_read_constant_index(vm);
-            value name = vm->_chunk->constants.values[name_index];
+            constant_index name_index = frame_read_constant_index(frame);
+            value name = frame->chunk->constants.values[name_index];
             // map_set could trigger an allocation causing garbage collection, so don't pop the
             // initialiser until we've set the variable
             value initialiser = vm_stack_peek(vm, 0);
@@ -241,11 +286,11 @@ static bool vm_execute(vm *vm)
             break;
         }
         case OP_GET_GLOBAL: {
-            constant_index name_index = vm_read_constant_index(vm);
-            value name = vm->_chunk->constants.values[name_index];
+            constant_index name_index = frame_read_constant_index(frame);
+            value name = frame->chunk->constants.values[name_index];
             value value;
             if (!map_get(&vm->_globals, name, &value)) {
-                vm_report_errorf(vm, instruction_offset, "'%s' has not been declared",
+                vm_report_errorf(vm, frame, instruction_offset, "'%s' has not been declared",
                                  value_as_string(name)->data);
                 return false;
             }
@@ -253,10 +298,11 @@ static bool vm_execute(vm *vm)
             break;
         }
         case OP_SET_GLOBAL: {
-            constant_index name_index = vm_read_constant_index(vm);
-            value name = vm->_chunk->constants.values[name_index];
+            constant_index name_index = frame_read_constant_index(frame);
+            value name = frame->chunk->constants.values[name_index];
             if (map_get(&vm->_global_final_vars, name, NULL)) {
-                vm_report_errorf(vm, instruction_offset, "final variable '%s' can't be reassigned",
+                vm_report_errorf(vm, frame, instruction_offset,
+                                 "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
                 return false;
             }
@@ -264,7 +310,7 @@ static bool vm_execute(vm *vm)
             bool is_new_name = map_set(vm, &vm->_globals, name, value);
             if (is_new_name) {
                 map_delete(&vm->_globals, name);
-                vm_report_errorf(vm, instruction_offset, "'%s' has not been declared",
+                vm_report_errorf(vm, frame, instruction_offset, "'%s' has not been declared",
                                  value_as_string(name)->data);
                 return false;
             }
@@ -277,27 +323,28 @@ static bool vm_execute(vm *vm)
         }
         case OP_DEFINE_LOCAL_FINAL: {
             stack_index top_stack_index = vm->_stack_top - vm->_stack - 1;
-            constant_index name_index = vm_read_constant_index(vm);
+            constant_index name_index = frame_read_constant_index(frame);
             vm->_local_final_vars[top_stack_index] = name_index;
             break;
         }
         case OP_GET_LOCAL: {
-            stack_index stack_index = vm_read_stack_index(vm);
-            value value = vm->_stack[stack_index];
+            stack_index stack_index = frame_read_stack_index(frame);
+            value value = vm->_stack[frame->stack_offset + stack_index];
             vm_stack_push(vm, value);
             break;
         }
         case OP_SET_LOCAL: {
-            stack_index stack_index = vm_read_stack_index(vm);
-            constant_index name_index = vm->_local_final_vars[stack_index];
+            stack_index stack_index = frame_read_stack_index(frame);
+            constant_index name_index = vm->_local_final_vars[frame->stack_offset + stack_index];
             if (name_index <= MAX_CONSTANT_INDEX) {
-                value name = vm->_chunk->constants.values[name_index];
-                vm_report_errorf(vm, instruction_offset, "final variable '%s' can't be reassigned",
+                value name = frame->chunk->constants.values[name_index];
+                vm_report_errorf(vm, frame, instruction_offset,
+                                 "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
                 return false;
             }
             value value = vm_stack_peek(vm, 0);
-            vm->_stack[stack_index] = value;
+            vm->_stack[frame->stack_offset + stack_index] = value;
             break;
         }
         case OP_EQUAL: {
@@ -319,7 +366,7 @@ static bool vm_execute(vm *vm)
         value b = vm_stack_peek(vm, 0);                                                    \
         value a = vm_stack_peek(vm, 1);                                                    \
         if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {              \
-            vm_report_errorf(vm, instruction_offset,                                       \
+            vm_report_errorf(vm, frame, instruction_offset,                                \
                              "'%s' operator cannot be used with types '%s' and '%s'", #op, \
                              value_type_string(a), value_type_string(b));                  \
             return false;                                                                  \
@@ -328,7 +375,7 @@ static bool vm_execute(vm *vm)
         vm_stack_pop(vm);                                                                  \
         vm_stack_push(vm, construct_result(value_as_number(a) op value_as_number(b)));     \
     } while (false)
-#define EXECUTE_COMPARISON_BINARY_OP(op)                                                      \
+#define EXECUTE_COMPARISON_BINARY_OP(op)                                                   \
     do {                                                                                   \
         value b = vm_stack_peek(vm, 0);                                                    \
         value a = vm_stack_peek(vm, 1);                                                    \
@@ -389,13 +436,13 @@ static bool vm_execute(vm *vm)
                 double n_double = value_as_number(n_value);
                 int64_t n = trunc(n_double);
                 if (n != n_double) {
-                    vm_report_errorf(vm, instruction_offset,
+                    vm_report_errorf(vm, frame, instruction_offset,
                                      "cannot multiply '%s' by non-integer '%s'",
                                      value_type_string(string_value), value_type_string(n_value));
                     return false;
                 }
                 if (n < 0) {
-                    vm_report_errorf(vm, instruction_offset,
+                    vm_report_errorf(vm, frame, instruction_offset,
                                      "cannot multiply '%s' by negative '%s'",
                                      value_type_string(string_value), value_type_string(n_value));
                     return false;
@@ -411,7 +458,7 @@ static bool vm_execute(vm *vm)
         case OP_DIVIDE: {
             value b = vm_stack_peek(vm, 0);
             if (value_as_number(b) == 0) {
-                vm_report_errorf(vm, instruction_offset, "cannot divide by 0");
+                vm_report_errorf(vm, frame, instruction_offset, "cannot divide by 0");
                 return false;
             }
             EXECUTE_BINARY_NUMBER_OP(/, value_number);
@@ -422,11 +469,11 @@ static bool vm_execute(vm *vm)
             value b = vm_stack_peek(vm, 0);
             value a = vm_stack_peek(vm, 1);
             if (value_as_number(b) == 0) {
-                vm_report_errorf(vm, instruction_offset, "cannot modulo by 0");
+                vm_report_errorf(vm, frame, instruction_offset, "cannot modulo by 0");
                 return false;
             }
             if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {
-                vm_report_errorf(vm, instruction_offset,
+                vm_report_errorf(vm, frame, instruction_offset,
                                  "'%%' operator cannot be used with types '%s' and '%s'",
                                  value_type_string(a), value_type_string(b));
                 return false;
@@ -445,7 +492,7 @@ static bool vm_execute(vm *vm)
         case OP_NEGATE: {
             value value = vm_stack_peek(vm, 0);
             if (value_type(value) != VALUE_NUMBER) {
-                vm_report_errorf(vm, instruction_offset,
+                vm_report_errorf(vm, frame, instruction_offset,
                                  "'-' operator cannot be used with type '%s'",
                                  value_type_string(value));
                 return false;
@@ -461,49 +508,73 @@ static bool vm_execute(vm *vm)
             break;
         }
         case OP_JUMP: {
-            jump_offset offset = vm_read_jump_offset(vm);
-            vm->_ip += offset;
+            jump_offset offset = frame_read_jump_offset(frame);
+            frame->ip += offset;
             break;
         }
         case OP_JUMP_BACK: {
-            jump_offset offset = vm_read_jump_offset(vm);
-            vm->_ip -= offset;
+            jump_offset offset = frame_read_jump_offset(frame);
+            frame->ip -= offset;
             break;
         }
         case OP_JUMP_IF_TRUE: {
-            jump_offset offset = vm_read_jump_offset(vm);
+            jump_offset offset = frame_read_jump_offset(frame);
             value top_value = vm_stack_peek(vm, 0);
             if (value_is_truthy(top_value))
-                vm->_ip += offset;
+                frame->ip += offset;
             break;
         }
         case OP_JUMP_IF_FALSE: {
-            jump_offset offset = vm_read_jump_offset(vm);
+            jump_offset offset = frame_read_jump_offset(frame);
             value top_value = vm_stack_peek(vm, 0);
             if (!value_is_truthy(top_value))
-                vm->_ip += offset;
+                frame->ip += offset;
+            break;
+        }
+        case OP_CALL: {
+            argument_count args = frame_read_argument_count(frame);
+            value value = vm_stack_peek(vm, args);
+            if (value_type(value) != VALUE_FUNCTION) {
+                vm_report_errorf(vm, frame, instruction_offset, "'%s' value is not callable",
+                                 value_type_string(value));
+                return false;
+            }
+
+            struct object_function *function = value_as_function(value);
+            if (args != function->arity) {
+                const char *were_was = args == 1 ? "was" : "were";
+                const char *argument_suffix = function->arity == 1 ? "" : "s";
+                vm_report_errorf(vm, frame, instruction_offset,
+                                 "%s() accepts %d argument%s but %d %s given", function->name->data,
+                                 function->arity, argument_suffix, args, were_was);
+                return false;
+            }
+
+            DYNAMIC_ARRAY_GROW(vm->_frames, vm->_frames_cap, vm->_frames_len + 1);
+            size_t required_stack_depth =
+                vm->_stack_top - vm->_stack + function->body.max_stack_depth;
+            vm_stack_grow(vm, required_stack_depth);
+
+            frame = &vm->_frames[vm->_frames_len++];
+            frame->chunk = &function->body;
+            frame->ip = function->body.instructions;
+            frame->stack_offset = vm->_stack_top - vm->_stack - args;
             break;
         }
         case OP_RETURN: {
-            return true;
+            value return_value = vm_stack_pop(vm);
+            vm->_frames_len--;
+            if (vm->_frames_len == 0)
+                return true;
+            // OP_CALL left the callable and arguments on the stack and pointed stack_offset in the
+            // new frame to the start of the arguments. So adding stack_offset takes us to the start
+            // of the arguments and we need to take away 1 so that stack top points at the callable.
+            vm->_stack_top = vm->_stack + frame->stack_offset - 1;
+            frame = &vm->_frames[vm->_frames_len - 1];
+            vm_stack_push(vm, return_value);
+            break;
         }
         }
-    }
-}
-
-// Ensures that there's enough space in the value stack so that it can hold `n` elements by
-// reallocating more space if necessary. If the stack already has enough space, then this is a
-// no-op. If the stack was grown, then the local final variables array will be as well.
-static void vm_stack_grow(vm *vm, size_t n)
-{
-    if (vm->_stack_cap < n) {
-        ptrdiff_t current_stack_depth = vm->_stack_top - vm->_stack;
-        size_t stack_size = DYNAMIC_ARRAY_SIZE(vm->_stack, n);
-        size_t local_final_var_size = DYNAMIC_ARRAY_SIZE(vm->_local_final_vars, n);
-        vm->_stack = xrealloc(vm->_stack, stack_size);
-        vm->_local_final_vars = xrealloc(vm->_local_final_vars, local_final_var_size);
-        vm->_stack_cap = n;
-        vm->_stack_top = vm->_stack + current_stack_depth;
     }
 }
 
@@ -519,14 +590,10 @@ bool vm_interpret(vm *vm, const char *source)
         goto out_chunk_free;
     }
 
-    // TODO: maybe these don't need to be struct members
+    // TODO: can this be moved out of the vm's state? Maybe attach the source to the chunk?
     vm->_source = source;
-    vm->_chunk = &chunk;
-    vm->_ip = chunk.instructions;
 
-    vm_stack_grow(vm, chunk.max_stack_depth);
-
-    success = vm_execute(vm);
+    success = vm_execute(vm, &chunk);
 
 out_chunk_free:
     bytecode_chunk_deinit(&chunk);
