@@ -25,6 +25,11 @@ void object_free(vm *vm, struct object *object)
         vm_mfree(vm, function, sizeof(struct object_function));
         break;
     }
+    case _OBJECT_NATIVE_FUNCTION: {
+        struct object_native_function *function = (struct object_native_function *)object;
+        vm_mfree(vm, function, sizeof(struct object_function));
+        break;
+    }
     }
 }
 
@@ -73,7 +78,7 @@ static struct object_string *object_string_new(vm *vm, const char *data, size_t 
     string->data = data;
     string->len = len;
     string->_hash = hash;
-    map_set(vm, &vm->_strings, value_string(string), value_nil);
+    map_set(vm, &vm->_strings, string_value(string), nil_value);
     return string;
 }
 
@@ -100,9 +105,9 @@ struct object_string *object_string_copy(vm *vm, const char *data, size_t len)
     return object_string_new(vm, data_copy, len, hash);
 }
 
-value value_string(struct object_string *string)
+value string_value(struct object_string *string)
 {
-    return value_object((struct object *)string);
+    return object_value((struct object *)string);
 }
 
 struct object_string *value_as_string(value value)
@@ -111,21 +116,43 @@ struct object_string *value_as_string(value value)
 }
 
 struct object_function *object_function_new(vm *vm, const char *name, size_t name_len,
-                                            struct bytecode_chunk body, argument_count arity)
+                                            argument_count arity, struct bytecode_chunk body)
 {
     struct object_function *function = OBJECT_NEW(vm, object_function, _OBJECT_FUNCTION);
     function->name = object_string_copy(vm, name, name_len);
-    function->body = body;
     function->arity = arity;
+    function->body = body;
     return function;
 }
 
-value value_function(struct object_function *function)
+value function_value(struct object_function *function)
 {
-    return value_object((struct object *)function);
+    return object_value((struct object *)function);
 }
 
 struct object_function *value_as_function(value value)
 {
     return (struct object_function *)value_as_object(value);
+}
+
+struct object_native_function *object_native_function_new(vm *vm, const char *name, size_t name_len,
+                                                          argument_count arity,
+                                                          native_function_body body)
+{
+    struct object_native_function *function =
+        OBJECT_NEW(vm, object_native_function, _OBJECT_NATIVE_FUNCTION);
+    function->name = object_string_copy(vm, name, name_len);
+    function->arity = arity;
+    function->body = body;
+    return function;
+}
+
+value native_function_value(struct object_native_function *function)
+{
+    return object_value((struct object *)function);
+}
+
+struct object_native_function *value_as_native_function(value value)
+{
+    return (struct object_native_function *)value_as_object(value);
 }

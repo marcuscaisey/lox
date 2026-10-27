@@ -132,11 +132,11 @@ void print_invalid_line_error(const char *msg, const char *source, int line)
     fprintf(stderr, "\n%s", reset_style);
 }
 
-void panicf(const char *format, ...)
+void exitf(const char *format, ...)
 {
     va_list args;
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
-    abort();
+    exit(1);
 }

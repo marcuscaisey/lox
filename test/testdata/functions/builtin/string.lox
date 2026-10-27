@@ -2,6 +2,6 @@ print type(string("1")); // prints: string
 print string("1"); // prints: 1
 print type(string("2")); // prints: string
 print string(2); // prints: 2
-class Foo {}
-print type(string(Foo)); // prints: string
-print string(Foo); // prints: [class Foo]
+fun foo() {}
+print type(string(foo)); // prints: string
+print string(foo); // prints: [function foo]

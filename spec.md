@@ -761,16 +761,16 @@ Stack Trace (most recent call first):
 
 Lox has the following built-in functions.
 
-| Name               | Accepts  | Returns  | Description                                                      |
-| ------------------ | -------- | -------- | ---------------------------------------------------------------- |
-| `clock()`          |          | `number` | Returns the number of seconds since the Unix epoch.              |
-| `sleep(duration)`  | `number` | `nil`    | Pauses execution of the program for at least `duration` seconds. |
-| `type(value)`      | any      | `string` | Returns the type of `value`.                                     |
-| `parseNumber(str)` | `string` | `number` | Parses `str` as a `number`.                                      |
-| `string(value)`    | any      | `string` | Returns the `string` representation of `value`.                  |
-| `error(msg)`       | any      |          | Throws a runtime error with the given message.                   |
-| `printerr(msg)`    | any      | `nil`    | Prints `msg` to stderr.                                          |
-| `exit(code)`       | `number` |          | Exits the program with the given status code.                    |
+| Name               | Accepts  | Returns  | Description                                                          |
+| ------------------ | -------- | -------- | -------------------------------------------------------------------- |
+| `clock()`          |          | `number` | Returns the number of seconds passed since some fixed point in time. |
+| `sleep(duration)`  | `number` | `nil`    | Pauses execution of the program for at least `duration` seconds.     |
+| `type(value)`      | any      | `string` | Returns the type of `value`.                                         |
+| `parseNumber(str)` | `string` | `number` | Parses `str` as a `number`.                                          |
+| `string(value)`    | any      | `string` | Returns the `string` representation of `value`.                      |
+| `error(msg)`       | any      |          | Throws a runtime error with the given message.                       |
+| `printerr(msg)`    | any      | `nil`    | Prints `msg` to stderr.                                              |
+| `exit(code)`       | `number` |          | Exits the program with the given status code.                        |
 
 ## Command Line Arguments
 

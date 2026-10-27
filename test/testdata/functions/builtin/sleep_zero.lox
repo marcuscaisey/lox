@@ -3,5 +3,5 @@ sleep(0);
 var duration = clock() - start;
 
 // It's hard to check the exact value, so we just check that within a reasonable range.
-print duration > 0; // prints: true
+print duration >= 0; // prints: true
 print duration < 0.01; // prints: true

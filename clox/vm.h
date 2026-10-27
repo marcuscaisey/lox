@@ -15,6 +15,7 @@
 struct _frame {
     const struct bytecode_chunk *chunk; // Bytecode chunk being executed
     uint8_t *ip; // Pointer to the next instruction to be executed (instruction pointer)
+    uint8_t *last_opcode; // Pointer to the last opcode read
     size_t stack_offset; // Index in the VM's value stack where this frame's value stack begins
 };
 

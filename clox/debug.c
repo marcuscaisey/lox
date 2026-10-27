@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "bytecode.h"
@@ -28,7 +29,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     int operand_width = 4;
 
     enum opcode opcode = chunk->instructions[offset];
-    const char *name = instruction_name(opcode);
+    const char *instruction = instruction_name(opcode);
     switch (opcode) {
     case OP_CONSTANT:
     case OP_DEFINE_GLOBAL:
@@ -43,9 +44,9 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
                     (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
             index_bytes = 4;
         }
-        printf("%-*s %*d '", name_width, name, operand_width, index);
-        value_print(chunk->constants.values[index]);
-        printf("'\n");
+        char *name = value_string(chunk->constants.values[index]);
+        printf("%-*s %*d '%s'\n", name_width, instruction, operand_width, index, name);
+        free(name);
         return offset + 1 + index_bytes;
     }
     case OP_POP_N: {
@@ -56,7 +57,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
                     (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
             count_bytes = 4;
         }
-        printf("%-*s %*d\n", name_width, name, operand_width, count);
+        printf("%-*s %*d\n", name_width, instruction, operand_width, count);
         return offset + 1 + count_bytes;
     }
     case OP_GET_LOCAL:
@@ -68,7 +69,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
                     (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
             index_bytes = 4;
         }
-        printf("%-*s %*d\n", name_width, name, operand_width, index);
+        printf("%-*s %*d\n", name_width, instruction, operand_width, index);
         return offset + 1 + index_bytes;
     }
     case OP_JUMP:
@@ -77,7 +78,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     case OP_JUMP_IF_FALSE: {
         jump_offset jump_offset = (chunk->instructions[offset + 1] << 8) |
                                   (chunk->instructions[offset + 2]);
-        printf("%-*s %*d\n", name_width, name, operand_width, jump_offset);
+        printf("%-*s %*d\n", name_width, instruction, operand_width, jump_offset);
         return offset + 3;
     }
     case OP_CALL: {
@@ -88,7 +89,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
                     (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
             count_bytes = 4;
         }
-        printf("%-*s %*d\n", name_width, name, operand_width, count);
+        printf("%-*s %*d\n", name_width, instruction, operand_width, count);
         return offset + 1 + count_bytes;
     }
     case OP_NIL:
@@ -112,7 +113,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     case OP_NEGATE:
     case OP_PRINT:
     case OP_RETURN:
-        printf("%s\n", name);
+        printf("%s\n", instruction);
         return offset + 1;
     }
     printf("Unknown opcode %d\n", opcode);

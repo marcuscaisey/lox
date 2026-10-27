@@ -1,5 +1,6 @@
 #include "value.h"
 
+#include <float.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -8,22 +9,43 @@
 
 #include "dynamic_array.h"
 #include "object.h"
+#include "strings.h"
 
-const value value_none = (value){ ._type = _VALUE_NONE };
+const char *value_type_string(enum value_type type)
+{
+    switch (type) {
+    case VALUE_NONE:
+        return "NONE";
+    case VALUE_NUMBER:
+        return "number";
+    case VALUE_BOOL:
+        return "bool";
+    case VALUE_NIL:
+        return "nil";
+    case VALUE_STRING:
+        return "string";
+    case VALUE_FUNCTION:
+        return "function";
+    case VALUE_NATIVE_FUNCTION:
+        return "function";
+    }
+}
 
-value value_number(double number)
+const value none_value = (value){ ._type = _VALUE_NONE };
+
+value number_value(double number)
 {
     return (value){ ._type = _VALUE_NUMBER, ._number = number };
 }
 
-value value_bool(bool bool_)
+value bool_value(bool bool_)
 {
     return (value){ ._type = _VALUE_BOOL, ._bool = bool_ };
 }
 
-const value value_nil = (value){ ._type = _VALUE_NIL };
+const value nil_value = (value){ ._type = _VALUE_NIL };
 
-value value_object(struct object *object)
+value object_value(struct object *object)
 {
     return (value){ ._type = _VALUE_OBJECT, ._object = object };
 }
@@ -56,24 +78,6 @@ enum value_type value_type(value value)
     return (enum value_type)value._type;
 }
 
-const char *value_type_string(value value)
-{
-    switch (value_type(value)) {
-    case VALUE_NONE:
-        return "NONE";
-    case VALUE_NUMBER:
-        return "number";
-    case VALUE_BOOL:
-        return "bool";
-    case VALUE_NIL:
-        return "nil";
-    case VALUE_STRING:
-        return "string";
-    case VALUE_FUNCTION:
-        return "function";
-    }
-}
-
 bool values_are_equal(value a, value b)
 {
     if (value_type(a) != value_type(b))
@@ -88,6 +92,7 @@ bool values_are_equal(value a, value b)
         return true;
     case VALUE_STRING:
     case VALUE_FUNCTION:
+    case VALUE_NATIVE_FUNCTION:
         return value_as_object(a) == value_as_object(b);
     }
 }
@@ -172,30 +177,35 @@ bool value_is_truthy(value value)
     }
 }
 
-void value_print(value value)
+char *value_string(value value)
 {
     switch (value_type(value)) {
     case VALUE_NONE:
-        printf("NONE");
-        break;
-    case VALUE_NUMBER:
-        printf("%g", value_as_number(value));
-        break;
+        return xstrdup("NONE");
+    case VALUE_NUMBER: {
+        char *out;
+        xasprintf(&out, "%.*g", DBL_DECIMAL_DIG, value_as_number(value));
+        return out;
+    }
     case VALUE_BOOL:
-        printf(value_as_bool(value) ? "true" : "false");
-        break;
+        return xstrdup(value_as_bool(value) ? "true" : "false");
     case VALUE_NIL:
-        printf("nil");
-        break;
+        return xstrdup("nil");
     case VALUE_STRING: {
         struct object_string *string = value_as_string(value);
-        printf("%s", string->data);
-        break;
+        return xstrdup(string->data);
     }
     case VALUE_FUNCTION: {
         struct object_function *function = value_as_function(value);
-        printf("[function %s]", function->name->data);
-        break;
+        char *out;
+        xasprintf(&out, "[function %s]", function->name->data);
+        return out;
+    }
+    case VALUE_NATIVE_FUNCTION: {
+        struct object_native_function *function = value_as_native_function(value);
+        char *out;
+        xasprintf(&out, "[built-in function %s]", function->name->data);
+        return out;
     }
     }
 }

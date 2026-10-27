@@ -1,0 +1,1 @@
+print type(clock); // prints: function

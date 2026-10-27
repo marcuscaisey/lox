@@ -1,5 +1,6 @@
-var secsSinceEpoch = clock();
-// It's hard to check the exact value, so we just check that it's within a reasonable range.
-// 1722794400 = 2024-08-04 18:00:00+00:00
-// 4878468000 = 2124-08-04 19:00:00+00:00
-print 1722794400 < secsSinceEpoch and secsSinceEpoch < 4878468000; // prints: true
+var a = clock();
+print a > 0; // prints: true
+var b = clock();
+print b > 0; // prints: true
+print b > a; // prints: true
+print b - a < 0.1; // prints: true

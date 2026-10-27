@@ -20,8 +20,9 @@ struct object {
     // Internal fields below, do not use.
     // Members must be equal to their corresponding value_type member
     enum _object_type {
-        _OBJECT_FUNCTION = VALUE_FUNCTION,
         _OBJECT_STRING = VALUE_STRING,
+        _OBJECT_FUNCTION = VALUE_FUNCTION,
+        _OBJECT_NATIVE_FUNCTION = VALUE_NATIVE_FUNCTION,
     } _type; // Indicates which object type this object is embedded in
 };
 
@@ -50,7 +51,7 @@ struct object_string *object_string_copy(vm *vm, const char *data, size_t len);
 // null-terminated.
 struct object_string *object_string_take(vm *vm, char *data, size_t len);
 
-value value_string(struct object_string *string);
+value string_value(struct object_string *string);
 struct object_string *value_as_string(value value);
 
 // Represents a Lox function.
@@ -58,16 +59,43 @@ struct object_string *value_as_string(value value);
 struct object_function {
     struct object _object; // Internal field, do not use.
     struct object_string *name;
-    struct bytecode_chunk body; // Instructions to execute the function's body
     argument_count arity; // Number of parameters that the function expects
+    struct bytecode_chunk body; // Instructions to execute the function's body
 };
 
 // Allocates and initialises a new function, making a copy of the first `name_len` bytes of `name`
 // and taking ownership of `body`.
 struct object_function *object_function_new(vm *vm, const char *name, size_t name_len,
-                                            struct bytecode_chunk body, argument_count arity);
+                                            argument_count arity, struct bytecode_chunk body);
 
-value value_function(struct object_function *function);
+value function_value(struct object_function *function);
 struct object_function *value_as_function(value value);
+
+// Type of function that implements the body of a native Lox function.
+// `args` is an array containing the function arguments. The caller is responsible for ensuring that
+// the correct number of arguments are passed.
+// If no error occurs, the function's result is returned to the Lox caller unchanged. Lox functions
+// implicitly return `nil` so `nil_value` must be returned if there is no result.
+// If an error occurs, the function must return `none_value` and write an error message to
+// `*error_msg`. The caller is responsible for freeing the error message with `free()` when it's no
+// longer needed.
+typedef value (*native_function_body)(vm *vm, value *args, char **error_msg);
+
+// Represents a native Lox function.
+// Must be created with `object_native_function_new()` and freed with `object_free()`.
+struct object_native_function {
+    struct object _object; // Internal field, do not use.
+    struct object_string *name;
+    native_function_body body;
+    argument_count arity; // Number of parameters that the function expects
+};
+
+// Allocates and initialises a new native function, making a copy of the first `name_len` bytes of
+// `name`.
+struct object_native_function *object_native_function_new(vm *vm, const char *name, size_t name_len,
+                                                   argument_count arity, native_function_body body);
+
+value native_function_value(struct object_native_function *function);
+struct object_native_function *value_as_native_function(value value);
 
 #endif

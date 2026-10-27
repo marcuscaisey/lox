@@ -1,1 +1,1 @@
-parseNumber([]); // error: expected parseNumber argument to be a 'string', got 'list'
+parseNumber(true); // error: expected parseNumber argument to be a 'string', got 'bool'

@@ -86,10 +86,7 @@ parser_report_errorvf(struct parser *parser, const char *start, const char *end,
 {
     parser->had_error = true;
     char *msg;
-    int size = vasprintf(&msg, format, args);
-    if (size < 0) {
-        panicf("clox: parser: encoding error formatting \"%s\"\n", format);
-    }
+    xvasprintf(&msg, format, args);
     va_end(args);
     print_invalid_range_error(msg, parser->_source, start, end);
     free(msg);
@@ -249,7 +246,7 @@ typedef struct {
     vm *_vm; // VM that will execute the output bytecode
     struct parser *_parser;
     struct bytecode_chunk *_out; // Chunk that bytecode is written to
-    enum opcode _last_instruction; // Last instruction emitted
+    enum opcode _last_opcode; // Last opcode emitted
     enum compiler_mode _mode;
     // Scope depth of the current token. 0 is global scope, 1 is inside a block at global scope, 2
     // is inside a block in that block, etc.
@@ -286,7 +283,7 @@ static void compiler_init(compiler *compiler, vm *vm, struct parser *parser,
     compiler->_vm = vm;
     compiler->_parser = parser;
     compiler->_out = out;
-    compiler->_last_instruction = -1;
+    compiler->_last_opcode = -1;
     compiler->_mode = COMPILER_MODE_SCRIPT;
     compiler->_scope_depth = 0;
     map_init(&compiler->_constant_indexes);
@@ -325,7 +322,7 @@ static bytecode_offset compiler_bytecode_offset(const compiler *compiler)
 static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int line)
 {
     bytecode_chunk_write(compiler->_out, opcode, line);
-    compiler->_last_instruction = opcode;
+    compiler->_last_opcode = opcode;
     switch (opcode) {
     case OP_CONSTANT:
     case OP_NIL:
@@ -393,8 +390,8 @@ static void compiler_emit_constant_index(compiler *compiler, value v, int line)
     } else {
         index = bytecode_chunk_add_constant(compiler->_out, v);
         if (index > MAX_CONSTANT_INDEX)
-            panicf("maximum number of constants (%llu) used", (uint64_t)MAX_CONSTANT_INDEX + 1);
-        map_set(compiler->_vm, &compiler->_constant_indexes, v, value_number(index));
+            exitf("maximum number of constants (%llu) used", (uint64_t)MAX_CONSTANT_INDEX + 1);
+        map_set(compiler->_vm, &compiler->_constant_indexes, v, number_value(index));
     }
     if (index < 255) {
         compiler_emit_operand(compiler, index, line);
@@ -476,7 +473,7 @@ static void compiler_set_forward_jump_offset(const compiler *compiler, bytecode_
     // the result (1 for the opcode, 2 for the operand).
     uint64_t jump_offset = compiler_bytecode_offset(compiler) - target - 3;
     if (jump_offset > MAX_JUMP_OFFSET)
-        panicf("maximum jump offset (%llu) exceeded", (uint64_t)MAX_JUMP_OFFSET);
+        exitf("maximum jump offset (%llu) exceeded", (uint64_t)MAX_JUMP_OFFSET);
     compiler->_out->instructions[target + 1] = (jump_offset >> 8) & 0xFF;
     compiler->_out->instructions[target + 2] = (jump_offset >> 0) & 0xFF;
 }
@@ -490,7 +487,7 @@ static void compiler_emit_backward_jump(compiler *compiler, bytecode_offset targ
     // so we need we need to add this to the result.
     uint64_t jump_offset = compiler_bytecode_offset(compiler) - target + 2;
     if (jump_offset > MAX_JUMP_OFFSET)
-        panicf("maximum jump offset (%llu) exceeded", (uint64_t)MAX_JUMP_OFFSET);
+        exitf("maximum jump offset (%llu) exceeded", (uint64_t)MAX_JUMP_OFFSET);
     compiler_emit_operand(compiler, (jump_offset >> 8) & 0xFF, line);
     compiler_emit_operand(compiler, (jump_offset >> 0) & 0xFF, line);
 }
@@ -544,7 +541,7 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
     stack_index index = compiler->_locals_count;
     DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
     if (index > MAX_STACK_INDEX)
-        panicf("maximum number of local variables (%llu) used", (uint64_t)MAX_STACK_INDEX + 1);
+        exitf("maximum number of local variables (%llu) used", (uint64_t)MAX_STACK_INDEX + 1);
     struct local *local = &compiler->_locals[compiler->_locals_count++];
     local->name = ident.start;
     local->name_len = ident.len;
@@ -563,12 +560,12 @@ static void compiler_emit_variable_definition(compiler *compiler, struct token i
         compiler_emit_opcode(compiler, instruction, ident.line);
         struct object_string *name_string =
             object_string_copy(compiler->_vm, ident.start, ident.len);
-        compiler_emit_constant_index(compiler, value_string(name_string), ident.line);
+        compiler_emit_constant_index(compiler, string_value(name_string), ident.line);
     } else if (is_final) {
         compiler_emit_opcode(compiler, OP_DEFINE_LOCAL_FINAL, ident.line);
         struct object_string *name_string =
             object_string_copy(compiler->_vm, ident.start, ident.len);
-        compiler_emit_constant_index(compiler, value_string(name_string), ident.line);
+        compiler_emit_constant_index(compiler, string_value(name_string), ident.line);
     } else {
         compiler_emit_opcode(compiler, OP_DEFINE_LOCAL, ident.line);
     }
@@ -773,7 +770,7 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
         enum opcode instruction = is_get ? OP_GET_GLOBAL : OP_SET_GLOBAL;
         compiler_emit_opcode(compiler, instruction, line);
         struct object_string *name_string = object_string_copy(compiler->_vm, name.start, name.len);
-        compiler_emit_constant_index(compiler, value_string(name_string), line);
+        compiler_emit_constant_index(compiler, string_value(name_string), line);
     }
 }
 
@@ -788,7 +785,7 @@ static void compiler_compile_string_literal_expr(compiler *compiler, enum preced
     struct object_string *string =
         object_string_copy(compiler->_vm, token.start + 1, token.len - 2);
     compiler_emit_opcode(compiler, OP_CONSTANT, compiler->_parser->prev_token.line);
-    compiler_emit_constant_index(compiler, value_string(string),
+    compiler_emit_constant_index(compiler, string_value(string),
                                  compiler->_parser->prev_token.line);
 }
 
@@ -799,7 +796,7 @@ static void compiler_compile_number_literal_expr(compiler *compiler, enum preced
     parser_expect(compiler->_parser, TOKEN_NUMBER);
     double number = strtod(compiler->_parser->prev_token.start, NULL);
     compiler_emit_opcode(compiler, OP_CONSTANT, compiler->_parser->prev_token.line);
-    compiler_emit_constant_index(compiler, value_number(number),
+    compiler_emit_constant_index(compiler, number_value(number),
                                  compiler->_parser->prev_token.line);
 }
 
@@ -1090,15 +1087,15 @@ static void compiler_compile_fun_decl(compiler *compiler_)
         parser_expect(fun_compiler._parser, TOKEN_RIGHT_PAREN);
     }
     compiler_compile_block(&fun_compiler);
-    if (fun_compiler._last_instruction != OP_RETURN) {
+    if (fun_compiler._last_opcode != OP_RETURN) {
         compiler_emit_opcode(&fun_compiler, OP_NIL, fun_compiler._parser->prev_token.line);
         compiler_emit_opcode(&fun_compiler, OP_RETURN, fun_compiler._parser->prev_token.line);
     }
 
     struct object_function *function =
-        object_function_new(compiler_->_vm, name.start, name.len, body, arity);
+        object_function_new(compiler_->_vm, name.start, name.len, arity, body);
     compiler_emit_opcode(compiler_, OP_CONSTANT, line);
-    compiler_emit_constant_index(compiler_, value_function(function), line);
+    compiler_emit_constant_index(compiler_, function_value(function), line);
     bool is_final = false;
     compiler_emit_variable_definition(compiler_, name, is_final);
 

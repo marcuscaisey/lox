@@ -198,10 +198,7 @@ static __attribute__((format(printf, 2, 3))) char *lexer_sprintf(lexer *lexer, c
     char *result;
     va_list args;
     va_start(args, format);
-    int size = vasprintf(&result, format, args);
-    if (size < 0) {
-        panicf("clox: lexer: encoding error formatting \"%s\"\n", format);
-    }
+    xvasprintf(&result, format, args);
     va_end(args);
 
     DYNAMIC_ARRAY_GROW(lexer->_strs, lexer->_strs_cap, lexer->_strs_len + 1);

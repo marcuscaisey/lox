@@ -16,11 +16,11 @@
 
 // Entry is what gets stored in the each slot of the array. The meanings of `key` and `value` depend
 // on their values.
-//   1. If `key != value_none`, then the slot is populated. This means that `value` is the value
+//   1. If `key != none_value`, then the slot is populated. This means that `value` is the value
 //      associated with `key`.
-//   2. If `key == value_none` and `value == value_none`, then the slot is empty. This means that
+//   2. If `key == none_value` and `value == none_value`, then the slot is empty. This means that
 //      there's no value associated with `key`.
-//   3. If `key == value_none` and `value == value_nil`, then the entry is a tombstone. This means
+//   3. If `key == none_value` and `value == nil_value`, then the entry is a tombstone. This means
 //      that the value previously associated with `key` was deleted.
 //
 // Use the helpers defined below for working with entries instead of directly working with the
@@ -33,33 +33,33 @@ struct _entry {
 // Marks the slot containing `entry` as empty.
 static void mark_empty_slot(struct _entry *entry)
 {
-    entry->key = value_none;
-    entry->value = value_none;
+    entry->key = none_value;
+    entry->value = none_value;
 }
 
 // Reports whether the slot containing `entry` is populated.
 static bool slot_is_populated(struct _entry entry)
 {
-    return !values_are_equal(entry.key, value_none);
+    return !values_are_equal(entry.key, none_value);
 }
 
 // Reports whether the slot containing `entry` is empty.
 static bool slot_is_empty(struct _entry entry)
 {
-    return values_are_equal(entry.key, value_none) && values_are_equal(entry.value, value_none);
+    return values_are_equal(entry.key, none_value) && values_are_equal(entry.value, none_value);
 }
 
 // Marks `entry` as a tombstone.
 static void mark_tombstone(struct _entry *entry)
 {
-    entry->key = value_none;
-    entry->value = value_nil;
+    entry->key = none_value;
+    entry->value = nil_value;
 }
 
 // Reports whether `entry` is a tombstone.
 static bool is_tombstone(struct _entry entry)
 {
-    return values_are_equal(entry.key, value_none) && values_are_equal(entry.value, value_nil);
+    return values_are_equal(entry.key, none_value) && values_are_equal(entry.value, nil_value);
 }
 
 void map_init(map *map)
@@ -96,7 +96,7 @@ static struct _entry *find_entry(struct _entry *entries, size_t cap, value key)
     // looking for, an empty slot, or a tombstone. Since we grow the array when the load factor gets
     // above a certain threshold, there should always be at least 1 slot free and we should never
     // get here.
-    panicf("clox: map: no empty slot found\n");
+    exitf("clox: map: no empty slot found\n");
 }
 
 struct object_string *map_get_string_key(map *map, const char *data, size_t len, hash_value hash)
@@ -123,7 +123,7 @@ struct object_string *map_get_string_key(map *map, const char *data, size_t len,
     // looking for, an empty slot, or a tombstone. Since we grow the array when the load factor gets
     // above a certain threshold, there should always be at least 1 slot free and we should never
     // get here.
-    panicf("clox: map: no empty slot found\n");
+    exitf("clox: map: no empty slot found\n");
 }
 
 // Allocates a new array with capacity `new_cap` and transfers all of the entries from the old one
