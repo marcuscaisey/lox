@@ -99,7 +99,6 @@ static argument_count frame_read_argument_count(struct frame *frame)
 
 void vm_init(vm *vm)
 {
-    // vm_stack_reset(vm); // TODO call this at some point
     vm->_frames = NULL;
     vm->_frames_len = 0;
     vm->_frames_cap = 0;
@@ -326,7 +325,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             if (!map_get(&vm->_globals, name, &value)) {
                 vm_report_errorf(vm, source, "'%s' has not been declared",
                                  value_as_string(name)->data);
-                return false;
+                goto out_error;
             }
             vm_stack_push(vm, value);
             break;
@@ -338,7 +337,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             if (map_get(&vm->_global_final_vars, name, NULL)) {
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
-                return false;
+                goto out_error;
             }
             value value = vm_stack_peek(vm, 0);
             bool is_new_name = map_set(vm, &vm->_globals, name, value);
@@ -346,7 +345,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                 map_delete(&vm->_globals, name);
                 vm_report_errorf(vm, source, "'%s' has not been declared",
                                  value_as_string(name)->data);
-                return false;
+                goto out_error;
             }
             break;
         }
@@ -378,7 +377,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                 value name = frame->_chunk->constants.values[name_index];
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
-                return false;
+                goto out_error;
             }
             value value = vm_stack_peek(vm, 0);
             vm->_stack[frame->_stack_offset + stack_index] = value;
@@ -409,12 +408,13 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             vm_report_errorf(vm, source, "'%s' operator cannot be used with types '%s' and '%s'", \
                              #op, value_type_string(value_type(a)),                               \
                              value_type_string(value_type(b)));                                   \
-            return false;                                                                         \
+            goto out_error;                                                                       \
         }                                                                                         \
         vm_stack_pop(vm);                                                                         \
         vm_stack_pop(vm);                                                                         \
         vm_stack_push(vm, construct_result(value_as_number(a) op value_as_number(b)));            \
     } while (false)
+
 #define EXECUTE_COMPARISON_BINARY_OP(op)                                                   \
     do {                                                                                   \
         value b = vm_stack_peek(vm, 0);                                                    \
@@ -486,13 +486,13 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                     vm_report_errorf(vm, source, "cannot multiply '%s' by non-integer '%s'",
                                      value_type_string(value_type(string_operand)),
                                      value_type_string(value_type(n_operand)));
-                    return false;
+                    goto out_error;
                 }
                 if (n < 0) {
                     vm_report_errorf(vm, source, "cannot multiply '%s' by negative '%s'",
                                      value_type_string(value_type(string_operand)),
                                      value_type_string(value_type(n_operand)));
-                    return false;
+                    goto out_error;
                 }
                 struct object_string *result =
                     vm_repeat_string(vm, value_as_string(string_operand), n);
@@ -507,7 +507,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             value b = vm_stack_peek(vm, 0);
             if (value_as_number(b) == 0) {
                 vm_report_errorf(vm, source, "cannot divide by 0");
-                return false;
+                goto out_error;
             }
             EXECUTE_BINARY_NUMBER_OP(/, number_value);
             break;
@@ -519,14 +519,14 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             value a = vm_stack_peek(vm, 1);
             if (value_as_number(b) == 0) {
                 vm_report_errorf(vm, source, "cannot modulo by 0");
-                return false;
+                goto out_error;
             }
             if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {
                 vm_report_errorf(vm, source,
                                  "'%%' operator cannot be used with types '%s' and '%s'",
                                  value_type_string(value_type(a)),
                                  value_type_string(value_type(b)));
-                return false;
+                goto out_error;
             }
             vm_stack_pop(vm);
             vm_stack_pop(vm);
@@ -546,7 +546,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             if (value_type(value) != VALUE_NUMBER) {
                 vm_report_errorf(vm, source, "'-' operator cannot be used with type '%s'",
                                  value_type_string(value_type(value)));
-                return false;
+                goto out_error;
             }
             vm_stack_pop(vm);
             vm_stack_push(vm, number_value(-value_as_number(value)));
@@ -608,7 +608,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             default:
                 vm_report_errorf(vm, source, "'%s' value is not callable",
                                  value_type_string(value_type(callable)));
-                return false;
+                goto out_error;
             }
 
             if (arg_count != arity) {
@@ -618,7 +618,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                                                                 native_function->name;
                 vm_report_errorf(vm, source, "%s() accepts %d argument%s but %d %s given",
                                  name->data, arity, argument_suffix, arg_count, were_was);
-                return false;
+                goto out_error;
             }
 
             if (native_function != NULL) {
@@ -629,7 +629,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                 if (values_are_equal(result, none_value)) {
                     vm_report_errorf(vm, source, "%s", error_msg);
                     free(error_msg);
-                    return false;
+                    goto out_error;
                 }
                 vm_stack_push(vm, result);
                 break;
@@ -664,6 +664,11 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
         }
     }
+
+out_error:
+    vm->_stack_top = vm->_stack;
+    vm->_frames_len = 0;
+    return false;
 }
 
 bool vm_interpret(vm *vm, const char *source)
@@ -675,12 +680,12 @@ bool vm_interpret(vm *vm, const char *source)
 
     if (!compile(vm, source, &chunk)) {
         success = false;
-        goto out_chunk_free;
+        goto out_chunk_deinit;
     }
 
     success = vm_execute(vm, &chunk, source);
 
-out_chunk_free:
+out_chunk_deinit:
     bytecode_chunk_deinit(&chunk);
     return success;
 }
