@@ -4,6 +4,7 @@ BASE_BUILD_DIR := build
 CFLAGS := -std=c11 -Wall -Wextra -Wpedantic -Werror
 
 ifdef DEBUG
+	BUILD_DIR := $(BASE_BUILD_DIR)/debug
 	CFLAGS += -O0 -g -DDEBUG
 	ifdef PRINT_BYTECODE
 		CFLAGS += -DDEBUG_PRINT_BYTECODE
@@ -11,10 +12,14 @@ ifdef DEBUG
 	ifdef TRACE_EXECUTION
 		CFLAGS += -DDEBUG_TRACE_EXECUTION
 	endif
-	BUILD_DIR := $(BASE_BUILD_DIR)/debug
+	LINK_FLAGS = -Wl,-object_path_lto,$(BUILD_DIR)/lto.o
 else
 	CFLAGS += -O3 -flto
 	BUILD_DIR := $(BASE_BUILD_DIR)/release
+	ifdef DEBUG_SYMBOLS
+		CFLAGS += -g
+		LINK_FLAGS = -Wl,-object_path_lto,$(BUILD_DIR)/lto.o
+	endif
 endif
 
 
@@ -31,7 +36,7 @@ OBJECTS := $(addprefix $(BUILD_DIR)/, $(patsubst %.c, %.o, $(SOURCES)))
 
 $(BUILD_DIR)/clox: $(OBJECTS)
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $(LINK_FLAGS) $^ -o $@
 
 HEADERS := $(wildcard *.h)
 
