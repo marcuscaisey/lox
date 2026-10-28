@@ -25,7 +25,9 @@
 
 line_number frame_last_instruction_line(const struct frame *frame)
 {
-    size_t offset = frame->_last_opcode - frame->_chunk->instructions;
+    // ip-1 either points at the opcode of the previous instruction or one of its operands. Either
+    // way, they should both be associated with the same line.
+    size_t offset = frame->_ip - 1 - frame->_chunk->instructions;
     line_number line = frame->_chunk->offset_lines[offset];
     return line;
 }
@@ -51,7 +53,6 @@ static uint32_t frame_read_u24(struct frame *frame)
 // Reads the opcode at the instruction pointer and moves the instruction pointer past it.
 static enum opcode frame_read_opcode(struct frame *frame)
 {
-    frame->_last_opcode = frame->_ip;
     return *frame->_ip++;
 }
 
