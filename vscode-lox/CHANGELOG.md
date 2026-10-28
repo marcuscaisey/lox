@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Make documentation for built-in `clock` function accurate.
+
 ## [4.6.0] - 2026-10-20
 
 ### Added
@@ -138,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reduce snippet indent size from 4 to 2.
 - Highlight comments in the middle of expressions.
 - Allow comments anywhere when formatting.
-- Show docstrings in completions and hover text again.
+- Show documentation in completions and hover text again.
 
 ### Changed
 
