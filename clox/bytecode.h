@@ -19,7 +19,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "line_number.h"
 #include "value.h"
+
+// TODO: use signed ints for these types?
 
 typedef uint32_t constant_index;
 
@@ -197,7 +200,7 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk);
 void bytecode_chunk_deinit(struct bytecode_chunk *chunk);
 
 // Writes `byte` into the chunk's instructions. `line` is the line number corresponding to the byte.
-void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line);
+void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, line_number line);
 
 // Stores `value` in the chunk's constants and returns its index.
 constant_index bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);

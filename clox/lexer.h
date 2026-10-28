@@ -3,6 +3,10 @@
 
 // Types of token emitted by the lexer.
 #include <stddef.h>
+#include <stdint.h>
+
+#include "line_number.h"
+
 enum token_type {
     TOKEN_ERROR,
     TOKEN_EOF,
@@ -77,7 +81,7 @@ struct token {
     const char *start;
     size_t len;
     const char *error_msg; // Null-terminated error message. Valid when `type == TOKEN_ERROR`.
-    int line; // Line that the token starts on
+    line_number line; // Line that the token starts on
 };
 
 // Lexer which reads Lox source code and produces lexical tokens.

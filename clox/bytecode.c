@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include "dynamic_array.h"
+#include "line_number.h"
 #include "value.h"
 
 const char *instruction_name(enum opcode opcode)
@@ -101,7 +102,7 @@ void bytecode_chunk_deinit(struct bytecode_chunk *chunk)
     bytecode_chunk_init(chunk);
 }
 
-void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, int line)
+void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, line_number line)
 {
     size_t original_cap = chunk->_cap;
     DYNAMIC_ARRAY_GROW(chunk->instructions, chunk->_cap, chunk->len + 1);

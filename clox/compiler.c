@@ -14,6 +14,7 @@
 #include "dynamic_array.h"
 #include "errors.h"
 #include "lexer.h"
+#include "line_number.h"
 #include "map.h"
 #include "object.h"
 #include "strings.h"
@@ -43,7 +44,7 @@ struct loop_jump_statement {
     bytecode_offset instruction;
     // Number of local variables in scope at the statements position
     size_t locals_count;
-    int line; // Line that the statement appeared on
+    line_number line; // Line that the statement appeared on
 };
 
 // State related to the compilation of a loop.
@@ -319,7 +320,7 @@ static bytecode_offset compiler_bytecode_offset(const compiler *compiler)
 }
 
 // Writes `opcode` corresponding to `line` to the output bytecode chunk.
-static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int line)
+static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_number line)
 {
     bytecode_chunk_write(compiler->_out, opcode, line);
     compiler->_last_opcode = opcode;
@@ -374,14 +375,14 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, int lin
 }
 
 // Writes `operand` corresponding to `line` to the output bytecode chunk.
-static void compiler_emit_operand(const compiler *compiler, uint8_t operand, int line)
+static void compiler_emit_operand(const compiler *compiler, uint8_t operand, line_number line)
 {
     bytecode_chunk_write(compiler->_out, operand, line);
 }
 
 // Ensures that value `v` corresponding to `line` is in the output bytecode chunk's constants,
 // encodes the corresponding index, and writes it to the chunk.
-static void compiler_emit_constant_index(compiler *compiler, value v, int line)
+static void compiler_emit_constant_index(compiler *compiler, value v, line_number line)
 {
     value index_value;
     constant_index index;
@@ -404,7 +405,7 @@ static void compiler_emit_constant_index(compiler *compiler, value v, int line)
 }
 
 // Encodes and writes `index` to the output bytecode chunk.
-static void compiler_emit_stack_index(const compiler *compiler, stack_index index, int line)
+static void compiler_emit_stack_index(const compiler *compiler, stack_index index, line_number line)
 {
     if (index < 255) {
         compiler_emit_operand(compiler, index, line);
@@ -425,7 +426,8 @@ static bool is_forward_jump_opcode(enum opcode opcode)
 // chunk and returns the offset of the written instruction in the chunk.
 // A placeholder jump offset operand is written which can be set later by passing the returned
 // bytecode offset to `compiler_set_jump_offset()`.
-static bytecode_offset compiler_emit_forward_jump(compiler *compiler, enum opcode opcode, int line)
+static bytecode_offset compiler_emit_forward_jump(compiler *compiler, enum opcode opcode,
+                                                  line_number line)
 {
     assert(is_forward_jump_opcode(opcode));
     bytecode_offset jump = compiler_bytecode_offset(compiler);
@@ -437,7 +439,7 @@ static bytecode_offset compiler_emit_forward_jump(compiler *compiler, enum opcod
 
 // Writes a pop instruction corresponding to `line` to the output bytecode that pops `count` values
 // from the stack.
-static void compiler_emit_pops(compiler *compiler, pop_count count, int line)
+static void compiler_emit_pops(compiler *compiler, pop_count count, line_number line)
 {
     if (count == 0)
         return;
@@ -480,7 +482,8 @@ static void compiler_set_forward_jump_offset(const compiler *compiler, bytecode_
 
 // Writes a backward jump instruction corresponding to `line` to the output bytecode chunk that
 // jumps back to `target`.
-static void compiler_emit_backward_jump(compiler *compiler, bytecode_offset target, int line)
+static void compiler_emit_backward_jump(compiler *compiler, bytecode_offset target,
+                                        line_number line)
 {
     compiler_emit_opcode(compiler, OP_JUMP_BACK, line);
     // The jump offset counts from the offset after the 2 operand bytes which we haven't written yet
@@ -499,7 +502,7 @@ static void compiler_begin_scope(compiler *compiler)
 }
 
 // Signals that a lexical scope has been exited on `line`.
-static void compiler_end_scope(compiler *compiler, int line)
+static void compiler_end_scope(compiler *compiler, line_number line)
 {
     size_t start_locals_count = compiler->_locals_count;
     for (ptrdiff_t i = compiler->_locals_count - 1;
@@ -623,7 +626,7 @@ static struct loop_jump_statement compiler_compile_loop_jump_stmt(compiler *comp
                                                                   enum token_type type)
 {
     assert(type == TOKEN_BREAK || type == TOKEN_CONTINUE);
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, type);
     parser_expect(compiler->_parser, TOKEN_SEMICOLON);
     bytecode_offset jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
@@ -736,7 +739,7 @@ static void compiler_compile_keyword_literal_expr(compiler *compiler, enum prece
 // `expr_compiler` for an identifier expression.
 static void compiler_compile_ident_expr(compiler *compiler, enum precedence_level level)
 {
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     struct token name = compiler->_parser->token;
     if (!parser_expectf(compiler->_parser, TOKEN_IDENT, "expected identifier"))
         return;
@@ -813,7 +816,7 @@ static void compiler_compile_group_expr(compiler *compiler, enum precedence_leve
 static void compiler_compile_unary_expr(compiler *compiler, enum precedence_level level)
 {
     (void)level;
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     enum opcode instruction;
     if (PARSER_MATCH(compiler->_parser, TOKEN_MINUS)) {
         instruction = OP_NEGATE;
@@ -856,7 +859,7 @@ static expr_compiler expr_compiler_for_prefix(enum token_type type)
 static void compiler_compile_comma_expr(compiler *compiler, enum precedence_level level)
 {
     (void)level;
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_COMMA);
     compiler_compile_expr_at_level(compiler, PREC_COMMA); // Right operand
     compiler_emit_pops(compiler, 1, line); // Right operand
@@ -866,7 +869,7 @@ static void compiler_compile_comma_expr(compiler *compiler, enum precedence_leve
 static void compiler_compile_ternary_expr(compiler *compiler, enum precedence_level level)
 {
     (void)level;
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_QUESTION);
     bytecode_offset else_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
     compiler_emit_pops(compiler, 1, line); // Condition
@@ -882,7 +885,7 @@ static void compiler_compile_ternary_expr(compiler *compiler, enum precedence_le
 // `infix_expr_compiler` for an or expression.
 static void compiler_compile_or_expr(compiler *compiler, enum precedence_level level)
 {
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_OR);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_TRUE, line);
     compiler_emit_pops(compiler, 1, line); // Left operand
@@ -893,7 +896,7 @@ static void compiler_compile_or_expr(compiler *compiler, enum precedence_level l
 // `infix_expr_compiler` for an and expression.
 static void compiler_compile_and_expr(compiler *compiler, enum precedence_level level)
 {
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_AND);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
     compiler_emit_pops(compiler, 1, line); // Left operand
@@ -904,7 +907,7 @@ static void compiler_compile_and_expr(compiler *compiler, enum precedence_level 
 // `infix_expr_compiler` for a binary expression.
 static void compiler_compile_binary_expr(compiler *compiler, enum precedence_level level)
 {
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     enum opcode instruction;
     if (PARSER_MATCH(compiler->_parser, TOKEN_PLUS)) {
         instruction = OP_ADD;
@@ -941,7 +944,7 @@ static void compiler_compile_binary_expr(compiler *compiler, enum precedence_lev
 static void compiler_compile_call_expr(compiler *compiler, enum precedence_level level)
 {
     (void)level;
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_LEFT_PAREN);
 
     argument_count args = 0;
@@ -1032,7 +1035,7 @@ static void compiler_compile_expr(compiler *compiler)
 // current token and advances the compiler past it.
 static void compiler_compile_var_decl(compiler *compiler)
 {
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     bool is_final = false;
     if (PARSER_MATCH(compiler->_parser, TOKEN_FINAL))
         is_final = true;
@@ -1062,7 +1065,7 @@ static void compiler_compile_var_decl(compiler *compiler)
 // compiler past it.
 static void compiler_compile_fun_decl(compiler *compiler_)
 {
-    int line = compiler_->_parser->token.line;
+    line_number line = compiler_->_parser->token.line;
     parser_expect(compiler_->_parser, TOKEN_FUN);
     struct token name = compiler_->_parser->token;
     if (!parser_expectf(compiler_->_parser, TOKEN_IDENT, "expected function name"))
@@ -1144,7 +1147,7 @@ static void compiler_compile_block(compiler *compiler)
 // compiler past it.
 static void compiler_compile_print_stmt(compiler *compiler)
 {
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_PRINT);
     compiler_compile_expr(compiler);
     parser_expect(compiler->_parser, TOKEN_SEMICOLON);
@@ -1198,7 +1201,7 @@ static void compiler_compile_switch_stmt(compiler *compiler)
 
     // Non-default cases
     while (PARSER_MATCH(compiler->_parser, TOKEN_CASE)) {
-        int line = compiler->_parser->prev_token.line;
+        line_number line = compiler->_parser->prev_token.line;
 
         // Compare switch value against case value
         compiler_emit_opcode(compiler, OP_DUP, line); // Switch value
@@ -1404,8 +1407,7 @@ static void compiler_finish_compiling_continue_stmts(compiler *compiler)
 // compiler past it.
 static void compiler_compile_return_stmt(compiler *compiler)
 {
-    // TODO: add typedef for line number
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_RETURN);
     if (PARSER_MATCH(compiler->_parser, TOKEN_SEMICOLON)) {
         compiler_emit_opcode(compiler, OP_NIL, line);
@@ -1420,7 +1422,7 @@ static void compiler_compile_return_stmt(compiler *compiler)
 // compiler past it.
 static void compiler_compile_expr_stmt(compiler *compiler)
 {
-    int line = compiler->_parser->token.line;
+    line_number line = compiler->_parser->token.line;
     compiler_compile_expr(compiler);
     parser_expect(compiler->_parser, TOKEN_SEMICOLON);
     compiler_emit_pops(compiler, 1, line); // Expression value

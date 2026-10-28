@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "bytecode.h"
+#include "line_number.h"
 #include "value.h"
 
 void disassemble(const struct bytecode_chunk *chunk, const char *name)
@@ -18,7 +19,7 @@ void disassemble(const struct bytecode_chunk *chunk, const char *name)
 int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
 {
     printf("%04d ", offset);
-    int line = chunk->offset_lines[offset];
+    line_number line = chunk->offset_lines[offset];
     if (offset > 0 && line == chunk->offset_lines[offset - 1])
         printf("   | ");
     else

@@ -12,6 +12,7 @@
 #include "errors.h"
 #include "object.h"
 #include "value.h"
+#include "vm.h"
 #include "vm_memory.h"
 
 // Entry is what gets stored in the each slot of the array. The meanings of `key` and `value` depend

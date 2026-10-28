@@ -15,6 +15,7 @@
 #include "debug.h"
 #include "dynamic_array.h"
 #include "errors.h"
+#include "line_number.h"
 #include "map.h"
 #include "memory.h"
 #include "object.h"
@@ -22,33 +23,40 @@
 #include "value.h"
 #include "vm_memory.h"
 
-// Reads the u8 at the instruction pointer and moves the instruction pointer past it.
-static uint8_t frame_read_u8(struct _frame *frame)
+line_number frame_last_instruction_line(const struct frame *frame)
 {
-    return *frame->ip++;
+    size_t offset = frame->_last_opcode - frame->_chunk->instructions;
+    line_number line = frame->_chunk->offset_lines[offset];
+    return line;
+}
+
+// Reads the u8 at the instruction pointer and moves the instruction pointer past it.
+static uint8_t frame_read_u8(struct frame *frame)
+{
+    return *frame->_ip++;
 }
 
 // Reads the u16 at the instruction pointer and moves the instruction pointer past it.
-static uint16_t frame_read_u16(struct _frame *frame)
+static uint16_t frame_read_u16(struct frame *frame)
 {
     return (frame_read_u8(frame) << 8) | (frame_read_u8(frame));
 }
 
 // Reads the u24 at the instruction pointer and moves the instruction pointer past it.
-static uint32_t frame_read_u24(struct _frame *frame)
+static uint32_t frame_read_u24(struct frame *frame)
 {
     return (frame_read_u8(frame) << 16) | (frame_read_u8(frame) << 8) | (frame_read_u8(frame));
 }
 
 // Reads the opcode at the instruction pointer and moves the instruction pointer past it.
-static enum opcode frame_read_opcode(struct _frame *frame)
+static enum opcode frame_read_opcode(struct frame *frame)
 {
-    frame->last_opcode = frame->ip;
-    return *frame->ip++;
+    frame->_last_opcode = frame->_ip;
+    return *frame->_ip++;
 }
 
 // Reads the constant index at the instruction pointer and moves the instruction pointer past it.
-static constant_index frame_read_constant_index(struct _frame *frame)
+static constant_index frame_read_constant_index(struct frame *frame)
 {
     uint8_t index = frame_read_u8(frame);
     if (index == 0xFF)
@@ -57,7 +65,7 @@ static constant_index frame_read_constant_index(struct _frame *frame)
 }
 
 // Reads the pop count at the instruction pointer and moves the instruction pointer past it.
-static pop_count frame_read_pop_count(struct _frame *frame)
+static pop_count frame_read_pop_count(struct frame *frame)
 {
     uint8_t count = frame_read_u8(frame);
     if (count == 0xFF)
@@ -66,7 +74,7 @@ static pop_count frame_read_pop_count(struct _frame *frame)
 }
 
 // Reads the stack index at the instruction pointer and moves the instruction pointer past it.
-static stack_index frame_read_stack_index(struct _frame *frame)
+static stack_index frame_read_stack_index(struct frame *frame)
 {
     uint8_t index = frame_read_u8(frame);
     if (index == 0xFF)
@@ -75,13 +83,13 @@ static stack_index frame_read_stack_index(struct _frame *frame)
 }
 
 // Reads the jump offset at the instruction pointer and moves the instruction pointer past it.
-static jump_offset frame_read_jump_offset(struct _frame *frame)
+static jump_offset frame_read_jump_offset(struct frame *frame)
 {
     return frame_read_u16(frame);
 }
 
 // Reads the argument count at the instruction pointer and moves the instruction pointer past it.
-static argument_count frame_read_argument_count(struct _frame *frame)
+static argument_count frame_read_argument_count(struct frame *frame)
 {
     uint8_t count = frame_read_u8(frame);
     if (count == 0xFF)
@@ -176,7 +184,7 @@ static value vm_stack_peek(vm *vm, int distance)
 
 #ifdef DEBUG_TRACE_EXECUTION
 // Prints the contents of the value stack and the frame's current instruction.
-static void vm_print_trace_info(const vm *vm, const struct _frame *frame)
+static void vm_print_trace_info(const vm *vm, const struct frame *frame)
 {
     // Lines up the start of the stack with the start of the instruction in the
     // `disassemble_instruction()` output
@@ -187,26 +195,31 @@ static void vm_print_trace_info(const vm *vm, const struct _frame *frame)
         free(string);
     }
     printf("\n");
-    int offset = frame->ip - frame->chunk->instructions;
-    disassemble_instruction(frame->chunk, offset);
+    int offset = frame->_ip - frame->_chunk->instructions;
+    disassemble_instruction(frame->_chunk, offset);
 }
 #endif
 
-// Prints an error related to the most recently read opcode in the current frame with a formatted
-// message.
-static __attribute__((format(printf, 2, 3))) void vm_report_errorf(const vm *vm, const char *format,
-                                                                   ...)
+// Prints an error related to the most recently read instruction in the current frame with a
+// formatted message. `source` is the source that the instruction was compiled from.
+static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const vm *vm, const char *source,
+                                                                   const char *format, ...)
 {
     char *msg;
     va_list args;
     va_start(args, format);
     xvasprintf(&msg, format, args);
     va_end(args);
-    struct _frame *current_frame = &vm->_frames[vm->_frames_len - 1];
-    size_t offset = current_frame->last_opcode - current_frame->chunk->instructions;
-    int line = current_frame->chunk->offset_lines[offset];
-    print_invalid_line_error(msg, vm->_source, line);
+    struct frame *current_frame = &vm->_frames[vm->_frames_len - 1];
+    line_number line = frame_last_instruction_line(current_frame);
+    print_invalid_line_error(msg, source, line);
     free(msg);
+
+    if (vm->_frames_len < 2)
+        return;
+
+    fprintf(stderr, "\n");
+    print_stack_trace(vm->_frames, vm->_frames_len, source);
 }
 
 // Returns a new string created by concatenating `a` and `b`.
@@ -238,16 +251,17 @@ struct object_string *vm_repeat_string(vm *vm, struct object_string *s, int64_t 
 // This will allow for a stack of `INITIAL_FRAME_CAPACITY` calls using up to 256 simultaneous values
 #define INITIAL_STACK_CAPACITY (INITIAL_FRAMES_CAPACITY * 256)
 
-// Executes `chunk` and reports whether execution was successful.
-static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
+// Executes `chunk` which was compiled from `source` and reports whether execution was successful.
+static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *source)
 {
     DYNAMIC_ARRAY_GROW(vm->_frames, vm->_frames_cap, INITIAL_FRAMES_CAPACITY);
     vm_stack_grow(vm, INITIAL_STACK_CAPACITY);
 
-    struct _frame *frame = &vm->_frames[vm->_frames_len++];
-    frame->chunk = chunk;
-    frame->ip = chunk->instructions;
-    frame->stack_offset = 0;
+    struct frame *frame = &vm->_frames[vm->_frames_len++];
+    frame->name = NULL;
+    frame->_chunk = chunk;
+    frame->_ip = chunk->instructions;
+    frame->_stack_offset = 0;
 
     while (true) {
 #ifdef DEBUG_TRACE_EXECUTION
@@ -258,7 +272,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
         switch (opcode) {
         case OP_CONSTANT: {
             constant_index index = frame_read_constant_index(frame);
-            value value = frame->chunk->constants.values[index];
+            value value = frame->_chunk->constants.values[index];
             vm_stack_push(vm, value);
             break;
         }
@@ -294,7 +308,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
         case OP_DEFINE_GLOBAL:
         case OP_DEFINE_GLOBAL_FINAL: {
             constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->chunk->constants.values[name_index];
+            value name = frame->_chunk->constants.values[name_index];
             // map_set could trigger an allocation causing garbage collection, so don't pop the
             // initialiser until we've set the variable
             value initialiser = vm_stack_peek(vm, 0);
@@ -307,10 +321,11 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
 
         case OP_GET_GLOBAL: {
             constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->chunk->constants.values[name_index];
+            value name = frame->_chunk->constants.values[name_index];
             value value;
             if (!map_get(&vm->_globals, name, &value)) {
-                vm_report_errorf(vm, "'%s' has not been declared", value_as_string(name)->data);
+                vm_report_errorf(vm, source, "'%s' has not been declared",
+                                 value_as_string(name)->data);
                 return false;
             }
             vm_stack_push(vm, value);
@@ -319,9 +334,9 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
 
         case OP_SET_GLOBAL: {
             constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->chunk->constants.values[name_index];
+            value name = frame->_chunk->constants.values[name_index];
             if (map_get(&vm->_global_final_vars, name, NULL)) {
-                vm_report_errorf(vm, "final variable '%s' can't be reassigned",
+                vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
                 return false;
             }
@@ -329,7 +344,8 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
             bool is_new_name = map_set(vm, &vm->_globals, name, value);
             if (is_new_name) {
                 map_delete(&vm->_globals, name);
-                vm_report_errorf(vm, "'%s' has not been declared", value_as_string(name)->data);
+                vm_report_errorf(vm, source, "'%s' has not been declared",
+                                 value_as_string(name)->data);
                 return false;
             }
             break;
@@ -350,22 +366,22 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
 
         case OP_GET_LOCAL: {
             stack_index stack_index = frame_read_stack_index(frame);
-            value value = vm->_stack[frame->stack_offset + stack_index];
+            value value = vm->_stack[frame->_stack_offset + stack_index];
             vm_stack_push(vm, value);
             break;
         }
 
         case OP_SET_LOCAL: {
             stack_index stack_index = frame_read_stack_index(frame);
-            constant_index name_index = vm->_local_final_vars[frame->stack_offset + stack_index];
+            constant_index name_index = vm->_local_final_vars[frame->_stack_offset + stack_index];
             if (name_index <= MAX_CONSTANT_INDEX) {
-                value name = frame->chunk->constants.values[name_index];
-                vm_report_errorf(vm, "final variable '%s' can't be reassigned",
+                value name = frame->_chunk->constants.values[name_index];
+                vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
                 return false;
             }
             value value = vm_stack_peek(vm, 0);
-            vm->_stack[frame->stack_offset + stack_index] = value;
+            vm->_stack[frame->_stack_offset + stack_index] = value;
             break;
         }
 
@@ -390,8 +406,9 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
         value b = vm_stack_peek(vm, 0);                                                           \
         value a = vm_stack_peek(vm, 1);                                                           \
         if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {                     \
-            vm_report_errorf(vm, "'%s' operator cannot be used with types '%s' and '%s'", #op,    \
-                             value_type_string(value_type(a)), value_type_string(value_type(b))); \
+            vm_report_errorf(vm, source, "'%s' operator cannot be used with types '%s' and '%s'", \
+                             #op, value_type_string(value_type(a)),                               \
+                             value_type_string(value_type(b)));                                   \
             return false;                                                                         \
         }                                                                                         \
         vm_stack_pop(vm);                                                                         \
@@ -466,13 +483,13 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
                 double n_double = value_as_number(n_operand);
                 int64_t n = trunc(n_double);
                 if (n != n_double) {
-                    vm_report_errorf(vm, "cannot multiply '%s' by non-integer '%s'",
+                    vm_report_errorf(vm, source, "cannot multiply '%s' by non-integer '%s'",
                                      value_type_string(value_type(string_operand)),
                                      value_type_string(value_type(n_operand)));
                     return false;
                 }
                 if (n < 0) {
-                    vm_report_errorf(vm, "cannot multiply '%s' by negative '%s'",
+                    vm_report_errorf(vm, source, "cannot multiply '%s' by negative '%s'",
                                      value_type_string(value_type(string_operand)),
                                      value_type_string(value_type(n_operand)));
                     return false;
@@ -489,7 +506,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
         case OP_DIVIDE: {
             value b = vm_stack_peek(vm, 0);
             if (value_as_number(b) == 0) {
-                vm_report_errorf(vm, "cannot divide by 0");
+                vm_report_errorf(vm, source, "cannot divide by 0");
                 return false;
             }
             EXECUTE_BINARY_NUMBER_OP(/, number_value);
@@ -501,11 +518,12 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
             value b = vm_stack_peek(vm, 0);
             value a = vm_stack_peek(vm, 1);
             if (value_as_number(b) == 0) {
-                vm_report_errorf(vm, "cannot modulo by 0");
+                vm_report_errorf(vm, source, "cannot modulo by 0");
                 return false;
             }
             if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {
-                vm_report_errorf(vm, "'%%' operator cannot be used with types '%s' and '%s'",
+                vm_report_errorf(vm, source,
+                                 "'%%' operator cannot be used with types '%s' and '%s'",
                                  value_type_string(value_type(a)),
                                  value_type_string(value_type(b)));
                 return false;
@@ -526,7 +544,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
         case OP_NEGATE: {
             value value = vm_stack_peek(vm, 0);
             if (value_type(value) != VALUE_NUMBER) {
-                vm_report_errorf(vm, "'-' operator cannot be used with type '%s'",
+                vm_report_errorf(vm, source, "'-' operator cannot be used with type '%s'",
                                  value_type_string(value_type(value)));
                 return false;
             }
@@ -545,13 +563,13 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
 
         case OP_JUMP: {
             jump_offset offset = frame_read_jump_offset(frame);
-            frame->ip += offset;
+            frame->_ip += offset;
             break;
         }
 
         case OP_JUMP_BACK: {
             jump_offset offset = frame_read_jump_offset(frame);
-            frame->ip -= offset;
+            frame->_ip -= offset;
             break;
         }
 
@@ -559,7 +577,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
             jump_offset offset = frame_read_jump_offset(frame);
             value top_value = vm_stack_peek(vm, 0);
             if (value_is_truthy(top_value))
-                frame->ip += offset;
+                frame->_ip += offset;
             break;
         }
 
@@ -567,7 +585,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
             jump_offset offset = frame_read_jump_offset(frame);
             value top_value = vm_stack_peek(vm, 0);
             if (!value_is_truthy(top_value))
-                frame->ip += offset;
+                frame->_ip += offset;
             break;
         }
 
@@ -588,7 +606,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
                 arity = function->arity;
                 break;
             default:
-                vm_report_errorf(vm, "'%s' value is not callable",
+                vm_report_errorf(vm, source, "'%s' value is not callable",
                                  value_type_string(value_type(callable)));
                 return false;
             }
@@ -598,8 +616,8 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
                 const char *argument_suffix = arity == 1 ? "" : "s";
                 struct object_string *name = function != NULL ? function->name :
                                                                 native_function->name;
-                vm_report_errorf(vm, "%s() accepts %d argument%s but %d %s given", name->data,
-                                 arity, argument_suffix, arg_count, were_was);
+                vm_report_errorf(vm, source, "%s() accepts %d argument%s but %d %s given",
+                                 name->data, arity, argument_suffix, arg_count, were_was);
                 return false;
             }
 
@@ -609,7 +627,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
                 char *error_msg;
                 value result = native_function->body(vm, args, &error_msg);
                 if (values_are_equal(result, none_value)) {
-                    vm_report_errorf(vm, "%s", error_msg);
+                    vm_report_errorf(vm, source, "%s", error_msg);
                     free(error_msg);
                     return false;
                 }
@@ -623,9 +641,10 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
             vm_stack_grow(vm, required_stack_depth);
 
             frame = &vm->_frames[vm->_frames_len++];
-            frame->chunk = &function->body;
-            frame->ip = function->body.instructions;
-            frame->stack_offset = vm->_stack_top - vm->_stack - arg_count;
+            frame->name = function->name;
+            frame->_chunk = &function->body;
+            frame->_ip = function->body.instructions;
+            frame->_stack_offset = vm->_stack_top - vm->_stack - arg_count;
             break;
         }
 #undef REPORT_ARITY_ERROR
@@ -638,7 +657,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk)
             // OP_CALL left the callable and arguments on the stack and pointed stack_offset in the
             // new frame to the start of the arguments. So adding stack_offset takes us to the start
             // of the arguments and we need to take away 1 so that stack top points at the callable.
-            vm->_stack_top = vm->_stack + frame->stack_offset - 1;
+            vm->_stack_top = vm->_stack + frame->_stack_offset - 1;
             frame = &vm->_frames[vm->_frames_len - 1];
             vm_stack_push(vm, return_value);
             break;
@@ -659,10 +678,7 @@ bool vm_interpret(vm *vm, const char *source)
         goto out_chunk_free;
     }
 
-    // TODO: can this be moved out of the vm's state? Maybe attach the source to the chunk?
-    vm->_source = source;
-
-    success = vm_execute(vm, &chunk);
+    success = vm_execute(vm, &chunk, source);
 
 out_chunk_free:
     bytecode_chunk_deinit(&chunk);

@@ -8,6 +8,7 @@
 #include "bytecode.h"
 #include "map.h"
 #include "value.h"
+#include "vm.h"
 #include "vm_memory.h"
 
 void object_free(vm *vm, struct object *object)

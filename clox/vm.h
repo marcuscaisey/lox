@@ -6,25 +6,30 @@
 #include <stdint.h>
 
 #include "bytecode.h"
+#include "line_number.h"
 #include "map.h"
 #include "object.h"
 #include "value.h"
 
 // Runtime representation of a frame as defined in bytecode.h.
-// Internal type, do not use.
-struct _frame {
-    const struct bytecode_chunk *chunk; // Bytecode chunk being executed
-    uint8_t *ip; // Pointer to the next instruction to be executed (instruction pointer)
-    uint8_t *last_opcode; // Pointer to the last opcode read
-    size_t stack_offset; // Index in the VM's value stack where this frame's value stack begins
+struct frame {
+    // Name of the callable if this frame was created to execute a callable, otherwise `NULL`
+    struct object_string *name;
+    // Internal fields below, do not use.
+    const struct bytecode_chunk *_chunk; // Bytecode chunk being executed
+    uint8_t *_ip; // Pointer to the next instruction to be executed (instruction pointer)
+    uint8_t *_last_opcode; // Pointer to the last opcode read
+    size_t _stack_offset; // Index in the VM's value stack where this frame's value stack begins
 };
+
+// Returns the line associated with the last instruction read in this frame.
+line_number frame_last_instruction_line(const struct frame *frame);
 
 // A virtual machine which interprets Lox code.
 // Must be initialised with `vm_init()` before use and deinitialised with `vm_deinit()` after use.
 typedef struct vm {
     // Internal fields below, do not use.
-    const char *_source; // Source being interpreted
-    struct _frame *_frames; // Stack of frames for active bytecode executions
+    struct frame *_frames; // Stack of frames for active bytecode executions
     size_t _frames_len; // Number of active frames
     size_t _frames_cap; // Number of actives frames space has been allocated for
     // Value stack shared by all active frames.
