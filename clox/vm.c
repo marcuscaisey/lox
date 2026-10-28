@@ -41,19 +41,21 @@ static uint8_t frame_read_u8(struct frame *frame)
 // Reads the u16 at the instruction pointer and moves the instruction pointer past it.
 static uint16_t frame_read_u16(struct frame *frame)
 {
-    return (frame_read_u8(frame) << 8) | (frame_read_u8(frame));
+    frame->_ip += 2;
+    return (frame->_ip[-2] << 8) | (frame->_ip[-1]);
 }
 
 // Reads the u24 at the instruction pointer and moves the instruction pointer past it.
 static uint32_t frame_read_u24(struct frame *frame)
 {
-    return (frame_read_u8(frame) << 16) | (frame_read_u8(frame) << 8) | (frame_read_u8(frame));
+    frame->_ip += 3;
+    return (frame->_ip[-3] << 16) | (frame->_ip[-2] << 8) | (frame->_ip[-1]);
 }
 
 // Reads the opcode at the instruction pointer and moves the instruction pointer past it.
 static enum opcode frame_read_opcode(struct frame *frame)
 {
-    return *frame->_ip++;
+    return frame_read_u8(frame);
 }
 
 // Reads the constant index at the instruction pointer and moves the instruction pointer past it.
