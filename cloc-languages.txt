@@ -1,0 +1,4 @@
+Lox
+    filter remove_inline //.*$
+    extension lox
+    3rd_gen_scale 1.00

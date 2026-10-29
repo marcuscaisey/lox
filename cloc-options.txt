@@ -1,0 +1,4 @@
+--vcs=git
+--fullpath
+--exclude-content=^// Code generated .* DO NOT EDIT\.$
+--not-match-f=(?:^|/)tree-sitter-lox/(?!grammar\.js$|package\.json$|tree-sitter\.json$|test/|queries/)|package-lock\.json$
