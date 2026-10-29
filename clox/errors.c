@@ -35,6 +35,7 @@ static void maybe_unset_semantic_styles(void)
 {
     if (!isatty(STDERR_FILENO)) {
         error_msg_line_style = "";
+        title_style = "";
         location_style = "";
         location_separator_style = "";
         error_style = "";

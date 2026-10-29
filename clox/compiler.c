@@ -257,12 +257,12 @@ typedef struct compiler {
     // their declaration in the source
     struct local *_locals;
     // Number of local variables in scope at the current token's position
-    size_t _locals_count;
+    stack_depth _locals_count;
     // Number of elements space has been allocated for in the locals array
-    size_t _locals_cap;
+    stack_depth _locals_cap;
     // Number of elements that would be in the value stack if execution reached the current token's
     // position
-    stack_index _stack_depth;
+    stack_depth _stack_depth;
     struct loop_state _loop_state; // State of the loop currently being compiled
 } compiler;
 
@@ -379,7 +379,7 @@ static void compiler_emit_constant_index(compiler *compiler, value v, line_numbe
     } else {
         index = bytecode_chunk_add_constant(compiler->_out, v);
         if (index > MAX_CONSTANT_INDEX)
-            exitf("maximum number of constants (%llu) used", (uint64_t)MAX_CONSTANT_INDEX + 1);
+            exitf("maximum number of constants (%d) used", MAX_CONSTANT_INDEX + 1);
         map_set(compiler->_vm, &compiler->_constant_indexes, v, number_value(index));
     }
     if (index < 255) {
@@ -493,7 +493,7 @@ static void compiler_begin_scope(compiler *compiler)
 static void compiler_end_scope(compiler *compiler, line_number line)
 {
     size_t start_locals_count = compiler->_locals_count;
-    for (ptrdiff_t i = compiler->_locals_count - 1;
+    for (stack_depth i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
         compiler->_locals_count--;
     }
@@ -521,7 +521,7 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
 {
     if (in_global_scope(compiler))
         return;
-    for (ptrdiff_t i = compiler->_locals_count - 1;
+    for (stack_depth i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0 &&
@@ -532,7 +532,7 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
     stack_index index = compiler->_locals_count;
     DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
     if (index > MAX_STACK_INDEX)
-        exitf("maximum number of local variables (%llu) used", (uint64_t)MAX_STACK_INDEX + 1);
+        exitf("maximum number of local variables (%d) used", MAX_STACK_INDEX + 1);
     struct local *local = &compiler->_locals[compiler->_locals_count++];
     local->name = ident.start;
     local->name_len = ident.len;
@@ -562,11 +562,11 @@ static void compiler_emit_variable_definition(compiler *compiler, struct token i
     }
 }
 
-// Returns the index in the value stack of the local variable that `ident` refers to or
-// `MAX_STACK_INDEX + 1` if one is not found.
+// Returns the index in the value stack of the local variable that `ident` refers to or `-1` if one
+// is not found.
 static stack_index compiler_resolve_local_variable(const compiler *compiler, struct token ident)
 {
-    for (ptrdiff_t i = compiler->_locals_count - 1; i >= 0; i--) {
+    for (stack_depth i = compiler->_locals_count - 1; i >= 0; i--) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0) {
             if (local.is_initialising)
@@ -575,18 +575,14 @@ static stack_index compiler_resolve_local_variable(const compiler *compiler, str
             return i;
         }
     }
-    return MAX_STACK_INDEX + 1;
+    return -1;
 }
-
-// Ensures that when MAX_STACK_INDEX + 1 is a valid value to return from
-_Static_assert((constant_index)-1 > 0, "stack_index must be unsigned");
-_Static_assert(MAX_STACK_INDEX < (stack_index)-1, "MAX_STACK_INDEX must be < max(stack_index)");
 
 // Marks the variable corresponding to `ident` as initialising. An error is reported if a local
 // variable is resolved while it's initialising.
 static void compiler_start_initialising_variable(const compiler *compiler, struct token ident)
 {
-    for (ptrdiff_t i = compiler->_locals_count - 1;
+    for (stack_depth i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
@@ -597,7 +593,7 @@ static void compiler_start_initialising_variable(const compiler *compiler, struc
 // Marks the variable corresponding to `ident` as initialised.
 static void compiler_finish_initialising_variable(const compiler *compiler, struct token ident)
 {
-    for (ptrdiff_t i = compiler->_locals_count - 1;
+    for (stack_depth i = compiler->_locals_count - 1;
          i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
@@ -816,7 +812,7 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
     }
 
     stack_index index = compiler_resolve_local_variable(compiler, name);
-    if (index <= MAX_STACK_INDEX) {
+    if (index >= 0) {
         enum opcode instruction = is_get ? OP_GET_LOCAL : OP_SET_LOCAL;
         compiler_emit_opcode(compiler, instruction, line);
         compiler_emit_stack_index(compiler, index, line);

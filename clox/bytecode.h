@@ -22,27 +22,28 @@
 #include "line_number.h"
 #include "value.h"
 
-// TODO: use signed ints for these types?
-
-typedef uint32_t constant_index;
+typedef int32_t constant_index;
 
 #define MAX_CONSTANT_INDEX ((1 << 24) - 1)
 
-typedef uint32_t pop_count;
+typedef int32_t pop_count;
 
 #define MAX_POP_COUNT ((1 << 24) - 1)
 
-typedef uint32_t stack_index;
+typedef int32_t stack_index;
+
+// Represents the depth of a frame's value stack.
+typedef int32_t stack_depth;
 
 // 1 less than `MAX_POP_COUNT` so that it's possible to pop every value from the stack with one
 // POP_N instruction.
 #define MAX_STACK_INDEX (MAX_POP_COUNT - 1)
 
-typedef uint16_t jump_offset;
+typedef int32_t jump_offset;
 
-#define MAX_JUMP_OFFSET UINT16_MAX
+#define MAX_JUMP_OFFSET ((1 << 16) - 1)
 
-typedef uint32_t argument_count;
+typedef int32_t argument_count;
 
 // Instructions defined by the Lox VM's instruction set.
 //
@@ -190,7 +191,7 @@ struct bytecode_chunk {
     size_t _cap;
     struct value_array constants; // Pool of constants referenced by the chunk
     // Maximum number of values that will be on the value stack during execution
-    size_t max_stack_depth;
+    stack_depth max_stack_depth;
 };
 
 // Initialises `chunk` for use.

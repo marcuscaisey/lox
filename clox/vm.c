@@ -150,7 +150,7 @@ void vm_deinit(vm *vm)
 static void vm_stack_grow(vm *vm, size_t n)
 {
     if (vm->_stack_cap < n) {
-        ptrdiff_t current_stack_depth = vm->_stack_top - vm->_stack;
+        stack_depth current_stack_depth = vm->_stack_top - vm->_stack;
         size_t stack_size = DYNAMIC_ARRAY_SIZE(vm->_stack, n);
         size_t local_final_var_size = DYNAMIC_ARRAY_SIZE(vm->_local_final_vars, n);
         vm->_stack = xrealloc(vm->_stack, stack_size);
@@ -355,7 +355,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_DEFINE_LOCAL: {
             stack_index top_stack_index = vm->_stack_top - vm->_stack - 1;
-            vm->_local_final_vars[top_stack_index] = MAX_CONSTANT_INDEX + 1;
+            vm->_local_final_vars[top_stack_index] = -1;
             break;
         }
 
@@ -376,7 +376,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         case OP_SET_LOCAL: {
             stack_index stack_index = frame_read_stack_index(frame);
             constant_index name_index = vm->_local_final_vars[frame->_stack_offset + stack_index];
-            if (name_index <= MAX_CONSTANT_INDEX) {
+            if (name_index >= 0) {
                 value name = frame->_chunk->constants.values[name_index];
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
@@ -639,7 +639,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             }
 
             DYNAMIC_ARRAY_GROW(vm->_frames, vm->_frames_cap, vm->_frames_len + 1);
-            size_t required_stack_depth =
+            stack_depth required_stack_depth =
                 vm->_stack_top - vm->_stack + function->body.max_stack_depth;
             vm_stack_grow(vm, required_stack_depth);
 
