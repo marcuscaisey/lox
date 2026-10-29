@@ -48,6 +48,7 @@ struct loop_jump_statement {
 
 // State related to the compilation of a loop.
 struct loop_state {
+    bool is_nested; // Whether the loop is nested inside another one
     // Array of break statements compiled since compilation of the loop started
     struct loop_jump_statement *break_stmts;
     size_t break_stmts_len; // Number of elements in `break_stmts`
@@ -263,6 +264,7 @@ typedef struct compiler {
     // Number of elements that would be in the value stack if execution reached the current token's
     // position
     stack_depth _stack_depth;
+    bool _in_loop; // Whether a loop is currently being compiled
     struct loop_state _loop_state; // State of the loop currently being compiled
 } compiler;
 
@@ -291,6 +293,7 @@ static void compiler_init(compiler *compiler, vm *vm, struct parser *parser,
     compiler->_locals_count = 0;
     compiler->_locals_cap = 0;
     compiler->_stack_depth = 0;
+    compiler->_in_loop = false;
     compiler->_loop_state = (struct loop_state){ 0 };
 }
 
@@ -610,6 +613,9 @@ static struct loop_jump_statement compiler_compile_loop_jump_stmt(compiler *comp
                                                                   enum token_type type)
 {
     assert(type == TOKEN_BREAK || type == TOKEN_CONTINUE);
+    if (!compiler->_in_loop)
+        PARSER_REPORT_ERRORF(compiler->_parser, compiler->_parser->token,
+                             "'%s' can only be used inside a loop", token_type_string(type));
     line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, type);
     parser_expect(compiler->_parser, TOKEN_SEMICOLON);
@@ -1363,12 +1369,8 @@ static void compiler_compile_for_stmt(compiler *compiler)
 static struct loop_state compiler_begin_loop(compiler *compiler)
 {
     struct loop_state prev_loop_state = compiler->_loop_state;
-    compiler->_loop_state.break_stmts = NULL;
-    compiler->_loop_state.break_stmts_len = 0;
-    compiler->_loop_state.break_stmts_cap = 0;
-    compiler->_loop_state.continue_stmts = NULL;
-    compiler->_loop_state.continue_stmts_len = 0;
-    compiler->_loop_state.continue_stmts_cap = 0;
+    compiler->_loop_state = (struct loop_state){ .is_nested = compiler->_in_loop };
+    compiler->_in_loop = true;
     return prev_loop_state;
 }
 
@@ -1380,6 +1382,7 @@ static void compiler_end_loop(compiler *compiler, struct loop_state prev_loop_st
     free(compiler->_loop_state.break_stmts);
     free(compiler->_loop_state.continue_stmts);
     compiler->_loop_state = prev_loop_state;
+    compiler->_in_loop = prev_loop_state.is_nested;
 }
 
 // Emits the bytecode for the break statement starting at the current token and advances the

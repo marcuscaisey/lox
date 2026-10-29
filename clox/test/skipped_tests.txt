@@ -225,10 +225,6 @@ TestClox/Classes/NotIndexableError
 TestClox/Classes/Print
 TestClox/Classes/TooManyArgsError
 TestClox/Classes/Type
-TestClox/For/BreakInsideNestedAnonymousFunctionError
-TestClox/For/BreakInsideNestedFunctionError
-TestClox/For/ContinueInsideNestedAnonymousFunctionError
-TestClox/For/ContinueInsideNestedFunctionError
 TestClox/Functions/AccessLocalDefinedAfterFunDeclaration
 TestClox/Functions/Anonymous/AccessLocalDefinedAfterFunExpression
 TestClox/Functions/Anonymous/Closure
@@ -323,8 +319,6 @@ TestClox/String/InvalidPropertyAccessError
 TestClox/String/InvalidPropertyAssignmentError
 TestClox/String/NotIndexableAssignmentError
 TestClox/String/NotIndexableError
-TestClox/SyntaxErrors/BreakOutsideLoop
-TestClox/SyntaxErrors/ContinueOutsideLoop
 TestClox/SyntaxErrors/IllegalChar
 TestClox/SyntaxErrors/InvalidUtf8
 TestClox/SyntaxErrors/InvalidUtf8String
@@ -332,7 +326,3 @@ TestClox/SyntaxErrors/ReturnOutsideFunction
 TestClox/Try/Failure
 TestClox/Try/PrintResult
 TestClox/Try/Success
-TestClox/While/BreakInsideNestedAnonymousFunctionError
-TestClox/While/BreakInsideNestedFunctionError
-TestClox/While/ContinueInsideNestedAnonymousFunctionError
-TestClox/While/ContinueInsideNestedFunctionError
