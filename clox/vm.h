@@ -55,8 +55,6 @@ void vm_init(vm *vm);
 void vm_deinit(vm *vm);
 
 // Interprets the given Lox `source` and reports whether interpretation was successful.
-// This function can be called multiple times with different sources and the state will be
-// maintained between calls.
 bool vm_interpret(vm *vm, const char *source);
 
 #endif

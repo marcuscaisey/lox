@@ -7,30 +7,6 @@
 
 #include "vm.h"
 
-// Runs the REPL until the user exits and returns an appropriate exit status.
-static int run_repl(void)
-{
-    vm vm;
-    vm_init(&vm);
-
-    printf("Welcome to the Lox REPL. Press Ctrl-D to exit.\n");
-    while (true) {
-        printf(">>> ");
-        char line[1024];
-        if (fgets(line, sizeof(line), stdin) == NULL)
-            break;
-        vm_interpret(&vm, line);
-    }
-
-    vm_deinit(&vm);
-
-    if (ferror(stdin)) {
-        fprintf(stderr, "clox: reading from stdin: %s\n", strerror(errno));
-        return 1;
-    }
-    return 0;
-}
-
 // Reads `filename` and returns its contents. If the operation fails, `NULL` is returned and the
 // global variable `errno` is set to indicate the error.
 static char *read_file(const char *filename)
@@ -85,15 +61,10 @@ static int run_file(const char *filename)
 
 int main(int argc, char *argv[])
 {
-    switch (argc) {
-    case 1:
-        return run_repl();
-    case 2: {
-        char *filename = argv[1];
-        return run_file(filename);
-    }
-    default:
+    if (argc != 2) {
         fprintf(stderr, "Usage: clox [<script>]\n");
         return 2;
     }
+    char *filename = argv[1];
+    return run_file(filename);
 }
