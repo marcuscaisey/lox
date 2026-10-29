@@ -274,7 +274,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         switch (opcode) {
         case OP_CONSTANT: {
             constant_index index = frame_read_constant_index(frame);
-            value value = frame->_chunk->constants.values[index];
+            value value = frame->_chunk->constants[index];
             vm_stack_push(vm, value);
             break;
         }
@@ -310,7 +310,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         case OP_DEFINE_GLOBAL:
         case OP_DEFINE_GLOBAL_FINAL: {
             constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->_chunk->constants.values[name_index];
+            value name = frame->_chunk->constants[name_index];
             // map_set could trigger an allocation causing garbage collection, so don't pop the
             // initialiser until we've set the variable
             value initialiser = vm_stack_peek(vm, 0);
@@ -323,7 +323,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_GET_GLOBAL: {
             constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->_chunk->constants.values[name_index];
+            value name = frame->_chunk->constants[name_index];
             value value;
             if (!map_get(&vm->_globals, name, &value)) {
                 vm_report_errorf(vm, source, "'%s' has not been declared",
@@ -336,7 +336,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_SET_GLOBAL: {
             constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->_chunk->constants.values[name_index];
+            value name = frame->_chunk->constants[name_index];
             if (map_get(&vm->_global_final_vars, name, NULL)) {
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
@@ -377,7 +377,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             stack_index stack_index = frame_read_stack_index(frame);
             constant_index name_index = vm->_local_final_vars[frame->_stack_offset + stack_index];
             if (name_index >= 0) {
-                value name = frame->_chunk->constants.values[name_index];
+                value name = frame->_chunk->constants[name_index];
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
                 goto out_error;

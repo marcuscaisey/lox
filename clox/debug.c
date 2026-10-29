@@ -45,7 +45,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
                     (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
             index_bytes = 4;
         }
-        char *name = value_string(chunk->constants.values[index]);
+        char *name = value_string(chunk->constants[index]);
         printf("%-*s %*d '%s'\n", name_width, instruction, operand_width, index, name);
         free(name);
         return offset + 1 + index_bytes;

@@ -86,24 +86,4 @@ bool value_is_truthy(value value);
 // needed.
 char *value_string(value value);
 
-// Array of `values`. Elements can be accessed directly through `values` but must only be appended
-// via `value_array_write()`.
-// Must be initialised with `value_array_init()` before use and deinitialised with
-// `value_array_deinit()` after use.
-struct value_array {
-    value *values;
-    size_t len; // Number of elements in `values`
-    // Internal fields below, do not use.
-    size_t _cap; // Number of elements that space has been allocated for in `values`
-};
-
-// Initialises `array` for use.
-void value_array_init(struct value_array *array);
-
-// Frees the memory associated with `array`.
-void value_array_deinit(struct value_array *array);
-
-// Writes `value` into `array`.
-void value_array_write(struct value_array *array, value value);
-
 #endif

@@ -91,14 +91,16 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk)
     chunk->_cap = 0;
     chunk->instructions = NULL;
     chunk->offset_lines = NULL;
-    value_array_init(&chunk->constants);
+    chunk->constants = NULL;
+    chunk->constants_len = 0;
+    chunk->_constants_cap = 0;
     chunk->max_stack_depth = 0;
 }
 
 void bytecode_chunk_deinit(struct bytecode_chunk *chunk)
 {
     free(chunk->instructions);
-    value_array_deinit(&chunk->constants);
+    free(chunk->constants);
     bytecode_chunk_init(chunk);
 }
 
@@ -117,7 +119,8 @@ void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, line_numbe
 
 constant_index bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value)
 {
-    constant_index index = chunk->constants.len;
-    value_array_write(&chunk->constants, value);
+    constant_index index = chunk->constants_len;
+    DYNAMIC_ARRAY_GROW(chunk->constants, chunk->_constants_cap, chunk->constants_len + 1);
+    chunk->constants[chunk->constants_len++] = value;
     return index;
 }

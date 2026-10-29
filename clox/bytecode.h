@@ -187,9 +187,15 @@ struct bytecode_chunk {
     int *offset_lines; // Line numbers associated with each bytecode offset
     size_t len; // Number of elements in `instructions` and `offset_lines`
     // Internal field, do not use.
-    // Number of elements that space has been allocated for in `instructions` and `offset_lines`.
+    // Number of instructions and offset lines that space has been allocated for.
     size_t _cap;
-    struct value_array constants; // Pool of constants referenced by the chunk
+    // Array of constants referenced by the chunk.
+    // Must only be appended to via `bytecode_add_constant()`.
+    value *constants;
+    size_t constants_len; // Number of constants
+    // Internal field, do not use.
+    // Number of constants that space has been allocated for.
+    size_t _constants_cap;
     // Maximum number of values that will be on the value stack during execution
     stack_depth max_stack_depth;
 };
