@@ -20,7 +20,6 @@
 #include "strings.h"
 #include "value.h"
 
-// TODO: if the modes only correspond to the type of function being compiled, this should be renamed
 // Mode that a compiler can operate in.
 enum compiler_mode {
     COMPILER_MODE_SCRIPT, // Compiling a top level script
@@ -240,9 +239,9 @@ static bool parser_expect(struct parser *parser, enum token_type type)
 
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
 // chunk.
-// Must be initialised with `compiler_init()` or `compiler_init_child()` before use and
-// deinitialised with `compiler_deinit()` after use.
-typedef struct {
+// Must be initialised with `compiler_init()` before use and deinitialised with `compiler_deinit()`
+// after use.
+typedef struct compiler {
     // Internal fields below, do not use.
     vm *_vm; // VM that will execute the output bytecode
     struct parser *_parser;
@@ -293,17 +292,6 @@ static void compiler_init(compiler *compiler, vm *vm, struct parser *parser,
     compiler->_locals_cap = 0;
     compiler->_stack_depth = 0;
     compiler->_loop_state = (struct loop_state){ 0 };
-}
-
-// Initialises `compiler_` as a child of `parent` that parses in `mode` and writes the comppiled
-// bytecode into `out`.
-// Parent and child compilers share the same parser. All other state is independent.
-// `parent` and `out` must remain valid until `compiler_deinit()` is called.
-static void compiler_init_child(compiler *compiler_, compiler *parent, enum compiler_mode mode,
-                                struct bytecode_chunk *out)
-{
-    compiler_init(compiler_, parent->_vm, parent->_parser, out);
-    compiler_->_mode = mode;
 }
 
 // Frees the memory associated with `compiler`.
@@ -649,6 +637,54 @@ static void compiler_finish_compiling_loop_jump_stmt(compiler *compiler,
     compiler_emit_pops(compiler, locals_declared_before_stmt, stmt.line);
 }
 
+// Type of function being compiled.
+enum function_type {
+    FUNCTION_TYPE_FUNCTION = COMPILER_MODE_FUNCTION, // Regular function
+};
+
+// Compiles and returns the function whose parameters (including opening parenthesis) start at the
+// current token. Returns `NULL` if there was an error.
+// The first `name_len` bytes of `name` are copied to populate the function's name.
+static struct object_function *compiler_compile_fun(compiler *compiler, enum function_type type,
+                                                    const char *name, size_t name_len)
+{
+    struct bytecode_chunk body;
+    bytecode_chunk_init(&body);
+    struct compiler body_compiler;
+    compiler_init(&body_compiler, compiler->_vm, compiler->_parser, &body);
+    // All function_type members are equal to their equivalent compiler_mode
+    body_compiler._mode = (enum compiler_mode)type;
+
+    argument_count arity = 0;
+    parser_expect(body_compiler._parser, TOKEN_LEFT_PAREN);
+    if (!PARSER_MATCH(body_compiler._parser, TOKEN_RIGHT_PAREN)) {
+        do {
+            arity++;
+            struct token param = body_compiler._parser->token;
+            if (!parser_expectf(body_compiler._parser, TOKEN_IDENT, "expected parameter name"))
+                goto out_body_compiler_deinit;
+            compiler_declare_variable(&body_compiler, param);
+        } while (PARSER_MATCH(body_compiler._parser, TOKEN_COMMA));
+        parser_expect(body_compiler._parser, TOKEN_RIGHT_PAREN);
+    }
+    compiler_compile_block(&body_compiler);
+    if (body_compiler._last_opcode != OP_RETURN) {
+        compiler_emit_opcode(&body_compiler, OP_NIL, body_compiler._parser->prev_token.line);
+        compiler_emit_opcode(&body_compiler, OP_RETURN, body_compiler._parser->prev_token.line);
+    }
+
+    struct object_function *function =
+        object_function_new(compiler->_vm, name, name_len, arity, body);
+#ifdef DEBUG_PRINT_BYTECODE
+    disassemble(&function->body, function->name->data);
+#endif
+    return function;
+
+out_body_compiler_deinit:
+    compiler_deinit(&body_compiler);
+    return NULL;
+}
+
 // Precedence levels of the different operators, ordered by increasing precedence.
 enum precedence_level {
     // Default value used when a precedence level is expected but none are applicable
@@ -734,6 +770,21 @@ static void compiler_compile_keyword_literal_expr(compiler *compiler, enum prece
         return;
     }
     compiler_emit_opcode(compiler, instruction, compiler->_parser->prev_token.line);
+}
+
+// `expr_compiler` for a function expression.
+static void compiler_compile_fun_expr(compiler *compiler, enum precedence_level level)
+{
+    (void)level;
+    line_number line = compiler->_parser->token.line;
+    parser_expect(compiler->_parser, TOKEN_FUN);
+    const char name[] = "(anonymous)";
+    struct object_function *function =
+        compiler_compile_fun(compiler, FUNCTION_TYPE_FUNCTION, name, sizeof(name));
+    if (function == NULL)
+        return;
+    compiler_emit_opcode(compiler, OP_CONSTANT, line);
+    compiler_emit_constant_index(compiler, function_value(function), line);
 }
 
 // `expr_compiler` for an identifier expression.
@@ -835,10 +886,12 @@ static void compiler_compile_unary_expr(compiler *compiler, enum precedence_leve
 static expr_compiler expr_compiler_for_prefix(enum token_type type)
 {
     switch (type) {
-    case TOKEN_NIL:
     case TOKEN_TRUE:
     case TOKEN_FALSE:
+    case TOKEN_NIL:
         return compiler_compile_keyword_literal_expr;
+    case TOKEN_FUN:
+        return compiler_compile_fun_expr;
     case TOKEN_IDENT:
         return compiler_compile_ident_expr;
     case TOKEN_STRING:
@@ -1063,51 +1116,22 @@ static void compiler_compile_var_decl(compiler *compiler)
 
 // Emits the bytecode for the function declaration starting at the current token and advances the
 // compiler past it.
-static void compiler_compile_fun_decl(compiler *compiler_)
+static void compiler_compile_fun_decl(compiler *compiler)
 {
-    line_number line = compiler_->_parser->token.line;
-    parser_expect(compiler_->_parser, TOKEN_FUN);
-    struct token name = compiler_->_parser->token;
-    if (!parser_expectf(compiler_->_parser, TOKEN_IDENT, "expected function name"))
+    line_number line = compiler->_parser->token.line;
+    parser_expect(compiler->_parser, TOKEN_FUN);
+    struct token name = compiler->_parser->token;
+    if (!parser_expectf(compiler->_parser, TOKEN_IDENT, "expected function name"))
         return;
-    compiler_declare_variable(compiler_, name);
-
-    struct bytecode_chunk body;
-    bytecode_chunk_init(&body);
-    compiler fun_compiler;
-    compiler_init_child(&fun_compiler, compiler_, COMPILER_MODE_FUNCTION, &body);
-
-    argument_count arity = 0;
-    parser_expect(fun_compiler._parser, TOKEN_LEFT_PAREN);
-    if (!PARSER_MATCH(fun_compiler._parser, TOKEN_RIGHT_PAREN)) {
-        do {
-            arity++;
-            struct token param = fun_compiler._parser->token;
-            if (!parser_expectf(fun_compiler._parser, TOKEN_IDENT, "expected parameter name"))
-                goto out_fun_compiler_deinit;
-            compiler_declare_variable(&fun_compiler, param);
-        } while (PARSER_MATCH(fun_compiler._parser, TOKEN_COMMA));
-        parser_expect(fun_compiler._parser, TOKEN_RIGHT_PAREN);
-    }
-    compiler_compile_block(&fun_compiler);
-    if (fun_compiler._last_opcode != OP_RETURN) {
-        compiler_emit_opcode(&fun_compiler, OP_NIL, fun_compiler._parser->prev_token.line);
-        compiler_emit_opcode(&fun_compiler, OP_RETURN, fun_compiler._parser->prev_token.line);
-    }
-
+    compiler_declare_variable(compiler, name);
     struct object_function *function =
-        object_function_new(compiler_->_vm, name.start, name.len, arity, body);
-    compiler_emit_opcode(compiler_, OP_CONSTANT, line);
-    compiler_emit_constant_index(compiler_, function_value(function), line);
+        compiler_compile_fun(compiler, FUNCTION_TYPE_FUNCTION, name.start, name.len);
+    if (function == NULL)
+        return;
+    compiler_emit_opcode(compiler, OP_CONSTANT, line);
+    compiler_emit_constant_index(compiler, function_value(function), line);
     bool is_final = false;
-    compiler_emit_variable_definition(compiler_, name, is_final);
-
-#ifdef DEBUG_PRINT_BYTECODE
-    disassemble(&body, function->name->data);
-#endif
-
-out_fun_compiler_deinit:
-    compiler_deinit(&fun_compiler);
+    compiler_emit_variable_definition(compiler, name, is_final);
 }
 
 // Emits the bytecode for the declaration starting at the current token and advances the compiler
@@ -1120,8 +1144,10 @@ static void compiler_compile_decl(compiler *compiler)
         compiler_compile_var_decl(compiler);
         break;
     case TOKEN_FUN:
-        compiler_compile_fun_decl(compiler);
-        break;
+        if (compiler->_parser->next_token.type == TOKEN_IDENT) {
+            compiler_compile_fun_decl(compiler);
+            break;
+        }
     default:
         compiler_compile_stmt(compiler);
         break;
