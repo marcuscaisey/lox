@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dynamic_array.h"
@@ -69,7 +70,10 @@ void map_init(map *map, bool is_vm_managed)
 
 void map_deinit(vm *vm, map *map)
 {
-    vm_free(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
+    if (map->_is_vm_managed)
+        vm_free(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
+    else
+        free(map->_entries);
     map_init(map, map->_is_vm_managed);
 }
 
@@ -147,7 +151,10 @@ void map_grow(vm *vm, map *map, size_t new_cap)
         map->_count++;
     }
 
-    vm_free(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
+    if (map->_is_vm_managed)
+        vm_free(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
+    else
+        free(map->_entries);
 
     map->_entries = new_entries;
     map->_cap = new_cap;
