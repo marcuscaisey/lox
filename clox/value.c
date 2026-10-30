@@ -194,13 +194,13 @@ char *value_string(value value)
     case VALUE_FUNCTION: {
         struct object_function *function = value_as_function(value);
         char *out;
-        xasprintf(&out, "[function %s]", function->name->data);
+        xasprintf(&out, "[function %s]", function->name);
         return out;
     }
     case VALUE_NATIVE_FUNCTION: {
         struct object_native_function *function = value_as_native_function(value);
         char *out;
-        xasprintf(&out, "[built-in function %s]", function->name->data);
+        xasprintf(&out, "[built-in function %s]", function->name);
         return out;
     }
     }

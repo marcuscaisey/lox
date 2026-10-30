@@ -60,3 +60,11 @@ char *xstrdup(const char *s)
         exitf("clox: %s\n", strerror(errno));
     return result;
 }
+
+char *xstrndup(const char *s, size_t n)
+{
+    char *result = strndup(s, n);
+    if (result == NULL)
+        exitf("clox: %s\n", strerror(errno));
+    return result;
+}

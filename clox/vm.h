@@ -13,7 +13,7 @@
 // Runtime representation of a frame as defined in bytecode.h.
 struct frame {
     // Name of the callable if this frame was created to execute a callable, otherwise `NULL`
-    struct object_string *name;
+    char *name;
     // Internal fields below, do not use.
     const struct bytecode_chunk *_chunk; // Bytecode chunk being executed
     uint8_t *_ip; // Pointer to the next instruction to be executed (instruction pointer)

@@ -2,6 +2,7 @@
 #define CLOX_STRINGS_H
 
 #include <stdarg.h>
+#include <stddef.h>
 
 // Works like `sprintf()`, except a new string is allocated for the output and stored in `*out`.
 // The caller is responsible for freeing the string pointed to by `*out` with `free()` when it's no
@@ -20,6 +21,9 @@ __attribute__((format(printf, 2, 0))) int vasprintf(char **out, const char *form
 __attribute__((format(printf, 2, 0))) void xvasprintf(char **out, const char *format, va_list args);
 
 // Works like `strdup()`, except it exits the program on error.
-char *xstrdup(const char *s1);
+char *xstrdup(const char *s);
+
+// Works like `strdup()`, except it exits the program on error.
+char *xstrndup(const char *s, size_t n);
 
 #endif

@@ -8,7 +8,7 @@
 
 // Represents a builtin Lox function.
 struct builtin_function {
-    const char *name; // Null-terminated string
+    const char *name;
     argument_count arity; // Number of parameters that the function expects
     native_function_body body;
 };

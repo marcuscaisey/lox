@@ -5,10 +5,10 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "line_number.h"
-#include "object.h"
 #include "vm.h"
 
 // Concrete styles. These are used to build semantic styles.
@@ -154,9 +154,10 @@ void print_stack_trace(const struct frame *frames, size_t n, const char *source)
         if (lines[i] > max_line)
             max_line = lines[i];
         if (frame.name != NULL) {
-            names[i] = frame.name->data;
-            if ((int)frame.name->len > max_name_len)
-                max_name_len = frame.name->len;
+            names[i] = frame.name;
+            int name_len = strlen(frame.name);
+            if (name_len > max_name_len)
+                max_name_len = name_len;
         } else {
             names[i] = NULL;
         }

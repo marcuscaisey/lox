@@ -118,7 +118,9 @@ void vm_init(vm *vm)
         struct builtin_function function = builtin_functions[i];
         struct object_native_function *function_object = object_native_function_new(
             vm, function.name, strlen(function.name), function.arity, function.body);
-        map_set(vm, &vm->_globals, string_value(function_object->name),
+        struct object_string *name_object =
+            object_string_copy(vm, function.name, strlen(function.name));
+        map_set(vm, &vm->_globals, string_value(name_object),
                 native_function_value(function_object));
     }
 }
@@ -617,10 +619,9 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             if (arg_count != arity) {
                 const char *were_was = (arg_count) == 1 ? "was" : "were";
                 const char *argument_suffix = arity == 1 ? "" : "s";
-                struct object_string *name = function != NULL ? function->name :
-                                                                native_function->name;
-                vm_report_errorf(vm, source, "%s() accepts %d argument%s but %d %s given",
-                                 name->data, arity, argument_suffix, arg_count, were_was);
+                char *name = function != NULL ? function->name : native_function->name;
+                vm_report_errorf(vm, source, "%s() accepts %d argument%s but %d %s given", name,
+                                 arity, argument_suffix, arg_count, were_was);
                 goto out_error;
             }
 

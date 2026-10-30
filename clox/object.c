@@ -5,6 +5,7 @@
 
 #include "bytecode.h"
 #include "map.h"
+#include "strings.h"
 #include "value.h"
 #include "vm.h"
 #include "vm_memory.h"
@@ -118,7 +119,7 @@ struct object_function *object_function_new(vm *vm, const char *name, size_t nam
                                             argument_count arity, struct bytecode_chunk body)
 {
     struct object_function *function = OBJECT_NEW(vm, object_function, _OBJECT_FUNCTION);
-    function->name = object_string_copy(vm, name, name_len);
+    function->name = xstrndup(name, name_len);
     function->arity = arity;
     function->body = body;
     return function;
@@ -140,7 +141,7 @@ struct object_native_function *object_native_function_new(vm *vm, const char *na
 {
     struct object_native_function *function =
         OBJECT_NEW(vm, object_native_function, _OBJECT_NATIVE_FUNCTION);
-    function->name = object_string_copy(vm, name, name_len);
+    function->name = xstrndup(name, name_len);
     function->arity = arity;
     function->body = body;
     return function;

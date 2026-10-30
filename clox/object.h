@@ -56,7 +56,7 @@ struct object_string *value_as_string(value value);
 // Must be created with `object_function_new()` and freed with `object_free()`.
 struct object_function {
     struct object _object; // Internal field, do not use.
-    struct object_string *name;
+    char *name;
     argument_count arity; // Number of parameters that the function expects
     struct bytecode_chunk body; // Instructions to execute the function's body
 };
@@ -83,7 +83,7 @@ typedef value (*native_function_body)(vm *vm, value *args, char **error_msg);
 // Must be created with `object_native_function_new()` and freed with `object_free()`.
 struct object_native_function {
     struct object _object; // Internal field, do not use.
-    struct object_string *name;
+    char *name;
     native_function_body body;
     argument_count arity; // Number of parameters that the function expects
 };
