@@ -1,0 +1,6 @@
+final a = 1;
+print a; // prints: 1
+var a = 2; // lint hint: 'a' has already been declared
+print a; // prints: 2
+a = 3;
+print a; // prints: 3

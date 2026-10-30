@@ -50,6 +50,7 @@ func (e *globalEnvironment) Child() environment {
 
 func (e *globalEnvironment) Declare(ident *ast.Ident) environment {
 	e.values[ident.String()] = loxNil{}
+	e.finalVars[ident.String()] = false
 	return e
 }
 

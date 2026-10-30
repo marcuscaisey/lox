@@ -320,6 +320,8 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             vm_stack_pop(vm);
             if (opcode == OP_DEFINE_GLOBAL_FINAL)
                 map_set(vm, &vm->_global_final_vars, name, nil_value);
+            else
+                map_delete(&vm->_global_final_vars, name); // May have previously been defined final
             break;
         }
 

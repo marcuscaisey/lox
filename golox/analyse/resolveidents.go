@@ -312,6 +312,7 @@ func (r *identResolver) declareIdent(stmt ast.Decl) {
 	if scope := r.scopes.Peek(); scope.IsDeclared(ident.String()) {
 		typ := loxerr.Fatal
 		if r.inGlobalScope() {
+			scope.Declare(stmt)
 			typ = loxerr.Hint
 		}
 		r.addErrorf(ident, typ, "%m has already been declared", ident)

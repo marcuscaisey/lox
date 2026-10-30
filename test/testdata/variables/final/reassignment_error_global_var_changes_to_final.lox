@@ -1,0 +1,7 @@
+var a = 1;
+print a; // prints: 1
+final a = 2; // lint hint: 'a' has already been declared
+print a; // prints: 2
+// error: final variable 'a' can't be reassigned
+// lint warning: final variable 'a' can't be reassigned
+a = 3;
