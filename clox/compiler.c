@@ -17,6 +17,7 @@
 #include "object.h"
 #include "strings.h"
 #include "value.h"
+#include "vm.h"
 
 // Mode that a compiler can operate in.
 enum compiler_mode {
@@ -300,6 +301,10 @@ static void compiler_deinit(compiler *compiler)
 {
     map_deinit(compiler->_vm, &compiler->_constant_indexes);
     free(compiler->_locals);
+    if (compiler->_in_loop) {
+        free(compiler->_loop_state.break_stmts);
+        free(compiler->_loop_state.continue_stmts);
+    }
 }
 
 // Returns the offset which will be written to next in the output bytecode chunk.
@@ -531,9 +536,9 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
                                  (int)ident.len, ident.start);
     }
     stack_index index = compiler->_locals_count;
-    DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
     if (index > MAX_STACK_INDEX)
         exitf("maximum number of local variables (%d) used", MAX_STACK_INDEX + 1);
+    DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
     struct local *local = &compiler->_locals[compiler->_locals_count++];
     local->name = ident.start;
     local->name_len = ident.len;
@@ -1266,6 +1271,7 @@ static void compiler_compile_switch_stmt(compiler *compiler)
 
     for (size_t i = 0; i < end_jumps_len; i++)
         compiler_set_forward_jump_offset(compiler, end_jumps[i]);
+    free(end_jumps);
 }
 
 // Emits the bytecode for the while statement starting at the current token and advances the
