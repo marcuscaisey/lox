@@ -1,6 +1,7 @@
 #include "bytecode.h"
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -8,6 +9,7 @@
 #include "dynamic_array.h"
 #include "line_number.h"
 #include "value.h"
+#include "vm_memory.h"
 
 const char *instruction_name(enum opcode opcode)
 {
@@ -85,7 +87,7 @@ const char *instruction_name(enum opcode opcode)
     }
 }
 
-void bytecode_chunk_init(struct bytecode_chunk *chunk)
+void bytecode_chunk_init(struct bytecode_chunk *chunk, bool vm_managed)
 {
     chunk->len = 0;
     chunk->_cap = 0;
@@ -95,32 +97,55 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk)
     chunk->constants_len = 0;
     chunk->_constants_cap = 0;
     chunk->max_stack_depth = 0;
+    chunk->_is_vm_managed = vm_managed;
 }
 
-void bytecode_chunk_deinit(struct bytecode_chunk *chunk)
+void bytecode_chunk_deinit(vm *vm, struct bytecode_chunk *chunk)
 {
-    free(chunk->instructions);
-    free(chunk->constants);
-    bytecode_chunk_init(chunk);
+    if (chunk->_is_vm_managed) {
+        vm_free(vm, chunk->instructions, DYNAMIC_ARRAY_SIZE(chunk->instructions, chunk->_cap));
+        vm_free(vm, chunk->offset_lines, DYNAMIC_ARRAY_SIZE(chunk->offset_lines, chunk->_cap));
+        vm_free(vm, chunk->constants, DYNAMIC_ARRAY_SIZE(chunk->constants, chunk->_constants_cap));
+    } else {
+        free(chunk->instructions);
+        free(chunk->offset_lines);
+        free(chunk->constants);
+    }
+    bytecode_chunk_init(chunk, chunk->_is_vm_managed);
 }
 
-void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, line_number line)
+void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, line_number line)
 {
     size_t original_cap = chunk->_cap;
-    DYNAMIC_ARRAY_GROW(chunk->instructions, chunk->_cap, chunk->len + 1);
-    // DYNAMIC_ARRAY_GROW might modify _cap so we need to pass in the original value to ensure that
-    // we'll grow _offset_lines as well.
-    DYNAMIC_ARRAY_GROW(chunk->offset_lines, original_cap, chunk->len + 1);
+    size_t target_len = chunk->len + 1;
+    if (chunk->_is_vm_managed) {
+        VM_DYNAMIC_ARRAY_GROW(vm, chunk->instructions, chunk->_cap, target_len);
+        if (chunk->_cap > original_cap) {
+            chunk->offset_lines = vm_realloc(vm, chunk->offset_lines,
+                                             DYNAMIC_ARRAY_SIZE(chunk->offset_lines, original_cap),
+                                             DYNAMIC_ARRAY_SIZE(chunk->offset_lines, chunk->_cap));
+        }
+    } else {
+        DYNAMIC_ARRAY_GROW(chunk->instructions, chunk->_cap, target_len);
+        if (chunk->_cap > original_cap) {
+            chunk->offset_lines =
+                realloc(chunk->offset_lines, DYNAMIC_ARRAY_SIZE(chunk->offset_lines, chunk->_cap));
+        }
+    }
     int offset = chunk->len;
     chunk->instructions[offset] = byte;
     chunk->offset_lines[offset] = line;
     chunk->len++;
 }
 
-constant_index bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value)
+constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value)
 {
     constant_index index = chunk->constants_len;
-    DYNAMIC_ARRAY_GROW(chunk->constants, chunk->_constants_cap, chunk->constants_len + 1);
+    size_t target_len = chunk->constants_len + 1;
+    if (chunk->_is_vm_managed)
+        VM_DYNAMIC_ARRAY_GROW(vm, chunk->constants, chunk->_constants_cap, target_len);
+    else
+        DYNAMIC_ARRAY_GROW(chunk->constants, chunk->_constants_cap, target_len);
     chunk->constants[chunk->constants_len++] = value;
     return index;
 }

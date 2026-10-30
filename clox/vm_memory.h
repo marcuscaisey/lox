@@ -16,6 +16,6 @@ void *vm_malloc(vm *vm, size_t size);
 void *vm_realloc(vm *vm, void *p, size_t current_size, size_t target_size);
 
 // Frees the allocation of `size` bytes of VM managed memory pointed to by `p`.
-void vm_mfree(vm *vm, void *p, size_t size);
+void vm_free(vm *vm, void *p, size_t size);
 
 #endif

@@ -22,6 +22,8 @@
 #include "line_number.h"
 #include "value.h"
 
+typedef struct vm vm;
+
 typedef int32_t constant_index;
 
 #define MAX_CONSTANT_INDEX ((1 << 24) - 1)
@@ -198,18 +200,22 @@ struct bytecode_chunk {
     size_t _constants_cap;
     // Maximum number of values that will be on the value stack during execution
     stack_depth max_stack_depth;
+    bool _is_vm_managed; // Whether the VM manages dynamic memory allocation for this chunk
 };
 
 // Initialises `chunk` for use.
-void bytecode_chunk_init(struct bytecode_chunk *chunk);
+// `is_vm_managed` determines whether the VM manages dynamic memory allocation for `chunk`. If a
+// chunk is not VM managed, then `NULL` can be passed for the `vm *` parameter to all
+// `bytecode_chunk_*()` functions.
+void bytecode_chunk_init(struct bytecode_chunk *chunk, bool is_vm_managed);
 
 // Frees the memory associated with `chunk`.
-void bytecode_chunk_deinit(struct bytecode_chunk *chunk);
+void bytecode_chunk_deinit(vm *vm, struct bytecode_chunk *chunk);
 
-// Writes `byte` into the chunk's instructions. `line` is the line number corresponding to the byte.
-void bytecode_chunk_write(struct bytecode_chunk *chunk, uint8_t byte, line_number line);
+// Writes `byte` associated with `line` into the chunk's instructions.
+void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, line_number line);
 
 // Stores `value` in the chunk's constants and returns its index.
-constant_index bytecode_chunk_add_constant(struct bytecode_chunk *chunk, value value);
+constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value);
 
 #endif

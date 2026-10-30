@@ -16,19 +16,19 @@ void object_free(vm *vm, struct object *object)
     switch (object->_type) {
     case _OBJECT_STRING: {
         struct object_string *string = (struct object_string *)object;
-        vm_mfree(vm, (void *)string->data, string->len);
-        vm_mfree(vm, string, sizeof(struct object_string));
+        vm_free(vm, (void *)string->data, string->len);
+        vm_free(vm, string, sizeof(struct object_string));
         break;
     }
     case _OBJECT_FUNCTION: {
         struct object_function *function = (struct object_function *)object;
-        bytecode_chunk_deinit(&function->body);
-        vm_mfree(vm, function, sizeof(struct object_function));
+        bytecode_chunk_deinit(vm, &function->body);
+        vm_free(vm, function, sizeof(struct object_function));
         break;
     }
     case _OBJECT_NATIVE_FUNCTION: {
         struct object_native_function *function = (struct object_native_function *)object;
-        vm_mfree(vm, function, sizeof(struct object_function));
+        vm_free(vm, function, sizeof(struct object_function));
         break;
     }
     }
@@ -88,7 +88,7 @@ struct object_string *object_string_take(vm *vm, char *data, size_t len)
     hash_value hash = hash_string(data, len);
     struct object_string *interned_string = map_get_string_key(&vm->_strings, data, len, hash);
     if (interned_string != NULL) {
-        vm_mfree(vm, data, len);
+        vm_free(vm, data, len);
         return interned_string;
     }
     return object_string_new(vm, data, len, hash);

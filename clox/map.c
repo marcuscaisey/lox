@@ -72,7 +72,7 @@ void map_init(map *map)
 
 void map_deinit(vm *vm, map *map)
 {
-    vm_mfree(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
+    vm_free(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
     map_init(map);
 }
 
@@ -146,32 +146,32 @@ void map_grow(vm *vm, map *map, size_t new_cap)
         map->_count++;
     }
 
-    vm_mfree(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
+    vm_free(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
 
     map->_entries = new_entries;
     map->_cap = new_cap;
 }
 
 // Number of entries that space will be allocated for for the first time.
-#define INITIAL_CAPACITY 8
+#define MAP_INITIAL_CAPACITY 8
 
 // Load factor is the ratio between the map's count and capacity. When the load factor gets above
 // this number, the array needs to be grown.
 // Split into numerator and denominator so that they can be used in static assertions.
-#define MAX_LOAD_FACTOR_NUM 3
-#define MAX_LOAD_FACTOR_DENOM 4
-#define MAX_LOAD_FACTOR ((double)MAX_LOAD_FACTOR_NUM / MAX_LOAD_FACTOR_DENOM)
+#define MAP_MAX_LOAD_FACTOR_NUM 3
+#define MAP_MAX_LOAD_FACTOR_DENOM 4
+#define MAP_MAX_LOAD_FACTOR ((double)MAP_MAX_LOAD_FACTOR_NUM / MAP_MAX_LOAD_FACTOR_DENOM)
 
 // The factor that the map's capacity is grown by once the max load factor is reached.
 // Split into numerator and denominator so that they can be used in static assertions.
-#define GROWTH_FACTOR_NUM 2
-#define GROWTH_FACTOR_DENOM 1
-#define GROWTH_FACTOR ((double)GROWTH_FACTOR_NUM / GROWTH_FACTOR_DENOM)
+#define MAP_GROWTH_FACTOR_NUM 2
+#define MAP_GROWTH_FACTOR_DENOM 1
+#define MAP_GROWTH_FACTOR ((double)MAP_GROWTH_FACTOR_NUM / MAP_GROWTH_FACTOR_DENOM)
 
 bool map_set(vm *vm, map *map, value key, value value)
 {
-    if ((map->_count + 1) > map->_cap * MAX_LOAD_FACTOR) {
-        size_t new_cap = map->_cap > 0 ? map->_cap * GROWTH_FACTOR : INITIAL_CAPACITY;
+    if ((map->_count + 1) > map->_cap * MAP_MAX_LOAD_FACTOR) {
+        size_t new_cap = map->_cap > 0 ? map->_cap * MAP_GROWTH_FACTOR : MAP_INITIAL_CAPACITY;
         map_grow(vm, map, new_cap);
     }
     struct _entry *entry = find_entry(map->_entries, map->_cap, key);
@@ -224,7 +224,8 @@ bool map_get(map *map, value key, value *out)
 // For 1:
 //   If there's a slot available for every entry then we have N <= C <=> N/C <= 1
 //   N/C is the load factor, so we need L <= 1
-_Static_assert(MAX_LOAD_FACTOR_NUM <= MAX_LOAD_FACTOR_DENOM, "MAX_LOAD_FACTOR must be <= 1");
+_Static_assert(MAP_MAX_LOAD_FACTOR_NUM <= MAP_MAX_LOAD_FACTOR_DENOM,
+               "MAP_MAX_LOAD_FACTOR must be <= 1");
 //
 // For 2:
 //   There's space for a new entry if N + 1 <= C
@@ -232,16 +233,17 @@ _Static_assert(MAX_LOAD_FACTOR_NUM <= MAX_LOAD_FACTOR_DENOM, "MAX_LOAD_FACTOR mu
 //   So we need N + 1 <= GC <=> N/C + 1/C <= G
 //   N <= C, so in the worst case we'll have 1 + 1/C <= G
 //   1 + 1/C decreases as C increases, so it's enough that 1 + 1/I <= G <=> I + 1 <= GI
-_Static_assert(INITIAL_CAPACITY *GROWTH_FACTOR_DENOM + GROWTH_FACTOR_DENOM <=
-                   GROWTH_FACTOR_NUM * INITIAL_CAPACITY,
-               "INITIAL_CAPACTIY + 1 must be <= GROWTH_FACTOR * INITIAL_CAPACITY");
+_Static_assert(MAP_INITIAL_CAPACITY *MAP_GROWTH_FACTOR_DENOM + MAP_GROWTH_FACTOR_DENOM <=
+                   MAP_GROWTH_FACTOR_NUM * MAP_INITIAL_CAPACITY,
+               "MAP_INITIAL_CAPACITY + 1 must be <= MAP_GROWTH_FACTOR * MAP_INITIAL_CAPACITY");
 //
 // For 3:
 //   After growing the array, the load factor is (N + 1)/CG
 //   So we need (N + 1)/CG <= L
 //   N <= C, so in the worst case we'll have (C + 1)/CG <= L <=> 1/G + 1/CG <= L
 //   1/G + 1/CG decreases as C increases, so it's enough that 1/G + 1/IG <= L <=> I + 1 <= LGI
-_Static_assert(INITIAL_CAPACITY * GROWTH_FACTOR_DENOM * MAX_LOAD_FACTOR_DENOM +
-                       GROWTH_FACTOR_DENOM * MAX_LOAD_FACTOR_DENOM <=
-                   MAX_LOAD_FACTOR_NUM * GROWTH_FACTOR_NUM * INITIAL_CAPACITY,
-               "INITIAL_CAPACITY + 1 must be <= MAX_LOAD_FACTOR * GROWTH_FACTOR * INITIAL_CAPACITY");
+_Static_assert(
+    MAP_INITIAL_CAPACITY * MAP_GROWTH_FACTOR_DENOM * MAP_MAX_LOAD_FACTOR_DENOM +
+            MAP_GROWTH_FACTOR_DENOM * MAP_MAX_LOAD_FACTOR_DENOM <=
+        MAP_MAX_LOAD_FACTOR_NUM * MAP_GROWTH_FACTOR_NUM * MAP_INITIAL_CAPACITY,
+    "MAP_INITIAL_CAPACITY + 1 must be <= MAP_MAX_LOAD_FACTOR * MAP_GROWTH_FACTOR * MAP_INITIAL_CAPACITY");

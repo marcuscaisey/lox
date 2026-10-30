@@ -313,7 +313,7 @@ static bytecode_offset compiler_bytecode_offset(const compiler *compiler)
 // Writes `opcode` corresponding to `line` to the output bytecode chunk.
 static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_number line)
 {
-    bytecode_chunk_write(compiler->_out, opcode, line);
+    bytecode_chunk_write(compiler->_vm, compiler->_out, opcode, line);
     compiler->_last_opcode = opcode;
     switch (opcode) {
     case OP_CONSTANT:
@@ -368,7 +368,7 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_nu
 // Writes `operand` corresponding to `line` to the output bytecode chunk.
 static void compiler_emit_operand(const compiler *compiler, uint8_t operand, line_number line)
 {
-    bytecode_chunk_write(compiler->_out, operand, line);
+    bytecode_chunk_write(compiler->_vm, compiler->_out, operand, line);
 }
 
 // Ensures that value `v` corresponding to `line` is in the output bytecode chunk's constants,
@@ -380,7 +380,7 @@ static void compiler_emit_constant_index(compiler *compiler, value v, line_numbe
     if (map_get(&compiler->_constant_indexes, v, &index_value)) {
         index = value_as_number(index_value);
     } else {
-        index = bytecode_chunk_add_constant(compiler->_out, v);
+        index = bytecode_chunk_add_constant(compiler->_vm, compiler->_out, v);
         if (index > MAX_CONSTANT_INDEX)
             exitf("maximum number of constants (%d) used", MAX_CONSTANT_INDEX + 1);
         map_set(compiler->_vm, &compiler->_constant_indexes, v, number_value(index));
@@ -651,7 +651,7 @@ static struct object_function *compiler_compile_fun(compiler *compiler, enum fun
                                                     const char *name, size_t name_len)
 {
     struct bytecode_chunk body;
-    bytecode_chunk_init(&body);
+    bytecode_chunk_init(&body, true);
     struct compiler body_compiler;
     compiler_init(&body_compiler, compiler->_vm, compiler->_parser, &body);
     // All function_type members are equal to their equivalent compiler_mode

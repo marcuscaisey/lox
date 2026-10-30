@@ -17,7 +17,7 @@ void *vm_realloc(vm *vm, void *p, size_t current_size, size_t target_size)
     return xrealloc(p, target_size);
 }
 
-void vm_mfree(vm *vm, void *p, size_t size)
+void vm_free(vm *vm, void *p, size_t size)
 {
     (void)vm;
     (void)size;

@@ -679,7 +679,8 @@ bool vm_interpret(vm *vm, const char *source)
     bool success = true;
 
     struct bytecode_chunk chunk;
-    bytecode_chunk_init(&chunk);
+    // The lifetime of this chunk is this function so we don't need the VM to manage it
+    bytecode_chunk_init(&chunk, false);
 
     if (!compile(vm, source, &chunk)) {
         success = false;
@@ -689,6 +690,6 @@ bool vm_interpret(vm *vm, const char *source)
     success = vm_execute(vm, &chunk, source);
 
 out_chunk_deinit:
-    bytecode_chunk_deinit(&chunk);
+    bytecode_chunk_deinit(NULL, &chunk);
     return success;
 }
