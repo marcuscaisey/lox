@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "line_number.h"
+#include "object.h"
 #include "vm.h"
 
 // Concrete styles. These are used to build semantic styles.

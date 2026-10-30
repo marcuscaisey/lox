@@ -1,0 +1,8 @@
+[
+  { "include": ["<_time.h>", "private", "<time.h>", "public"] },
+  { "include": ["<_ctype.h>", "private", "<ctype.h>", "public"] },
+  { "include": ["<_stdio.h>", "private", "<stdio.h>", "public"] },
+  { "include": ["<_stdlib.h>", "private", "<stdlib.h>", "public"] },
+  { "include": ["<_string.h>", "private", "<string.h>", "public"] },
+]
+# vim: filetype=yaml

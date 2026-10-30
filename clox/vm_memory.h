@@ -1,7 +1,9 @@
 #ifndef CLOX_VM_MEMORY_H
 #define CLOX_VM_MEMORY_H
 
-#include "vm.h"
+#include <stddef.h>
+
+typedef struct vm vm;
 
 // Allocates `size` bytes of VM managed memory and returns a pointer to the allocated memory.
 // The process exits on allocation failure.

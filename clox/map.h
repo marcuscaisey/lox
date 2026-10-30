@@ -1,12 +1,11 @@
 #ifndef CLOX_MAP_H
 #define CLOX_MAP_H
 
+#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 #include "value.h"
-
-typedef struct vm vm;
+#include "vm_memory.h"
 
 // Map from `value` keys to `value` values.
 // Must be initialised with `map_init()` before use and deinitialised with `map_deinit()` after use.

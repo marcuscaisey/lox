@@ -1,12 +1,11 @@
 #ifndef CLOX_LEXER_H
 #define CLOX_LEXER_H
 
-// Types of token emitted by the lexer.
 #include <stddef.h>
-#include <stdint.h>
 
 #include "line_number.h"
 
+// Types of token emitted by the lexer.
 enum token_type {
     TOKEN_ERROR,
     TOKEN_EOF,

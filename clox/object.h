@@ -2,12 +2,10 @@
 #define CLOX_OBJECT_H
 
 #include <stddef.h>
-#include <stdint.h>
 
 #include "bytecode.h"
 #include "value.h"
-
-typedef struct vm vm;
+#include "vm_memory.h"
 
 // Objects represent dynamically allocated Lox values whose lifetime is managed by the VM.
 // This type contains the data which is common to all object types.

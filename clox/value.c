@@ -1,13 +1,9 @@
 #include "value.h"
 
 #include <float.h>
-#include <limits.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "dynamic_array.h"
 #include "object.h"
 #include "strings.h"
 

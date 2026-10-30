@@ -1,4 +1,4 @@
-.PHONY: clean objects FORCE test/skipped_tests.txt
+.PHONY: clean objects FORCE test/skipped_tests.txt iwyu
 
 BASE_BUILD_DIR := build
 CFLAGS := -std=c11 -Wall -Wextra -Wpedantic -Werror
@@ -69,3 +69,7 @@ test/skipped_tests.txt:
 		) \
 		| .Test \
 	' | sort > $@
+
+iwyu:
+	@iwyu_tool.py -p . --output-format clang -- -Xiwyu --mapping_file=iwyu.imp -Xiwyu --no_fwd_decls \
+		| sed -E '/^\s*$$/d'

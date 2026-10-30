@@ -1,6 +1,8 @@
 #ifndef CLOX_BUILTINS_H
 #define CLOX_BUILTINS_H
 
+#include <stddef.h>
+
 #include "bytecode.h"
 #include "object.h"
 

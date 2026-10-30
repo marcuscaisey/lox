@@ -2,7 +2,6 @@
 #define CLOX_VALUE_H
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
 // Type of a Lox value.

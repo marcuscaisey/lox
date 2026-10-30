@@ -11,6 +11,7 @@
 #include "object.h"
 #include "strings.h"
 #include "value.h"
+#include "vm_memory.h"
 
 value builtin_clock(vm *vm, value *args, char **error_msg)
 {

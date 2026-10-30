@@ -8,7 +8,6 @@
 #include "bytecode.h"
 #include "line_number.h"
 #include "map.h"
-#include "object.h"
 #include "value.h"
 
 // Runtime representation of a frame as defined in bytecode.h.

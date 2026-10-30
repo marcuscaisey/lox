@@ -16,13 +16,13 @@
 #ifndef CLOX_BYTECODE_H
 #define CLOX_BYTECODE_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "line_number.h"
 #include "value.h"
-
-typedef struct vm vm;
+#include "vm_memory.h"
 
 typedef int32_t constant_index;
 

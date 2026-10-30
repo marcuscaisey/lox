@@ -1,11 +1,7 @@
 #include "map.h"
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "dynamic_array.h"
