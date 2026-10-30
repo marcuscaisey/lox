@@ -109,9 +109,9 @@ void vm_init(vm *vm)
     vm->_stack_cap = 0;
     vm->_stack_top = NULL;
     vm->_objects = NULL;
-    map_init(&vm->_strings);
-    map_init(&vm->_globals);
-    map_init(&vm->_global_final_vars);
+    map_init(&vm->_strings, true); // Interned strings could become garbage so need VM to manage
+    map_init(&vm->_globals, false); // Lifetime is same as VM so no need for VM to manage
+    map_init(&vm->_global_final_vars, false); // Lifetime is same as VM so no need for VM to manage
     vm->_local_final_vars = NULL;
 
     for (size_t i = 0; i < builtin_functions_len; i++) {
@@ -679,8 +679,8 @@ bool vm_interpret(vm *vm, const char *source)
     bool success = true;
 
     struct bytecode_chunk chunk;
-    // The lifetime of this chunk is this function so we don't need the VM to manage it
-    bytecode_chunk_init(&chunk, false);
+
+    bytecode_chunk_init(&chunk, false); // Lifetime is this function so no need for VM to manage
 
     if (!compile(vm, source, &chunk)) {
         success = false;

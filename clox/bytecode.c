@@ -117,18 +117,17 @@ void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, li
 {
     size_t original_cap = chunk->_cap;
     size_t target_len = chunk->len + 1;
-    if (chunk->_is_vm_managed) {
+    if (chunk->_is_vm_managed)
         VM_DYNAMIC_ARRAY_GROW(vm, chunk->instructions, chunk->_cap, target_len);
-        if (chunk->_cap > original_cap) {
-            chunk->offset_lines = vm_realloc(vm, chunk->offset_lines,
-                                             DYNAMIC_ARRAY_SIZE(chunk->offset_lines, original_cap),
-                                             DYNAMIC_ARRAY_SIZE(chunk->offset_lines, chunk->_cap));
-        }
-    } else {
+    else
         DYNAMIC_ARRAY_GROW(chunk->instructions, chunk->_cap, target_len);
-        if (chunk->_cap > original_cap) {
-            chunk->offset_lines =
-                realloc(chunk->offset_lines, DYNAMIC_ARRAY_SIZE(chunk->offset_lines, chunk->_cap));
+    if (chunk->_cap > original_cap) {
+        size_t target_size = DYNAMIC_ARRAY_SIZE(chunk->offset_lines, chunk->_cap);
+        if (chunk->_is_vm_managed) {
+            size_t current_size = DYNAMIC_ARRAY_SIZE(chunk->offset_lines, original_cap);
+            chunk->offset_lines = vm_realloc(vm, chunk->offset_lines, current_size, target_size);
+        } else {
+            chunk->offset_lines = realloc(chunk->offset_lines, target_size);
         }
     }
     int offset = chunk->len;

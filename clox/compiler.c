@@ -287,7 +287,8 @@ static void compiler_init(compiler *compiler, vm *vm, struct parser *parser,
     compiler->_last_opcode = -1;
     compiler->_mode = COMPILER_MODE_SCRIPT;
     compiler->_scope_depth = 0;
-    map_init(&compiler->_constant_indexes);
+    // Lifetime is same as compiler so no need for VM to manage
+    map_init(&compiler->_constant_indexes, false);
     compiler->_locals = NULL;
     compiler->_locals_count = 0;
     compiler->_locals_cap = 0;

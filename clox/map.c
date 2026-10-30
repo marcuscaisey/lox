@@ -6,9 +6,9 @@
 
 #include "dynamic_array.h"
 #include "errors.h"
+#include "memory.h"
 #include "object.h"
 #include "value.h"
-#include "vm.h"
 #include "vm_memory.h"
 
 // Entry is what gets stored in the each slot of the array. The meanings of `key` and `value` depend
@@ -59,17 +59,18 @@ static bool is_tombstone(struct _entry entry)
     return values_are_equal(entry.key, none_value) && values_are_equal(entry.value, nil_value);
 }
 
-void map_init(map *map)
+void map_init(map *map, bool is_vm_managed)
 {
     map->_entries = NULL;
     map->_count = 0;
     map->_cap = 0;
+    map->_is_vm_managed = is_vm_managed;
 }
 
 void map_deinit(vm *vm, map *map)
 {
     vm_free(vm, map->_entries, DYNAMIC_ARRAY_SIZE(map->_entries, map->_cap));
-    map_init(map);
+    map_init(map, map->_is_vm_managed);
 }
 
 // Returns the entry corresponding with `key`. `entries` must be non-empty.
@@ -127,10 +128,14 @@ struct object_string *map_get_string_key(map *map, const char *data, size_t len,
 // to it.
 void map_grow(vm *vm, map *map, size_t new_cap)
 {
-    struct _entry *new_entries = vm_malloc(vm, DYNAMIC_ARRAY_SIZE(new_entries, new_cap));
-    for (struct _entry *entry = new_entries; entry < new_entries + new_cap; entry++) {
+    struct _entry *new_entries;
+    size_t size = DYNAMIC_ARRAY_SIZE(new_entries, new_cap);
+    if (map->_is_vm_managed)
+        new_entries = vm_malloc(vm, size);
+    else
+        new_entries = xmalloc(size);
+    for (struct _entry *entry = new_entries; entry < new_entries + new_cap; entry++)
         mark_empty_slot(entry);
-    }
 
     map->_count = 0; // Reset since current value includes tombstones which won't be copied over
     for (struct _entry *entry = map->_entries; entry < map->_entries + map->_cap; entry++) {

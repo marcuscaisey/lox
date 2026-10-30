@@ -16,10 +16,15 @@ typedef struct {
     struct _entry *_entries;
     size_t _count; // Number of values and tombstones in the map
     size_t _cap; // Number of elements that space has been allocated for in `_entries`
+    // Internal field, do not use.
+    // Whether the VM manages dynamic memory allocation for this map.
+    bool _is_vm_managed;
 } map;
 
 // Initialises `map` for use.
-void map_init(map *map);
+// `is_vm_managed` determines whether the VM manages dynamic memory allocation for `map`. If a map
+// is not VM managed, then `NULL` can be passed for the `vm *` parameter to all `map_*()` functions.
+void map_init(map *map, bool is_vm_managed);
 
 // Frees the memory associated with `map`.
 void map_deinit(vm *vm, map *map);
@@ -32,7 +37,7 @@ bool map_set(vm *vm, map *map, value key, value value);
 // If `out == NULL` then it's ignored.
 bool map_get(map *map, value key, value *out);
 
-// Returns the string key with data matching the provided parameters or `NULL` if no key is found.
+// Returns the string key with the provided fields or `NULL` if no key is found.
 struct object_string *map_get_string_key(map *map, const char *data, size_t len, hash_value hash);
 
 // Deletes the value associated with `key` if it's found.

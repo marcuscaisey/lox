@@ -200,7 +200,9 @@ struct bytecode_chunk {
     size_t _constants_cap;
     // Maximum number of values that will be on the value stack during execution
     stack_depth max_stack_depth;
-    bool _is_vm_managed; // Whether the VM manages dynamic memory allocation for this chunk
+    // Internal field, do not use.
+    // Whether the VM manages dynamic memory allocation for this chunk.
+    bool _is_vm_managed;
 };
 
 // Initialises `chunk` for use.
