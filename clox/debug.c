@@ -31,12 +31,7 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
     enum opcode opcode = chunk->instructions[offset];
     const char *instruction = instruction_name(opcode);
     switch (opcode) {
-    case OP_CONSTANT:
-    case OP_DEFINE_GLOBAL:
-    case OP_DEFINE_GLOBAL_FINAL:
-    case OP_GET_GLOBAL:
-    case OP_SET_GLOBAL:
-    case OP_DEFINE_LOCAL_FINAL: {
+    case OP_CONSTANT: {
         constant_index index = chunk->instructions[offset + 1];
         int index_bytes = 1;
         if (index == 0xFF) {
@@ -47,6 +42,21 @@ int disassemble_instruction(const struct bytecode_chunk *chunk, int offset)
         char *name = value_string(chunk->constants[index]);
         printf("%-*s %*d '%s'\n", name_width, instruction, operand_width, index, name);
         free(name);
+        return offset + 1 + index_bytes;
+    }
+    case OP_DEFINE_GLOBAL:
+    case OP_DEFINE_GLOBAL_FINAL:
+    case OP_GET_GLOBAL:
+    case OP_SET_GLOBAL:
+    case OP_DEFINE_LOCAL_FINAL: {
+        global_index index = chunk->instructions[offset + 1];
+        int index_bytes = 1;
+        if (index == 0xFF) {
+            index = (chunk->instructions[offset + 2] << 16) |
+                    (chunk->instructions[offset + 3] << 8) | (chunk->instructions[offset + 4]);
+            index_bytes = 4;
+        }
+        printf("%-*s %*d\n", name_width, instruction, operand_width, index);
         return offset + 1 + index_bytes;
     }
     case OP_POP_N: {

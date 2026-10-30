@@ -17,7 +17,7 @@
 #include "object.h"
 #include "strings.h"
 #include "value.h"
-#include "vm.h"
+#include "vm_internal.h"
 
 // Mode that a compiler can operate in.
 enum compiler_mode {
@@ -412,6 +412,20 @@ static void compiler_emit_stack_index(const compiler *compiler, stack_index inde
     }
 }
 
+// Encodes and writes `index` to the output bytecode chunk.
+static void compiler_emit_global_index(const compiler *compiler, global_index index,
+                                       line_number line)
+{
+    if (index < 255) {
+        compiler_emit_operand(compiler, index, line);
+    } else {
+        compiler_emit_operand(compiler, 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 16) & 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 8) & 0xFF, line);
+        compiler_emit_operand(compiler, (index >> 0) & 0xFF, line);
+    }
+}
+
 static bool is_forward_jump_opcode(enum opcode opcode)
 {
     return opcode == OP_JUMP || opcode == OP_JUMP_IF_TRUE || opcode == OP_JUMP_IF_FALSE;
@@ -556,11 +570,11 @@ static void compiler_emit_variable_definition(compiler *compiler, struct token i
     if (in_global_scope(compiler)) {
         enum opcode instruction = is_final ? OP_DEFINE_GLOBAL_FINAL : OP_DEFINE_GLOBAL;
         compiler_emit_opcode(compiler, instruction, ident.line);
-        struct object_string *name_string =
-            object_string_copy(compiler->_vm, ident.start, ident.len);
-        compiler_emit_constant_index(compiler, string_value(name_string), ident.line);
+        global_index index = vm_add_global(compiler->_vm, ident.start, ident.len);
+        compiler_emit_global_index(compiler, index, ident.line);
     } else if (is_final) {
         compiler_emit_opcode(compiler, OP_DEFINE_LOCAL_FINAL, ident.line);
+        // TODO: add name to bytecode chunk?
         struct object_string *name_string =
             object_string_copy(compiler->_vm, ident.start, ident.len);
         compiler_emit_constant_index(compiler, string_value(name_string), ident.line);
@@ -682,7 +696,7 @@ static struct object_function *compiler_compile_fun(compiler *compiler, enum fun
     struct object_function *function =
         object_function_new(compiler->_vm, name, name_len, arity, body);
 #ifdef DEBUG_PRINT_BYTECODE
-    disassemble(&function->body, function->name->data);
+    disassemble(&function->body, function->name);
 #endif
     return function;
 
@@ -829,8 +843,8 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
     } else {
         enum opcode instruction = is_get ? OP_GET_GLOBAL : OP_SET_GLOBAL;
         compiler_emit_opcode(compiler, instruction, line);
-        struct object_string *name_string = object_string_copy(compiler->_vm, name.start, name.len);
-        compiler_emit_constant_index(compiler, string_value(name_string), line);
+        global_index index = vm_add_global(compiler->_vm, name.start, name.len);
+        compiler_emit_global_index(compiler, index, line);
     }
 }
 

@@ -4,7 +4,8 @@
 #include <stddef.h>
 
 #include "line_number.h"
-#include "vm.h"
+
+struct frame;
 
 // Prints an error message to stderr highlighting an invalid range of characters in `source`.
 // `start` points to the first character in the range.

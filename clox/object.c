@@ -8,7 +8,7 @@
 #include "strings.h"
 #include "value.h"
 #include "vm.h"
-#include "vm_memory.h"
+#include "vm_internal.h"
 
 void object_free(vm *vm, struct object *object)
 {

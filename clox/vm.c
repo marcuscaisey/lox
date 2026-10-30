@@ -21,7 +21,7 @@
 #include "object.h"
 #include "strings.h"
 #include "value.h"
-#include "vm_memory.h"
+#include "vm_internal.h"
 
 line_number frame_last_instruction_line(const struct frame *frame)
 {
@@ -76,6 +76,15 @@ static pop_count frame_read_pop_count(struct frame *frame)
     return count;
 }
 
+// Reads the global index at the instruction pointer and moves the instruction pointer past it.
+static global_index frame_read_global_index(struct frame *frame)
+{
+    uint8_t index = frame_read_u8(frame);
+    if (index == 0xFF)
+        return frame_read_u24(frame);
+    return index;
+}
+
 // Reads the stack index at the instruction pointer and moves the instruction pointer past it.
 static stack_index frame_read_stack_index(struct frame *frame)
 {
@@ -110,18 +119,20 @@ void vm_init(vm *vm)
     vm->_stack_top = NULL;
     vm->_objects = NULL;
     map_init(&vm->_strings, true); // Interned strings could become garbage so need VM to manage
-    map_init(&vm->_globals, false); // Lifetime is same as VM so no need for VM to manage
-    map_init(&vm->_global_final_vars, false); // Lifetime is same as VM so no need for VM to manage
+    vm->_globals = NULL;
+    vm->_globals_len = 0;
+    vm->_globals_cap = 0;
     vm->_local_final_vars = NULL;
 
+    DYNAMIC_ARRAY_GROW(vm->_globals, vm->_globals_cap, builtin_functions_len);
     for (size_t i = 0; i < builtin_functions_len; i++) {
         struct builtin_function function = builtin_functions[i];
-        struct object_native_function *function_object = object_native_function_new(
-            vm, function.name, strlen(function.name), function.arity, function.body);
-        struct object_string *name_object =
-            object_string_copy(vm, function.name, strlen(function.name));
-        map_set(vm, &vm->_globals, string_value(name_object),
-                native_function_value(function_object));
+        size_t name_len = strlen(function.name);
+        struct object_native_function *function_object =
+            object_native_function_new(vm, function.name, name_len, function.arity, function.body);
+        struct global *global = &vm->_globals[vm->_globals_len++];
+        global_init(global, function.name, name_len);
+        global->value = native_function_value(function_object);
     }
 }
 
@@ -141,8 +152,9 @@ void vm_deinit(vm *vm)
     free(vm->_stack);
     vm_free_objects(vm);
     map_deinit(vm, &vm->_strings);
-    map_deinit(vm, &vm->_globals);
-    map_deinit(vm, &vm->_global_final_vars);
+    for (size_t i = 0; i < vm->_globals_len; i++)
+        global_deinit(&vm->_globals[i]);
+    free(vm->_globals);
     free(vm->_local_final_vars);
 }
 
@@ -309,51 +321,49 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             break;
         }
 
-        case OP_DEFINE_GLOBAL:
+        case OP_DEFINE_GLOBAL: {
+            global_index index = frame_read_global_index(frame);
+            struct global *global = &vm->_globals[index];
+            value initialiser = vm_stack_pop(vm);
+            global->value = initialiser;
+            global->is_final = false;
+            break;
+        }
+
         case OP_DEFINE_GLOBAL_FINAL: {
-            constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->_chunk->constants[name_index];
-            // map_set could trigger an allocation causing garbage collection, so don't pop the
-            // initialiser until we've set the variable
-            value initialiser = vm_stack_peek(vm, 0);
-            map_set(vm, &vm->_globals, name, initialiser);
-            vm_stack_pop(vm);
-            if (opcode == OP_DEFINE_GLOBAL_FINAL)
-                map_set(vm, &vm->_global_final_vars, name, nil_value);
-            else
-                map_delete(&vm->_global_final_vars, name); // May have previously been defined final
+            global_index index = frame_read_global_index(frame);
+            struct global *global = &vm->_globals[index];
+            value initialiser = vm_stack_pop(vm);
+            global->value = initialiser;
+            global->is_final = true;
             break;
         }
 
         case OP_GET_GLOBAL: {
-            constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->_chunk->constants[name_index];
-            value value;
-            if (!map_get(&vm->_globals, name, &value)) {
-                vm_report_errorf(vm, source, "'%s' has not been declared",
-                                 value_as_string(name)->data);
+            global_index index = frame_read_global_index(frame);
+            struct global *global = &vm->_globals[index];
+            if (values_are_equal(global->value, none_value)) {
+                vm_report_errorf(vm, source, "'%s' has not been declared", global->name);
                 goto out_error;
             }
-            vm_stack_push(vm, value);
+            vm_stack_push(vm, global->value);
             break;
         }
 
         case OP_SET_GLOBAL: {
-            constant_index name_index = frame_read_constant_index(frame);
-            value name = frame->_chunk->constants[name_index];
-            if (map_get(&vm->_global_final_vars, name, NULL)) {
+            global_index index = frame_read_global_index(frame);
+            struct global *global = &vm->_globals[index];
+            if (global->is_final) {
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
-                                 value_as_string(name)->data);
+                                 global->name);
+                goto out_error;
+            }
+            if (values_are_equal(global->value, none_value)) {
+                vm_report_errorf(vm, source, "'%s' has not been declared", global->name);
                 goto out_error;
             }
             value value = vm_stack_peek(vm, 0);
-            bool is_new_name = map_set(vm, &vm->_globals, name, value);
-            if (is_new_name) {
-                map_delete(&vm->_globals, name);
-                vm_report_errorf(vm, source, "'%s' has not been declared",
-                                 value_as_string(name)->data);
-                goto out_error;
-            }
+            global->value = value;
             break;
         }
 

@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 #include "memory.h" // IWYU pragma: keep // xrealloc used by DYNAMIC_ARRAY_GROW
-#include "vm_memory.h" // IWYU pragma: keep // vm_realloc used by DYNAMIC_ARRAY_GROW
+#include "vm_internal.h" // IWYU pragma: keep // vm_realloc used by VM_DYNAMIC_ARRAY_GROW
 
 // Number of elements that space will be allocated for for the first time.
 #define DYNAMIC_ARRAY_INITIAL_CAPACITY 8

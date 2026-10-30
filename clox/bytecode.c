@@ -8,7 +8,7 @@
 #include "dynamic_array.h"
 #include "line_number.h"
 #include "value.h"
-#include "vm_memory.h"
+#include "vm_internal.h"
 
 const char *instruction_name(enum opcode opcode)
 {

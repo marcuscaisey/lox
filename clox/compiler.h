@@ -3,8 +3,9 @@
 
 #include <stdbool.h>
 
-#include "bytecode.h"
-#include "vm.h"
+#include "vm_fwd.h"
+
+struct bytecode_chunk;
 
 // Writes bytecode to be executed by `vm` for the Lox `source` into `out` and reports whether
 // compilation was successful. If complication was unsuccessful, errors are printed to stderr.

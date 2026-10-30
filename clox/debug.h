@@ -1,7 +1,7 @@
 #ifndef CLOX_DEBUG_H
 #define CLOX_DEBUG_H
 
-#include "bytecode.h"
+struct bytecode_chunk;
 
 // Prints a human-readable representation of `chunk`.
 // `name` is a meaningful name that will be printed as well to identify the chunk.

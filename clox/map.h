@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 #include "value.h"
-#include "vm_memory.h"
+#include "vm_fwd.h"
 
 // Map from `value` keys to `value` values.
 // Must be initialised with `map_init()` before use and deinitialised with `map_deinit()` after use.

@@ -71,5 +71,5 @@ test/skipped_tests.txt:
 	' | sort > $@
 
 iwyu:
-	@iwyu_tool.py -p . --output-format clang -- -Xiwyu --mapping_file=iwyu.imp -Xiwyu --no_fwd_decls \
+	@iwyu_tool.py -p . --output-format clang -- -I. -Xiwyu --mapping_file=iwyu.imp \
 		| sed -E '/^\s*$$/d'

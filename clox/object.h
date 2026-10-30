@@ -5,7 +5,7 @@
 
 #include "bytecode.h"
 #include "value.h"
-#include "vm_memory.h"
+#include "vm_fwd.h"
 
 // Objects represent dynamically allocated Lox values whose lifetime is managed by the VM.
 // This type contains the data which is common to all object types.
@@ -37,7 +37,7 @@ enum value_type object_value_type(const struct object *object);
 // determine equality.
 struct object_string {
     struct object _object; // Internal field, do not use.
-    const char *data; // Pointer to the null-terminated string data
+    const char *data; // Null-terminated string contents
     size_t len; // Length of the string
     hash_value _hash; // Internal field, do not use. Hash of the string data.
 };
@@ -91,7 +91,8 @@ struct object_native_function {
 // Allocates and initialises a new native function, making a copy of the first `name_len` bytes of
 // `name`.
 struct object_native_function *object_native_function_new(vm *vm, const char *name, size_t name_len,
-                                                   argument_count arity, native_function_body body);
+                                                          argument_count arity,
+                                                          native_function_body body);
 
 value native_function_value(struct object_native_function *function);
 struct object_native_function *value_as_native_function(value value);

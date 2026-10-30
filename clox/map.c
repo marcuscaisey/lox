@@ -10,7 +10,7 @@
 #include "memory.h"
 #include "object.h"
 #include "value.h"
-#include "vm_memory.h"
+#include "vm_internal.h"
 
 // Entry is what gets stored in the each slot of the array. The meanings of `key` and `value` depend
 // on their values.

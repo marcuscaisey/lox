@@ -12,6 +12,10 @@
 // frame is created to execute its associated chunk and execution of the calling chunk is suspended.
 // When the callable returns, execution resumes in the calling chunk. Different calls of the same
 // callable are associated with indpendent frames.
+//
+// The VM also maintains a set of global variables that are shared between executions of different
+// chunks. Each global variable is identified by an index that remains stable for the lifetime of
+// the VM.
 
 #ifndef CLOX_BYTECODE_H
 #define CLOX_BYTECODE_H
@@ -22,7 +26,7 @@
 
 #include "line_number.h"
 #include "value.h"
-#include "vm_memory.h"
+#include "vm_fwd.h"
 
 typedef int32_t constant_index;
 
@@ -31,6 +35,8 @@ typedef int32_t constant_index;
 typedef int32_t pop_count;
 
 #define MAX_POP_COUNT ((1 << 24) - 1)
+
+typedef int32_t global_index;
 
 typedef int32_t stack_index;
 
@@ -66,6 +72,11 @@ typedef int32_t argument_count;
 //     Encoding
 //       0 - 254: u8 representing the number
 //       255 - 16,777,215: u8 value of FF followed by u24 representing the number
+//   global_index
+//     Index of a global variable maintained by the VM.
+//     Encoding
+//       0 - 254: u8 representing the index value
+//       255 - 16,777,215: u8 value of FF followed by u24 representing the index value
 //   stack_index
 //     Index of a value in a value stack.
 //     Encoding
@@ -100,19 +111,19 @@ enum opcode {
     OP_DUP, // Pushes the value on top of the stack
     // Pops a value then defines a global variable initialised to that value
     // Operands
-    //   constant_index - index of the constant containing the variable name
+    //   global_index - index of the global variable
     OP_DEFINE_GLOBAL,
     // Pops a value then defines a global final variable initialised to that value
     // Operands
-    //   constant_index - index of the constant containing the variable name
+    //   global_index - index of the global variable
     OP_DEFINE_GLOBAL_FINAL,
     // Pushes the value of a global variable
     // Operands
-    //   constant_index - index of the constant containing the variable name
+    //   global_index - index of the global variable
     OP_GET_GLOBAL,
     // Sets a global variable to the value on top of the stack
     // Operands
-    //   constant_index - index of the constant containing the variable name
+    //   global_index - index of the global variable
     OP_SET_GLOBAL,
     // Marks the value on top of the stack as a local variable
     OP_DEFINE_LOCAL,
@@ -179,7 +190,7 @@ const char *instruction_name(enum opcode opcode);
 typedef size_t bytecode_offset;
 
 // Represents a sequence of bytecode instructions.
-// Must be initialised with `bytecode_chunk_init()` before use and freed with
+// Must be initialised with `bytecode_chunk_init()` before use and deinitialised with
 // `bytecode_chunk_deinit()` after use.
 struct bytecode_chunk {
     // Array of instructions of the form
