@@ -1,4 +1,8 @@
 Diagnostics:
   Includes:
     IgnoreHeader:
+      - '_ctype\.h$'
+      - '_stdio\.h$'
+      - '_stdlib\.h$'
       - '_string\.h$'
+      - '_time\.h$'
