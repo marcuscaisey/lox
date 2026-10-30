@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "memory.h"
 #include "vm.h"
 
 // Reads `filename` and returns its contents. If the operation fails, `NULL` is returned and the
@@ -14,7 +15,6 @@ static char *read_file(const char *filename)
     FILE *file = fopen(filename, "rb");
     if (file == NULL)
         return NULL;
-    char *file_contents = NULL;
     if (fseek(file, 0, SEEK_END))
         goto out_close_file;
     long file_size = ftell(file);
@@ -22,21 +22,19 @@ static char *read_file(const char *filename)
         goto out_close_file;
     if (fseek(file, 0, SEEK_SET))
         goto out_close_file;
-    file_contents = malloc(file_size + 1);
-    if (file_contents == NULL)
-        goto out_close_file;
+    char *file_contents = xmalloc(file_size + 1);
     size_t bytes_read = fread(file_contents, sizeof(*file_contents), file_size, file);
-    if (bytes_read < (size_t)file_size && ferror(file))
+    if (ferror(file))
         goto out_free_file_contents;
+    fclose(file);
     file_contents[bytes_read] = '\0';
-    goto out_close_file;
+    return file_contents;
 
 out_free_file_contents:
     free(file_contents);
-    file_contents = NULL;
 out_close_file:
     fclose(file);
-    return file_contents;
+    return NULL;
 }
 
 // Runs `filename` and returns an appropriate exit status.
