@@ -1,0 +1,20 @@
+fun newCounter(start) {
+  var nextCount = start;
+  class Counter {
+    static count() {
+      var currentCount = nextCount;
+      nextCount = nextCount + 1;
+      return currentCount;
+    }
+  }
+  return Counter;
+}
+
+var counter1 = newCounter(1);
+var counter2 = newCounter(10);
+print counter1.count(); // prints: 1
+print counter2.count(); // prints: 10
+print counter1.count(); // prints: 2
+print counter2.count(); // prints: 11
+print counter1.count(); // prints: 3
+print counter2.count(); // prints: 12

@@ -1,0 +1,35 @@
+fun outer() {
+  var a = "outer a";
+  var b = "outer b";
+
+  class Middle {
+    middle() {
+      var c = "middle c";
+      var d = "middle d";
+
+      class Inner {
+        inner() {
+          print a;
+          print c;
+          b = "inner b";
+          d = "inner d";
+        }
+      }
+
+      var inner = Inner();
+      a = "updated outer a";
+      c = "updated middle c";
+      // prints: updated outer a
+      // prints: updated middle c
+      inner.inner();
+      // prints: inner b
+      // prints: inner d
+      print b;
+      print d;
+    }
+  }
+
+  Middle().middle();
+}
+
+outer();

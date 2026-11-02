@@ -1,0 +1,46 @@
+var a = "global a";
+var b = "global b";
+
+var Outer;
+var Inner;
+var printAB;
+
+{
+  var a = "local a";
+  var b = "local b";
+
+  class OuterLocal {
+    init() {
+      class InnerLocal {
+        init(location) {
+          a = location + " a";
+          b = location + " b";
+        }
+      }
+
+      class PrintAB {
+        init() {
+          print a;
+          print b;
+        }
+      }
+
+      InnerLocal("inside outer");
+      printAB = PrintAB;
+      // prints: inside outer a
+      // prints: inside outer b
+      printAB();
+      Inner = InnerLocal;
+    }
+  }
+
+  Outer = OuterLocal;
+}
+
+Outer();
+Inner("outside outer");
+// prints: outside outer a
+// prints: outside outer b
+printAB();
+print a; // prints: global a
+print b; // prints: global b

@@ -1,0 +1,17 @@
+{
+  var a = "local a";
+  var b = "local b";
+
+  var outer = fun() {
+    var inner = fun() {
+      print a;
+      b = "inner b";
+    };
+
+    a = "updated local a";
+    inner(); // prints: updated local a
+    print b; // prints: inner b
+  };
+
+  outer();
+}

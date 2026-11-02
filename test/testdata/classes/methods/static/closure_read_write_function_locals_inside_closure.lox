@@ -1,0 +1,44 @@
+var a = "global a";
+var b = "global b";
+
+var printAB;
+
+fun outer() {
+  var a = "outer a";
+
+  class Middle {
+    static middle() {
+      var b = "middle b";
+
+      class Inner {
+        static inner(location) {
+          a = location + " a";
+          b = location + " b";
+        }
+
+        static printAB() {
+          print a;
+          print b;
+        }
+      }
+
+      printAB = Inner.printAB;
+      Inner.inner("inside middle");
+      // prints: inside middle a
+      // prints: inside middle b
+      printAB();
+      return Inner;
+    }
+  }
+
+  return Middle.middle();
+}
+
+var inner = outer();
+inner.inner("outside outer");
+// prints: outside outer a
+// prints: outside outer b
+printAB();
+
+print a; // prints: global a
+print b; // prints: global b

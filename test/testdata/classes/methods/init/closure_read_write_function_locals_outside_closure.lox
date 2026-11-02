@@ -1,0 +1,34 @@
+fun outer() {
+  var a = "outer a";
+  var b = "outer b";
+
+  class Middle {
+    init() {
+      var c = "middle c";
+      var d = "middle d";
+
+      class Inner {
+        init() {
+          print a;
+          print c;
+          b = "inner b";
+          d = "inner d";
+        }
+      }
+
+      a = "updated outer a";
+      c = "updated middle c";
+      // prints: updated outer a
+      // prints: updated middle c
+      Inner();
+      // prints: inner b
+      // prints: inner d
+      print b;
+      print d;
+    }
+  }
+
+  Middle();
+}
+
+outer();

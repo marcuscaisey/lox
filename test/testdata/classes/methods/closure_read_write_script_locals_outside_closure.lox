@@ -1,0 +1,21 @@
+{
+  var a = "local a";
+  var b = "local b";
+
+  class Outer {
+    outer() {
+      class Inner {
+        inner() {
+          print a;
+          b = "inner b";
+        }
+      }
+
+      a = "updated local a";
+      Inner().inner(); // prints: updated local a
+      print b; // prints: inner b
+    }
+  }
+
+  Outer().outer();
+}

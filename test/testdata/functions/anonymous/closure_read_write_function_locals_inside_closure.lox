@@ -1,0 +1,37 @@
+var a = "global a";
+var b = "global b";
+
+var printAB;
+
+fun outer() {
+  var a = "outer a";
+
+  var middle = fun() {
+    var b = "middle b";
+    printAB = fun() {
+      print a;
+      print b;
+    };
+
+    var inner = fun(location) {
+      a = location + " a";
+      b = location + " b";
+    };
+
+    inner("inside middle");
+    // prints: inside middle a
+    // prints: inside middle b
+    printAB();
+    return inner;
+  };
+
+  return middle();
+}
+
+var inner = outer();
+inner("outside outer");
+// prints: outside outer a
+// prints: outside outer b
+printAB();
+print a; // prints: global a
+print b; // prints: global b
