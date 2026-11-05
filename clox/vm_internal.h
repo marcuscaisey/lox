@@ -6,7 +6,7 @@
 
 #include "bytecode.h"
 #include "value.h"
-#include "vm_fwd.h"
+#include "vm_fwd.h" // IWYU pragma: export
 
 // Allocates `size` bytes of VM managed memory and returns a pointer to the allocated memory.
 // The process exits on allocation failure.
