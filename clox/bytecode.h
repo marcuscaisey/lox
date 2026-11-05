@@ -231,4 +231,34 @@ void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, li
 // Stores `value` in the chunk's constants and returns its index.
 constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value);
 
+// TODO: maybe uint8_t should be typedefed away?
+
+// Reads the opcode at the instruction pointer pointed to by `ip` and moves the instruction pointer
+// past it.
+enum opcode bytecode_read_opcode(uint8_t **ip);
+
+// Reads the constant index at the instruction pointer pointed to by `ip` and moves the instruction
+// pointer past it.
+constant_index bytecode_read_constant_index(uint8_t **ip);
+
+// Reads the pop count at the instruction pointer pointed to by `ip` and moves the instruction
+// pointer past it.
+pop_count bytecode_read_pop_count(uint8_t **ip);
+
+// Reads the global index at the instruction pointer pointed to by `ip` and moves the instruction
+// pointer past it.
+global_index bytecode_read_global_index(uint8_t **ip);
+
+// Reads the stack index at the instruction pointer pointed to by `ip` and moves the instruction
+// pointer past it.
+stack_index bytecode_read_stack_index(uint8_t **ip);
+
+// Reads the jump offset at the instruction pointer pointed to by `ip` and moves the instruction
+// pointer past it.
+jump_offset bytecode_read_jump_offset(uint8_t **ip);
+
+// Reads the argument count at the instruction pointer pointed to by `ip` and moves the instruction
+// pointer past it.
+argument_count bytecode_read_argument_count(uint8_t **ip);
+
 #endif

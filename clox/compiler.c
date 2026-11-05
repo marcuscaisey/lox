@@ -402,6 +402,7 @@ static void compiler_emit_constant_index(compiler *compiler, value v, line_numbe
 // Encodes and writes `index` to the output bytecode chunk.
 static void compiler_emit_stack_index(const compiler *compiler, stack_index index, line_number line)
 {
+    // TODO: move this kind of logic into bytecode.h?
     if (index < 255) {
         compiler_emit_operand(compiler, index, line);
     } else {

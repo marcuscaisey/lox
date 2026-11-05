@@ -147,3 +147,70 @@ constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk,
     chunk->constants[chunk->constants_len++] = value;
     return index;
 }
+
+static uint8_t bytecode_read_u8(uint8_t **ip)
+{
+    return *(*ip)++;
+}
+
+static uint16_t bytecode_read_u16(uint8_t **ip)
+{
+    *ip += 2;
+    return ((*ip)[-2] << 8) | ((*ip)[-1]);
+}
+
+static uint32_t bytecode_read_u24(uint8_t **ip)
+{
+    *ip += 3;
+    return ((*ip)[-3] << 16) | ((*ip)[-2] << 8) | ((*ip)[-1]);
+}
+
+enum opcode bytecode_read_opcode(uint8_t **ip)
+{
+    return bytecode_read_u8(ip);
+}
+
+constant_index bytecode_read_constant_index(uint8_t **ip)
+{
+    uint8_t index = bytecode_read_u8(ip);
+    if (index == 0xFF)
+        return bytecode_read_u24(ip);
+    return index;
+}
+
+pop_count bytecode_read_pop_count(uint8_t **ip)
+{
+    uint8_t count = bytecode_read_u8(ip);
+    if (count == 0xFF)
+        return bytecode_read_u24(ip);
+    return count;
+}
+
+global_index bytecode_read_global_index(uint8_t **ip)
+{
+    uint8_t index = bytecode_read_u8(ip);
+    if (index == 0xFF)
+        return bytecode_read_u24(ip);
+    return index;
+}
+
+stack_index bytecode_read_stack_index(uint8_t **ip)
+{
+    uint8_t index = bytecode_read_u8(ip);
+    if (index == 0xFF)
+        return bytecode_read_u24(ip);
+    return index;
+}
+
+jump_offset bytecode_read_jump_offset(uint8_t **ip)
+{
+    return bytecode_read_u16(ip);
+}
+
+argument_count bytecode_read_argument_count(uint8_t **ip)
+{
+    uint8_t count = bytecode_read_u8(ip);
+    if (count == 0xFF)
+        return bytecode_read_u24(ip);
+    return count;
+}

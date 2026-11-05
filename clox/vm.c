@@ -32,83 +32,6 @@ line_number frame_last_instruction_line(const struct frame *frame)
     return line;
 }
 
-// Reads the u8 at the instruction pointer and moves the instruction pointer past it.
-static uint8_t frame_read_u8(struct frame *frame)
-{
-    return *frame->_ip++;
-}
-
-// Reads the u16 at the instruction pointer and moves the instruction pointer past it.
-static uint16_t frame_read_u16(struct frame *frame)
-{
-    frame->_ip += 2;
-    return (frame->_ip[-2] << 8) | (frame->_ip[-1]);
-}
-
-// Reads the u24 at the instruction pointer and moves the instruction pointer past it.
-static uint32_t frame_read_u24(struct frame *frame)
-{
-    frame->_ip += 3;
-    return (frame->_ip[-3] << 16) | (frame->_ip[-2] << 8) | (frame->_ip[-1]);
-}
-
-// Reads the opcode at the instruction pointer and moves the instruction pointer past it.
-static enum opcode frame_read_opcode(struct frame *frame)
-{
-    return frame_read_u8(frame);
-}
-
-// Reads the constant index at the instruction pointer and moves the instruction pointer past it.
-static constant_index frame_read_constant_index(struct frame *frame)
-{
-    uint8_t index = frame_read_u8(frame);
-    if (index == 0xFF)
-        return frame_read_u24(frame);
-    return index;
-}
-
-// Reads the pop count at the instruction pointer and moves the instruction pointer past it.
-static pop_count frame_read_pop_count(struct frame *frame)
-{
-    uint8_t count = frame_read_u8(frame);
-    if (count == 0xFF)
-        return frame_read_u24(frame);
-    return count;
-}
-
-// Reads the global index at the instruction pointer and moves the instruction pointer past it.
-static global_index frame_read_global_index(struct frame *frame)
-{
-    uint8_t index = frame_read_u8(frame);
-    if (index == 0xFF)
-        return frame_read_u24(frame);
-    return index;
-}
-
-// Reads the stack index at the instruction pointer and moves the instruction pointer past it.
-static stack_index frame_read_stack_index(struct frame *frame)
-{
-    uint8_t index = frame_read_u8(frame);
-    if (index == 0xFF)
-        return frame_read_u24(frame);
-    return index;
-}
-
-// Reads the jump offset at the instruction pointer and moves the instruction pointer past it.
-static jump_offset frame_read_jump_offset(struct frame *frame)
-{
-    return frame_read_u16(frame);
-}
-
-// Reads the argument count at the instruction pointer and moves the instruction pointer past it.
-static argument_count frame_read_argument_count(struct frame *frame)
-{
-    uint8_t count = frame_read_u8(frame);
-    if (count == 0xFF)
-        return frame_read_u24(frame);
-    return count;
-}
-
 void vm_init(vm *vm)
 {
     vm->_frames = NULL;
@@ -211,8 +134,7 @@ static void vm_print_trace_info(const vm *vm, const struct frame *frame)
         free(string);
     }
     printf("\n");
-    int offset = frame->_ip - frame->_chunk->instructions;
-    disassemble_instruction(frame->_chunk, offset);
+    disassemble_instruction(frame->_chunk, frame->_ip);
 }
 #endif
 
@@ -284,10 +206,10 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         vm_print_trace_info(vm, frame);
 #endif
 
-        enum opcode opcode = frame_read_opcode(frame);
+        enum opcode opcode = bytecode_read_opcode(&frame->_ip);
         switch (opcode) {
         case OP_CONSTANT: {
-            constant_index index = frame_read_constant_index(frame);
+            constant_index index = bytecode_read_constant_index(&frame->_ip);
             value value = frame->_chunk->constants[index];
             vm_stack_push(vm, value);
             break;
@@ -310,7 +232,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             break;
 
         case OP_POP_N: {
-            pop_count count = frame_read_pop_count(frame);
+            pop_count count = bytecode_read_pop_count(&frame->_ip);
             vm_stack_pop_n(vm, count);
             break;
         }
@@ -322,7 +244,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_DEFINE_GLOBAL: {
-            global_index index = frame_read_global_index(frame);
+            global_index index = bytecode_read_global_index(&frame->_ip);
             struct global *global = &vm->_globals[index];
             value initialiser = vm_stack_pop(vm);
             global->value = initialiser;
@@ -331,7 +253,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_DEFINE_GLOBAL_FINAL: {
-            global_index index = frame_read_global_index(frame);
+            global_index index = bytecode_read_global_index(&frame->_ip);
             struct global *global = &vm->_globals[index];
             value initialiser = vm_stack_pop(vm);
             global->value = initialiser;
@@ -340,7 +262,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_GET_GLOBAL: {
-            global_index index = frame_read_global_index(frame);
+            global_index index = bytecode_read_global_index(&frame->_ip);
             struct global *global = &vm->_globals[index];
             if (values_are_equal(global->value, none_value)) {
                 vm_report_errorf(vm, source, "'%s' has not been declared", global->name);
@@ -351,7 +273,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_SET_GLOBAL: {
-            global_index index = frame_read_global_index(frame);
+            global_index index = bytecode_read_global_index(&frame->_ip);
             struct global *global = &vm->_globals[index];
             if (global->is_final) {
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
@@ -375,20 +297,20 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_DEFINE_LOCAL_FINAL: {
             stack_index top_stack_index = vm->_stack_top - vm->_stack - 1;
-            constant_index name_index = frame_read_constant_index(frame);
+            constant_index name_index = bytecode_read_constant_index(&frame->_ip);
             vm->_local_final_vars[top_stack_index] = name_index;
             break;
         }
 
         case OP_GET_LOCAL: {
-            stack_index stack_index = frame_read_stack_index(frame);
+            stack_index stack_index = bytecode_read_stack_index(&frame->_ip);
             value value = vm->_stack[frame->_stack_offset + stack_index];
             vm_stack_push(vm, value);
             break;
         }
 
         case OP_SET_LOCAL: {
-            stack_index stack_index = frame_read_stack_index(frame);
+            stack_index stack_index = bytecode_read_stack_index(&frame->_ip);
             constant_index name_index = vm->_local_final_vars[frame->_stack_offset + stack_index];
             if (name_index >= 0) {
                 value name = frame->_chunk->constants[name_index];
@@ -579,19 +501,19 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_JUMP: {
-            jump_offset offset = frame_read_jump_offset(frame);
+            jump_offset offset = bytecode_read_jump_offset(&frame->_ip);
             frame->_ip += offset;
             break;
         }
 
         case OP_JUMP_BACK: {
-            jump_offset offset = frame_read_jump_offset(frame);
+            jump_offset offset = bytecode_read_jump_offset(&frame->_ip);
             frame->_ip -= offset;
             break;
         }
 
         case OP_JUMP_IF_TRUE: {
-            jump_offset offset = frame_read_jump_offset(frame);
+            jump_offset offset = bytecode_read_jump_offset(&frame->_ip);
             value top_value = vm_stack_peek(vm, 0);
             if (value_is_truthy(top_value))
                 frame->_ip += offset;
@@ -599,7 +521,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_JUMP_IF_FALSE: {
-            jump_offset offset = frame_read_jump_offset(frame);
+            jump_offset offset = bytecode_read_jump_offset(&frame->_ip);
             value top_value = vm_stack_peek(vm, 0);
             if (!value_is_truthy(top_value))
                 frame->_ip += offset;
@@ -607,7 +529,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_CALL: {
-            argument_count arg_count = frame_read_argument_count(frame);
+            argument_count arg_count = bytecode_read_argument_count(&frame->_ip);
             value callable = vm_stack_peek(vm, arg_count);
 
             struct object_native_function *native_function = NULL;
