@@ -317,7 +317,7 @@ static bytecode_offset compiler_bytecode_offset(const compiler *compiler)
 // Writes `opcode` corresponding to `line` to the output bytecode chunk.
 static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_number line)
 {
-    bytecode_chunk_write(compiler->_vm, compiler->_out, opcode, line);
+    bytecode_chunk_write_opcode(compiler->_vm, compiler->_out, opcode, line);
     compiler->_last_opcode = opcode;
     switch (opcode) {
     case OP_CONSTANT:
@@ -369,14 +369,8 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_nu
         compiler->_out->max_stack_depth = compiler->_stack_depth;
 }
 
-// Writes `operand` corresponding to `line` to the output bytecode chunk.
-static void compiler_emit_operand(const compiler *compiler, uint8_t operand, line_number line)
-{
-    bytecode_chunk_write(compiler->_vm, compiler->_out, operand, line);
-}
-
-// Ensures that value `v` corresponding to `line` is in the output bytecode chunk's constants,
-// encodes the corresponding index, and writes it to the chunk.
+// Ensures that value `v` corresponding to `line` is in the output bytecode chunk's constants and
+// writes its index to the chunk.
 static void compiler_emit_constant_index(compiler *compiler, value v, line_number line)
 {
     value index_value;
@@ -385,46 +379,29 @@ static void compiler_emit_constant_index(compiler *compiler, value v, line_numbe
         index = value_as_number(index_value);
     } else {
         index = bytecode_chunk_add_constant(compiler->_vm, compiler->_out, v);
-        if (index > MAX_CONSTANT_INDEX)
-            exitf("maximum number of constants (%d) used", MAX_CONSTANT_INDEX + 1);
         map_set(compiler->_vm, &compiler->_constant_indexes, v, number_value(index));
     }
-    if (index < 255) {
-        compiler_emit_operand(compiler, index, line);
-    } else {
-        compiler_emit_operand(compiler, 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 16) & 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 8) & 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 0) & 0xFF, line);
-    }
+    bytecode_chunk_write_constant_index(compiler->_vm, compiler->_out, index, line);
 }
 
-// Encodes and writes `index` to the output bytecode chunk.
+// Writes `index` to the output bytecode chunk.
 static void compiler_emit_stack_index(const compiler *compiler, stack_index index, line_number line)
 {
-    // TODO: move this kind of logic into bytecode.h?
-    if (index < 255) {
-        compiler_emit_operand(compiler, index, line);
-    } else {
-        compiler_emit_operand(compiler, 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 16) & 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 8) & 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 0) & 0xFF, line);
-    }
+    bytecode_chunk_write_stack_index(compiler->_vm, compiler->_out, index, line);
 }
 
-// Encodes and writes `index` to the output bytecode chunk.
+// Writes `index` to the output bytecode chunk.
 static void compiler_emit_global_index(const compiler *compiler, global_index index,
                                        line_number line)
 {
-    if (index < 255) {
-        compiler_emit_operand(compiler, index, line);
-    } else {
-        compiler_emit_operand(compiler, 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 16) & 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 8) & 0xFF, line);
-        compiler_emit_operand(compiler, (index >> 0) & 0xFF, line);
-    }
+    bytecode_chunk_write_global_index(compiler->_vm, compiler->_out, index, line);
+}
+
+// Writes `count` to the output bytecode chunk.
+static void compiler_emit_argument_count(const compiler *compiler, argument_count count,
+                                         line_number line)
+{
+    bytecode_chunk_write_argument_count(compiler->_vm, compiler->_out, count, line);
 }
 
 static bool is_forward_jump_opcode(enum opcode opcode)
@@ -435,15 +412,14 @@ static bool is_forward_jump_opcode(enum opcode opcode)
 // Writes a forward jump instruction using `opcode` corresponding to `line` to the output bytecode
 // chunk and returns the offset of the written instruction in the chunk.
 // A placeholder jump offset operand is written which can be set later by passing the returned
-// bytecode offset to `compiler_set_jump_offset()`.
+// bytecode offset to `compiler_set_forward_jump_offset()`.
 static bytecode_offset compiler_emit_forward_jump(compiler *compiler, enum opcode opcode,
                                                   line_number line)
 {
     assert(is_forward_jump_opcode(opcode));
     bytecode_offset jump = compiler_bytecode_offset(compiler);
     compiler_emit_opcode(compiler, opcode, line);
-    compiler_emit_operand(compiler, 0xFF, line);
-    compiler_emit_operand(compiler, 0xFF, line);
+    bytecode_chunk_write_jump_offset(compiler->_vm, compiler->_out, 0, line);
     return jump;
 }
 
@@ -457,14 +433,7 @@ static void compiler_emit_pops(compiler *compiler, pop_count count, line_number 
         compiler_emit_opcode(compiler, OP_POP, line);
     } else {
         compiler_emit_opcode(compiler, OP_POP_N, line);
-        if (count < 255) {
-            compiler_emit_operand(compiler, count, line);
-        } else {
-            compiler_emit_operand(compiler, 0xFF, line);
-            compiler_emit_operand(compiler, (count >> 16) & 0xFF, line);
-            compiler_emit_operand(compiler, (count >> 8) & 0xFF, line);
-            compiler_emit_operand(compiler, (count >> 0) & 0xFF, line);
-        }
+        bytecode_write_pop_count(compiler->_vm, compiler->_out, count, line);
         // This is decremented in `compiler_emit_opcode()` for all other instructions. We need to
         // handle this one here because the effect on the stack depth is not static. We don't need
         // to worry about updating the output bytecode's max stack depth because this instruction
@@ -480,14 +449,11 @@ static void compiler_set_forward_jump_offset(const compiler *compiler, bytecode_
 {
     enum opcode opcode = compiler->_out->instructions[target];
     assert(is_forward_jump_opcode(opcode));
-    // `target` is the offset of the jump opcode which is then followed by 2 bytes for the operand.
-    // The jump offset counts from the offset after the operand bytes we need to take this away from
-    // the result (1 for the opcode, 2 for the operand).
-    uint64_t jump_offset = compiler_bytecode_offset(compiler) - target - 3;
-    if (jump_offset > MAX_JUMP_OFFSET)
-        exitf("maximum jump offset (%llu) exceeded", (uint64_t)MAX_JUMP_OFFSET);
-    compiler->_out->instructions[target + 1] = (jump_offset >> 8) & 0xFF;
-    compiler->_out->instructions[target + 2] = (jump_offset >> 0) & 0xFF;
+    // `target` is the offset of the jump opcode which is then followed by `jump_offset_size` bytes
+    // for the operand. The jump offset counts from the offset after the operand bytes so we need to
+    // take this away from the result (1 for the opcode, `jump_offset_size` for the operand).
+    jump_offset jump_offset = compiler_bytecode_offset(compiler) - target - 1 - jump_offset_size;
+    bytecode_chunk_set_jump_offset(compiler->_out, target, jump_offset);
 }
 
 // Writes a backward jump instruction corresponding to `line` to the output bytecode chunk that
@@ -496,13 +462,10 @@ static void compiler_emit_backward_jump(compiler *compiler, bytecode_offset targ
                                         line_number line)
 {
     compiler_emit_opcode(compiler, OP_JUMP_BACK, line);
-    // The jump offset counts from the offset after the 2 operand bytes which we haven't written yet
-    // so we need we need to add this to the result.
-    uint64_t jump_offset = compiler_bytecode_offset(compiler) - target + 2;
-    if (jump_offset > MAX_JUMP_OFFSET)
-        exitf("maximum jump offset (%llu) exceeded", (uint64_t)MAX_JUMP_OFFSET);
-    compiler_emit_operand(compiler, (jump_offset >> 8) & 0xFF, line);
-    compiler_emit_operand(compiler, (jump_offset >> 0) & 0xFF, line);
+    // The jump offset counts from the offset after the `jump_offset_size` operand bytes which we
+    // haven't written yet so we need we need to add this to the result.
+    jump_offset jump_offset = compiler_bytecode_offset(compiler) - target + jump_offset_size;
+    bytecode_chunk_write_jump_offset(compiler->_vm, compiler->_out, jump_offset, line);
 }
 
 // Signals that a new lexical scope has been entered.
@@ -551,9 +514,6 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
             PARSER_REPORT_ERRORF(compiler->_parser, ident, "'%.*s' has already been declared",
                                  (int)ident.len, ident.start);
     }
-    stack_index index = compiler->_locals_count;
-    if (index > MAX_STACK_INDEX)
-        exitf("maximum number of local variables (%d) used", MAX_STACK_INDEX + 1);
     DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
     struct local *local = &compiler->_locals[compiler->_locals_count++];
     local->name = ident.start;
@@ -1031,14 +991,7 @@ static void compiler_compile_call_expr(compiler *compiler, enum precedence_level
     }
 
     compiler_emit_opcode(compiler, OP_CALL, line);
-    if (args < 255) {
-        compiler_emit_operand(compiler, args, line);
-    } else {
-        compiler_emit_operand(compiler, 0xFF, line);
-        compiler_emit_operand(compiler, (args >> 16) & 0xFF, line);
-        compiler_emit_operand(compiler, (args >> 8) & 0xFF, line);
-        compiler_emit_operand(compiler, (args >> 0) & 0xFF, line);
-    }
+    compiler_emit_argument_count(compiler, args, line);
     // This is decremented in `compiler_emit_opcode()` for all other instructions. We need to
     // handle this one here because the effect on the stack depth is not static. We don't need
     // to worry about updating the output bytecode's max stack depth because this instruction will

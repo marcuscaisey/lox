@@ -30,11 +30,7 @@
 
 typedef int32_t constant_index;
 
-#define MAX_CONSTANT_INDEX ((1 << 24) - 1)
-
 typedef int32_t pop_count;
-
-#define MAX_POP_COUNT ((1 << 24) - 1)
 
 typedef int32_t global_index;
 
@@ -43,13 +39,10 @@ typedef int32_t stack_index;
 // Represents the depth of a frame's value stack.
 typedef int32_t stack_depth;
 
-// 1 less than `MAX_POP_COUNT` so that it's possible to pop every value from the stack with one
-// POP_N instruction.
-#define MAX_STACK_INDEX (MAX_POP_COUNT - 1)
-
 typedef int32_t jump_offset;
 
-#define MAX_JUMP_OFFSET ((1 << 16) - 1)
+// Size of a jump offset value.
+extern const size_t jump_offset_size;
 
 typedef int32_t argument_count;
 
@@ -64,37 +57,23 @@ typedef int32_t argument_count;
 // Operand types
 //   constant_index
 //     Index of a constant in a bytecode chunk's constant pool.
-//     Encoding
-//       0 - 254: u8 representing the index value
-//       255 - 16,777,215: u8 value of FF followed by u24 representing the index value
+//     Range: 0 - 16,777,215
 //   pop_count
 //     Number of values to pop from a value stack.
-//     Encoding
-//       0 - 254: u8 representing the number
-//       255 - 16,777,215: u8 value of FF followed by u24 representing the number
+//     Range: 0 - 16,777,215
 //   global_index
 //     Index of a global variable maintained by the VM.
-//     Encoding
-//       0 - 254: u8 representing the index value
-//       255 - 16,777,215: u8 value of FF followed by u24 representing the index value
+//     Range: 0 - 16,777,215
 //   stack_index
 //     Index of a value in a value stack.
-//     Encoding
-//       0 - 254: u8 representing the index value
-//       255 - 16,777,214: u8 value of FF followed by u24 representing the index value
+//     Range: 0 - 16,777,214
 //   jump_offset
 //     Number of bytes for a jump instruction to jump in the bytecode chunk's instructions starting
 //     from the next instruction's offset
-//     Encoding
-//       0 - 65,535: u16 representing the number
+//     Range: 0 - 65,535
 //   argument_count
 //     Number of arguments passed to a callable.
-//     Encoding
-//       0 - 254: u8 representing the index value
-//       255 - 16,777,215: u8 value of FF followed by u24 representing the index value
-//
-//   When an operand larger than a u8 is used, the bytes are encoded in big-endian order. I.e. `v`
-//   encoded as a u16 is the byte `(v >> 8) & 0xFF` followed by the byte `v & 0xFF`.
+//     Range: 0 - 16,777,215
 enum opcode {
     // Pushes a constant
     // Operands
@@ -195,7 +174,7 @@ typedef size_t bytecode_offset;
 struct bytecode_chunk {
     // Array of instructions of the form
     //     `{I1_OPCODE, I1_OPERAND_1, I2_OPCODE, I2_OPERAND_1, I2_OPERAND_2, ...}`
-    // Must only be appended to via `bytecode_write()`.
+    // Must only be appended to via `bytecode_chunk_write()`.
     uint8_t *instructions;
     int *offset_lines; // Line numbers associated with each bytecode offset
     size_t len; // Number of elements in `instructions` and `offset_lines`
@@ -203,7 +182,7 @@ struct bytecode_chunk {
     // Number of instructions and offset lines that space has been allocated for.
     size_t _cap;
     // Array of constants referenced by the chunk.
-    // Must only be appended to via `bytecode_add_constant()`.
+    // Must only be appended to via `bytecode_chunk_add_constant()`.
     value *constants;
     size_t constants_len; // Number of constants
     // Internal field, do not use.
@@ -225,40 +204,63 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk, bool is_vm_managed);
 // Frees the memory associated with `chunk`.
 void bytecode_chunk_deinit(vm *vm, struct bytecode_chunk *chunk);
 
-// Writes `byte` associated with `line` into the chunk's instructions.
+// Writes `byte` associated with `line` to the chunk's instructions.
 void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, line_number line);
 
 // Stores `value` in the chunk's constants and returns its index.
 constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value);
 
-// TODO: maybe uint8_t should be typedefed away?
+// Writes `opcode` associated with `line` to the chunk's instructions.
+void bytecode_chunk_write_opcode(vm *vm, struct bytecode_chunk *chunk, enum opcode opcode,
+                                 line_number line);
 
-// Reads the opcode at the instruction pointer pointed to by `ip` and moves the instruction pointer
-// past it.
+// Writes `index` associated with `line` to the chunk's instructions.
+void bytecode_chunk_write_constant_index(vm *vm, struct bytecode_chunk *chunk, constant_index index,
+                                         line_number line);
+
+// Writes `count` associated with `line` to the chunk's instructions.
+void bytecode_write_pop_count(vm *vm, struct bytecode_chunk *chunk, pop_count count,
+                              line_number line);
+
+// Writes `index` associated with `line` to the chunk's instructions.
+void bytecode_chunk_write_global_index(vm *vm, struct bytecode_chunk *chunk, global_index index,
+                                       line_number line);
+
+// Writes `index` associated with `line` to the chunk's instructions.
+void bytecode_chunk_write_stack_index(vm *vm, struct bytecode_chunk *chunk, stack_index index,
+                                      line_number line);
+
+// Writes `offset` associated with `line` to the chunk's instructions.
+void bytecode_chunk_write_jump_offset(vm *vm, struct bytecode_chunk *chunk, jump_offset offset,
+                                      line_number line);
+
+// Sets the operand of the jump instruction at `target` to `offset`.
+void bytecode_chunk_set_jump_offset(struct bytecode_chunk *chunk, bytecode_offset target,
+                                    jump_offset offset);
+
+// Writes `count` associated with `line` to the chunk's instructions.
+void bytecode_chunk_write_argument_count(vm *vm, struct bytecode_chunk *chunk, argument_count count,
+                                         line_number line);
+
+// Reads the opcode from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 enum opcode bytecode_read_opcode(uint8_t **ip);
 
-// Reads the constant index at the instruction pointer pointed to by `ip` and moves the instruction
-// pointer past it.
+// Reads the constant index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 constant_index bytecode_read_constant_index(uint8_t **ip);
 
-// Reads the pop count at the instruction pointer pointed to by `ip` and moves the instruction
-// pointer past it.
+// Reads the pop count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 pop_count bytecode_read_pop_count(uint8_t **ip);
 
-// Reads the global index at the instruction pointer pointed to by `ip` and moves the instruction
-// pointer past it.
+// Reads the global index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 global_index bytecode_read_global_index(uint8_t **ip);
 
-// Reads the stack index at the instruction pointer pointed to by `ip` and moves the instruction
-// pointer past it.
+// Reads the stack index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 stack_index bytecode_read_stack_index(uint8_t **ip);
 
-// Reads the jump offset at the instruction pointer pointed to by `ip` and moves the instruction
-// pointer past it.
+// Reads the jump offset from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 jump_offset bytecode_read_jump_offset(uint8_t **ip);
 
-// Reads the argument count at the instruction pointer pointed to by `ip` and moves the instruction
-// pointer past it.
+// Reads the argument count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 argument_count bytecode_read_argument_count(uint8_t **ip);
 
 #endif
