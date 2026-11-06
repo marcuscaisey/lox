@@ -94,17 +94,17 @@ bool values_are_equal(value a, value b)
 }
 
 // Fixed hash values chosen so that they're distinct
-#define HASH_VALUE_NONE 0
-#define HASH_VALUE_ZERO 1
-#define HASH_VALUE_TRUE 2
-#define HASH_VALUE_FALSE 3
-#define HASH_VALUE_NIL 4
+static const hash_value hash_value_none = 0;
+static const hash_value hash_value_zero = 1;
+static const hash_value hash_value_true = 2;
+static const hash_value hash_value_false = 3;
+static const hash_value hash_value_nil = 4;
 
 hash_value hash_number(double value)
 {
     // Lox (as C does) compares -0 and 0 equal we assign the same hash value to both
     if (value == 0)
-        return HASH_VALUE_ZERO;
+        return hash_value_zero;
     // algorithm fnv-1a is
     //     hash := FNV_offset_basis
     //     for each byte_of_data to be hashed do
@@ -145,13 +145,13 @@ hash_value value_hash(value value)
 {
     switch (value_type(value)) {
     case VALUE_NONE:
-        return HASH_VALUE_NONE;
+        return hash_value_none;
     case VALUE_NUMBER:
         return hash_number(value_as_number(value));
     case VALUE_BOOL:
-        return value_as_bool(value) ? HASH_VALUE_TRUE : HASH_VALUE_FALSE;
+        return value_as_bool(value) ? hash_value_true : hash_value_false;
     case VALUE_NIL:
-        return HASH_VALUE_NIL;
+        return hash_value_nil;
     case VALUE_STRING: {
         struct object_string *string = value_as_string(value);
         return string->_hash;

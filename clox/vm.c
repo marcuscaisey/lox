@@ -183,17 +183,18 @@ struct object_string *vm_repeat_string(vm *vm, struct object_string *s, int64_t 
 }
 
 // Number of active frames that space will initially be allocated for
-#define INITIAL_FRAMES_CAPACITY 64
+static const size_t initial_frames_capacity = 64;
 
-// Number of values in that space will initially be allocated for in the value stack
-// This will allow for a stack of `INITIAL_FRAME_CAPACITY` calls using up to 256 simultaneous values
-#define INITIAL_STACK_CAPACITY (INITIAL_FRAMES_CAPACITY * 256)
+// Number of values in that space will initially be allocated for in the value stack.
+// This will allow for a stack of `initial_frames_capacity` calls using up to 256 simultaneous
+// values.
+static const size_t initial_stack_capacity = initial_frames_capacity * 256;
 
 // Executes `chunk` which was compiled from `source` and reports whether execution was successful.
 static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *source)
 {
-    DYNAMIC_ARRAY_GROW(vm->_frames, vm->_frames_cap, INITIAL_FRAMES_CAPACITY);
-    vm_stack_grow(vm, INITIAL_STACK_CAPACITY);
+    DYNAMIC_ARRAY_GROW(vm->_frames, vm->_frames_cap, initial_frames_capacity);
+    vm_stack_grow(vm, initial_stack_capacity);
 
     struct frame *frame = &vm->_frames[vm->_frames_len++];
     frame->name = NULL;

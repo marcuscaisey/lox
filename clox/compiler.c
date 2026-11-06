@@ -257,9 +257,9 @@ typedef struct compiler {
     // their declaration in the source
     struct local *_locals;
     // Number of local variables in scope at the current token's position
-    stack_depth _locals_count;
+    size_t _locals_count;
     // Number of elements space has been allocated for in the locals array
-    stack_depth _locals_cap;
+    size_t _locals_cap;
     // Number of elements that would be in the value stack if execution reached the current token's
     // position
     stack_depth _stack_depth;
@@ -478,10 +478,9 @@ static void compiler_begin_scope(compiler *compiler)
 static void compiler_end_scope(compiler *compiler, line_number line)
 {
     size_t start_locals_count = compiler->_locals_count;
-    for (stack_depth i = compiler->_locals_count - 1;
-         i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
+    while (compiler->_locals_count > 0 &&
+           compiler->_locals[compiler->_locals_count - 1].scope_depth == compiler->_scope_depth)
         compiler->_locals_count--;
-    }
     size_t locals_in_scope = start_locals_count - compiler->_locals_count;
     compiler_emit_pops(compiler, locals_in_scope, line);
     compiler->_scope_depth--;
@@ -506,8 +505,8 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
 {
     if (in_global_scope(compiler))
         return;
-    for (stack_depth i = compiler->_locals_count - 1;
-         i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
+    for (size_t i = compiler->_locals_count;
+         i-- > 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth;) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0 &&
             !is_blank_ident(local.name, local.name_len))
@@ -548,7 +547,7 @@ static void compiler_emit_variable_definition(compiler *compiler, struct token i
 // is not found.
 static stack_index compiler_resolve_local_variable(const compiler *compiler, struct token ident)
 {
-    for (stack_depth i = compiler->_locals_count - 1; i >= 0; i--) {
+    for (size_t i = compiler->_locals_count; i-- > 0;) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0) {
             if (local.is_initialising)
@@ -564,8 +563,8 @@ static stack_index compiler_resolve_local_variable(const compiler *compiler, str
 // variable is resolved while it's initialising.
 static void compiler_start_initialising_variable(const compiler *compiler, struct token ident)
 {
-    for (stack_depth i = compiler->_locals_count - 1;
-         i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
+    for (size_t i = compiler->_locals_count;
+         i-- > 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth;) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
             compiler->_locals[i].is_initialising = true;
@@ -575,8 +574,8 @@ static void compiler_start_initialising_variable(const compiler *compiler, struc
 // Marks the variable corresponding to `ident` as initialised.
 static void compiler_finish_initialising_variable(const compiler *compiler, struct token ident)
 {
-    for (stack_depth i = compiler->_locals_count - 1;
-         i >= 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth; i--) {
+    for (size_t i = compiler->_locals_count;
+         i-- > 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth;) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
             compiler->_locals[i].is_initialising = false;

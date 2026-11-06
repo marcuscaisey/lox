@@ -8,10 +8,10 @@
 #include "vm_internal.h" // IWYU pragma: keep // vm_realloc used by VM_DYNAMIC_ARRAY_GROW
 
 // Number of elements that space will be allocated for for the first time.
-#define DYNAMIC_ARRAY_INITIAL_CAPACITY 8
+static const size_t dynamic_array_initial_capacity = 8;
 
 // The factor that the array's capacity is grown by once its capacity is reached.
-#define DYNAMIC_ARRAY_GROW_FACTOR 2
+static const int dynamic_array_growth_factor = 2;
 
 // Ensures that there is enough space in a dynamically allocated array so that it can hold at least
 // `n` elements by reallocating more space if necessary. If the array already has enough space, then
@@ -25,11 +25,10 @@
 #define DYNAMIC_ARRAY_GROW(data, cap, n)                     \
     do {                                                     \
         if ((n) > (cap)) {                                   \
-            if ((cap) < DYNAMIC_ARRAY_INITIAL_CAPACITY)      \
-                (cap) = DYNAMIC_ARRAY_INITIAL_CAPACITY;      \
-            else                                             \
-                while ((cap) < (n))                          \
-                    (cap) *= DYNAMIC_ARRAY_GROW_FACTOR;      \
+            if ((cap) < dynamic_array_initial_capacity)      \
+                (cap) = dynamic_array_initial_capacity;      \
+            while ((cap) < (n))                              \
+                (cap) *= dynamic_array_growth_factor;        \
             size_t size = DYNAMIC_ARRAY_SIZE((data), (cap)); \
             (data) = xrealloc((data), size);                 \
         }                                                    \
@@ -40,9 +39,10 @@
     do {                                                                  \
         if ((n) > (cap)) {                                                \
             size_t current_size = DYNAMIC_ARRAY_SIZE((data), (cap));      \
-            (cap) = (cap) < 8 ? 8 : (cap) * 2;                            \
+            if ((cap) < dynamic_array_initial_capacity)                   \
+                (cap) = dynamic_array_initial_capacity;                   \
             while ((cap) < (n))                                           \
-                (cap) *= 2;                                               \
+                (cap) *= dynamic_array_growth_factor;                     \
             size_t target_size = DYNAMIC_ARRAY_SIZE((data), (cap));       \
             (data) = vm_realloc((vm), (data), current_size, target_size); \
         }                                                                 \
