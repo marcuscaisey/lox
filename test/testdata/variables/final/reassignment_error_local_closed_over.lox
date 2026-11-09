@@ -1,0 +1,9 @@
+{
+  final a = 1;
+  fun f() {
+    // error: final variable 'a' can't be reassigned
+    // lint warning: final variable 'a' can't be reassigned
+    a = 2;
+  }
+  f();
+}

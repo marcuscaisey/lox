@@ -1,21 +1,38 @@
 // This module defines the bytecode format and instruction set for the Lox virtual machine (VM).
 //
-// The Lox VM is an abstract computing machine (not tied to a particular implementation) that
-// executes bytecode chunks (sequences of instructions). Each chunk has an associated pool of
-// constants that instructions can reference by index.
+// The VM executes bytecode chunks (sequences of instructions). Each chunk has a pool of constants
+// that instructions can reference by index.
 //
+// Execution Chunks
+// ----------------
 // For each execution of a chunk, the VM maintains a "frame" containing the state of that execution
-// and a stack of Lox values (the "value stack") that instructions can manipulate. Each frame has an
-// independent value stack.
+// and a stack of Lox values (the "value stack") that instructions can manipulate and reference by
+// index. Each frame has an independent value stack.
 //
-// The VM begins by creating a frame to execute an initial chunk. When a callable is called, a new
-// frame is created to execute its associated chunk and execution of the calling chunk is suspended.
-// When the callable returns, execution resumes in the calling chunk. Different calls of the same
-// callable are associated with indpendent frames.
+// The VM begins by creating a frame to execute an initial chunk. When a function is called, a new
+// frame is created to execute its chunk and execution of the calling chunk is suspended. When the
+// function returns, its frame is destroyed and execution resumes in the calling chunk. Different
+// calls of the same function are associated with independent frames.
 //
-// The VM also maintains a set of global variables that are shared between executions of different
+// Global Variables
+// ----------------
+// The VM maintains a set of global variables that are shared between executions of different
 // chunks. Each global variable is identified by an index that remains stable for the lifetime of
 // the VM.
+//
+// Closures
+// --------
+// A called function's chunk can normally only reference global variables and values in its frame's
+// value stack. A closure can be created that associates a function with a set of "upvalues". These
+// are values that aren't global and don't live on the value stack of the function's frame. When a
+// closure is called, its function's chunk is executed in the same way as a normal function's is,
+// but the chunk can also reference the closure's upvalues by index.
+//
+// An upvalue can either be "open" or "closed". An open upvalue aliases a value in a frame's value
+// stack. A closed upvalue is stored by the VM separately from the frame's value stack. An upvalue
+// is open when it's created and must be closed before the value it aliases is popped from the
+// stack. A function's chunk references an upvalue by an index defined by its closure. Different
+// closures can associate functions with the same upvalue which is shared between them.
 
 #ifndef CLOX_BYTECODE_H
 #define CLOX_BYTECODE_H
@@ -36,9 +53,6 @@ typedef int32_t global_index;
 
 typedef int32_t stack_index;
 
-// Represents the depth of a frame's value stack.
-typedef int32_t stack_depth;
-
 typedef int32_t jump_offset;
 
 // Size of a jump offset value.
@@ -46,12 +60,17 @@ extern const size_t jump_offset_size;
 
 typedef int32_t argument_count;
 
+typedef int32_t upvalue_count;
+
+typedef int32_t upvalue_index;
+
 // Instructions defined by the Lox VM's instruction set.
 //
 // The comment on each opcode describes the operation and operands, if any.
 // Unless stated otherwise:
 //   - "Push" and "pop" refer to pushing and popping from the current frame's value stack.
 //   - "Bytecode chunk" refers to the currently executing bytecode chunk.
+//   - "Upvalue" refers to an upvalue of the closure associated with the current frame.
 //   - "Constants" refer to the constant pool of the currently executing bytecode chunk.
 //
 // Operand types
@@ -64,6 +83,9 @@ typedef int32_t argument_count;
 //   global_index
 //     Index of a global variable maintained by the VM.
 //     Range: 0 - 16,777,215
+//   upvalue_index
+//     Index of a closure's upvalue.
+//     Range: 0 - 16,777,215
 //   stack_index
 //     Index of a value in a value stack.
 //     Range: 0 - 16,777,214
@@ -72,7 +94,10 @@ typedef int32_t argument_count;
 //     from the next instruction's offset
 //     Range: 0 - 65,535
 //   argument_count
-//     Number of arguments passed to a callable.
+//     Number of arguments passed to a function.
+//     Range: 0 - 16,777,215
+//   upvalue_count
+//     Number of upvalues that a closure associates with a function.
 //     Range: 0 - 16,777,215
 enum opcode {
     // Pushes a constant
@@ -104,17 +129,26 @@ enum opcode {
     // Operands
     //   global_index - index of the global variable
     OP_SET_GLOBAL,
+    // Pushes the value of an upvalue
+    // Operands
+    //   upvalue_index - index of the upvalue
+    OP_GET_UPVALUE,
+    // Sets the value of an upvalue
+    // Operands
+    //   upvalue_index - index of the upvalue
+    OP_SET_UPVALUE,
     // Marks the value on top of the stack as a local variable
     OP_DEFINE_LOCAL,
     // Marks the value on top of the stack as a final local variable
     // Operands
     //   constant_index - index of the constant containing the variable name
     OP_DEFINE_LOCAL_FINAL,
-    // Pushes the value at a stack index
+    // Pushes the value from the value stack
     // Operands
     //   stack_index - index of the value
     OP_GET_LOCAL,
-    // Sets the value at a stack index to the value on top of the stack
+    // Sets the value in the value stack to the value on top of the stack. The value assigned to
+    // must have been marked local or final local variable.
     // Operands
     //   stack_index - index of the value
     OP_SET_LOCAL,
@@ -148,17 +182,51 @@ enum opcode {
     // Operands
     //   jump_offset - number of bytes to jump
     OP_JUMP_IF_FALSE,
-    // Pops the top n values from the current frame's stack and the callable below them, then calls
-    // the callable, passing those values as arguments. A new frame is created to execute the
-    // callable's chunk and the passed arguments are made available at indices 0 through
-    // `argument_count-1` of its stack. The function's arguments are marked as local variables (as
-    // if with the `OP_DEFINE_LOCAL` instruction).
+    // Pops the top n values from the current frame's stack and the function below them, then calls
+    // the function, passing those values as arguments.
+    //
+    // A new frame is created to execute the function's chunk and the passed arguments are made
+    // available at indices 0 through `n-1` of its stack. The function's arguments are marked as
+    // local variables (as if with the `OP_DEFINE_LOCAL` instruction).
+    //
     // Operands
     //   argument_count - number of arguments being passed
     OP_CALL,
-    // Pops the top value from the current frame's stack and ends execution of its chunk. If there
-    // is a calling frame, the popped value is pushed onto its stack and the execution its is
-    // resumed. Otherwise, VM execution terminates.
+    // Creates a closure associating a function with a set of upvalues and pushes it.
+    //
+    // The operands after the upvalue count specify the sources of the upvalues. They can refer to
+    // either:
+    //   a. A value in the current frame's value stack. In this case, an open upvalue aliasing the
+    //      value is created if one doesn't exist and this upvalue is associated with the function.
+    //   b. An upvalue of the closure associated with the current frame. In this case, that upvalue
+    //      is associated with the function.
+    // The source operands are grouped into pairs where the value of the first operand determines
+    // what the index in the second one refers to. If the first is 1, then the second refers to (a),
+    // otherwise it refers to (b). The order of the pairs determines the indexes that the function's
+    // chunk can reference its associated upvalues with.
+    //
+    // Operands
+    //   constant_index - index of the function
+    //   upvalue_count - number of upvalues
+    //   u8 - 1 or 0
+    //   stack_index or upvalue_index - index for upvalue 0
+    //   u8 - 1 or 0
+    //   stack_index or upvalue_index - index for upvalue 1
+    //   ...
+    //   u8 - 1 or 0
+    //   stack_index or upvalue_index - index for upvalue n-1
+    OP_CLOSURE,
+    // Closes the open upvalue aliasing the value on top of the stack and pops the value
+    OP_CLOSE_UPVALUE,
+    // Closes the open upvalues that alias any of the top n values of the stack (if any) and pops
+    // the values
+    // Operands
+    //   pop_count - number of open upvalues to close and values to pop
+    OP_CLOSE_UPVALUE_N,
+    // Pops the top value from the current frame's stack, closes the open upvalues that alias any of
+    // the values remaining on the stack, and ends execution of its chunk. If there is a calling
+    // frame, the popped value is pushed onto its stack and its execution is resumed. Otherwise, VM
+    // execution terminates.
     OP_RETURN,
 };
 
@@ -189,7 +257,7 @@ struct bytecode_chunk {
     // Number of constants that space has been allocated for.
     size_t _constants_cap;
     // Maximum number of values that will be on the value stack during execution
-    stack_depth max_stack_depth;
+    size_t max_stack_depth;
     // Internal field, do not use.
     // Whether the VM manages dynamic memory allocation for this chunk.
     bool _is_vm_managed;
@@ -227,6 +295,10 @@ void bytecode_chunk_write_global_index(vm *vm, struct bytecode_chunk *chunk, glo
                                        line_number line);
 
 // Writes `index` associated with `line` to the chunk's instructions.
+void bytecode_chunk_write_upvalue_index(vm *vm, struct bytecode_chunk *chunk, upvalue_index index,
+                                        line_number line);
+
+// Writes `index` associated with `line` to the chunk's instructions.
 void bytecode_chunk_write_stack_index(vm *vm, struct bytecode_chunk *chunk, stack_index index,
                                       line_number line);
 
@@ -242,25 +314,38 @@ void bytecode_chunk_set_jump_offset(struct bytecode_chunk *chunk, bytecode_offse
 void bytecode_chunk_write_argument_count(vm *vm, struct bytecode_chunk *chunk, argument_count count,
                                          line_number line);
 
+// Writes `count` associated with `line` to the chunk's instructions.
+void bytecode_chunk_write_upvalue_count(vm *vm, struct bytecode_chunk *chunk, upvalue_count count,
+                                        line_number line);
+
+// Reads the u8 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
+uint8_t bytecode_read_u8(uint8_t **p);
+
 // Reads the opcode from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-enum opcode bytecode_read_opcode(uint8_t **ip);
+enum opcode bytecode_read_opcode(uint8_t **p);
 
 // Reads the constant index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-constant_index bytecode_read_constant_index(uint8_t **ip);
+constant_index bytecode_read_constant_index(uint8_t **p);
 
 // Reads the pop count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-pop_count bytecode_read_pop_count(uint8_t **ip);
+pop_count bytecode_read_pop_count(uint8_t **p);
 
 // Reads the global index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-global_index bytecode_read_global_index(uint8_t **ip);
+global_index bytecode_read_global_index(uint8_t **p);
+
+// Reads the upvalue index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
+upvalue_index bytecode_read_upvalue_index(uint8_t **p);
 
 // Reads the stack index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-stack_index bytecode_read_stack_index(uint8_t **ip);
+stack_index bytecode_read_stack_index(uint8_t **p);
 
 // Reads the jump offset from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-jump_offset bytecode_read_jump_offset(uint8_t **ip);
+jump_offset bytecode_read_jump_offset(uint8_t **p);
 
 // Reads the argument count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-argument_count bytecode_read_argument_count(uint8_t **ip);
+argument_count bytecode_read_argument_count(uint8_t **p);
+
+// Reads the upvalue count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
+argument_count bytecode_read_upvalue_count(uint8_t **p);
 
 #endif

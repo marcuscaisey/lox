@@ -32,6 +32,12 @@ line_number frame_last_instruction_line(const struct frame *frame)
     return line;
 }
 
+// Returns the index in the VM's value stack corresponding to `index` in the frame's value stack.
+static size_t frame_vm_stack_index(const struct frame *frame, stack_index index)
+{
+    return frame->_stack_offset + index;
+}
+
 void vm_init(vm *vm)
 {
     vm->_frames = NULL;
@@ -41,12 +47,14 @@ void vm_init(vm *vm)
     vm->_stack_cap = 0;
     vm->_stack_top = NULL;
     vm->_objects = NULL;
-    map_init(&vm->_strings, true); // Interned strings could become garbage so need VM to manage
+    map_init(&vm->_strings, true); // Interned strings can become garbage so need VM to manage this
     vm->_globals = NULL;
     vm->_globals_len = 0;
     vm->_globals_cap = 0;
+    vm->_open_upvalues = NULL;
     vm->_local_final_vars = NULL;
 
+    // Define built-in functions
     DYNAMIC_ARRAY_GROW(vm->_globals, vm->_globals_cap, builtin_functions_len);
     for (size_t i = 0; i < builtin_functions_len; i++) {
         struct builtin_function function = builtin_functions[i];
@@ -87,11 +95,11 @@ void vm_deinit(vm *vm)
 static void vm_stack_grow(vm *vm, size_t n)
 {
     if (vm->_stack_cap < n) {
-        stack_depth current_stack_depth = vm->_stack_top - vm->_stack;
+        size_t current_stack_depth = vm->_stack_top - vm->_stack;
         size_t stack_size = DYNAMIC_ARRAY_SIZE(vm->_stack, n);
-        size_t local_final_var_size = DYNAMIC_ARRAY_SIZE(vm->_local_final_vars, n);
+        size_t local_final_vars_size = DYNAMIC_ARRAY_SIZE(vm->_local_final_vars, n);
         vm->_stack = xrealloc(vm->_stack, stack_size);
-        vm->_local_final_vars = xrealloc(vm->_local_final_vars, local_final_var_size);
+        vm->_local_final_vars = xrealloc(vm->_local_final_vars, local_final_vars_size);
         vm->_stack_cap = n;
         vm->_stack_top = vm->_stack + current_stack_depth;
     }
@@ -161,7 +169,8 @@ static __attribute__((format(printf, 3, 4))) void vm_report_errorf(const vm *vm,
 }
 
 // Returns a new string created by concatenating `a` and `b`.
-struct object_string *vm_concat_strings(vm *vm, struct object_string *a, struct object_string *b)
+static struct object_string *vm_concat_strings(vm *vm, struct object_string *a,
+                                               struct object_string *b)
 {
     size_t len = a->len + b->len;
     char *data = vm_malloc(vm, len + 1);
@@ -172,7 +181,7 @@ struct object_string *vm_concat_strings(vm *vm, struct object_string *a, struct 
 }
 
 // Returns a new string created by repeating `s` `n` times.
-struct object_string *vm_repeat_string(vm *vm, struct object_string *s, int64_t n)
+static struct object_string *vm_repeat_string(vm *vm, struct object_string *s, int64_t n)
 {
     size_t len = s->len * n;
     char *data = vm_malloc(vm, len + 1);
@@ -180,6 +189,20 @@ struct object_string *vm_repeat_string(vm *vm, struct object_string *s, int64_t 
         memcpy(data + s->len * i, s->data, s->len);
     data[len] = '\0';
     return object_string_take(vm, data, len);
+}
+
+// Closes the open upvalues that alias any of the top `n` values of the stack (if any).
+static void vm_close_upvalues(vm *vm, size_t n)
+{
+    // Last VM stack index that we'll close an upvalue for
+    size_t last_vm_stack_index = vm->_stack_top - vm->_stack - n;
+    // Iterate (if possible) over the next pointers (treating the pointer to the head as one) that
+    // point to upvalues with a large enough VM stack index
+    struct object_upvalue **next_ptr = &vm->_open_upvalues;
+    while (*next_ptr != NULL && (*next_ptr)->vm_stack_index >= last_vm_stack_index) {
+        object_upvalue_close(vm, *next_ptr);
+        *next_ptr = (*next_ptr)->next;
+    }
 }
 
 // Number of active frames that space will initially be allocated for
@@ -197,10 +220,11 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
     vm_stack_grow(vm, initial_stack_capacity);
 
     struct frame *frame = &vm->_frames[vm->_frames_len++];
-    frame->name = NULL;
+    frame->function = NULL;
     frame->_chunk = chunk;
     frame->_ip = chunk->instructions;
     frame->_stack_offset = 0;
+    frame->_upvalues = NULL;
 
     while (true) {
 #ifdef DEBUG_TRACE_EXECUTION
@@ -234,6 +258,19 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_POP_N: {
             pop_count count = bytecode_read_pop_count(&frame->_ip);
+            vm_stack_pop_n(vm, count);
+            break;
+        }
+
+        case OP_CLOSE_UPVALUE: {
+            vm_close_upvalues(vm, 1);
+            vm_stack_pop(vm);
+            break;
+        }
+
+        case OP_CLOSE_UPVALUE_N: {
+            pop_count count = bytecode_read_pop_count(&frame->_ip);
+            vm_close_upvalues(vm, count);
             vm_stack_pop_n(vm, count);
             break;
         }
@@ -290,6 +327,27 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             break;
         }
 
+        case OP_GET_UPVALUE: {
+            upvalue_index index = bytecode_read_upvalue_index(&frame->_ip);
+            struct object_upvalue *upvalue = frame->_upvalues[index];
+            value value = object_upvalue_read(vm, upvalue);
+            vm_stack_push(vm, value);
+            break;
+        }
+
+        case OP_SET_UPVALUE: {
+            upvalue_index index = bytecode_read_upvalue_index(&frame->_ip);
+            struct object_upvalue *upvalue = frame->_upvalues[index];
+            if (upvalue->final_var_name) {
+                vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
+                                 upvalue->final_var_name->data);
+                goto out_error;
+            }
+            value value = vm_stack_peek(vm, 0);
+            object_upvalue_write(vm, upvalue, value);
+            break;
+        }
+
         case OP_DEFINE_LOCAL: {
             stack_index top_stack_index = vm->_stack_top - vm->_stack - 1;
             vm->_local_final_vars[top_stack_index] = -1;
@@ -305,22 +363,24 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_GET_LOCAL: {
             stack_index stack_index = bytecode_read_stack_index(&frame->_ip);
-            value value = vm->_stack[frame->_stack_offset + stack_index];
+            value value = vm->_stack[frame_vm_stack_index(frame, stack_index)];
             vm_stack_push(vm, value);
             break;
         }
 
         case OP_SET_LOCAL: {
             stack_index stack_index = bytecode_read_stack_index(&frame->_ip);
-            constant_index name_index = vm->_local_final_vars[frame->_stack_offset + stack_index];
-            if (name_index >= 0) {
+            size_t vm_stack_index = frame_vm_stack_index(frame, stack_index);
+            constant_index name_index = vm->_local_final_vars[vm_stack_index];
+            bool is_final = name_index >= 0;
+            if (is_final) {
                 value name = frame->_chunk->constants[name_index];
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  value_as_string(name)->data);
                 goto out_error;
             }
             value value = vm_stack_peek(vm, 0);
-            vm->_stack[frame->_stack_offset + stack_index] = value;
+            vm->_stack[vm_stack_index] = value;
             break;
         }
 
@@ -531,23 +591,31 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_CALL: {
             argument_count arg_count = bytecode_read_argument_count(&frame->_ip);
-            value callable = vm_stack_peek(vm, arg_count);
+            value function_value = vm_stack_peek(vm, arg_count);
 
             struct object_native_function *native_function = NULL;
             struct object_function *function = NULL;
             argument_count arity;
-            switch (value_type(callable)) {
+            struct object_upvalue **upvalues = NULL;
+            switch (value_type(function_value)) {
             case VALUE_NATIVE_FUNCTION:
-                native_function = value_as_native_function(callable);
+                native_function = value_as_native_function(function_value);
                 arity = native_function->arity;
                 break;
             case VALUE_FUNCTION:
-                function = value_as_function(callable);
+                function = value_as_function(function_value);
                 arity = function->arity;
                 break;
+            case VALUE_CLOSURE: {
+                struct object_closure *closure = value_as_closure(function_value);
+                function = closure->function;
+                arity = closure->function->arity;
+                upvalues = closure->upvalues;
+                break;
+            }
             default:
                 vm_report_errorf(vm, source, "'%s' value is not callable",
-                                 value_type_string(value_type(callable)));
+                                 value_type_string(value_type(function_value)));
                 goto out_error;
             }
 
@@ -562,7 +630,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
             if (native_function != NULL) {
                 value *args = vm->_stack_top - arg_count;
-                vm_stack_pop_n(vm, arg_count + 1); // Arguments + callable
+                vm_stack_pop_n(vm, arg_count + 1); // Arguments + function
                 char *error_msg;
                 value result = native_function->body(vm, args, &error_msg);
                 if (values_are_equal(result, none_value)) {
@@ -575,27 +643,76 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             }
 
             DYNAMIC_ARRAY_GROW(vm->_frames, vm->_frames_cap, vm->_frames_len + 1);
-            stack_depth required_stack_depth =
+            size_t required_stack_depth =
                 vm->_stack_top - vm->_stack + function->body.max_stack_depth;
             vm_stack_grow(vm, required_stack_depth);
 
             frame = &vm->_frames[vm->_frames_len++];
-            frame->name = function->name;
+            frame->function = function;
             frame->_chunk = &function->body;
             frame->_ip = function->body.instructions;
             frame->_stack_offset = vm->_stack_top - vm->_stack - arg_count;
+            frame->_upvalues = upvalues;
             break;
         }
-#undef REPORT_ARITY_ERROR
+
+        case OP_CLOSURE: {
+            constant_index function_index = bytecode_read_constant_index(&frame->_ip);
+
+            upvalue_count upvalue_count = bytecode_read_upvalue_count(&frame->_ip);
+            struct object_upvalue **upvalues = vm_malloc(vm, upvalue_count * sizeof(*upvalues));
+            for (size_t i = 0; i < (size_t)upvalue_count; i++) {
+                bool is_stack_index = bytecode_read_u8(&frame->_ip);
+                if (is_stack_index) {
+                    stack_index index = bytecode_read_stack_index(&frame->_ip);
+                    size_t vm_stack_index = frame_vm_stack_index(frame, index);
+                    // Iterate (if possible) over the next pointers (treating the pointer to the
+                    // head as one) until we reach one which points to an upvalue with a VM stack
+                    // index <= ours
+                    struct object_upvalue **next_ptr = &vm->_open_upvalues;
+                    while (*next_ptr != NULL && (*next_ptr)->vm_stack_index > vm_stack_index)
+                        next_ptr = &(*next_ptr)->next;
+                    if (*next_ptr == NULL || (*next_ptr)->vm_stack_index != vm_stack_index) {
+                        constant_index final_var_name_index = vm->_local_final_vars[vm_stack_index];
+                        struct object_string *final_var_name = NULL;
+                        if (final_var_name_index >= 0) {
+                            value value = frame->_chunk->constants[final_var_name_index];
+                            final_var_name = value_as_string(value);
+                        }
+                        struct object_upvalue *upvalue =
+                            object_upvalue_new_open(vm, vm_stack_index, final_var_name);
+                        upvalue->next = *next_ptr;
+                        *next_ptr = upvalue;
+                    }
+                    upvalues[i] = *next_ptr;
+
+                } else {
+                    upvalue_index index = bytecode_read_upvalue_index(&frame->_ip);
+                    upvalues[i] = frame->_upvalues[index];
+                }
+            }
+
+            struct object_function *function =
+                value_as_function(frame->_chunk->constants[function_index]);
+            struct object_closure *closure =
+                object_closure_new(vm, function, upvalues, upvalue_count);
+            vm_stack_push(vm, closure_value(closure));
+            break;
+        }
 
         case OP_RETURN: {
             value return_value = vm_stack_pop(vm);
             vm->_frames_len--;
             if (vm->_frames_len == 0)
                 return true;
-            // OP_CALL left the callable and arguments on the stack and pointed stack_offset in the
+
+            // Close any upvalues aliasing the values left on the stack
+            size_t frame_stack_depth = vm->_stack_top - vm->_stack - frame->_stack_offset;
+            vm_close_upvalues(vm, frame_stack_depth);
+
+            // OP_CALL left the function and arguments on the stack and pointed stack_offset in the
             // new frame to the start of the arguments. So adding stack_offset takes us to the start
-            // of the arguments and we need to take away 1 so that stack top points at the callable.
+            // of the arguments and we need to take away 1 so that stack top points at the function.
             vm->_stack_top = vm->_stack + frame->_stack_offset - 1;
             frame = &vm->_frames[vm->_frames_len - 1];
             vm_stack_push(vm, return_value);

@@ -36,6 +36,10 @@ const char *instruction_name(enum opcode opcode)
         return "GET_GLOBAL";
     case OP_SET_GLOBAL:
         return "SET_GLOBAL";
+    case OP_GET_UPVALUE:
+        return "GET_UPVALUE";
+    case OP_SET_UPVALUE:
+        return "SET_UPVALUE";
     case OP_DEFINE_LOCAL:
         return "DEFINE_LOCAL";
     case OP_DEFINE_LOCAL_FINAL:
@@ -82,6 +86,12 @@ const char *instruction_name(enum opcode opcode)
         return "JUMP_IF_FALSE";
     case OP_CALL:
         return "CALL";
+    case OP_CLOSURE:
+        return "CLOSURE";
+    case OP_CLOSE_UPVALUE:
+        return "CLOSE_UPVALUE";
+    case OP_CLOSE_UPVALUE_N:
+        return "CLOSE_UPVALUE_N";
     case OP_RETURN:
         return "RETURN";
     }
@@ -211,13 +221,25 @@ static const pop_count max_pop_count = max_u24;
 void bytecode_write_pop_count(vm *vm, struct bytecode_chunk *chunk, pop_count count,
                               line_number line)
 {
+    assert(count <= max_pop_count);
     bytecode_chunk_write_compact_u24(vm, chunk, count, line);
 }
 
 void bytecode_chunk_write_global_index(vm *vm, struct bytecode_chunk *chunk, global_index index,
                                        line_number line)
 {
-    assert(index >= 0 && index <= 0xFFFFFF);
+    bytecode_chunk_write_compact_u24(vm, chunk, index, line);
+}
+
+static const upvalue_count max_upvalue_count = max_u24;
+
+// 1 less than `max_upvalue_count` so that it's possible to reference every upvalue by index
+static const upvalue_index max_upvalue_index = max_upvalue_count - 1;
+
+void bytecode_chunk_write_upvalue_index(vm *vm, struct bytecode_chunk *chunk, upvalue_index index,
+                                        line_number line)
+{
+    assert(index <= max_upvalue_index);
     bytecode_chunk_write_compact_u24(vm, chunk, index, line);
 }
 
@@ -253,67 +275,83 @@ void bytecode_chunk_write_argument_count(vm *vm, struct bytecode_chunk *chunk, a
     bytecode_chunk_write_compact_u24(vm, chunk, count, line);
 }
 
-// Reads the u8 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-static uint8_t bytecode_read_u8(uint8_t **ip)
+void bytecode_chunk_write_upvalue_count(vm *vm, struct bytecode_chunk *chunk, upvalue_count count,
+                                        line_number line)
 {
-    return *(*ip)++;
+    assert(count <= max_upvalue_count);
+    bytecode_chunk_write_compact_u24(vm, chunk, count, line);
+}
+
+uint8_t bytecode_read_u8(uint8_t **p)
+{
+    return *(*p)++;
 }
 
 // Reads the big-endian u16 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-static uint16_t bytecode_read_u16(uint8_t **ip)
+static uint16_t bytecode_read_u16(uint8_t **p)
 {
-    *ip += 2;
-    return ((*ip)[-2] << 8) | ((*ip)[-1]);
+    *p += 2;
+    return ((*p)[-2] << 8) | ((*p)[-1]);
 }
 
 // Reads the big-endian u24 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-static uint32_t bytecode_read_u24(uint8_t **ip)
+static uint32_t bytecode_read_u24(uint8_t **p)
 {
-    *ip += 3;
-    return ((*ip)[-3] << 16) | ((*ip)[-2] << 8) | ((*ip)[-1]);
+    *p += 3;
+    return ((*p)[-3] << 16) | ((*p)[-2] << 8) | ((*p)[-1]);
 }
 
 // Reads the value encoded by `bytecode_chunk_write_compact_u24()` from the sequence of bytes
 // pointed to by `*p` and moves `*p` past it.
-static uint32_t bytecode_read_compact_u24(uint8_t **ip)
+static uint32_t bytecode_read_compact_u24(uint8_t **p)
 {
-    uint8_t index = bytecode_read_u8(ip);
+    uint8_t index = bytecode_read_u8(p);
     if (index < 0xFF)
         return index;
-    return bytecode_read_u24(ip);
+    return bytecode_read_u24(p);
 }
 
-enum opcode bytecode_read_opcode(uint8_t **ip)
+enum opcode bytecode_read_opcode(uint8_t **p)
 {
-    return bytecode_read_u8(ip);
+    return bytecode_read_u8(p);
 }
 
-constant_index bytecode_read_constant_index(uint8_t **ip)
+constant_index bytecode_read_constant_index(uint8_t **p)
 {
-    return bytecode_read_compact_u24(ip);
+    return bytecode_read_compact_u24(p);
 }
 
-pop_count bytecode_read_pop_count(uint8_t **ip)
+pop_count bytecode_read_pop_count(uint8_t **p)
 {
-    return bytecode_read_compact_u24(ip);
+    return bytecode_read_compact_u24(p);
 }
 
-global_index bytecode_read_global_index(uint8_t **ip)
+global_index bytecode_read_global_index(uint8_t **p)
 {
-    return bytecode_read_compact_u24(ip);
+    return bytecode_read_compact_u24(p);
 }
 
-stack_index bytecode_read_stack_index(uint8_t **ip)
+upvalue_index bytecode_read_upvalue_index(uint8_t **p)
 {
-    return bytecode_read_compact_u24(ip);
+    return bytecode_read_compact_u24(p);
 }
 
-jump_offset bytecode_read_jump_offset(uint8_t **ip)
+stack_index bytecode_read_stack_index(uint8_t **p)
 {
-    return bytecode_read_u16(ip);
+    return bytecode_read_compact_u24(p);
 }
 
-argument_count bytecode_read_argument_count(uint8_t **ip)
+jump_offset bytecode_read_jump_offset(uint8_t **p)
 {
-    return bytecode_read_compact_u24(ip);
+    return bytecode_read_u16(p);
+}
+
+argument_count bytecode_read_argument_count(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
+}
+
+upvalue_count bytecode_read_upvalue_count(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
 }

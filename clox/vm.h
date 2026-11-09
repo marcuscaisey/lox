@@ -13,12 +13,15 @@
 
 // Runtime representation of a frame as defined in bytecode.h.
 struct frame {
-    // Name of the callable if this frame was created to execute a callable, otherwise `NULL`
-    const char *name; // TODO: replace with struct object_function *
+    // Function called if this frame was created for a function call, otherwise `NULL`
+    const struct object_function *function;
     // Internal fields below, do not use.
     const struct bytecode_chunk *_chunk; // Bytecode chunk being executed
-    uint8_t *_ip; // Pointer to the next instruction to be executed (instruction pointer)
+    uint8_t *_ip; // Pointer to the next byte to be read from the instructions (instruction pointer)
     size_t _stack_offset; // Index in the VM's value stack where this frame's value stack begins
+    // Array of upvalues associated with the closure called if this frame was created for a closure
+    // call, otherwise `NULL`
+    struct object_upvalue **_upvalues;
 };
 
 // Returns the line associated with the last instruction read in this frame.
@@ -44,6 +47,9 @@ struct vm {
     struct global *_globals;
     size_t _globals_len; // Number of global variables
     size_t _globals_cap; // Number of global variables space has been allocated for
+    // Head of the linked list of open upvalues.
+    // The list is sorted in descending VM stack index order.
+    struct object_upvalue *_open_upvalues;
     // Array where each element stores whether the local variable (if any) at the same index in the
     // value stack is a final variable. If it is, then the element is the index of the constant
     // containing the variable name. Otherwise, the element is -1.

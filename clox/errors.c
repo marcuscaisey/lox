@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "line_number.h"
+#include "object.h"
 #include "vm.h"
 
 // Concrete styles. These are used to build semantic styles.
@@ -152,9 +153,9 @@ void print_stack_trace(const struct frame *frames, size_t n, const char *source)
         lines[i] = frame_last_instruction_line(&frame);
         if (lines[i] > max_line)
             max_line = lines[i];
-        if (frame.name != NULL) {
-            names[i] = frame.name;
-            int name_len = strlen(frame.name);
+        if (frame.function != NULL) {
+            names[i] = frame.function->name;
+            int name_len = strlen(frame.function->name);
             if (name_len > max_name_len)
                 max_name_len = name_len;
         } else {
@@ -178,7 +179,7 @@ void print_stack_trace(const struct frame *frames, size_t n, const char *source)
         // Print line
         fprintf(stderr, "  %s%-*d ", location_style, max_line_width, line);
         fprintf(stderr, "%s", reset_style);
-        // Print callable name
+        // Print function name
         if (names[i] != NULL) {
             fprintf(stderr, "in %-*s ", max_name_len, names[i]);
         } else {

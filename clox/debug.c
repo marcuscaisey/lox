@@ -19,12 +19,15 @@ void disassemble(const struct bytecode_chunk *chunk, const char *name)
 uint8_t *disassemble_instruction(const struct bytecode_chunk *chunk, uint8_t *ip)
 {
     int offset = ip - chunk->instructions;
-    printf("%04d ", offset);
+    int offset_width = 4;
+    printf("%0*d ", offset_width, offset);
+
+    int line_width = 4;
     line_number line = chunk->offset_lines[offset];
     if (offset > 0 && line == chunk->offset_lines[offset - 1])
-        printf("   | ");
+        printf("%*s ", line_width, "|");
     else
-        printf("%4d ", line);
+        printf("%*d ", line_width, line);
 
     // Width of longest name of instruction which accepts an operand
     int name_width = strlen(instruction_name(OP_DEFINE_GLOBAL_FINAL));
@@ -35,11 +38,19 @@ uint8_t *disassemble_instruction(const struct bytecode_chunk *chunk, uint8_t *ip
     switch (opcode) {
     case OP_CONSTANT: {
         constant_index index = bytecode_read_constant_index(&ip);
-        char *name = value_string(chunk->constants[index]);
-        printf("%-*s %*d '%s'\n", name_width, instruction, operand_width, index, name);
-        free(name);
+        char *value = value_string(chunk->constants[index]);
+        printf("%-*s %*d '%s'\n", name_width, instruction, operand_width, index, value);
+        free(value);
         return ip;
     }
+
+    case OP_POP_N:
+    case OP_CLOSE_UPVALUE_N: {
+        pop_count count = bytecode_read_pop_count(&ip);
+        printf("%-*s %*d\n", name_width, instruction, operand_width, count);
+        return ip;
+    }
+
     case OP_DEFINE_GLOBAL:
     case OP_DEFINE_GLOBAL_FINAL:
     case OP_GET_GLOBAL:
@@ -49,17 +60,21 @@ uint8_t *disassemble_instruction(const struct bytecode_chunk *chunk, uint8_t *ip
         printf("%-*s %*d\n", name_width, instruction, operand_width, index);
         return ip;
     }
-    case OP_POP_N: {
-        pop_count count = bytecode_read_pop_count(&ip);
-        printf("%-*s %*d\n", name_width, instruction, operand_width, count);
+
+    case OP_GET_UPVALUE:
+    case OP_SET_UPVALUE: {
+        upvalue_index index = bytecode_read_upvalue_index(&ip);
+        printf("%-*s %*d\n", name_width, instruction, operand_width, index);
         return ip;
     }
+
     case OP_GET_LOCAL:
     case OP_SET_LOCAL: {
         stack_index index = bytecode_read_stack_index(&ip);
         printf("%-*s %*d\n", name_width, instruction, operand_width, index);
         return ip;
     }
+
     case OP_JUMP:
     case OP_JUMP_BACK:
     case OP_JUMP_IF_TRUE:
@@ -68,11 +83,35 @@ uint8_t *disassemble_instruction(const struct bytecode_chunk *chunk, uint8_t *ip
         printf("%-*s %*d\n", name_width, instruction, operand_width, jump_offset);
         return ip;
     }
+
     case OP_CALL: {
         argument_count count = bytecode_read_argument_count(&ip);
         printf("%-*s %*d\n", name_width, instruction, operand_width, count);
         return ip;
     }
+
+    case OP_CLOSURE: {
+        constant_index function_index = bytecode_read_constant_index(&ip);
+        char *function_string = value_string(chunk->constants[function_index]);
+        printf("%-*s %*d %s\n", name_width, instruction, operand_width, function_index,
+               function_string);
+        free(function_string);
+        upvalue_count count = bytecode_read_upvalue_count(&ip);
+        for (upvalue_count i = 0; i < count; i++) {
+            printf("%0*d %*s %-*s %*s ", offset_width, offset, line_width, "", name_width, "|",
+                   operand_width, "");
+            bool is_stack_index = *ip++;
+            if (is_stack_index) {
+                stack_index index = bytecode_read_stack_index(&ip);
+                printf("local %d\n", index);
+            } else {
+                upvalue_index index = bytecode_read_upvalue_index(&ip);
+                printf("upvalue %d\n", index);
+            }
+        }
+        return ip;
+    }
+
     case OP_NIL:
     case OP_TRUE:
     case OP_FALSE:
@@ -93,10 +132,12 @@ uint8_t *disassemble_instruction(const struct bytecode_chunk *chunk, uint8_t *ip
     case OP_NOT:
     case OP_NEGATE:
     case OP_PRINT:
+    case OP_CLOSE_UPVALUE:
     case OP_RETURN:
         printf("%s\n", instruction);
         return ip;
     }
+
     printf("Unknown opcode %d\n", opcode);
     return ip;
 }

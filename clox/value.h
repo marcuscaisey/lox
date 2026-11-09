@@ -13,6 +13,7 @@ enum value_type {
     VALUE_NIL,
     VALUE_STRING,
     VALUE_FUNCTION,
+    VALUE_CLOSURE,
     VALUE_NATIVE_FUNCTION,
 };
 

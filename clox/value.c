@@ -21,7 +21,7 @@ const char *value_type_string(enum value_type type)
     case VALUE_STRING:
         return "string";
     case VALUE_FUNCTION:
-        return "function";
+    case VALUE_CLOSURE:
     case VALUE_NATIVE_FUNCTION:
         return "function";
     }
@@ -88,6 +88,7 @@ bool values_are_equal(value a, value b)
         return true;
     case VALUE_STRING:
     case VALUE_FUNCTION:
+    case VALUE_CLOSURE:
     case VALUE_NATIVE_FUNCTION:
         return value_as_object(a) == value_as_object(b);
     }
@@ -190,6 +191,10 @@ char *value_string(value value)
     case VALUE_STRING: {
         struct object_string *string = value_as_string(value);
         return xstrdup(string->data);
+    }
+    case VALUE_CLOSURE: {
+        struct object_closure *closure = value_as_closure(value);
+        return value_string(function_value(closure->function));
     }
     case VALUE_FUNCTION: {
         struct object_function *function = value_as_function(value);

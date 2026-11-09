@@ -19,45 +19,6 @@
 #include "value.h"
 #include "vm_internal.h"
 
-// Mode that a compiler can operate in.
-enum compiler_mode {
-    COMPILER_MODE_SCRIPT, // Compiling a top level script
-    COMPILER_MODE_FUNCTION, // Compiling a normal function
-};
-
-// Represents a local variable.
-struct local {
-    // Pointer to the start of the variable's name.
-    // This is not a null-terminated string, so `name_len` must be used to read it.
-    const char *name;
-    size_t name_len;
-    // Depth of the scope that the variable was defined in (see `compiler._scope_depth`)
-    int scope_depth;
-    bool is_initialising; // Whether the variable is currently being initialised
-};
-
-// Represents a break or continue statement that has been compiled.
-struct loop_jump_statement {
-    // Where the corresponding forward jump instruction was written to in the bytecode chunk
-    bytecode_offset instruction;
-    // Number of local variables in scope at the statements position
-    size_t locals_count;
-    line_number line; // Line that the statement appeared on
-};
-
-// State related to the compilation of a loop.
-struct loop_state {
-    bool is_nested; // Whether the loop is nested inside another one
-    // Array of break statements compiled since compilation of the loop started
-    struct loop_jump_statement *break_stmts;
-    size_t break_stmts_len; // Number of elements in `break_stmts`
-    size_t break_stmts_cap; // Number of elements space has been allocated for in `break_stmts`
-    // Array of continue statements compiled since compilation of the loop started
-    struct loop_jump_statement *continue_stmts;
-    size_t continue_stmts_len; // Number of elements in `continue_stmts`
-    size_t continue_stmts_cap; // Number of elements space has been allocated for in `continue_stmts`
-};
-
 // Reads a stream of tokens from a source and tracks whether errors have been reported while parsing
 // them.
 // All public fields are read-only.
@@ -237,6 +198,61 @@ static bool parser_expect(struct parser *parser, enum token_type type)
     return parser_expectf(parser, type, "expected '%s'", token_type_string(type));
 }
 
+// Mode that a compiler can operate in.
+enum compiler_mode {
+    COMPILER_MODE_SCRIPT, // Compiling a top level script
+    COMPILER_MODE_FUNCTION_BODY, // Compiling a regular function body
+};
+
+// Represents a local variable.
+struct local {
+    // Pointer to the start of the variable's name.
+    // This is not a null-terminated string, so `name_len` must be used to read it.
+    const char *name;
+    size_t name_len;
+    // Depth of the scope that the variable was defined in (see `compiler._scope_depth`)
+    int scope_depth;
+    bool is_initialising; // Whether the variable is currently being initialised
+    bool is_closed_over; // Whether the variable is referenced by a closure
+};
+
+// Represents a break or continue statement that has been compiled.
+struct loop_jump_statement {
+    // Where the corresponding forward jump instruction was written to in the bytecode chunk
+    bytecode_offset instruction;
+    // Number of local variables in scope at the statements position
+    size_t local_count;
+    line_number line; // Line that the statement appeared on
+};
+
+// State related to the compilation of a loop.
+struct loop_state {
+    bool is_nested; // Whether the loop is nested inside another one
+    // Array of break statements compiled since compilation of the loop started
+    struct loop_jump_statement *break_stmts;
+    size_t break_stmts_len; // Number of elements in `break_stmts`
+    size_t break_stmts_cap; // Number of elements space has been allocated for in `break_stmts`
+    // Array of continue statements compiled since compilation of the loop started
+    struct loop_jump_statement *continue_stmts;
+    size_t continue_stmts_len; // Number of elements in `continue_stmts`
+    size_t continue_stmts_cap; // Number of elements space has been allocated for in `continue_stmts`
+};
+
+// Represents the source of an upvalue that a function may be associated with.
+// This type corresponds to a pair of source operands of the `OP_CLOSURE` instruction.
+struct upvalue_source {
+    // Whether this source is in the enclosing script's or function body's value stack
+    bool is_stack;
+    union {
+        // Index in the enclosing script's or function body's value stack.
+        // Valid when `is_stack == true`.
+        stack_index stack_index;
+        // Index in the enclosing closure's upvalues.
+        // Valid when `is_stack == false`.
+        upvalue_index upvalue_index;
+    };
+};
+
 // Compiler that parses Lox source code and writes the compiled bytecode into a caller provided
 // chunk.
 // Must be initialised with `compiler_init()` before use and deinitialised with `compiler_deinit()`
@@ -246,8 +262,8 @@ typedef struct compiler {
     vm *_vm; // VM that will execute the output bytecode
     struct parser *_parser;
     struct bytecode_chunk *_out; // Chunk that bytecode is written to
-    enum opcode _last_opcode; // Last opcode emitted
     enum compiler_mode _mode;
+    enum opcode _last_opcode; // Last opcode emitted
     // Scope depth of the current token. 0 is global scope, 1 is inside a block at global scope, 2
     // is inside a block in that block, etc.
     int _scope_depth;
@@ -256,13 +272,22 @@ typedef struct compiler {
     // Array of local variables in scope at the current token's position, ordered by the position of
     // their declaration in the source
     struct local *_locals;
-    // Number of local variables in scope at the current token's position
-    size_t _locals_count;
-    // Number of elements space has been allocated for in the locals array
-    size_t _locals_cap;
+    size_t _local_count; // Number of local variables in scope at the current token's position
+    size_t _locals_cap; // Number of elements space has been allocated for in the locals array
+    // Compiler of the script or function body enclosing the function body being compiled or `NULL`
+    // if a function body isn't being compiled
+    struct compiler *_enclosing_compiler;
+    // Array of the sources of the upvalues referenced by the function body being compiled, ordered
+    // by the upvalue index the body references them with.
+    // `NULL` if a function body isn't being compiled.
+    struct upvalue_source *_upvalue_sources;
+    // Number of upvalues referenced by the function body being compiled.
+    // `0` if a function body isn't being compiled.
+    size_t _upvalue_count;
+    size_t _upvalue_sources_cap; // Number of upvalue sources space has been allocated for
     // Number of elements that would be in the value stack if execution reached the current token's
     // position
-    stack_depth _stack_depth;
+    size_t _stack_depth;
     bool _in_loop; // Whether a loop is currently being compiled
     struct loop_state _loop_state; // State of the loop currently being compiled
 } compiler;
@@ -284,14 +309,18 @@ static void compiler_init(compiler *compiler, vm *vm, struct parser *parser,
     compiler->_vm = vm;
     compiler->_parser = parser;
     compiler->_out = out;
-    compiler->_last_opcode = -1;
     compiler->_mode = COMPILER_MODE_SCRIPT;
+    compiler->_last_opcode = -1;
     compiler->_scope_depth = 0;
     // Lifetime is same as compiler so no need for VM to manage
     map_init(&compiler->_constant_indexes, false);
     compiler->_locals = NULL;
-    compiler->_locals_count = 0;
+    compiler->_local_count = 0;
     compiler->_locals_cap = 0;
+    compiler->_enclosing_compiler = NULL;
+    compiler->_upvalue_sources = NULL;
+    compiler->_upvalue_count = 0;
+    compiler->_upvalue_sources_cap = 0;
     compiler->_stack_depth = 0;
     compiler->_in_loop = false;
     compiler->_loop_state = (struct loop_state){ 0 };
@@ -326,10 +355,13 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_nu
     case OP_FALSE:
     case OP_DUP:
     case OP_GET_GLOBAL:
+    case OP_GET_UPVALUE:
     case OP_GET_LOCAL:
+    case OP_CLOSURE:
         compiler->_stack_depth++;
         break;
     case OP_POP:
+    case OP_CLOSE_UPVALUE:
     case OP_DEFINE_GLOBAL:
     case OP_DEFINE_GLOBAL_FINAL:
     case OP_EQUAL:
@@ -350,7 +382,11 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_nu
     case OP_POP_N:
         // This reduces the stack depth by n but we don't know what n is until the operand has been
         // written, so we reduce the stack size in `compiler_emit_pops()` instead.
+    case OP_CLOSE_UPVALUE_N:
+        // This reduces the stack depth by n but we don't know what n is until the operand has been
+        // written, so we reduce the stack size in `compiler_emit_close_upvalues()` instead.
     case OP_SET_GLOBAL:
+    case OP_SET_UPVALUE:
     case OP_DEFINE_LOCAL:
     case OP_DEFINE_LOCAL_FINAL:
     case OP_SET_LOCAL:
@@ -369,6 +405,12 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_nu
         compiler->_out->max_stack_depth = compiler->_stack_depth;
 }
 
+// Writes `operand` corresponding to `line` to the output bytecode chunk.
+static void compiler_emit_operand(const compiler *compiler, uint8_t operand, line_number line)
+{
+    bytecode_chunk_write(compiler->_vm, compiler->_out, operand, line);
+}
+
 // Ensures that value `v` corresponding to `line` is in the output bytecode chunk's constants and
 // writes its index to the chunk.
 static void compiler_emit_constant_index(compiler *compiler, value v, line_number line)
@@ -384,24 +426,38 @@ static void compiler_emit_constant_index(compiler *compiler, value v, line_numbe
     bytecode_chunk_write_constant_index(compiler->_vm, compiler->_out, index, line);
 }
 
-// Writes `index` to the output bytecode chunk.
+// Writes `index` corresponding to `line` to the output bytecode chunk.
 static void compiler_emit_stack_index(const compiler *compiler, stack_index index, line_number line)
 {
     bytecode_chunk_write_stack_index(compiler->_vm, compiler->_out, index, line);
 }
 
-// Writes `index` to the output bytecode chunk.
+// Writes `index` corresponding to `line` to the output bytecode chunk.
+static void compiler_emit_upvalue_index(const compiler *compiler, upvalue_index index,
+                                        line_number line)
+{
+    bytecode_chunk_write_upvalue_index(compiler->_vm, compiler->_out, index, line);
+}
+
+// Writes `index` corresponding to `line` to the output bytecode chunk.
 static void compiler_emit_global_index(const compiler *compiler, global_index index,
                                        line_number line)
 {
     bytecode_chunk_write_global_index(compiler->_vm, compiler->_out, index, line);
 }
 
-// Writes `count` to the output bytecode chunk.
+// Writes `count` corresponding to `line` to the output bytecode chunk.
 static void compiler_emit_argument_count(const compiler *compiler, argument_count count,
                                          line_number line)
 {
     bytecode_chunk_write_argument_count(compiler->_vm, compiler->_out, count, line);
+}
+
+// Writes `count` corresponding to `line` to the output bytecode chunk.
+static void compiler_emit_upvalue_count(const compiler *compiler, upvalue_count count,
+                                        line_number line)
+{
+    bytecode_chunk_write_upvalue_count(compiler->_vm, compiler->_out, count, line);
 }
 
 static bool is_forward_jump_opcode(enum opcode opcode)
@@ -433,6 +489,25 @@ static void compiler_emit_pops(compiler *compiler, pop_count count, line_number 
         compiler_emit_opcode(compiler, OP_POP, line);
     } else {
         compiler_emit_opcode(compiler, OP_POP_N, line);
+        bytecode_write_pop_count(compiler->_vm, compiler->_out, count, line);
+        // This is decremented in `compiler_emit_opcode()` for all other instructions. We need to
+        // handle this one here because the effect on the stack depth is not static. We don't need
+        // to worry about updating the output bytecode's max stack depth because this instruction
+        // will always decrease the current stack depth.
+        compiler->_stack_depth -= count;
+    }
+}
+
+// Writes a close upvalue instruction corresponding to `line` to the output bytecode that closes
+// the top `count` values of the stack and pops them.
+static void compiler_emit_close_upvalues(compiler *compiler, pop_count count, line_number line)
+{
+    if (count == 0)
+        return;
+    if (count == 1) {
+        compiler_emit_opcode(compiler, OP_CLOSE_UPVALUE, line);
+    } else {
+        compiler_emit_opcode(compiler, OP_CLOSE_UPVALUE_N, line);
         bytecode_write_pop_count(compiler->_vm, compiler->_out, count, line);
         // This is decremented in `compiler_emit_opcode()` for all other instructions. We need to
         // handle this one here because the effect on the stack depth is not static. We don't need
@@ -477,12 +552,19 @@ static void compiler_begin_scope(compiler *compiler)
 // Signals that a lexical scope has been exited on `line`.
 static void compiler_end_scope(compiler *compiler, line_number line)
 {
-    size_t start_locals_count = compiler->_locals_count;
-    while (compiler->_locals_count > 0 &&
-           compiler->_locals[compiler->_locals_count - 1].scope_depth == compiler->_scope_depth)
-        compiler->_locals_count--;
-    size_t locals_in_scope = start_locals_count - compiler->_locals_count;
-    compiler_emit_pops(compiler, locals_in_scope, line);
+    size_t start_local_count = compiler->_local_count;
+    bool locals_closed_over = false;
+    for (size_t i = compiler->_local_count;
+         i-- > 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth;) {
+        compiler->_local_count--;
+        if (compiler->_locals[i].is_closed_over)
+            locals_closed_over = true;
+    }
+    size_t locals_in_scope = start_local_count - compiler->_local_count;
+    if (locals_closed_over)
+        compiler_emit_close_upvalues(compiler, locals_in_scope, line);
+    else
+        compiler_emit_pops(compiler, locals_in_scope, line);
     compiler->_scope_depth--;
 }
 
@@ -505,7 +587,7 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
 {
     if (in_global_scope(compiler))
         return;
-    for (size_t i = compiler->_locals_count;
+    for (size_t i = compiler->_local_count;
          i-- > 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth;) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0 &&
@@ -513,12 +595,13 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
             PARSER_REPORT_ERRORF(compiler->_parser, ident, "'%.*s' has already been declared",
                                  (int)ident.len, ident.start);
     }
-    DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_locals_count + 1);
-    struct local *local = &compiler->_locals[compiler->_locals_count++];
+    DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_local_count + 1);
+    struct local *local = &compiler->_locals[compiler->_local_count++];
     local->name = ident.start;
     local->name_len = ident.len;
     local->scope_depth = compiler->_scope_depth;
     local->is_initialising = false;
+    local->is_closed_over = false;
 }
 
 // Writes the instruction to define the variable corresponding to `ident` to the output bytecode
@@ -547,7 +630,7 @@ static void compiler_emit_variable_definition(compiler *compiler, struct token i
 // is not found.
 static stack_index compiler_resolve_local_variable(const compiler *compiler, struct token ident)
 {
-    for (size_t i = compiler->_locals_count; i-- > 0;) {
+    for (size_t i = compiler->_local_count; i-- > 0;) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0) {
             if (local.is_initialising)
@@ -563,7 +646,7 @@ static stack_index compiler_resolve_local_variable(const compiler *compiler, str
 // variable is resolved while it's initialising.
 static void compiler_start_initialising_variable(const compiler *compiler, struct token ident)
 {
-    for (size_t i = compiler->_locals_count;
+    for (size_t i = compiler->_local_count;
          i-- > 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth;) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
@@ -574,12 +657,60 @@ static void compiler_start_initialising_variable(const compiler *compiler, struc
 // Marks the variable corresponding to `ident` as initialised.
 static void compiler_finish_initialising_variable(const compiler *compiler, struct token ident)
 {
-    for (size_t i = compiler->_locals_count;
+    for (size_t i = compiler->_local_count;
          i-- > 0 && compiler->_locals[i].scope_depth == compiler->_scope_depth;) {
         struct local local = compiler->_locals[i];
         if (local.name_len == ident.len && memcmp(local.name, ident.start, local.name_len) == 0)
             compiler->_locals[i].is_initialising = false;
     }
+}
+
+// Adds `source` to the compiler's array of upvalue sources if it doesn't already exist and returns
+// the index of the source in the array.
+static size_t compiler_add_upvalue_source(compiler *compiler, struct upvalue_source source)
+{
+    for (size_t i = 0; i < compiler->_upvalue_count; i++) {
+        struct upvalue_source existing = compiler->_upvalue_sources[i];
+        if ((existing.is_stack && source.is_stack && existing.stack_index == source.stack_index) ||
+            (!existing.is_stack && !source.is_stack &&
+             existing.upvalue_index == source.upvalue_index))
+            return i;
+    }
+    DYNAMIC_ARRAY_GROW(compiler->_upvalue_sources, compiler->_upvalue_sources_cap,
+                       compiler->_upvalue_count + 1);
+    upvalue_index index = compiler->_upvalue_count;
+    compiler->_upvalue_sources[compiler->_upvalue_count++] = source;
+    return index;
+}
+
+// Returns the index of the upvalue of the closure being compiled that `ident` refers to or `-1` if
+// one is not found.
+static upvalue_index compiler_resolve_upvalue(compiler *compiler, struct token ident)
+{
+    if (compiler->_mode == COMPILER_MODE_SCRIPT)
+        return -1;
+
+    // Check if `ident` refers to a local variable of the enclosing script or function body
+    for (size_t i = compiler->_enclosing_compiler->_local_count; i-- > 0;) {
+        struct local *local = &compiler->_enclosing_compiler->_locals[i];
+        if (!local->is_initialising && local->name_len == ident.len &&
+            memcmp(local->name, ident.start, local->name_len) == 0) {
+            local->is_closed_over = true;
+            struct upvalue_source source =
+                (struct upvalue_source){ .is_stack = true, .stack_index = i };
+            return compiler_add_upvalue_source(compiler, source);
+        }
+    }
+
+    // Check if `ident` refers to an upvalue of the enclosing closure
+    upvalue_index index;
+    if ((index = compiler_resolve_upvalue(compiler->_enclosing_compiler, ident)) >= 0) {
+        struct upvalue_source source =
+            (struct upvalue_source){ .is_stack = false, .upvalue_index = index };
+        return compiler_add_upvalue_source(compiler, source);
+    }
+
+    return -1;
 }
 
 // Emits the bytecode for the loop jump statement starting at the current `type` token and advances
@@ -599,7 +730,7 @@ static struct loop_jump_statement compiler_compile_loop_jump_stmt(compiler *comp
     parser_expect(compiler->_parser, TOKEN_SEMICOLON);
     bytecode_offset jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
     return (struct loop_jump_statement){ .instruction = jump,
-                                         .locals_count = compiler->_locals_count,
+                                         .local_count = compiler->_local_count,
                                          .line = line };
 }
 
@@ -613,27 +744,29 @@ static void compiler_finish_compiling_loop_jump_stmt(compiler *compiler,
     // came after some local variables had been declared, the jump will skip over the instructions
     // popping those variables from the stack, so we need to do that as well.
     compiler_set_forward_jump_offset(compiler, stmt.instruction);
-    size_t locals_declared_before_stmt = stmt.locals_count - compiler->_locals_count;
+    size_t locals_declared_before_stmt = stmt.local_count - compiler->_local_count;
     compiler_emit_pops(compiler, locals_declared_before_stmt, stmt.line);
 }
 
 // Type of function being compiled.
 enum function_type {
-    FUNCTION_TYPE_FUNCTION = COMPILER_MODE_FUNCTION, // Regular function
+    FUNCTION_TYPE_FUNCTION = COMPILER_MODE_FUNCTION_BODY, // Regular function
 };
 
-// Compiles and returns the function whose parameters (including opening parenthesis) start at the
-// current token. Returns `NULL` if there was an error.
+// Parses the function corresponding to `line` whose parameters (including opening parenthesis)
+// start at the current token, advances the compiler past it, and emits bytecode that pushes it onto
+// the value stack.
 // The first `name_len` bytes of `name` are copied to populate the function's name.
-static struct object_function *compiler_compile_fun(compiler *compiler, enum function_type type,
-                                                    const char *name, size_t name_len)
+static void compiler_compile_fun(compiler *compiler, enum function_type type, const char *name,
+                                 size_t name_len, line_number line)
 {
     struct bytecode_chunk body;
     bytecode_chunk_init(&body, true);
     struct compiler body_compiler;
     compiler_init(&body_compiler, compiler->_vm, compiler->_parser, &body);
-    // All function_type members are equal to their equivalent compiler_mode
+    // All function_type members are equal to their equivalent compiler_mode so this is safe
     body_compiler._mode = (enum compiler_mode)type;
+    body_compiler._enclosing_compiler = compiler;
 
     argument_count arity = 0;
     parser_expect(body_compiler._parser, TOKEN_LEFT_PAREN);
@@ -653,16 +786,34 @@ static struct object_function *compiler_compile_fun(compiler *compiler, enum fun
         compiler_emit_opcode(&body_compiler, OP_RETURN, body_compiler._parser->prev_token.line);
     }
 
+#ifdef DEBUG_PRINT_BYTECODE
+    char *name_copy = xstrndup(name, name_len); // Ensure passed in name is null-terminated
+    disassemble(&body, name_copy);
+    free(name_copy);
+#endif
+
     struct object_function *function =
         object_function_new(compiler->_vm, name, name_len, arity, body);
-#ifdef DEBUG_PRINT_BYTECODE
-    disassemble(&function->body, function->name);
-#endif
-    return function;
+    if (body_compiler._upvalue_count > 0) {
+        compiler_emit_opcode(compiler, OP_CLOSURE, line);
+        compiler_emit_constant_index(compiler, function_value(function), line);
+        compiler_emit_upvalue_count(compiler, body_compiler._upvalue_count, line);
+        for (size_t i = 0; i < body_compiler._upvalue_count; i++) {
+            struct upvalue_source source = body_compiler._upvalue_sources[i];
+            compiler_emit_operand(compiler, source.is_stack, line);
+            if (source.is_stack)
+                compiler_emit_stack_index(compiler, source.stack_index, line);
+            else
+                compiler_emit_upvalue_index(compiler, source.upvalue_index, line);
+        }
+
+    } else {
+        compiler_emit_opcode(compiler, OP_CONSTANT, line);
+        compiler_emit_constant_index(compiler, function_value(function), line);
+    }
 
 out_body_compiler_deinit:
     compiler_deinit(&body_compiler);
-    return NULL;
 }
 
 // Precedence levels of the different operators, ordered by increasing precedence.
@@ -759,12 +910,7 @@ static void compiler_compile_fun_expr(compiler *compiler, enum precedence_level 
     line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_FUN);
     const char name[] = "(anonymous)";
-    struct object_function *function =
-        compiler_compile_fun(compiler, FUNCTION_TYPE_FUNCTION, name, sizeof(name));
-    if (function == NULL)
-        return;
-    compiler_emit_opcode(compiler, OP_CONSTANT, line);
-    compiler_emit_constant_index(compiler, function_value(function), line);
+    compiler_compile_fun(compiler, FUNCTION_TYPE_FUNCTION, name, sizeof(name), line);
 }
 
 // `expr_compiler` for an identifier expression.
@@ -775,7 +921,7 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
     if (!parser_expectf(compiler->_parser, TOKEN_IDENT, "expected identifier"))
         return;
 
-    bool is_get = true;
+    bool is_read = true;
     if (compiler->_parser->token.type == TOKEN_EQUAL) {
         if (level > PREC_ASSIGNMENT) {
             PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, compiler->_parser->token, "%s",
@@ -784,24 +930,30 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
         }
         parser_advance(compiler->_parser);
         compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT); // Initialiser
-        is_get = false;
+        is_read = false;
     }
 
     if (is_blank_ident(name.start, name.len)) {
-        if (is_get)
+        if (is_read)
             PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, name, "%s",
                                         "'_' cannot be used as a value");
-        else
-            return;
+        return;
     }
 
-    stack_index index = compiler_resolve_local_variable(compiler, name);
-    if (index >= 0) {
-        enum opcode instruction = is_get ? OP_GET_LOCAL : OP_SET_LOCAL;
+    stack_index stack_index;
+    upvalue_index upvalue_index;
+    if ((stack_index = compiler_resolve_local_variable(compiler, name)) >= 0) {
+        enum opcode instruction = is_read ? OP_GET_LOCAL : OP_SET_LOCAL;
         compiler_emit_opcode(compiler, instruction, line);
-        compiler_emit_stack_index(compiler, index, line);
+        compiler_emit_stack_index(compiler, stack_index, line);
+
+    } else if ((upvalue_index = compiler_resolve_upvalue(compiler, name)) >= 0) {
+        enum opcode instruction = is_read ? OP_GET_UPVALUE : OP_SET_UPVALUE;
+        compiler_emit_opcode(compiler, instruction, line);
+        compiler_emit_upvalue_index(compiler, upvalue_index, line);
+
     } else {
-        enum opcode instruction = is_get ? OP_GET_GLOBAL : OP_SET_GLOBAL;
+        enum opcode instruction = is_read ? OP_GET_GLOBAL : OP_SET_GLOBAL;
         compiler_emit_opcode(compiler, instruction, line);
         global_index index = vm_add_global(compiler->_vm, name.start, name.len);
         compiler_emit_global_index(compiler, index, line);
@@ -1097,12 +1249,7 @@ static void compiler_compile_fun_decl(compiler *compiler)
     if (!parser_expectf(compiler->_parser, TOKEN_IDENT, "expected function name"))
         return;
     compiler_declare_variable(compiler, name);
-    struct object_function *function =
-        compiler_compile_fun(compiler, FUNCTION_TYPE_FUNCTION, name.start, name.len);
-    if (function == NULL)
-        return;
-    compiler_emit_opcode(compiler, OP_CONSTANT, line);
-    compiler_emit_constant_index(compiler, function_value(function), line);
+    compiler_compile_fun(compiler, FUNCTION_TYPE_FUNCTION, name.start, name.len, line);
     bool is_final = false;
     compiler_emit_variable_definition(compiler, name, is_final);
 }

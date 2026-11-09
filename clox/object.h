@@ -1,13 +1,14 @@
 #ifndef CLOX_OBJECT_H
 #define CLOX_OBJECT_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "bytecode.h"
 #include "value.h"
 #include "vm_fwd.h"
 
-// Objects represent dynamically allocated Lox values whose lifetime is managed by the VM.
+// Objects are dynamically allocated values whose lifetime is managed by the VM.
 // This type contains the data which is common to all object types.
 // Values which are represented by objects can be converted to this type using `value_as_object()`.
 //
@@ -16,10 +17,13 @@
 struct object {
     struct object *next; // Next object managed by the VM, or `NULL` if this is the last one
     // Internal fields below, do not use.
-    // Members must be equal to their corresponding value_type member
+    // Members which correspond to a Lox value type must be equal to their corresponding value_type
+    // member
     enum _object_type {
         _OBJECT_STRING = VALUE_STRING,
         _OBJECT_FUNCTION = VALUE_FUNCTION,
+        _OBJECT_CLOSURE = VALUE_CLOSURE,
+        _OBJECT_UPVALUE = -1,
         _OBJECT_NATIVE_FUNCTION = VALUE_NATIVE_FUNCTION,
     } _type; // Indicates which object type this object is embedded in
 };
@@ -37,7 +41,7 @@ enum value_type object_value_type(const struct object *object);
 // determine equality.
 struct object_string {
     struct object _object; // Internal field, do not use.
-    const char *data; // Null-terminated string contents
+    char *data; // Null-terminated string contents
     size_t len; // Length of the string
     hash_value _hash; // Internal field, do not use. Hash of the string data.
 };
@@ -68,6 +72,50 @@ struct object_function *object_function_new(vm *vm, const char *name, size_t nam
 
 value function_value(struct object_function *function);
 struct object_function *value_as_function(value value);
+
+// Represents a Lox closure.
+// Must be created with `object_closure_new()` and freed with `object_free()`.
+struct object_closure {
+    struct object _object; // Internal field, do not use.
+    struct object_function *function;
+    struct object_upvalue **upvalues; // Array of upvalues
+    upvalue_count upvalue_count; // Number of upvalues
+};
+
+// Allocates and initialises a new closure, taking ownership of the array of `upvalue_count`
+// upvalues pointed to by `upvalues`.
+struct object_closure *object_closure_new(vm *vm, struct object_function *function,
+                                          struct object_upvalue **upvalues,
+                                          upvalue_count upvalue_count);
+
+value closure_value(struct object_closure *closure);
+struct object_closure *value_as_closure(value value);
+
+// Represents an upvalue as defined in bytecode.h.
+struct object_upvalue {
+    struct object _object; // Internal field, do not use.
+    struct object_upvalue *next; // Next upvalue managed by the VM, or `NULL` if this is the last one
+    size_t vm_stack_index; // Index in the VM's value stack of the upvalue's value
+    // Internal field, do not use. Upvalue's value if it's closed, otherwise `none_value`
+    value _value;
+    bool _is_open; // Internal field, do not use.
+    // Name of the variable if this upvalue represents a final variable, otherwise `NULL`
+    struct object_string *final_var_name;
+};
+
+// Allocates and initialises a new open upvalue which aliases the value at `vm_stack_index` in the
+// VM's value stack.
+struct object_upvalue *object_upvalue_new_open(vm *vm, size_t vm_stack_index,
+                                               struct object_string *final_var_name);
+
+// Closes `upvalue`.
+void object_upvalue_close(const vm *vm, struct object_upvalue *upvalue);
+
+// Returns the value of `upvalue`.
+value object_upvalue_read(const vm *vm, struct object_upvalue *upvalue);
+
+// Sets the value of `upvalue` to `value`.
+void object_upvalue_write(vm *vm, struct object_upvalue *upvalue, value value);
 
 // Type of function that implements the body of a native Lox function.
 // `args` is an array containing the function arguments. The caller is responsible for ensuring that
