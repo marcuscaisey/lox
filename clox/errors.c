@@ -86,16 +86,14 @@ void print_invalid_range_error(const char *msg, const char *source, const char *
     while (line_start < end) {
         // Print line
         fprintf(stderr, "%s", code_snippet_style);
-        for (const char *p = line_start; *p != '\n' && *p != '\0'; p++) {
+        for (const char *p = line_start; *p != '\n' && *p != '\0'; p++)
             fprintf(stderr, "%c", *p);
-        }
         fprintf(stderr, "\n%s", reset_style);
         // Print tildes
         fprintf(stderr, "%s", error_style);
         const char *p;
-        for (p = line_start; *p != '\n' && *p != '\0'; p++) {
+        for (p = line_start; *p != '\n' && *p != '\0'; p++)
             fprintf(stderr, start <= p && p < end ? "~" : " ");
-        }
         line_start = p + 1;
         fprintf(stderr, "\n%s", reset_style);
     }
@@ -127,16 +125,17 @@ void print_invalid_line_error(const char *msg, const char *source, line_number l
     //   ~~~~~~~~~~
     // Print line
     fprintf(stderr, "%s", code_snippet_style);
-    for (const char *p = line_start; *p != '\n' && *p != '\0'; p++) {
+    for (const char *p = line_start; *p != '\n' && *p != '\0'; p++)
         fprintf(stderr, "%c", *p);
-    }
     fprintf(stderr, "\n%s", reset_style);
     // Print tildes
     fprintf(stderr, "%s", error_style);
-    const char *p;
-    for (p = line_start; *p != '\n' && *p != '\0'; p++) {
-        fprintf(stderr, "~");
-    }
+    const char *tildes_start = line_start;
+    while (*tildes_start != '\n' && *tildes_start != '\0' && isspace(*tildes_start))
+        tildes_start++;
+    for (const char *p = line_start; *p != '\n' && *p != '\0'; p++)
+        fprintf(stderr, tildes_start <= p ? "~" : " ");
+
     fprintf(stderr, "\n%s", reset_style);
 }
 
