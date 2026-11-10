@@ -23,6 +23,12 @@ void *vm_realloc(vm *vm, void *p, size_t current_size, size_t target_size);
 // Frees the allocation of `size` bytes of VM managed memory pointed to by `p`.
 void vm_free(vm *vm, void *p, size_t size);
 
+// Works like `xstrdup()`, except it allocates VM managed memory for the result.
+char *vm_xstrdup(vm *vm, const char *s);
+
+// Works like `vm_xstrndup()`, execpt it allocates VM managed memory for the result.
+char *vm_xstrndup(vm *vm, const char *s, size_t n);
+
 // Represents a global variable.
 // Must be created with `vm_add_global()` and deinitialised with `global_deinit()` after use.
 // Internal type, do not use.

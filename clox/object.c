@@ -5,7 +5,6 @@
 
 #include "bytecode.h"
 #include "map.h"
-#include "strings.h"
 #include "value.h"
 #include "vm.h"
 #include "vm_internal.h"
@@ -21,6 +20,7 @@ void object_free(vm *vm, struct object *object)
     }
     case _OBJECT_FUNCTION: {
         struct object_function *function = (struct object_function *)object;
+        vm_free(vm, function->name, strlen(function->name) + 1);
         bytecode_chunk_deinit(vm, &function->body);
         vm_free(vm, function, sizeof(struct object_function));
         break;
@@ -33,12 +33,15 @@ void object_free(vm *vm, struct object *object)
     }
     case _OBJECT_UPVALUE: {
         struct object_upvalue *upvalue = (struct object_upvalue *)object;
+        if (upvalue->final_local_name != NULL)
+            vm_free(vm, upvalue->final_local_name, strlen(upvalue->final_local_name) + 1);
         vm_free(vm, upvalue, sizeof(struct object_upvalue));
         break;
     }
     case _OBJECT_NATIVE_FUNCTION: {
         struct object_native_function *function = (struct object_native_function *)object;
-        vm_free(vm, function, sizeof(struct object_function));
+        vm_free(vm, function->name, strlen(function->name) + 1);
+        vm_free(vm, function, sizeof(struct object_native_function));
         break;
     }
     }
@@ -129,7 +132,7 @@ struct object_function *object_function_new(vm *vm, const char *name, size_t nam
                                             argument_count arity, struct bytecode_chunk body)
 {
     struct object_function *function = OBJECT_NEW(vm, object_function, _OBJECT_FUNCTION);
-    function->name = xstrndup(name, name_len);
+    function->name = vm_xstrndup(vm, name, name_len);
     function->arity = arity;
     function->body = body;
     return function;
@@ -167,14 +170,14 @@ struct object_closure *value_as_closure(value value)
 }
 
 struct object_upvalue *object_upvalue_new_open(vm *vm, size_t vm_stack_index,
-                                               struct object_string *final_var_name)
+                                               const char *final_local_name)
 {
     struct object_upvalue *upvalue = OBJECT_NEW(vm, object_upvalue, _OBJECT_UPVALUE);
     upvalue->next = NULL;
     upvalue->vm_stack_index = vm_stack_index;
     upvalue->_value = none_value;
     upvalue->_is_open = true;
-    upvalue->final_var_name = final_var_name;
+    upvalue->final_local_name = final_local_name != NULL ? vm_xstrdup(vm, final_local_name) : NULL;
     return upvalue;
 }
 
@@ -206,7 +209,7 @@ struct object_native_function *object_native_function_new(vm *vm, const char *na
 {
     struct object_native_function *function =
         OBJECT_NEW(vm, object_native_function, _OBJECT_NATIVE_FUNCTION);
-    function->name = xstrndup(name, name_len);
+    function->name = vm_xstrndup(vm, name, name_len);
     function->arity = arity;
     function->body = body;
     return function;

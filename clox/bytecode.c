@@ -4,9 +4,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "dynamic_array.h"
 #include "line_number.h"
+#include "memory.h"
 #include "value.h"
 #include "vm_internal.h"
 
@@ -105,17 +107,30 @@ void bytecode_chunk_init(struct bytecode_chunk *chunk, bool vm_managed)
     chunk->constants = NULL;
     chunk->constants_len = 0;
     chunk->_constants_cap = 0;
+    chunk->final_local_names = NULL;
+    chunk->final_local_names_len = 0;
+    chunk->_final_local_names_cap = 0;
     chunk->max_stack_depth = 0;
     chunk->_is_vm_managed = vm_managed;
 }
 
 void bytecode_chunk_deinit(vm *vm, struct bytecode_chunk *chunk)
 {
+    for (size_t i = 0; i < chunk->final_local_names_len; i++) {
+        char *name = chunk->final_local_names[i];
+        if (chunk->_is_vm_managed)
+            vm_free(vm, name, strlen(name) + 1);
+        else
+            free(name);
+    }
     if (chunk->_is_vm_managed) {
+        vm_free(vm, chunk->final_local_names,
+                DYNAMIC_ARRAY_SIZE(chunk->final_local_names, chunk->_final_local_names_cap));
         vm_free(vm, chunk->instructions, DYNAMIC_ARRAY_SIZE(chunk->instructions, chunk->_cap));
         vm_free(vm, chunk->offset_lines, DYNAMIC_ARRAY_SIZE(chunk->offset_lines, chunk->_cap));
         vm_free(vm, chunk->constants, DYNAMIC_ARRAY_SIZE(chunk->constants, chunk->_constants_cap));
     } else {
+        free(chunk->final_local_names);
         free(chunk->instructions);
         free(chunk->offset_lines);
         free(chunk->constants);
@@ -155,5 +170,24 @@ constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk,
     else
         DYNAMIC_ARRAY_GROW(chunk->constants, chunk->_constants_cap, target_len);
     chunk->constants[chunk->constants_len++] = value;
+    return index;
+}
+
+final_local_name_index bytecode_chunk_add_final_local_name(vm *vm, struct bytecode_chunk *chunk,
+                                                          const char *name, size_t len)
+{
+    final_local_name_index index = chunk->final_local_names_len;
+    size_t target_len = chunk->final_local_names_len + 1;
+    char *name_copy;
+    if (chunk->_is_vm_managed) {
+        VM_DYNAMIC_ARRAY_GROW(vm, chunk->final_local_names, chunk->_final_local_names_cap, target_len);
+        name_copy = vm_malloc(vm, len + 1);
+    } else {
+        DYNAMIC_ARRAY_GROW(chunk->final_local_names, chunk->_final_local_names_cap, target_len);
+        name_copy = xmalloc(len + 1);
+    }
+    memcpy(name_copy, name, len);
+    name_copy[len] = '\0';
+    chunk->final_local_names[chunk->final_local_names_len++] = name_copy;
     return index;
 }

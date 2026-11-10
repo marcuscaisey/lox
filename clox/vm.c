@@ -52,7 +52,7 @@ void vm_init(vm *vm)
     vm->_globals_len = 0;
     vm->_globals_cap = 0;
     vm->_open_upvalues = NULL;
-    vm->_local_final_vars = NULL;
+    vm->_final_local_names = NULL;
 
     // Define built-in functions
     DYNAMIC_ARRAY_GROW(vm->_globals, vm->_globals_cap, builtin_functions_len);
@@ -86,20 +86,20 @@ void vm_deinit(vm *vm)
     for (size_t i = 0; i < vm->_globals_len; i++)
         global_deinit(&vm->_globals[i]);
     free(vm->_globals);
-    free(vm->_local_final_vars);
+    free(vm->_final_local_names);
 }
 
 // Ensures that there's enough space in the value stack so that it can hold `n` elements by
 // reallocating more space if necessary. If the stack already has enough space, then this is a
-// no-op. If the stack was grown, then the local final variables array will be as well.
+// no-op. If the stack was grown, then the final local names array will be as well.
 static void vm_stack_grow(vm *vm, size_t n)
 {
     if (vm->_stack_cap < n) {
         size_t current_stack_depth = vm->_stack_top - vm->_stack;
         size_t stack_size = DYNAMIC_ARRAY_SIZE(vm->_stack, n);
-        size_t local_final_vars_size = DYNAMIC_ARRAY_SIZE(vm->_local_final_vars, n);
+        size_t final_local_names_size = DYNAMIC_ARRAY_SIZE(vm->_final_local_names, n);
         vm->_stack = xrealloc(vm->_stack, stack_size);
-        vm->_local_final_vars = xrealloc(vm->_local_final_vars, local_final_vars_size);
+        vm->_final_local_names = xrealloc(vm->_final_local_names, final_local_names_size);
         vm->_stack_cap = n;
         vm->_stack_top = vm->_stack + current_stack_depth;
     }
@@ -338,9 +338,9 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         case OP_SET_UPVALUE: {
             upvalue_index index = bytecode_read_upvalue_index(&frame->_ip);
             struct object_upvalue *upvalue = frame->_upvalues[index];
-            if (upvalue->final_var_name) {
+            if (upvalue->final_local_name != NULL) {
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
-                                 upvalue->final_var_name->data);
+                                 upvalue->final_local_name);
                 goto out_error;
             }
             value value = vm_stack_peek(vm, 0);
@@ -350,14 +350,14 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_DEFINE_LOCAL: {
             stack_index top_stack_index = vm->_stack_top - vm->_stack - 1;
-            vm->_local_final_vars[top_stack_index] = -1;
+            vm->_final_local_names[top_stack_index] = NULL;
             break;
         }
 
         case OP_DEFINE_LOCAL_FINAL: {
             stack_index top_stack_index = vm->_stack_top - vm->_stack - 1;
-            constant_index name_index = bytecode_read_constant_index(&frame->_ip);
-            vm->_local_final_vars[top_stack_index] = name_index;
+            final_local_name_index name_index = bytecode_read_final_local_name_index(&frame->_ip);
+            vm->_final_local_names[top_stack_index] = frame->_chunk->final_local_names[name_index];
             break;
         }
 
@@ -371,12 +371,11 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         case OP_SET_LOCAL: {
             stack_index stack_index = bytecode_read_stack_index(&frame->_ip);
             size_t vm_stack_index = frame_vm_stack_index(frame, stack_index);
-            constant_index name_index = vm->_local_final_vars[vm_stack_index];
-            bool is_final = name_index >= 0;
+            const char *name = vm->_final_local_names[vm_stack_index];
+            bool is_final = name != NULL;
             if (is_final) {
-                value name = frame->_chunk->constants[name_index];
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
-                                 value_as_string(name)->data);
+                                 name);
                 goto out_error;
             }
             value value = vm_stack_peek(vm, 0);
@@ -673,14 +672,9 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                     while (*next_ptr != NULL && (*next_ptr)->vm_stack_index > vm_stack_index)
                         next_ptr = &(*next_ptr)->next;
                     if (*next_ptr == NULL || (*next_ptr)->vm_stack_index != vm_stack_index) {
-                        constant_index final_var_name_index = vm->_local_final_vars[vm_stack_index];
-                        struct object_string *final_var_name = NULL;
-                        if (final_var_name_index >= 0) {
-                            value value = frame->_chunk->constants[final_var_name_index];
-                            final_var_name = value_as_string(value);
-                        }
+                        const char *final_local_name = vm->_final_local_names[vm_stack_index];
                         struct object_upvalue *upvalue =
-                            object_upvalue_new_open(vm, vm_stack_index, final_var_name);
+                            object_upvalue_new_open(vm, vm_stack_index, final_local_name);
                         upvalue->next = *next_ptr;
                         *next_ptr = upvalue;
                     }

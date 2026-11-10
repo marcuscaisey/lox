@@ -619,10 +619,9 @@ static void compiler_emit_variable_definition(compiler *compiler, struct token i
         compiler_emit_global_index(compiler, index, ident.line);
     } else if (is_final) {
         compiler_emit_opcode(compiler, OP_DEFINE_LOCAL_FINAL, ident.line);
-        // TODO: add name to bytecode chunk?
-        struct object_string *name_string =
-            object_string_copy(compiler->_vm, ident.start, ident.len);
-        compiler_emit_constant_index(compiler, string_value(name_string), ident.line);
+        final_local_name_index index = bytecode_chunk_add_final_local_name(
+            compiler->_vm, compiler->_out, ident.start, ident.len);
+        bytecode_chunk_write_final_local_name_index(compiler->_vm, compiler->_out, index, ident.line);
     } else {
         compiler_emit_opcode(compiler, OP_DEFINE_LOCAL, ident.line);
     }

@@ -100,13 +100,13 @@ struct object_upvalue {
     value _value;
     bool _is_open; // Internal field, do not use.
     // Name of the variable if this upvalue represents a final variable, otherwise `NULL`
-    struct object_string *final_var_name;
+    char *final_local_name;
 };
 
 // Allocates and initialises a new open upvalue which aliases the value at `vm_stack_index` in the
-// VM's value stack.
+// VM's value stack, making a copy of `final_local_name` if non-NULL.
 struct object_upvalue *object_upvalue_new_open(vm *vm, size_t vm_stack_index,
-                                               struct object_string *final_var_name);
+                                               const char *final_local_name);
 
 // Closes `upvalue`.
 void object_upvalue_close(const vm *vm, struct object_upvalue *upvalue);

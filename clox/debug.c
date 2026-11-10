@@ -54,10 +54,16 @@ uint8_t *disassemble_instruction(const struct bytecode_chunk *chunk, uint8_t *ip
     case OP_DEFINE_GLOBAL:
     case OP_DEFINE_GLOBAL_FINAL:
     case OP_GET_GLOBAL:
-    case OP_SET_GLOBAL:
-    case OP_DEFINE_LOCAL_FINAL: {
+    case OP_SET_GLOBAL: {
         global_index index = bytecode_read_global_index(&ip);
         printf("%-*s %*d\n", name_width, instruction, operand_width, index);
+        return ip;
+    }
+
+    case OP_DEFINE_LOCAL_FINAL: {
+        final_local_name_index index = bytecode_read_final_local_name_index(&ip);
+        printf("%-*s %*d '%s'\n", name_width, instruction, operand_width, index,
+               chunk->final_local_names[index]);
         return ip;
     }
 

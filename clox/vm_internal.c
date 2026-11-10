@@ -56,3 +56,19 @@ void vm_free(vm *vm, void *p, size_t size)
     (void)size;
     free(p);
 }
+
+char *vm_xstrdup(vm *vm, const char *s)
+{
+    return vm_xstrndup(vm, s, strlen(s));
+}
+
+char *vm_xstrndup(vm *vm, const char *s, size_t n)
+{
+    size_t len = 0;
+    while (len < n && s[len] != '\0')
+        len++;
+    char *copy = vm_malloc(vm, len + 1);
+    memcpy(copy, s, len);
+    copy[len] = '\0';
+    return copy;
+}

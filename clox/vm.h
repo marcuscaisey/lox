@@ -51,10 +51,10 @@ struct vm {
     // The list is sorted in descending VM stack index order.
     struct object_upvalue *_open_upvalues;
     // Array where each element stores whether the local variable (if any) at the same index in the
-    // value stack is a final variable. If it is, then the element is the index of the constant
-    // containing the variable name. Otherwise, the element is -1.
+    // value stack is a final variable. If it is, then the element is the variable name. Otherwise,
+    // the element is `NULL`.
     // The size of this array mirrors the value stack.
-    constant_index *_local_final_vars;
+    const char **_final_local_names;
 };
 
 // Initialises `vm` for use.

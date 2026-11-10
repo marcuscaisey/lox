@@ -1,7 +1,7 @@
 // This module defines the bytecode format and instruction set for the Lox virtual machine (VM).
 //
 // The VM executes bytecode chunks (sequences of instructions). Each chunk has a pool of constants
-// that instructions can reference by index.
+// and a pool of final local variable names that instructions can reference by index.
 //
 // Execution Chunks
 // ----------------
@@ -48,6 +48,8 @@
 
 typedef int32_t constant_index;
 
+typedef int32_t final_local_name_index;
+
 typedef int32_t pop_count;
 
 typedef int32_t global_index;
@@ -73,10 +75,15 @@ typedef int32_t upvalue_index;
 //   - "Bytecode chunk" refers to the currently executing bytecode chunk.
 //   - "Upvalue" refers to an upvalue of the closure associated with the current frame.
 //   - "Constants" refer to the constant pool of the currently executing bytecode chunk.
+//   - "Final local variable names" refer to the final local variable name pool of the currently
+//     executing bytecode chunk.
 //
 // Operand types
 //   constant_index
 //     Index of a constant in a bytecode chunk's constant pool.
+//     Range: 0 - 16,777,215
+//   final_local_name_index
+//     Index of a name in a bytecode chunk's final local variable name pool.
 //     Range: 0 - 16,777,215
 //   pop_count
 //     Number of values to pop from a value stack.
@@ -142,7 +149,7 @@ enum opcode {
     OP_DEFINE_LOCAL,
     // Marks the value on top of the stack as a final local variable
     // Operands
-    //   constant_index - index of the constant containing the variable name
+    //   final_local_name_index - index of the final local variable name
     OP_DEFINE_LOCAL_FINAL,
     // Pushes the value from the value stack
     // Operands
@@ -257,6 +264,13 @@ struct bytecode_chunk {
     // Internal field, do not use.
     // Number of constants that space has been allocated for.
     size_t _constants_cap;
+    // Array of final local variable names referenced by the chunk.
+    // Must only be appended to via `bytecode_chunk_add_final_local_name()`.
+    char **final_local_names;
+    size_t final_local_names_len; // Number of final local variable names
+    // Internal field, do not use.
+    // Number of final local variable names that space has been allocated for.
+    size_t _final_local_names_cap;
     // Maximum number of values that will be on the value stack during execution
     size_t max_stack_depth;
     // Internal field, do not use.
@@ -278,6 +292,11 @@ void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, li
 
 // Stores `value` in the chunk's constants and returns its index.
 constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value);
+
+// Stores a copy of the first `len` bytes of `name` in the chunk's final local variable name pool
+// and returns its index.
+final_local_name_index bytecode_chunk_add_final_local_name(vm *vm, struct bytecode_chunk *chunk,
+                                                           const char *name, size_t len);
 
 // Writes `value` as a big-endian u16 to `out`.
 // Internal function, do not use.
@@ -349,6 +368,14 @@ static inline void bytecode_chunk_write_opcode(vm *vm, struct bytecode_chunk *ch
 // Writes `index` associated with `line` to the chunk's instructions.
 static inline void bytecode_chunk_write_constant_index(vm *vm, struct bytecode_chunk *chunk,
                                                        constant_index index, line_number line)
+{
+    _bytecode_chunk_write_compact_u24(vm, chunk, index, line);
+}
+
+// Writes `index` associated with `line` to the chunk's instructions.
+static inline void bytecode_chunk_write_final_local_name_index(vm *vm, struct bytecode_chunk *chunk,
+                                                               final_local_name_index index,
+                                                               line_number line)
 {
     _bytecode_chunk_write_compact_u24(vm, chunk, index, line);
 }
@@ -463,6 +490,12 @@ static inline constant_index bytecode_read_constant_index(uint8_t **p)
 
 // Reads the pop count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline pop_count bytecode_read_pop_count(uint8_t **p)
+{
+    return _bytecode_read_compact_u24(p);
+}
+
+// Reads the final local name index from the bytes pointed to by `*p` and moves `*p` past it.
+static inline final_local_name_index bytecode_read_final_local_name_index(uint8_t **p)
 {
     return _bytecode_read_compact_u24(p);
 }
