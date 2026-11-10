@@ -86,7 +86,10 @@ uint8_t *disassemble_instruction(const struct bytecode_chunk *chunk, uint8_t *ip
     case OP_JUMP_IF_TRUE:
     case OP_JUMP_IF_FALSE: {
         jump_offset jump_offset = bytecode_read_jump_offset(&ip);
-        printf("%-*s %*d\n", name_width, instruction, operand_width, jump_offset);
+        int target_offset =
+            ip - chunk->instructions + (opcode == OP_JUMP_BACK ? -1 : 1) * jump_offset;
+        printf("%-*s %*d -> %0*d\n", name_width, instruction, operand_width, jump_offset,
+               offset_width, target_offset);
         return ip;
     }
 
