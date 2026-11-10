@@ -319,33 +319,87 @@ void bytecode_chunk_write_upvalue_count(vm *vm, struct bytecode_chunk *chunk, up
                                         line_number line);
 
 // Reads the u8 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-uint8_t bytecode_read_u8(uint8_t **p);
+static inline uint8_t bytecode_read_u8(uint8_t **p)
+{
+    return *(*p)++;
+}
+
+// Reads the big-endian u16 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
+static inline uint16_t bytecode_read_u16(uint8_t **p)
+{
+    *p += 2;
+    return ((*p)[-2] << 8) | ((*p)[-1]);
+}
+
+// Reads the big-endian u24 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
+static inline uint32_t bytecode_read_u24(uint8_t **p)
+{
+    *p += 3;
+    return ((*p)[-3] << 16) | ((*p)[-2] << 8) | ((*p)[-1]);
+}
+
+// Reads the value encoded by `bytecode_chunk_write_compact_u24()` from the sequence of bytes
+// pointed to by `*p` and moves `*p` past it.
+static inline uint32_t bytecode_read_compact_u24(uint8_t **p)
+{
+    uint8_t index = bytecode_read_u8(p);
+    if (index < 0xFF)
+        return index;
+    return bytecode_read_u24(p);
+}
 
 // Reads the opcode from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-enum opcode bytecode_read_opcode(uint8_t **p);
+static inline enum opcode bytecode_read_opcode(uint8_t **p)
+{
+    return bytecode_read_u8(p);
+}
 
 // Reads the constant index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-constant_index bytecode_read_constant_index(uint8_t **p);
+static inline constant_index bytecode_read_constant_index(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
+}
 
 // Reads the pop count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-pop_count bytecode_read_pop_count(uint8_t **p);
+static inline pop_count bytecode_read_pop_count(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
+}
 
 // Reads the global index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-global_index bytecode_read_global_index(uint8_t **p);
+static inline global_index bytecode_read_global_index(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
+}
 
 // Reads the upvalue index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-upvalue_index bytecode_read_upvalue_index(uint8_t **p);
+static inline upvalue_index bytecode_read_upvalue_index(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
+}
 
 // Reads the stack index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-stack_index bytecode_read_stack_index(uint8_t **p);
+static inline stack_index bytecode_read_stack_index(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
+}
 
 // Reads the jump offset from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-jump_offset bytecode_read_jump_offset(uint8_t **p);
+static inline jump_offset bytecode_read_jump_offset(uint8_t **p)
+{
+    return bytecode_read_u16(p);
+}
 
 // Reads the argument count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-argument_count bytecode_read_argument_count(uint8_t **p);
+static inline argument_count bytecode_read_argument_count(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
+}
 
 // Reads the upvalue count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-argument_count bytecode_read_upvalue_count(uint8_t **p);
+static inline upvalue_count bytecode_read_upvalue_count(uint8_t **p)
+{
+    return bytecode_read_compact_u24(p);
+}
 
 #endif
