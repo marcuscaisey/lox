@@ -264,14 +264,12 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_CLOSE_UPVALUE: {
             vm_close_upvalues(vm, 1);
-            vm_stack_pop(vm);
             break;
         }
 
         case OP_CLOSE_UPVALUE_N: {
             pop_count count = bytecode_read_pop_count(&frame->_ip);
             vm_close_upvalues(vm, count);
-            vm_stack_pop_n(vm, count);
             break;
         }
 

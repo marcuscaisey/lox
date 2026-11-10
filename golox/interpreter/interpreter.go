@@ -260,8 +260,12 @@ func (i *Interpreter) execWhileStmt(env environment, stmt *ast.WhileStmt) stmtRe
 
 func (i *Interpreter) execForStmt(env environment, stmt *ast.ForStmt) stmtResult {
 	childEnv := env.Child()
+	var loopVarName string
 	if stmt.Initialise != nil {
 		_, childEnv = i.execStmt(childEnv, stmt.Initialise)
+		if varDecl, ok := stmt.Initialise.(*ast.VarDecl); ok {
+			loopVarName = varDecl.Name.String()
+		}
 	}
 	for stmt.Condition == nil || isTruthy(i.evalExpr(childEnv, stmt.Condition)) {
 		switch result, _ := i.execStmt(childEnv, stmt.Body); result.(type) {
@@ -270,6 +274,11 @@ func (i *Interpreter) execForStmt(env environment, stmt *ast.ForStmt) stmtResult
 		case stmtResultReturn:
 			return result
 		case stmtResultContinue, stmtResultNone:
+		}
+		if loopVarName != "" {
+			loopVarValue := childEnv.GetByName(loopVarName)
+			childEnv = env.Child()
+			childEnv = childEnv.Define(loopVarName, loopVarValue)
 		}
 		if stmt.Update != nil {
 			i.evalExpr(childEnv, stmt.Update)

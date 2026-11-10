@@ -93,7 +93,7 @@ typedef int32_t upvalue_index;
 //     Range: 0 - 16,777,215
 //   upvalue_index
 //     Index of a closure's upvalue.
-//     Range: 0 - 16,777,215
+//     Range: 0 - 16,777,214
 //   stack_index
 //     Index of a value in a value stack.
 //     Range: 0 - 16,777,214
@@ -224,12 +224,11 @@ enum opcode {
     //   u8 - 1 or 0
     //   stack_index or upvalue_index - index for upvalue n-1
     OP_CLOSURE,
-    // Closes the open upvalue aliasing the value on top of the stack and pops the value
+    // Closes the open upvalue aliasing the value on top of the stack
     OP_CLOSE_UPVALUE,
-    // Closes the open upvalues that alias any of the top n values of the stack (if any) and pops
-    // the values
+    // Closes the open upvalues that alias any of the top n values of the stack (if any)
     // Operands
-    //   pop_count - number of open upvalues to close and values to pop
+    //   pop_count - number of open upvalues to close
     OP_CLOSE_UPVALUE_N,
     // Pops the top value from the current frame's stack, closes the open upvalues that alias any of
     // the values remaining on the stack, and ends execution of its chunk. If there is a calling

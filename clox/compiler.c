@@ -361,7 +361,6 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_nu
         compiler->_stack_depth++;
         break;
     case OP_POP:
-    case OP_CLOSE_UPVALUE:
     case OP_DEFINE_GLOBAL:
     case OP_DEFINE_GLOBAL_FINAL:
     case OP_EQUAL:
@@ -382,9 +381,6 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_nu
     case OP_POP_N:
         // This reduces the stack depth by n but we don't know what n is until the operand has been
         // written, so we reduce the stack size in `compiler_emit_pops()` instead.
-    case OP_CLOSE_UPVALUE_N:
-        // This reduces the stack depth by n but we don't know what n is until the operand has been
-        // written, so we reduce the stack size in `compiler_emit_close_upvalues()` instead.
     case OP_SET_GLOBAL:
     case OP_SET_UPVALUE:
     case OP_DEFINE_LOCAL:
@@ -399,6 +395,8 @@ static void compiler_emit_opcode(compiler *compiler, enum opcode opcode, line_nu
     case OP_CALL:
         // This reduces the stack depth by n but we don't know what n is until the operand has been
         // written, so we reduce the stack size in `compile_compile_call_expr()` instead.
+    case OP_CLOSE_UPVALUE:
+    case OP_CLOSE_UPVALUE_N:
         break;
     }
     if (compiler->_stack_depth > compiler->_out->max_stack_depth)
@@ -499,7 +497,7 @@ static void compiler_emit_pops(compiler *compiler, pop_count count, line_number 
 }
 
 // Writes a close upvalue instruction corresponding to `line` to the output bytecode that closes
-// the top `count` values of the stack and pops them.
+// the top `count` values of the stack.
 static void compiler_emit_close_upvalues(compiler *compiler, pop_count count, line_number line)
 {
     if (count == 0)
@@ -509,11 +507,6 @@ static void compiler_emit_close_upvalues(compiler *compiler, pop_count count, li
     } else {
         compiler_emit_opcode(compiler, OP_CLOSE_UPVALUE_N, line);
         bytecode_write_pop_count(compiler->_vm, compiler->_out, count, line);
-        // This is decremented in `compiler_emit_opcode()` for all other instructions. We need to
-        // handle this one here because the effect on the stack depth is not static. We don't need
-        // to worry about updating the output bytecode's max stack depth because this instruction
-        // will always decrease the current stack depth.
-        compiler->_stack_depth -= count;
     }
 }
 
@@ -565,8 +558,7 @@ static void compiler_end_scope(compiler *compiler, line_number line)
     size_t locals_in_scope = start_local_count - compiler->_local_count;
     if (locals_closed_over)
         compiler_emit_close_upvalues(compiler, locals_in_scope, line);
-    else
-        compiler_emit_pops(compiler, locals_in_scope, line);
+    compiler_emit_pops(compiler, locals_in_scope, line);
     compiler->_scope_depth--;
 }
 
@@ -608,8 +600,7 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
 
 // Writes the instruction to define the variable corresponding to `ident` to the output bytecode
 // chunk.
-// Must be called straight after the bytecode pushing the initialiser onto the value stack has been
-// emitted.
+// Must be called when the initialiser is on top of the value stack.
 static void compiler_emit_variable_definition(compiler *compiler, struct token ident, bool is_final)
 {
     if (in_global_scope(compiler)) {
@@ -621,7 +612,8 @@ static void compiler_emit_variable_definition(compiler *compiler, struct token i
         compiler_emit_opcode(compiler, OP_DEFINE_LOCAL_FINAL, ident.line);
         final_local_name_index index = bytecode_chunk_add_final_local_name(
             compiler->_vm, compiler->_out, ident.start, ident.len);
-        bytecode_chunk_write_final_local_name_index(compiler->_vm, compiler->_out, index, ident.line);
+        bytecode_chunk_write_final_local_name_index(compiler->_vm, compiler->_out, index,
+                                                    ident.line);
     } else {
         compiler_emit_opcode(compiler, OP_DEFINE_LOCAL, ident.line);
     }
@@ -1431,12 +1423,13 @@ static void compiler_compile_for_stmt(compiler *compiler)
     parser_expect(compiler->_parser, TOKEN_LEFT_PAREN);
 
     // Initialiser
-    if (PARSER_MATCH(compiler->_parser, TOKEN_SEMICOLON))
-        ;
-    else if (compiler->_parser->token.type == TOKEN_VAR)
+    bool hasLoopVar = false;
+    if (compiler->_parser->token.type == TOKEN_VAR) {
         compiler_compile_var_decl(compiler);
-    else
+        hasLoopVar = true;
+    } else if (!PARSER_MATCH(compiler->_parser, TOKEN_SEMICOLON)) {
         compiler_compile_expr_stmt(compiler);
+    }
 
     // Condition
     bool has_condition = !PARSER_MATCH(compiler->_parser, TOKEN_SEMICOLON);
@@ -1470,6 +1463,8 @@ static void compiler_compile_for_stmt(compiler *compiler)
         compiler_set_forward_jump_offset(compiler, increment_body_jump);
     compiler_compile_stmt(compiler); // Body
     compiler_finish_compiling_continue_stmts(compiler);
+    if (hasLoopVar)
+        compiler_emit_close_upvalues(compiler, 1, for_line);
     bytecode_offset body_jump_back_target = has_increment ? increment_start : condition_start;
     compiler_emit_backward_jump(compiler, body_jump_back_target, for_line);
     if (has_condition) {

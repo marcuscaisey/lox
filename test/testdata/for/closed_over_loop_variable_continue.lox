@@ -1,0 +1,17 @@
+var globalOne = nil;
+var globalTwo = nil;
+
+for (var i = 0; i < 2; i = i + 1) {
+  fun closure() {
+    print i;
+  }
+  if (i == 0) {
+    globalOne = closure;
+  } else {
+    globalTwo = closure;
+  }
+  continue;
+}
+
+globalOne(); // prints: 0
+globalTwo(); // prints: 1
