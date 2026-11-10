@@ -374,8 +374,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             const char *name = vm->_final_local_names[vm_stack_index];
             bool is_final = name != NULL;
             if (is_final) {
-                vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
-                                 name);
+                vm_report_errorf(vm, source, "final variable '%s' can't be reassigned", name);
                 goto out_error;
             }
             value value = vm_stack_peek(vm, 0);
@@ -652,6 +651,12 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             frame->_ip = function->body.instructions;
             frame->_stack_offset = vm->_stack_top - vm->_stack - arg_count;
             frame->_upvalues = upvalues;
+
+            // Mark arguments as local variables
+            stack_index top_stack_index = vm->_stack_top - vm->_stack - 1;
+            for (argument_count i = 0; i < arg_count; i++)
+                vm->_final_local_names[top_stack_index - i] = NULL;
+
             break;
         }
 
