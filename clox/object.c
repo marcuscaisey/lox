@@ -77,7 +77,7 @@ static hash_value hash_string(const char *data, size_t len)
 // Use the `OBJECT_NEW()` macro instead.
 static struct object *object_new(vm *vm, size_t size, enum _object_type type)
 {
-    struct object *object = vm_malloc(vm, size);
+    struct object *object = vm_xmalloc(vm, size);
     object->next = vm->_objects;
     vm->_objects = object;
     object->_type = type;
@@ -112,7 +112,7 @@ struct object_string *object_string_copy(vm *vm, const char *data, size_t len)
     struct object_string *interned_string = map_get_string_key(&vm->_strings, data, len, hash);
     if (interned_string != NULL)
         return interned_string;
-    char *data_copy = vm_malloc(vm, len + 1);
+    char *data_copy = vm_xmalloc(vm, len + 1);
     memcpy(data_copy, data, len);
     data_copy[len] = '\0';
     return object_string_new(vm, data_copy, len, hash);

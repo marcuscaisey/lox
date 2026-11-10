@@ -150,7 +150,7 @@ void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, li
         size_t target_size = DYNAMIC_ARRAY_SIZE(chunk->offset_lines, chunk->_cap);
         if (chunk->_is_vm_managed) {
             size_t current_size = DYNAMIC_ARRAY_SIZE(chunk->offset_lines, original_cap);
-            chunk->offset_lines = vm_realloc(vm, chunk->offset_lines, current_size, target_size);
+            chunk->offset_lines = vm_xrealloc(vm, chunk->offset_lines, current_size, target_size);
         } else {
             chunk->offset_lines = realloc(chunk->offset_lines, target_size);
         }
@@ -181,7 +181,7 @@ final_local_name_index bytecode_chunk_add_final_local_name(vm *vm, struct byteco
     char *name_copy;
     if (chunk->_is_vm_managed) {
         VM_DYNAMIC_ARRAY_GROW(vm, chunk->final_local_names, chunk->_final_local_names_cap, target_len);
-        name_copy = vm_malloc(vm, len + 1);
+        name_copy = vm_xmalloc(vm, len + 1);
     } else {
         DYNAMIC_ARRAY_GROW(chunk->final_local_names, chunk->_final_local_names_cap, target_len);
         name_copy = xmalloc(len + 1);

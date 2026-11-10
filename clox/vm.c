@@ -173,7 +173,7 @@ static struct object_string *vm_concat_strings(vm *vm, struct object_string *a,
                                                struct object_string *b)
 {
     size_t len = a->len + b->len;
-    char *data = vm_malloc(vm, len + 1);
+    char *data = vm_xmalloc(vm, len + 1);
     memcpy(data, a->data, a->len);
     memcpy(data + a->len, b->data, b->len);
     data[len] = '\0';
@@ -184,7 +184,7 @@ static struct object_string *vm_concat_strings(vm *vm, struct object_string *a,
 static struct object_string *vm_repeat_string(vm *vm, struct object_string *s, int64_t n)
 {
     size_t len = s->len * n;
-    char *data = vm_malloc(vm, len + 1);
+    char *data = vm_xmalloc(vm, len + 1);
     for (int i = 0; i < n; i++)
         memcpy(data + s->len * i, s->data, s->len);
     data[len] = '\0';
@@ -659,7 +659,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             constant_index function_index = bytecode_read_constant_index(&frame->_ip);
 
             upvalue_count upvalue_count = bytecode_read_upvalue_count(&frame->_ip);
-            struct object_upvalue **upvalues = vm_malloc(vm, upvalue_count * sizeof(*upvalues));
+            struct object_upvalue **upvalues = vm_xmalloc(vm, upvalue_count * sizeof(*upvalues));
             for (size_t i = 0; i < (size_t)upvalue_count; i++) {
                 bool is_stack_index = bytecode_read_u8(&frame->_ip);
                 if (is_stack_index) {

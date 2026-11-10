@@ -37,13 +37,13 @@ global_index vm_add_global(vm *vm, const char *name, size_t len)
     return index;
 }
 
-void *vm_malloc(vm *vm, size_t size)
+void *vm_xmalloc(vm *vm, size_t size)
 {
     (void)vm;
     return xmalloc(size);
 }
 
-void *vm_realloc(vm *vm, void *p, size_t current_size, size_t target_size)
+void *vm_xrealloc(vm *vm, void *p, size_t current_size, size_t target_size)
 {
     (void)vm;
     (void)current_size;
@@ -67,7 +67,7 @@ char *vm_xstrndup(vm *vm, const char *s, size_t n)
     size_t len = 0;
     while (len < n && s[len] != '\0')
         len++;
-    char *copy = vm_malloc(vm, len + 1);
+    char *copy = vm_xmalloc(vm, len + 1);
     memcpy(copy, s, len);
     copy[len] = '\0';
     return copy;

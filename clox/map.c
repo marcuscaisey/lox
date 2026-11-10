@@ -135,7 +135,7 @@ void map_grow(vm *vm, map *map, size_t new_cap)
     struct _entry *new_entries;
     size_t size = DYNAMIC_ARRAY_SIZE(new_entries, new_cap);
     if (map->_is_vm_managed)
-        new_entries = vm_malloc(vm, size);
+        new_entries = vm_xmalloc(vm, size);
     else
         new_entries = xmalloc(size);
     for (struct _entry *entry = new_entries; entry < new_entries + new_cap; entry++)

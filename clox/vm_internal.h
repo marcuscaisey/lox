@@ -8,25 +8,19 @@
 #include "value.h"
 #include "vm_fwd.h" // IWYU pragma: export
 
-// Allocates `size` bytes of VM managed memory and returns a pointer to the allocated memory.
-// The process exits on allocation failure.
-// Like `xmalloc()`, except the memory is managed by the VM.
-void *vm_malloc(vm *vm, size_t size);
+// Works like `xmalloc()`, except it allocates VM managed memory.
+void *vm_xmalloc(vm *vm, size_t size);
 
-// Grows or shrinks the allocation of `current_size` bytes of VM managed memory pointed to by `p` to
-// `target_size` bytes and returns a pointer to the reallocated memory.
-// If `p` is `NULL`, `vm_reallocate(p, current_size, target_size)` is equivalent to
-// `vm_allocate(target_size)`.
-// The process exits on allocation failure.
-void *vm_realloc(vm *vm, void *p, size_t current_size, size_t target_size);
+// Works like `xrealloc()`, execpt it allocates VM managed memory.
+void *vm_xrealloc(vm *vm, void *p, size_t current_size, size_t target_size);
 
 // Frees the allocation of `size` bytes of VM managed memory pointed to by `p`.
 void vm_free(vm *vm, void *p, size_t size);
 
-// Works like `xstrdup()`, except it allocates VM managed memory for the result.
+// Works like `xstrdup()`, except it allocates VM managed memory.
 char *vm_xstrdup(vm *vm, const char *s);
 
-// Works like `vm_xstrndup()`, execpt it allocates VM managed memory for the result.
+// Works like `vm_xstrndup()`, execpt it allocates VM managed memory.
 char *vm_xstrndup(vm *vm, const char *s, size_t n);
 
 // Represents a global variable.
