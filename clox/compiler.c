@@ -527,7 +527,8 @@ static void compiler_set_forward_jump_offset(const compiler *compiler, bytecode_
     // `target` is the offset of the jump opcode which is then followed by `jump_offset_size` bytes
     // for the operand. The jump offset counts from the offset after the operand bytes so we need to
     // take this away from the result (1 for the opcode, `jump_offset_size` for the operand).
-    jump_offset jump_offset = compiler_bytecode_offset(compiler) - target - 1 - jump_offset_size;
+    jump_offset jump_offset =
+        compiler_bytecode_offset(compiler) - target - 1 - bytecode_jump_offset_size;
     bytecode_chunk_set_jump_offset(compiler->_out, target, jump_offset);
 }
 
@@ -539,7 +540,8 @@ static void compiler_emit_backward_jump(compiler *compiler, bytecode_offset targ
     compiler_emit_opcode(compiler, OP_JUMP_BACK, line);
     // The jump offset counts from the offset after the `jump_offset_size` operand bytes which we
     // haven't written yet so we need we need to add this to the result.
-    jump_offset jump_offset = compiler_bytecode_offset(compiler) - target + jump_offset_size;
+    jump_offset jump_offset =
+        compiler_bytecode_offset(compiler) - target + bytecode_jump_offset_size;
     bytecode_chunk_write_jump_offset(compiler->_vm, compiler->_out, jump_offset, line);
 }
 

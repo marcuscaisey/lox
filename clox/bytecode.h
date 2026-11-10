@@ -37,6 +37,7 @@
 #ifndef CLOX_BYTECODE_H
 #define CLOX_BYTECODE_H
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -56,7 +57,7 @@ typedef int32_t stack_index;
 typedef int32_t jump_offset;
 
 // Size of a jump offset value.
-extern const size_t jump_offset_size;
+static const size_t bytecode_jump_offset_size;
 
 typedef int32_t argument_count;
 
@@ -278,45 +279,142 @@ void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, li
 // Stores `value` in the chunk's constants and returns its index.
 constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value);
 
+// Writes `value` as a big-endian u16 to `out`.
+// Internal function, do not use.
+static inline void _bytecode_write_u16(uint8_t *out, uint16_t value)
+{
+    static const int32_t max_u16 = (1 << 16) - 1;
+    assert(value >= 0 && value <= max_u16);
+    out[0] = (value >> 8) & 0xFF;
+    out[1] = value & 0xFF;
+}
+
+// Writes `value` associated with `line` to the chunk's instructions as a big-endian u16.
+// Internal function, do not use.
+static inline void _bytecode_chunk_write_u16(vm *vm, struct bytecode_chunk *chunk, int32_t value,
+                                             line_number line)
+{
+    uint8_t bytes[2];
+    _bytecode_write_u16(bytes, value);
+    bytecode_chunk_write(vm, chunk, bytes[0], line);
+    bytecode_chunk_write(vm, chunk, bytes[1], line);
+}
+
+static const int32_t _bytecode_max_u24 = (1 << 24) - 1;
+
+// Writes `value` associated with line to the chunk's instructions as a big-endian u24.
+// Internal function, do not use.
+static inline void _bytecode_chunk_write_u24(vm *vm, struct bytecode_chunk *chunk, int32_t value,
+                                             line_number line)
+{
+    assert(value >= 0 && value <= _bytecode_max_u24);
+    bytecode_chunk_write(vm, chunk, (value >> 16) & 0xFF, line);
+    bytecode_chunk_write(vm, chunk, (value >> 8) & 0xFF, line);
+    bytecode_chunk_write(vm, chunk, value & 0xFF, line);
+}
+
+// Writes `value` associated with `line` to the chunk's instructions as a u8 if it's < 0xFF,
+// otherwise as 0xFF followed by `value` as a big-endian u24.
+// Internal function, do not use.
+static inline void _bytecode_chunk_write_compact_u24(vm *vm, struct bytecode_chunk *chunk,
+                                                     int32_t value, line_number line)
+{
+    if (value < 0xFF) {
+        assert(value >= 0);
+        bytecode_chunk_write(vm, chunk, value, line);
+    } else {
+        bytecode_chunk_write(vm, chunk, 0xFF, line);
+        _bytecode_chunk_write_u24(vm, chunk, value, line);
+    }
+}
+
+static const pop_count _bytecode_max_pop_count = _bytecode_max_u24;
+
+static const upvalue_count _bytecode_max_upvalue_count = _bytecode_max_u24;
+
+// 1 less than `_max_upvalue_count` so that it's possible to reference every upvalue by index
+static const upvalue_index _bytecode_max_upvalue_index = _bytecode_max_upvalue_count - 1;
+
+// 1 less than `_max_pop_count` so that it's possible to pop every value from the stack with one
+// POP_N instruction.
+static const stack_index _bytecode_max_stack_index = _bytecode_max_pop_count - 1;
+
 // Writes `opcode` associated with `line` to the chunk's instructions.
-void bytecode_chunk_write_opcode(vm *vm, struct bytecode_chunk *chunk, enum opcode opcode,
-                                 line_number line);
+static inline void bytecode_chunk_write_opcode(vm *vm, struct bytecode_chunk *chunk,
+                                               enum opcode opcode, line_number line)
+{
+    bytecode_chunk_write(vm, chunk, opcode, line);
+}
 
 // Writes `index` associated with `line` to the chunk's instructions.
-void bytecode_chunk_write_constant_index(vm *vm, struct bytecode_chunk *chunk, constant_index index,
-                                         line_number line);
+static inline void bytecode_chunk_write_constant_index(vm *vm, struct bytecode_chunk *chunk,
+                                                       constant_index index, line_number line)
+{
+    _bytecode_chunk_write_compact_u24(vm, chunk, index, line);
+}
 
 // Writes `count` associated with `line` to the chunk's instructions.
-void bytecode_write_pop_count(vm *vm, struct bytecode_chunk *chunk, pop_count count,
-                              line_number line);
+static inline void bytecode_write_pop_count(vm *vm, struct bytecode_chunk *chunk, pop_count count,
+                                            line_number line)
+{
+    assert(count <= _bytecode_max_pop_count);
+    _bytecode_chunk_write_compact_u24(vm, chunk, count, line);
+}
 
 // Writes `index` associated with `line` to the chunk's instructions.
-void bytecode_chunk_write_global_index(vm *vm, struct bytecode_chunk *chunk, global_index index,
-                                       line_number line);
+static inline void bytecode_chunk_write_global_index(vm *vm, struct bytecode_chunk *chunk,
+                                                     global_index index, line_number line)
+{
+    _bytecode_chunk_write_compact_u24(vm, chunk, index, line);
+}
 
 // Writes `index` associated with `line` to the chunk's instructions.
-void bytecode_chunk_write_upvalue_index(vm *vm, struct bytecode_chunk *chunk, upvalue_index index,
-                                        line_number line);
+static inline void bytecode_chunk_write_upvalue_index(vm *vm, struct bytecode_chunk *chunk,
+                                                      upvalue_index index, line_number line)
+{
+    assert(index <= _bytecode_max_upvalue_index);
+    _bytecode_chunk_write_compact_u24(vm, chunk, index, line);
+}
 
 // Writes `index` associated with `line` to the chunk's instructions.
-void bytecode_chunk_write_stack_index(vm *vm, struct bytecode_chunk *chunk, stack_index index,
-                                      line_number line);
+static inline void bytecode_chunk_write_stack_index(vm *vm, struct bytecode_chunk *chunk,
+                                                    stack_index index, line_number line)
+{
+    assert(index <= _bytecode_max_stack_index);
+    _bytecode_chunk_write_compact_u24(vm, chunk, index, line);
+}
+
+static const size_t bytecode_jump_offset_size = 2;
 
 // Writes `offset` associated with `line` to the chunk's instructions.
-void bytecode_chunk_write_jump_offset(vm *vm, struct bytecode_chunk *chunk, jump_offset offset,
-                                      line_number line);
+static inline void bytecode_chunk_write_jump_offset(vm *vm, struct bytecode_chunk *chunk,
+                                                    jump_offset offset, line_number line)
+{
+    // Must update `jump_offset_size` if this is updated to write a differently sized value.
+    _bytecode_chunk_write_u16(vm, chunk, offset, line);
+}
 
 // Sets the operand of the jump instruction at `target` to `offset`.
-void bytecode_chunk_set_jump_offset(struct bytecode_chunk *chunk, bytecode_offset target,
-                                    jump_offset offset);
+static inline void bytecode_chunk_set_jump_offset(struct bytecode_chunk *chunk,
+                                                  bytecode_offset target, jump_offset offset)
+{
+    _bytecode_write_u16(chunk->instructions + target + 1, offset);
+}
 
 // Writes `count` associated with `line` to the chunk's instructions.
-void bytecode_chunk_write_argument_count(vm *vm, struct bytecode_chunk *chunk, argument_count count,
-                                         line_number line);
+static inline void bytecode_chunk_write_argument_count(vm *vm, struct bytecode_chunk *chunk,
+                                                       argument_count count, line_number line)
+{
+    _bytecode_chunk_write_compact_u24(vm, chunk, count, line);
+}
 
 // Writes `count` associated with `line` to the chunk's instructions.
-void bytecode_chunk_write_upvalue_count(vm *vm, struct bytecode_chunk *chunk, upvalue_count count,
-                                        line_number line);
+static inline void bytecode_chunk_write_upvalue_count(vm *vm, struct bytecode_chunk *chunk,
+                                                      upvalue_count count, line_number line)
+{
+    assert(count <= _bytecode_max_upvalue_count);
+    _bytecode_chunk_write_compact_u24(vm, chunk, count, line);
+}
 
 // Reads the u8 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline uint8_t bytecode_read_u8(uint8_t **p)
@@ -325,27 +423,30 @@ static inline uint8_t bytecode_read_u8(uint8_t **p)
 }
 
 // Reads the big-endian u16 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-static inline uint16_t bytecode_read_u16(uint8_t **p)
+// Internal function, do not use.
+static inline uint16_t _bytecode_read_u16(uint8_t **p)
 {
     *p += 2;
     return ((*p)[-2] << 8) | ((*p)[-1]);
 }
 
 // Reads the big-endian u24 from the sequence of bytes pointed to by `*p` and moves `*p` past it.
-static inline uint32_t bytecode_read_u24(uint8_t **p)
+// Internal function, do not use.
+static inline uint32_t _bytecode_read_u24(uint8_t **p)
 {
     *p += 3;
     return ((*p)[-3] << 16) | ((*p)[-2] << 8) | ((*p)[-1]);
 }
 
-// Reads the value encoded by `bytecode_chunk_write_compact_u24()` from the sequence of bytes
+// Reads the value encoded by `_bytecode_chunk_write_compact_u24()` from the sequence of bytes
 // pointed to by `*p` and moves `*p` past it.
-static inline uint32_t bytecode_read_compact_u24(uint8_t **p)
+// Internal function, do not use.
+static inline uint32_t _bytecode_read_compact_u24(uint8_t **p)
 {
     uint8_t index = bytecode_read_u8(p);
     if (index < 0xFF)
         return index;
-    return bytecode_read_u24(p);
+    return _bytecode_read_u24(p);
 }
 
 // Reads the opcode from the sequence of bytes pointed to by `*p` and moves `*p` past it.
@@ -357,49 +458,49 @@ static inline enum opcode bytecode_read_opcode(uint8_t **p)
 // Reads the constant index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline constant_index bytecode_read_constant_index(uint8_t **p)
 {
-    return bytecode_read_compact_u24(p);
+    return _bytecode_read_compact_u24(p);
 }
 
 // Reads the pop count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline pop_count bytecode_read_pop_count(uint8_t **p)
 {
-    return bytecode_read_compact_u24(p);
+    return _bytecode_read_compact_u24(p);
 }
 
 // Reads the global index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline global_index bytecode_read_global_index(uint8_t **p)
 {
-    return bytecode_read_compact_u24(p);
+    return _bytecode_read_compact_u24(p);
 }
 
 // Reads the upvalue index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline upvalue_index bytecode_read_upvalue_index(uint8_t **p)
 {
-    return bytecode_read_compact_u24(p);
+    return _bytecode_read_compact_u24(p);
 }
 
 // Reads the stack index from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline stack_index bytecode_read_stack_index(uint8_t **p)
 {
-    return bytecode_read_compact_u24(p);
+    return _bytecode_read_compact_u24(p);
 }
 
 // Reads the jump offset from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline jump_offset bytecode_read_jump_offset(uint8_t **p)
 {
-    return bytecode_read_u16(p);
+    return _bytecode_read_u16(p);
 }
 
 // Reads the argument count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline argument_count bytecode_read_argument_count(uint8_t **p)
 {
-    return bytecode_read_compact_u24(p);
+    return _bytecode_read_compact_u24(p);
 }
 
 // Reads the upvalue count from the sequence of bytes pointed to by `*p` and moves `*p` past it.
 static inline upvalue_count bytecode_read_upvalue_count(uint8_t **p)
 {
-    return bytecode_read_compact_u24(p);
+    return _bytecode_read_compact_u24(p);
 }
 
 #endif
