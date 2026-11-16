@@ -33,8 +33,8 @@ void object_free(vm *vm, struct object *object)
     }
     case _OBJECT_UPVALUE: {
         struct object_upvalue *upvalue = (struct object_upvalue *)object;
-        if (upvalue->final_local_name != NULL)
-            vm_free(vm, upvalue->final_local_name, strlen(upvalue->final_local_name) + 1);
+        if (upvalue->_final_local_name)
+            vm_free(vm, upvalue->_final_local_name, strlen(upvalue->_final_local_name) + 1);
         vm_free(vm, upvalue, sizeof(struct object_upvalue));
         break;
     }
@@ -169,22 +169,23 @@ struct object_closure *value_as_closure(value value)
     return (struct object_closure *)value_as_object(value);
 }
 
-struct object_upvalue *object_upvalue_new_open(vm *vm, size_t vm_stack_index,
-                                               const char *final_local_name)
+struct object_upvalue *object_upvalue_new_open(vm *vm, size_t vm_stack_index)
 {
     struct object_upvalue *upvalue = OBJECT_NEW(vm, object_upvalue, _OBJECT_UPVALUE);
     upvalue->next = NULL;
     upvalue->vm_stack_index = vm_stack_index;
-    upvalue->_value = none_value;
     upvalue->_is_open = true;
-    upvalue->final_local_name = final_local_name != NULL ? vm_xstrdup(vm, final_local_name) : NULL;
+    upvalue->_value = none_value;
+    upvalue->_final_local_name = NULL;
     return upvalue;
 }
 
-void object_upvalue_close(const vm *vm, struct object_upvalue *upvalue)
+void object_upvalue_close(vm *vm, struct object_upvalue *upvalue)
 {
-    upvalue->_value = vm->_stack[upvalue->vm_stack_index];
     upvalue->_is_open = false;
+    upvalue->_value = vm->_stack[upvalue->vm_stack_index];
+    const char *final_local_name = vm->_final_local_names[upvalue->vm_stack_index];
+    upvalue->_final_local_name = final_local_name != NULL ? vm_xstrdup(vm, final_local_name) : NULL;
 }
 
 value object_upvalue_read(const vm *vm, struct object_upvalue *upvalue)
@@ -201,6 +202,12 @@ void object_upvalue_write(vm *vm, struct object_upvalue *upvalue, value value)
         vm->_stack[upvalue->vm_stack_index] = value;
     else
         upvalue->_value = value;
+}
+
+const char *object_upvalue_final_local_name(vm *vm, struct object_upvalue *upvalue)
+{
+    return upvalue->_is_open ? vm->_final_local_names[upvalue->vm_stack_index] :
+                               upvalue->_final_local_name;
 }
 
 struct object_native_function *object_native_function_new(vm *vm, const char *name, size_t name_len,

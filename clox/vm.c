@@ -336,9 +336,10 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         case OP_SET_UPVALUE: {
             upvalue_index index = bytecode_read_upvalue_index(&frame->_ip);
             struct object_upvalue *upvalue = frame->_upvalues[index];
-            if (upvalue->final_local_name != NULL) {
-                vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
-                                 upvalue->final_local_name);
+            const char *name = object_upvalue_final_local_name(vm, upvalue);
+            bool is_final = name != NULL;
+            if (is_final) {
+                vm_report_errorf(vm, source, "final variable '%s' can't be reassigned", name);
                 goto out_error;
             }
             value value = vm_stack_peek(vm, 0);
@@ -675,9 +676,8 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                     while (*next_ptr != NULL && (*next_ptr)->vm_stack_index > vm_stack_index)
                         next_ptr = &(*next_ptr)->next;
                     if (*next_ptr == NULL || (*next_ptr)->vm_stack_index != vm_stack_index) {
-                        const char *final_local_name = vm->_final_local_names[vm_stack_index];
                         struct object_upvalue *upvalue =
-                            object_upvalue_new_open(vm, vm_stack_index, final_local_name);
+                            object_upvalue_new_open(vm, vm_stack_index);
                         upvalue->next = *next_ptr;
                         *next_ptr = upvalue;
                     }

@@ -96,26 +96,31 @@ struct object_upvalue {
     struct object _object; // Internal field, do not use.
     struct object_upvalue *next; // Next upvalue managed by the VM, or `NULL` if this is the last one
     size_t vm_stack_index; // Index in the VM's value stack of the upvalue's value
-    // Internal field, do not use. Upvalue's value if it's closed, otherwise `none_value`
-    value _value;
     bool _is_open; // Internal field, do not use.
-    // Name of the variable if this upvalue represents a final variable, otherwise `NULL`
-    char *final_local_name;
+    // Internal field, do not use. Upvalue's value if it's closed, otherwise `none_value`.
+    value _value;
+    // Internal field, do not use.
+    // Name of the variable if this upvalue represents a final variable and the upvalue is closed,
+    // otherwise `NULL`.
+    char *_final_local_name;
 };
 
 // Allocates and initialises a new open upvalue which aliases the value at `vm_stack_index` in the
-// VM's value stack, making a copy of `final_local_name` if non-NULL.
-struct object_upvalue *object_upvalue_new_open(vm *vm, size_t vm_stack_index,
-                                               const char *final_local_name);
+// VM's value stack.
+struct object_upvalue *object_upvalue_new_open(vm *vm, size_t vm_stack_index);
 
 // Closes `upvalue`.
-void object_upvalue_close(const vm *vm, struct object_upvalue *upvalue);
+void object_upvalue_close(vm *vm, struct object_upvalue *upvalue);
 
 // Returns the value of `upvalue`.
 value object_upvalue_read(const vm *vm, struct object_upvalue *upvalue);
 
 // Sets the value of `upvalue` to `value`.
 void object_upvalue_write(vm *vm, struct object_upvalue *upvalue, value value);
+
+// Returns the name of the variable if this upvalue represents a final variable closed, otherwise
+// `NULL`.
+const char *object_upvalue_final_local_name(vm *vm, struct object_upvalue *upvalue);
 
 // Type of function that implements the body of a native Lox function.
 // `args` is an array containing the function arguments. The caller is responsible for ensuring that
