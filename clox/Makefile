@@ -5,21 +5,30 @@ CFLAGS := -std=c11 -Wall -Wextra -Wpedantic -Werror
 
 ifdef DEBUG
 	BUILD_DIR := $(BASE_BUILD_DIR)/debug
-	CFLAGS += -O0 -g -DDEBUG
-	ifdef PRINT_BYTECODE
-		CFLAGS += -DDEBUG_PRINT_BYTECODE
-	endif
-	ifdef TRACE_EXECUTION
-		CFLAGS += -DDEBUG_TRACE_EXECUTION
-	endif
-	LINK_FLAGS = -Wl,-object_path_lto,$(BUILD_DIR)/lto.o
+	CFLAGS += -O0 -DDEBUG
+	DEBUG_SYMBOLS := 1
 else
 	CFLAGS += -O3 -flto
 	BUILD_DIR := $(BASE_BUILD_DIR)/release
-	ifdef DEBUG_SYMBOLS
-		CFLAGS += -g
-		LINK_FLAGS = -Wl,-object_path_lto,$(BUILD_DIR)/lto.o
-	endif
+endif
+
+ifdef PRINT_BYTECODE
+	CFLAGS += -DDEBUG_PRINT_BYTECODE
+endif
+ifdef TRACE_EXECUTION
+	CFLAGS += -DDEBUG_TRACE_EXECUTION
+endif
+
+ifdef ASAN
+	CFLAGS += -O1 -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls
+	DEBUG_SYMBOLS := 1
+endif
+ifdef UBSAN
+	CFLAGS += -fsanitize=undefined -fno-sanitize-recover=undefined
+endif
+ifdef DEBUG_SYMBOLS
+	CFLAGS += -g
+	LINK_FLAGS = -Wl,-object_path_lto,$(BUILD_DIR)/lto.o
 endif
 
 
