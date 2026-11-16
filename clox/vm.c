@@ -416,7 +416,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
     do {                                                                                   \
         value b = vm_stack_peek(vm, 0);                                                    \
         value a = vm_stack_peek(vm, 1);                                                    \
-        if (value_type(a) == VALUE_STRING || value_type(b) == VALUE_STRING) {              \
+        if (value_type(a) == VALUE_STRING && value_type(b) == VALUE_STRING) {              \
             vm_stack_pop(vm);                                                              \
             vm_stack_pop(vm);                                                              \
             bool result = strcmp(value_as_string(a)->data, value_as_string(b)->data) op 0; \
