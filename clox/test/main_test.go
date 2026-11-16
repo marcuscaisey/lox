@@ -91,7 +91,10 @@ func shouldSkipTest(name string) bool {
 
 // mustBuildClox build clox and returns the path to it.
 func mustBuildClox(t *testing.T) string {
-	cmd := exec.CommandContext(t.Context(), "make", "-C", "..")
+	cmd := exec.CommandContext(t.Context(), "make", "-C", "..",
+		"ASAN=1",
+		"UBSAN=1",
+	)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("building clox: %s: %v\nOutput:\n%s\n", cmd.String(), err, string(output))
