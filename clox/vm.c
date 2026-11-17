@@ -38,37 +38,50 @@ static size_t frame_vm_stack_index(const struct frame *frame, stack_index index)
     return frame->_stack_offset + index;
 }
 
+// Number of bytes of VM managed memory that have to be allocated before the first GC cycle is
+// triggered
+static const size_t first_gc_bytes = 1024 * 1024;
+
 void vm_init(vm *vm)
 {
+    vm->_objects = NULL;
+    vm->_allocated_bytes = 0;
+    vm->_next_gc_bytes = first_gc_bytes;
+    vm->_is_gc_enabled = true;
+    vm->_grey_objects = NULL;
+    vm->_grey_objects_len = 0;
+    vm->_grey_objects_cap = 0;
     vm->_frames = NULL;
     vm->_frames_len = 0;
     vm->_frames_cap = 0;
     vm->_stack = NULL;
     vm->_stack_cap = 0;
     vm->_stack_top = NULL;
-    vm->_objects = NULL;
-    map_init(&vm->_strings, true); // Interned strings can become garbage so need VM to manage this
+    map_init(&vm->_strings, false); // Lifetime is same as VM so no need for it to manage
     vm->_globals = NULL;
     vm->_globals_len = 0;
     vm->_globals_cap = 0;
     vm->_open_upvalues = NULL;
     vm->_final_local_names = NULL;
+    vm->_interpret_calls = 0;
 
     // Define built-in functions
+    // Disable GC while we're creating the objects to avoid triggering needless collections
+    vm->_is_gc_enabled = false;
     DYNAMIC_ARRAY_GROW(vm->_globals, vm->_globals_cap, builtin_functions_len);
     for (size_t i = 0; i < builtin_functions_len; i++) {
         struct builtin_function function = builtin_functions[i];
         size_t name_len = strlen(function.name);
         struct object_native_function *function_object =
             object_native_function_new(vm, function.name, name_len, function.arity, function.body);
-        struct global *global = &vm->_globals[vm->_globals_len++];
+        struct _global *global = &vm->_globals[vm->_globals_len++];
         global_init(global, function.name, name_len);
         global->value = native_function_value(function_object);
     }
+    vm->_is_gc_enabled = true;
 }
 
-// Frees the objects managed by the VM and memory associated with them.
-void vm_free_objects(vm *vm)
+void vm_deinit(vm *vm)
 {
     struct object *object = vm->_objects;
     while (object != NULL) {
@@ -76,12 +89,7 @@ void vm_free_objects(vm *vm)
         object_free(vm, object);
         object = next;
     }
-}
-
-void vm_deinit(vm *vm)
-{
     free(vm->_stack);
-    vm_free_objects(vm);
     map_deinit(vm, &vm->_strings);
     for (size_t i = 0; i < vm->_globals_len; i++)
         global_deinit(&vm->_globals[i]);
@@ -284,7 +292,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_DEFINE_GLOBAL: {
             global_index index = bytecode_read_global_index(&frame->_ip);
-            struct global *global = &vm->_globals[index];
+            struct _global *global = &vm->_globals[index];
             value initialiser = vm_stack_pop(vm);
             global->value = initialiser;
             global->is_final = false;
@@ -293,7 +301,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_DEFINE_GLOBAL_FINAL: {
             global_index index = bytecode_read_global_index(&frame->_ip);
-            struct global *global = &vm->_globals[index];
+            struct _global *global = &vm->_globals[index];
             value initialiser = vm_stack_pop(vm);
             global->value = initialiser;
             global->is_final = true;
@@ -302,7 +310,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_GET_GLOBAL: {
             global_index index = bytecode_read_global_index(&frame->_ip);
-            struct global *global = &vm->_globals[index];
+            struct _global *global = &vm->_globals[index];
             if (values_are_equal(global->value, none_value)) {
                 vm_report_errorf(vm, source, "'%s' has not been declared", global->name);
                 goto out_error;
@@ -313,7 +321,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
         case OP_SET_GLOBAL: {
             global_index index = bytecode_read_global_index(&frame->_ip);
-            struct global *global = &vm->_globals[index];
+            struct _global *global = &vm->_globals[index];
             if (global->is_final) {
                 vm_report_errorf(vm, source, "final variable '%s' can't be reassigned",
                                  global->name);
@@ -410,8 +418,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                              value_type_string(value_type(b)));                                   \
             goto out_error;                                                                       \
         }                                                                                         \
-        vm_stack_pop(vm);                                                                         \
-        vm_stack_pop(vm);                                                                         \
+        vm_stack_pop_n(vm, 2);                                                                    \
         vm_stack_push(vm, construct_result(value_as_number(a) op value_as_number(b)));            \
     } while (false)
 
@@ -420,8 +427,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         value b = vm_stack_peek(vm, 0);                                                    \
         value a = vm_stack_peek(vm, 1);                                                    \
         if (value_type(a) == VALUE_STRING && value_type(b) == VALUE_STRING) {              \
-            vm_stack_pop(vm);                                                              \
-            vm_stack_pop(vm);                                                              \
+            vm_stack_pop_n(vm, 2);                                                         \
             bool result = strcmp(value_as_string(a)->data, value_as_string(b)->data) op 0; \
             vm_stack_push(vm, bool_value(result));                                         \
         } else {                                                                           \
@@ -450,10 +456,11 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             value b = vm_stack_peek(vm, 0);
             value a = vm_stack_peek(vm, 1);
             if (value_type(a) == VALUE_STRING && value_type(b) == VALUE_STRING) {
-                vm_stack_pop(vm);
-                vm_stack_pop(vm);
                 struct object_string *result =
                     vm_concat_strings(vm, value_as_string(a), value_as_string(b));
+                // Keep operands on the stack to prevent them from being garbage collected before
+                // the result has been created
+                vm_stack_pop_n(vm, 2);
                 vm_stack_push(vm, string_value(result));
             } else {
                 EXECUTE_BINARY_NUMBER_OP(+, number_value);
@@ -472,8 +479,6 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             enum value_type b_type = value_type(b);
             if ((a_type == VALUE_NUMBER && b_type == VALUE_STRING) ||
                 (a_type == VALUE_STRING && b_type == VALUE_NUMBER)) {
-                vm_stack_pop(vm);
-                vm_stack_pop(vm);
                 value n_operand = a;
                 value string_operand = b;
                 if (a_type == VALUE_STRING) {
@@ -496,6 +501,9 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                 }
                 struct object_string *result =
                     vm_repeat_string(vm, value_as_string(string_operand), n);
+                // Keep operands on the stack to prevent them from being garbage collected before
+                // the result has been created
+                vm_stack_pop_n(vm, 2);
                 vm_stack_push(vm, string_value(result));
             } else {
                 EXECUTE_BINARY_NUMBER_OP(*, number_value);
@@ -517,10 +525,6 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         case OP_MODULO: {
             value b = vm_stack_peek(vm, 0);
             value a = vm_stack_peek(vm, 1);
-            if (value_as_number(b) == 0) {
-                vm_report_errorf(vm, source, "cannot modulo by 0");
-                goto out_error;
-            }
             if (value_type(a) != VALUE_NUMBER || value_type(b) != VALUE_NUMBER) {
                 vm_report_errorf(vm, source,
                                  "'%%' operator cannot be used with types '%s' and '%s'",
@@ -528,8 +532,11 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
                                  value_type_string(value_type(b)));
                 goto out_error;
             }
-            vm_stack_pop(vm);
-            vm_stack_pop(vm);
+            if (value_as_number(b) == 0) {
+                vm_report_errorf(vm, source, "cannot modulo by 0");
+                goto out_error;
+            }
+            vm_stack_pop_n(vm, 2);
             vm_stack_push(vm, number_value(fmod(value_as_number(a), value_as_number(b))));
             break;
         }
@@ -636,9 +643,11 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
 
             if (native_function != NULL) {
                 value *args = vm->_stack_top - arg_count;
-                vm_stack_pop_n(vm, arg_count + 1); // Arguments + function
                 char *error_msg;
                 value result = native_function->body(vm, args, &error_msg);
+                // Keep operands on the stack to prevent them from being garbage collected before
+                // the function has been executed
+                vm_stack_pop_n(vm, arg_count + 1); // Arguments + function
                 if (values_are_equal(result, none_value)) {
                     vm_report_errorf(vm, source, "%s", error_msg);
                     free(error_msg);
@@ -707,7 +716,6 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_RETURN: {
-            value return_value = vm_stack_pop(vm);
             vm->_frames_len--;
             if (vm->_frames_len == 0)
                 return true;
@@ -716,6 +724,7 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
             size_t frame_stack_depth = vm->_stack_top - vm->_stack - frame->_stack_offset;
             vm_close_upvalues(vm, frame_stack_depth);
 
+            value return_value = vm_stack_pop(vm);
             // OP_CALL left the function and arguments on the stack and pointed stack_offset in the
             // new frame to the start of the arguments. So adding stack_offset takes us to the start
             // of the arguments and we need to take away 1 so that stack top points at the function.
@@ -735,16 +744,29 @@ out_error:
 
 bool vm_interpret(vm *vm, const char *source)
 {
+    vm->_interpret_calls++;
     bool success = true;
 
     struct bytecode_chunk chunk;
-
     bytecode_chunk_init(&chunk, false); // Lifetime is this function so no need for VM to manage
 
+    // We disable GC during compilation to avoid collecting objects which will but haven't started
+    // being used by the VM because the bytecode they're being compiled into hasn't started being
+    // executed yet.
+    //
+    // There may be some objects hanging around from a previous `vm_interpret()` call. We collect
+    // now to hopefully avoid any allocations during compilation pushing us over the next GC bytes
+    // threshold. It's still possible that there are enough allocations to push us over but we
+    // wouldn't want to collect any of them anyway.
+    if (vm->_interpret_calls > 1) {
+        vm_collect_garbage(vm);
+    }
+    vm->_is_gc_enabled = false;
     if (!compile(vm, source, &chunk)) {
         success = false;
         goto out_chunk_deinit;
     }
+    vm->_is_gc_enabled = true;
 
     success = vm_execute(vm, &chunk, source);
 

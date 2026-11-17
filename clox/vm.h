@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "bytecode.h"
 #include "line_number.h"
 #include "map.h"
 #include "value.h"
@@ -14,7 +13,7 @@
 // Runtime representation of a frame as defined in bytecode.h.
 struct frame {
     // Function called if this frame was created for a function call, otherwise `NULL`
-    const struct object_function *function;
+    struct object_function *function;
     // Internal fields below, do not use.
     const struct bytecode_chunk *_chunk; // Bytecode chunk being executed
     uint8_t *_ip; // Pointer to the next byte to be read from the instructions (instruction pointer)
@@ -31,6 +30,16 @@ line_number frame_last_instruction_line(const struct frame *frame);
 // Must be initialised with `vm_init()` before use and deinitialised with `vm_deinit()` after use.
 struct vm {
     // Internal fields below, do not use.
+    struct object *_objects; // Head of the linked list of objects
+    size_t _allocated_bytes; // Total number of bytes of VM managed memory allocated
+    // Total number of bytes of VM managed memory that have to be allocated before the next GC cycle
+    // is triggered
+    size_t _next_gc_bytes;
+    bool _is_gc_enabled;
+    // Stack of reachable objects which haven't had their references traced
+    struct object **_grey_objects;
+    size_t _grey_objects_len; // Number of grey objects
+    size_t _grey_objects_cap; // Numbre of grey objects space has been allocated for
     struct frame *_frames; // Stack of frames for active bytecode executions
     size_t _frames_len; // Number of active frames
     size_t _frames_cap; // Number of actives frames space has been allocated for
@@ -40,11 +49,10 @@ struct vm {
     value *_stack;
     size_t _stack_cap; // Number of elements space has been allocated for in the value stack
     value *_stack_top; // Points to where the next element will be pushed on the value stack
-    struct object *_objects; // Head of the linked list of managed objects
     map _strings; // Interned strings
     // Array of global variables.
     // Must only be appended to via `vm_add_global()`.
-    struct global *_globals;
+    struct _global *_globals;
     size_t _globals_len; // Number of global variables
     size_t _globals_cap; // Number of global variables space has been allocated for
     // Head of the linked list of open upvalues.
@@ -55,6 +63,7 @@ struct vm {
     // the element is `NULL`.
     // The size of this array mirrors the value stack.
     const char **_final_local_names;
+    int64_t _interpret_calls; // Number of times `vm_interpret()` has been called.
 };
 
 // Initialises `vm` for use.

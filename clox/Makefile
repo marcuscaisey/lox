@@ -18,6 +18,12 @@ endif
 ifdef TRACE_EXECUTION
 	CFLAGS += -DDEBUG_TRACE_EXECUTION
 endif
+ifdef TRACE_GC
+	CFLAGS += -DDEBUG_TRACE_GC
+endif
+ifdef STRESS_GC
+	CFLAGS += -DDEBUG_STRESS_GC
+endif
 
 ifdef ASAN
 	CFLAGS += -O1 -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls
@@ -66,7 +72,7 @@ objects: $(OBJECTS)
 
 compile_commands.json: Makefile $(SOURCES) $(HEADERS) $(BUILD_DIR)/.cflags
 	$(MAKE) clean DEBUG=1
-	bear -- $(MAKE) -k objects DEBUG=1 PRINT_BYTECODE=1 TRACE_EXECUTION=1
+	bear -- $(MAKE) -k objects PRINT_BYTECODE=1 TRACE_EXECUTION=1 TRACE_GC=1
 
 test/skipped_tests.txt:
 	@rm $@

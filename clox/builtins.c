@@ -94,7 +94,7 @@ value builtin_string(vm *vm, value *args, char **error_msg)
     (void)error_msg;
     value value = args[0];
     char *data = value_string(value);
-    struct object_string *result = object_string_take(vm, data, strlen(data));
+    struct object_string *result = object_string_copy(vm, data, strlen(data));
     return string_value(result);
 }
 

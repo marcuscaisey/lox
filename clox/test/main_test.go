@@ -94,6 +94,7 @@ func mustBuildClox(t *testing.T) string {
 	cmd := exec.CommandContext(t.Context(), "make", "-C", "..",
 		"ASAN=1",
 		"UBSAN=1",
+		"STRESS_GC=1",
 	)
 	output, err := cmd.CombinedOutput()
 	if err != nil {

@@ -34,7 +34,6 @@ const char *value_type_string(enum value_type type);
 // `value_is_object()`, and `value_as_object()` to work with this representation.
 typedef struct {
     // Internal fields below, do not use.
-    // Members must be equal to their corresponding value_type member apart from _VALUE_OBJECT
     enum _value_type {
         _VALUE_NONE = VALUE_NONE,
         _VALUE_NUMBER = VALUE_NUMBER,

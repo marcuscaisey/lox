@@ -188,25 +188,10 @@ char *value_string(value value)
         return xstrdup(value_as_bool(value) ? "true" : "false");
     case VALUE_NIL:
         return xstrdup("nil");
-    case VALUE_STRING: {
-        struct object_string *string = value_as_string(value);
-        return xstrdup(string->data);
-    }
-    case VALUE_CLOSURE: {
-        struct object_closure *closure = value_as_closure(value);
-        return value_string(function_value(closure->function));
-    }
-    case VALUE_FUNCTION: {
-        struct object_function *function = value_as_function(value);
-        char *out;
-        xasprintf(&out, "[function %s]", function->name);
-        return out;
-    }
-    case VALUE_NATIVE_FUNCTION: {
-        struct object_native_function *function = value_as_native_function(value);
-        char *out;
-        xasprintf(&out, "[built-in function %s]", function->name);
-        return out;
-    }
+    case VALUE_STRING:
+    case VALUE_FUNCTION:
+    case VALUE_CLOSURE:
+    case VALUE_NATIVE_FUNCTION:
+        return object_string(NULL, value._object);
     }
 }

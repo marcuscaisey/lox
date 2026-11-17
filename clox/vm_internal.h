@@ -7,6 +7,10 @@
 #include "value.h"
 #include "vm_fwd.h" // IWYU pragma: export
 
+// Frees objects which will never be used by the VM.
+// If GC is not enabled, this is a no-op.
+void vm_collect_garbage(vm *vm);
+
 // Works like `xmalloc()`, except it allocates VM managed memory.
 void *vm_xmalloc(vm *vm, size_t size);
 
@@ -25,7 +29,7 @@ char *vm_xstrndup(vm *vm, const char *s, size_t n);
 // Represents a global variable.
 // Must be created with `vm_add_global()` and deinitialised with `global_deinit()` after use.
 // Internal type, do not use.
-struct global {
+struct _global {
     char *name;
     size_t name_len;
     value value; // `none_value` if the variable has not been declared yet
@@ -34,10 +38,10 @@ struct global {
 
 // Initialises `global` as an undeclared global variable by making a copy of the first `len` bytes
 // of `name`.
-void global_init(struct global *global, const char *name, size_t len);
+void global_init(struct _global *global, const char *name, size_t len);
 
 // Frees the memory associated with `global`.
-void global_deinit(struct global *global);
+void global_deinit(struct _global *global);
 
 // Adds a global variable to `vm's` set if it doesn't exist and returns its index.
 // The first `len` bytes of `name` are copied if a global is added.
