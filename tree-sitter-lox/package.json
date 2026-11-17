@@ -51,5 +51,9 @@
     "tree_sitter": {
       "optional": true
     }
+  },
+  "allowScripts": {
+    "tree-sitter@0.22.4": true,
+    "tree-sitter-cli@0.25.10": true
   }
 }
