@@ -213,6 +213,9 @@ static const size_t initial_frames_capacity = 64;
 // values.
 static const size_t initial_stack_capacity = initial_frames_capacity * 256;
 
+// Max number of nested function calls that can be made.
+static const int max_call_depth = 100;
+
 // Executes `chunk` which was compiled from `source` and reports whether execution was successful.
 static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *source)
 {
@@ -587,6 +590,12 @@ static bool vm_execute(vm *vm, const struct bytecode_chunk *chunk, const char *s
         }
 
         case OP_CALL: {
+            // + 1 because first frame is not a function call
+            if (vm->_frames_len == max_call_depth + 1) {
+                vm_report_errorf(vm, source, "max call depth reached");
+                goto out_error;
+            }
+
             argument_count arg_count = bytecode_read_argument_count(&frame->_ip);
             value function_value = vm_stack_peek(vm, arg_count);
 
