@@ -83,6 +83,9 @@ struct token {
     line_number line; // Line that the token starts on
 };
 
+// Returns a pointer to the character just after the token in the source.
+const char *token_end(struct token token);
+
 // Lexer which reads Lox source code and produces lexical tokens.
 // Must be initialised with `lexer_init()` before use and deinitialised with `lexer_deinit()` after
 // use.

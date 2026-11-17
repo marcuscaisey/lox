@@ -1,6 +1,7 @@
 #include "compiler.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -218,6 +219,7 @@ struct local {
 
 // Represents a break or continue statement that has been compiled.
 struct loop_jump_statement {
+    struct token keyword; // The break or continue token
     // Where the corresponding forward jump instruction was written to in the bytecode chunk
     bytecode_offset instruction;
     // Number of local variables in scope at the statements position
@@ -414,11 +416,15 @@ static void compiler_emit_operand(const compiler *compiler, uint8_t operand, lin
 static void compiler_emit_constant_index(compiler *compiler, value v, line_number line)
 {
     value index_value;
-    constant_index index;
+    size_t index;
     if (map_get(&compiler->_constant_indexes, v, &index_value)) {
         index = value_as_number(index_value);
     } else {
         index = bytecode_chunk_add_constant(compiler->_vm, compiler->_out, v);
+        if (index > bytecode_max_constant_index)
+            PARSER_REPORT_ERRORF(compiler->_parser, compiler->_parser->prev_token,
+                                 "max number of constants used (%" PRIu64 ")",
+                                 (uint64_t)bytecode_max_constant_index + 1);
         map_set(compiler->_vm, &compiler->_constant_indexes, v, number_value(index));
     }
     bytecode_chunk_write_constant_index(compiler->_vm, compiler->_out, index, line);
@@ -437,11 +443,15 @@ static void compiler_emit_upvalue_index(const compiler *compiler, upvalue_index 
     bytecode_chunk_write_upvalue_index(compiler->_vm, compiler->_out, index, line);
 }
 
-// Writes `index` corresponding to `line` to the output bytecode chunk.
+// Writes `index` corresponding to `ident` to the output bytecode chunk.
 static void compiler_emit_global_index(const compiler *compiler, global_index index,
-                                       line_number line)
+                                       struct token ident)
 {
-    bytecode_chunk_write_global_index(compiler->_vm, compiler->_out, index, line);
+    if (index > bytecode_max_global_index)
+        PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, ident,
+                                    "max number of global variables used (%" PRIu64 ")",
+                                    (uint64_t)bytecode_max_global_index + 1);
+    bytecode_chunk_write_global_index(compiler->_vm, compiler->_out, index, ident.line);
 }
 
 // Writes `count` corresponding to `line` to the output bytecode chunk.
@@ -513,29 +523,32 @@ static void compiler_emit_close_upvalues(compiler *compiler, pop_count count, li
 // Sets the operand of the forward jump instruction at offset `target` in the output bytecode chunk
 // so that it jumps to the next offset written to. I.e. if this function is called just before
 // another which emits some bytecode, the jump instruction will jump to that emitted bytecode.
-static void compiler_set_forward_jump_offset(const compiler *compiler, bytecode_offset target)
+// Returns whether the jump was too large for the operand to be written precisely.
+static bool compiler_set_forward_jump_offset(const compiler *compiler, bytecode_offset target)
 {
     enum opcode opcode = compiler->_out->instructions[target];
     assert(is_forward_jump_opcode(opcode));
     // `target` is the offset of the jump opcode which is then followed by `jump_offset_size` bytes
     // for the operand. The jump offset counts from the offset after the operand bytes so we need to
     // take this away from the result (1 for the opcode, `jump_offset_size` for the operand).
-    jump_offset jump_offset =
+    size_t jump_offset =
         compiler_bytecode_offset(compiler) - target - 1 - bytecode_jump_offset_size;
     bytecode_chunk_set_jump_offset(compiler->_out, target, jump_offset);
+    return jump_offset > bytecode_max_jump_offset;
 }
 
 // Writes a backward jump instruction corresponding to `line` to the output bytecode chunk that
 // jumps back to `target`.
-static void compiler_emit_backward_jump(compiler *compiler, bytecode_offset target,
+// Returns whether the jump was too large for the instruction's operand to be written precisely.
+static bool compiler_emit_backward_jump(compiler *compiler, bytecode_offset target,
                                         line_number line)
 {
     compiler_emit_opcode(compiler, OP_JUMP_BACK, line);
     // The jump offset counts from the offset after the `jump_offset_size` operand bytes which we
     // haven't written yet so we need we need to add this to the result.
-    jump_offset jump_offset =
-        compiler_bytecode_offset(compiler) - target + bytecode_jump_offset_size;
+    size_t jump_offset = compiler_bytecode_offset(compiler) - target + bytecode_jump_offset_size;
     bytecode_chunk_write_jump_offset(compiler->_vm, compiler->_out, jump_offset, line);
+    return jump_offset > bytecode_max_jump_offset;
 }
 
 // Signals that a new lexical scope has been entered.
@@ -590,6 +603,11 @@ static void compiler_declare_variable(compiler *compiler, struct token ident)
                                  (int)ident.len, ident.start);
     }
     DYNAMIC_ARRAY_GROW(compiler->_locals, compiler->_locals_cap, compiler->_local_count + 1);
+    size_t index = compiler->_local_count;
+    if (index > bytecode_max_stack_index)
+        PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, ident,
+                                    "max number of local variables declared (%" PRIu64 ")",
+                                    (uint64_t)bytecode_max_stack_index + 1);
     struct local *local = &compiler->_locals[compiler->_local_count++];
     local->name = ident.start;
     local->name_len = ident.len;
@@ -606,12 +624,17 @@ static void compiler_emit_variable_definition(compiler *compiler, struct token i
     if (in_global_scope(compiler)) {
         enum opcode instruction = is_final ? OP_DEFINE_GLOBAL_FINAL : OP_DEFINE_GLOBAL;
         compiler_emit_opcode(compiler, instruction, ident.line);
-        global_index index = vm_add_global(compiler->_vm, ident.start, ident.len);
-        compiler_emit_global_index(compiler, index, ident.line);
+        size_t index = vm_add_global(compiler->_vm, ident.start, ident.len);
+        compiler_emit_global_index(compiler, index, ident);
     } else if (is_final) {
         compiler_emit_opcode(compiler, OP_DEFINE_LOCAL_FINAL, ident.line);
-        final_local_name_index index = bytecode_chunk_add_final_local_name(
-            compiler->_vm, compiler->_out, ident.start, ident.len);
+        size_t index = bytecode_chunk_add_final_local_name(compiler->_vm, compiler->_out,
+                                                           ident.start, ident.len);
+        if (index > bytecode_max_final_local_name_index)
+            PARSER_REPORT_SYNTAX_ERRORF(compiler->_parser, ident,
+                                        "max number of final local variables declared (%" PRIu64
+                                        ")",
+                                        (uint64_t)bytecode_max_final_local_name_index + 1);
         bytecode_chunk_write_final_local_name_index(compiler->_vm, compiler->_out, index,
                                                     ident.line);
     } else {
@@ -671,7 +694,11 @@ static size_t compiler_add_upvalue_source(compiler *compiler, struct upvalue_sou
     }
     DYNAMIC_ARRAY_GROW(compiler->_upvalue_sources, compiler->_upvalue_sources_cap,
                        compiler->_upvalue_count + 1);
-    upvalue_index index = compiler->_upvalue_count;
+    size_t index = compiler->_upvalue_count;
+    if (index > bytecode_max_upvalue_index)
+        PARSER_REPORT_ERRORF(compiler->_parser, compiler->_parser->prev_token,
+                             "max number of upvalues used (%" PRIu64 ")",
+                             (uint64_t)bytecode_max_upvalue_index + 1);
     compiler->_upvalue_sources[compiler->_upvalue_count++] = source;
     return index;
 }
@@ -719,12 +746,16 @@ static struct loop_jump_statement compiler_compile_loop_jump_stmt(compiler *comp
         PARSER_REPORT_ERRORF(compiler->_parser, compiler->_parser->token,
                              "'%s' can only be used inside a loop", token_type_string(type));
     line_number line = compiler->_parser->token.line;
+    struct token keyword = compiler->_parser->token;
     parser_expect(compiler->_parser, type);
     parser_expect(compiler->_parser, TOKEN_SEMICOLON);
     bytecode_offset jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
-    return (struct loop_jump_statement){ .instruction = jump,
-                                         .local_count = compiler->_local_count,
-                                         .line = line };
+    return (struct loop_jump_statement){
+        .keyword = keyword,
+        .instruction = jump,
+        .local_count = compiler->_local_count,
+        .line = line,
+    };
 }
 
 // Finishes the compilation of `stmt`.
@@ -736,7 +767,9 @@ static void compiler_finish_compiling_loop_jump_stmt(compiler *compiler,
     // we need to update so that it points to the next bytecode offset written to. If the statement
     // came after some local variables had been declared, the jump will skip over the instructions
     // popping those variables from the stack, so we need to do that as well.
-    compiler_set_forward_jump_offset(compiler, stmt.instruction);
+    if (compiler_set_forward_jump_offset(compiler, stmt.instruction))
+        PARSER_REPORT_ERRORF(compiler->_parser, stmt.keyword, "'%s' too far from end of loop",
+                             token_type_string(stmt.keyword.type));
     size_t locals_declared_before_stmt = stmt.local_count - compiler->_local_count;
     compiler_emit_pops(compiler, locals_declared_before_stmt, stmt.line);
 }
@@ -761,7 +794,7 @@ static void compiler_compile_fun(compiler *compiler, enum function_type type, co
     body_compiler._mode = (enum compiler_mode)type;
     body_compiler._enclosing_compiler = compiler;
 
-    argument_count arity = 0;
+    size_t arity = 0;
     parser_expect(body_compiler._parser, TOKEN_LEFT_PAREN);
     if (!PARSER_MATCH(body_compiler._parser, TOKEN_RIGHT_PAREN)) {
         do {
@@ -769,6 +802,10 @@ static void compiler_compile_fun(compiler *compiler, enum function_type type, co
             struct token param = body_compiler._parser->token;
             if (!parser_expectf(body_compiler._parser, TOKEN_IDENT, "expected parameter name"))
                 goto out_body_compiler_deinit;
+            if (arity > bytecode_max_argument_count)
+                PARSER_REPORT_ERRORF(compiler->_parser, param,
+                                     "max number of parameters declared (%" PRIu64 ")",
+                                     (uint64_t)bytecode_max_argument_count);
             compiler_declare_variable(&body_compiler, param);
         } while (PARSER_MATCH(body_compiler._parser, TOKEN_COMMA));
         parser_expect(body_compiler._parser, TOKEN_RIGHT_PAREN);
@@ -948,8 +985,8 @@ static void compiler_compile_ident_expr(compiler *compiler, enum precedence_leve
     } else {
         enum opcode instruction = is_read ? OP_GET_GLOBAL : OP_SET_GLOBAL;
         compiler_emit_opcode(compiler, instruction, line);
-        global_index index = vm_add_global(compiler->_vm, name.start, name.len);
-        compiler_emit_global_index(compiler, index, line);
+        size_t index = vm_add_global(compiler->_vm, name.start, name.len);
+        compiler_emit_global_index(compiler, index, name);
     }
 }
 
@@ -1048,16 +1085,29 @@ static void compiler_compile_ternary_expr(compiler *compiler, enum precedence_le
 {
     (void)level;
     line_number line = compiler->_parser->token.line;
+
     parser_expect(compiler->_parser, TOKEN_QUESTION);
     bytecode_offset else_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
+
     compiler_emit_pops(compiler, 1, line); // Condition
+    const char *then_start = compiler->_parser->token.start;
     compiler_compile_expr(compiler); // Then value
+    const char *then_end = token_end(compiler->_parser->prev_token);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP, line);
+
     parser_expect(compiler->_parser, TOKEN_COLON);
-    compiler_set_forward_jump_offset(compiler, else_jump);
+    if (compiler_set_forward_jump_offset(compiler, else_jump))
+        parser_report_errorf(compiler->_parser, then_start, then_end,
+                             "tenary then expression too large");
+
     compiler_emit_pops(compiler, 1, line); // Condition
+    const char *else_start = compiler->_parser->token.start;
     compiler_compile_expr_at_level(compiler, PREC_TERNARY); // Else value
-    compiler_set_forward_jump_offset(compiler, end_jump);
+    const char *else_end = token_end(compiler->_parser->prev_token);
+
+    if (compiler_set_forward_jump_offset(compiler, end_jump))
+        parser_report_errorf(compiler->_parser, else_start, else_end,
+                             "tenary else expression too large");
 }
 
 // `infix_expr_compiler` for an or expression.
@@ -1067,8 +1117,12 @@ static void compiler_compile_or_expr(compiler *compiler, enum precedence_level l
     parser_expect(compiler->_parser, TOKEN_OR);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_TRUE, line);
     compiler_emit_pops(compiler, 1, line); // Left operand
+    const char *right_start = compiler->_parser->token.start;
     compiler_compile_expr_at_level(compiler, level + 1); // Right operand
-    compiler_set_forward_jump_offset(compiler, end_jump);
+    const char *right_end = token_end(compiler->_parser->prev_token);
+    if (compiler_set_forward_jump_offset(compiler, end_jump))
+        parser_report_errorf(compiler->_parser, right_start, right_end,
+                             "'%s' right operand too large", token_type_string(TOKEN_OR));
 }
 
 // `infix_expr_compiler` for an and expression.
@@ -1078,8 +1132,12 @@ static void compiler_compile_and_expr(compiler *compiler, enum precedence_level 
     parser_expect(compiler->_parser, TOKEN_AND);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, line);
     compiler_emit_pops(compiler, 1, line); // Left operand
+    const char *right_start = compiler->_parser->token.start;
     compiler_compile_expr_at_level(compiler, level + 1); // Right operand
-    compiler_set_forward_jump_offset(compiler, end_jump);
+    const char *right_end = token_end(compiler->_parser->prev_token);
+    if (compiler_set_forward_jump_offset(compiler, end_jump))
+        parser_report_errorf(compiler->_parser, right_start, right_end,
+                             "'%s' right operand too large", token_type_string(TOKEN_AND));
 }
 
 // `infix_expr_compiler` for a binary expression.
@@ -1125,11 +1183,17 @@ static void compiler_compile_call_expr(compiler *compiler, enum precedence_level
     line_number line = compiler->_parser->token.line;
     parser_expect(compiler->_parser, TOKEN_LEFT_PAREN);
 
-    argument_count args = 0;
+    size_t args = 0;
     if (!PARSER_MATCH(compiler->_parser, TOKEN_RIGHT_PAREN)) {
         do {
             args++;
+            const char *arg_start = compiler->_parser->token.start;
             compiler_compile_expr_at_level(compiler, PREC_ASSIGNMENT);
+            const char *arg_end = token_end(compiler->_parser->prev_token);
+            if (args > bytecode_max_argument_count)
+                parser_report_errorf(compiler->_parser, arg_start, arg_end,
+                                     "max number of arguments passed (%" PRIu64 ")",
+                                     (uint64_t)bytecode_max_argument_count);
         } while (PARSER_MATCH(compiler->_parser, TOKEN_COMMA));
         parser_expect(compiler->_parser, TOKEN_RIGHT_PAREN);
     }
@@ -1297,12 +1361,13 @@ static void compiler_compile_print_stmt(compiler *compiler)
 // past it.
 static void compiler_compile_if_stmt(compiler *compiler)
 {
-    int if_line = compiler->_parser->token.line;
+    struct token if_keyword = compiler->_parser->token;
+    line_number if_line = if_keyword.line;
     parser_expect(compiler->_parser, TOKEN_IF);
 
     // Condition
     parser_expect(compiler->_parser, TOKEN_LEFT_PAREN);
-    int condition_line = compiler->_parser->token.line;
+    line_number condition_line = compiler->_parser->token.line;
     compiler_compile_expr(compiler); // Condition
     parser_expect(compiler->_parser, TOKEN_RIGHT_PAREN);
     bytecode_offset else_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, if_line);
@@ -1313,19 +1378,25 @@ static void compiler_compile_if_stmt(compiler *compiler)
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP, if_line);
 
     // Else branch
-    compiler_set_forward_jump_offset(compiler, else_jump);
+    if (compiler_set_forward_jump_offset(compiler, else_jump))
+        PARSER_REPORT_ERRORF(compiler->_parser, if_keyword, "'%s' body too large",
+                             token_type_string(TOKEN_IF));
     compiler_emit_pops(compiler, 1, condition_line); // Condition
+    struct token else_keyword = compiler->_parser->token;
     if (PARSER_MATCH(compiler->_parser, TOKEN_ELSE)) {
         compiler_compile_stmt(compiler); // Else body
     }
-    compiler_set_forward_jump_offset(compiler, end_jump);
+    if (compiler_set_forward_jump_offset(compiler, end_jump))
+        PARSER_REPORT_ERRORF(compiler->_parser, else_keyword, "'%s' body too large",
+                             token_type_string(TOKEN_ELSE));
 }
 
 // Emits the bytecode for the switch statement starting at the current token and advances the
 // compiler past it.
 static void compiler_compile_switch_stmt(compiler *compiler)
 {
-    int switch_line = compiler->_parser->token.line;
+    struct token switch_keyword = compiler->_parser->token;
+    line_number switch_line = switch_keyword.len;
     parser_expect(compiler->_parser, TOKEN_SWITCH);
 
     // Switch value
@@ -1340,7 +1411,8 @@ static void compiler_compile_switch_stmt(compiler *compiler)
 
     // Non-default cases
     while (PARSER_MATCH(compiler->_parser, TOKEN_CASE)) {
-        line_number line = compiler->_parser->prev_token.line;
+        struct token keyword = compiler->_parser->prev_token;
+        line_number line = keyword.line;
 
         // Compare switch value against case value
         compiler_emit_opcode(compiler, OP_DUP, line); // Switch value
@@ -1362,7 +1434,9 @@ static void compiler_compile_switch_stmt(compiler *compiler)
         end_jumps[end_jumps_len++] = end_jump;
 
         // Jump to next case
-        compiler_set_forward_jump_offset(compiler, next_case_jump);
+        if (compiler_set_forward_jump_offset(compiler, next_case_jump))
+            PARSER_REPORT_ERRORF(compiler->_parser, keyword, "'%s' body too large",
+                                 token_type_string(TOKEN_CASE));
         compiler_emit_pops(compiler, 1, line); // EQUAL result
     }
 
@@ -1377,8 +1451,13 @@ static void compiler_compile_switch_stmt(compiler *compiler)
 
     parser_expect(compiler->_parser, TOKEN_RIGHT_BRACE);
 
+    bool switch_body_too_large = false;
     for (size_t i = 0; i < end_jumps_len; i++)
-        compiler_set_forward_jump_offset(compiler, end_jumps[i]);
+        switch_body_too_large = compiler_set_forward_jump_offset(compiler, end_jumps[i]) ||
+                                switch_body_too_large;
+    if (switch_body_too_large)
+        PARSER_REPORT_ERRORF(compiler->_parser, switch_keyword, "'%s' body too large",
+                             token_type_string(TOKEN_SWITCH));
     free(end_jumps);
 }
 
@@ -1389,12 +1468,13 @@ static void compiler_compile_while_stmt(compiler *compiler)
     struct loop_state prev_loop_state = compiler_begin_loop(compiler);
 
     bytecode_offset loop_start = compiler_bytecode_offset(compiler);
-    int while_line = compiler->_parser->token.line;
+    struct token while_keyword = compiler->_parser->token;
+    line_number while_line = while_keyword.line;
     parser_expect(compiler->_parser, TOKEN_WHILE);
 
     // Condition
     parser_expect(compiler->_parser, TOKEN_LEFT_PAREN);
-    int condition_line = compiler->_parser->token.line;
+    line_number condition_line = compiler->_parser->token.line;
     compiler_compile_expr(compiler); // Condition
     parser_expect(compiler->_parser, TOKEN_RIGHT_PAREN);
     bytecode_offset end_jump = compiler_emit_forward_jump(compiler, OP_JUMP_IF_FALSE, while_line);
@@ -1403,8 +1483,10 @@ static void compiler_compile_while_stmt(compiler *compiler)
     compiler_emit_pops(compiler, 1, condition_line); // Condition
     compiler_compile_stmt(compiler); // Body
     compiler_finish_compiling_continue_stmts(compiler);
-    compiler_emit_backward_jump(compiler, loop_start, while_line);
-    compiler_set_forward_jump_offset(compiler, end_jump);
+    if (compiler_emit_backward_jump(compiler, loop_start, while_line) ||
+        compiler_set_forward_jump_offset(compiler, end_jump))
+        PARSER_REPORT_ERRORF(compiler->_parser, while_keyword, "'%s' body too large",
+                             token_type_string(TOKEN_WHILE));
     compiler_emit_pops(compiler, 1, condition_line); // Condition
     compiler_finish_compiling_break_stmts(compiler);
 
@@ -1418,7 +1500,8 @@ static void compiler_compile_for_stmt(compiler *compiler)
     struct loop_state prev_loop_state = compiler_begin_loop(compiler);
     compiler_begin_scope(compiler);
 
-    int for_line = compiler->_parser->token.line;
+    struct token for_keyword = compiler->_parser->token;
+    line_number for_line = for_keyword.line;
     parser_expect(compiler->_parser, TOKEN_FOR);
     parser_expect(compiler->_parser, TOKEN_LEFT_PAREN);
 
@@ -1434,8 +1517,9 @@ static void compiler_compile_for_stmt(compiler *compiler)
     // Condition
     bool has_condition = !PARSER_MATCH(compiler->_parser, TOKEN_SEMICOLON);
     bytecode_offset condition_start = compiler_bytecode_offset(compiler);
-    int condition_line = compiler->_parser->token.line;
+    line_number condition_line = compiler->_parser->token.line;
     bytecode_offset end_jump;
+    const char *condition_start_char = compiler->_parser->token.start;
     if (has_condition) {
         compiler_compile_expr(compiler); // Condition
         parser_expect(compiler->_parser, TOKEN_SEMICOLON);
@@ -1446,29 +1530,41 @@ static void compiler_compile_for_stmt(compiler *compiler)
     // Increment expression
     bool has_increment = !PARSER_MATCH(compiler->_parser, TOKEN_RIGHT_PAREN);
     bytecode_offset increment_start;
-    int increment_line = compiler->_parser->token.line;
+    line_number increment_line = compiler->_parser->token.line;
     bytecode_offset increment_body_jump;
+    const char *increment_start_char = compiler->_parser->token.start;
+    const char *increment_end_char;
     if (has_increment) {
         increment_body_jump = compiler_emit_forward_jump(compiler, OP_JUMP, for_line);
         increment_start = compiler_bytecode_offset(compiler);
         compiler_compile_expr(compiler); // Increment expression
+        increment_end_char = token_end(compiler->_parser->prev_token);
         parser_expect(compiler->_parser, TOKEN_RIGHT_PAREN);
         compiler_emit_pops(compiler, 1, increment_line); // Increment expression value
         if (has_condition)
-            compiler_emit_backward_jump(compiler, condition_start, for_line);
+            if (compiler_emit_backward_jump(compiler, condition_start, for_line))
+                parser_report_errorf(
+                    compiler->_parser, condition_start_char, increment_end_char,
+                    "'%s' condition and increment expression combined are too large",
+                    token_type_string(TOKEN_FOR));
     }
 
     // Body
-    if (has_increment)
-        compiler_set_forward_jump_offset(compiler, increment_body_jump);
+    if (has_increment && compiler_set_forward_jump_offset(compiler, increment_body_jump))
+        parser_report_errorf(compiler->_parser, increment_start_char, increment_end_char,
+                             "'%s' increment expression too large", token_type_string(TOKEN_FOR));
     compiler_compile_stmt(compiler); // Body
     compiler_finish_compiling_continue_stmts(compiler);
     if (hasLoopVar)
         compiler_emit_close_upvalues(compiler, 1, for_line);
     bytecode_offset body_jump_back_target = has_increment ? increment_start : condition_start;
-    compiler_emit_backward_jump(compiler, body_jump_back_target, for_line);
+    if (compiler_emit_backward_jump(compiler, body_jump_back_target, for_line))
+        PARSER_REPORT_ERRORF(compiler->_parser, for_keyword, "'%s' body too large",
+                             token_type_string(TOKEN_FOR));
     if (has_condition) {
-        compiler_set_forward_jump_offset(compiler, end_jump);
+        if (compiler_set_forward_jump_offset(compiler, end_jump))
+            PARSER_REPORT_ERRORF(compiler->_parser, for_keyword, "'%s' body too large",
+                                 token_type_string(TOKEN_FOR));
         compiler_emit_pops(compiler, 1, condition_line); // Condition
     }
     compiler_finish_compiling_break_stmts(compiler);

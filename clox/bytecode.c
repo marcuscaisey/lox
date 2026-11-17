@@ -161,9 +161,9 @@ void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, li
     chunk->len++;
 }
 
-constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value)
+size_t bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value)
 {
-    constant_index index = chunk->constants_len;
+    size_t index = chunk->constants_len;
     size_t target_len = chunk->constants_len + 1;
     if (chunk->_is_vm_managed)
         VM_DYNAMIC_ARRAY_GROW(vm, chunk->constants, chunk->_constants_cap, target_len);
@@ -173,14 +173,15 @@ constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk,
     return index;
 }
 
-final_local_name_index bytecode_chunk_add_final_local_name(vm *vm, struct bytecode_chunk *chunk,
-                                                          const char *name, size_t len)
+size_t bytecode_chunk_add_final_local_name(vm *vm, struct bytecode_chunk *chunk, const char *name,
+                                           size_t len)
 {
-    final_local_name_index index = chunk->final_local_names_len;
+    size_t index = chunk->final_local_names_len;
     size_t target_len = chunk->final_local_names_len + 1;
     char *name_copy;
     if (chunk->_is_vm_managed) {
-        VM_DYNAMIC_ARRAY_GROW(vm, chunk->final_local_names, chunk->_final_local_names_cap, target_len);
+        VM_DYNAMIC_ARRAY_GROW(vm, chunk->final_local_names, chunk->_final_local_names_cap,
+                              target_len);
         name_copy = vm_xmalloc(vm, len + 1);
     } else {
         DYNAMIC_ARRAY_GROW(chunk->final_local_names, chunk->_final_local_names_cap, target_len);

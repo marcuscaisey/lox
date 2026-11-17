@@ -2,6 +2,7 @@ Diagnostics:
   Includes:
     IgnoreHeader:
       - '_ctype\.h$'
+      - '_inttypes\.h$'
       - '_stdio\.h$'
       - '_stdlib\.h$'
       - '_string\.h$'

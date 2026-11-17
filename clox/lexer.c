@@ -125,6 +125,11 @@ const char *token_type_string(enum token_type type)
     }
 }
 
+const char *token_end(struct token token)
+{
+    return token.start + token.len;
+}
+
 void lexer_init(lexer *lexer, const char *source)
 {
     lexer->_source_start = source;

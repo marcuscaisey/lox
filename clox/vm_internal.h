@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "bytecode.h"
 #include "value.h"
 #include "vm_fwd.h" // IWYU pragma: export
 
@@ -42,6 +41,6 @@ void global_deinit(struct global *global);
 
 // Adds a global variable to `vm's` set if it doesn't exist and returns its index.
 // The first `len` bytes of `name` are copied if a global is added.
-global_index vm_add_global(vm *vm, const char *name, size_t len);
+size_t vm_add_global(vm *vm, const char *name, size_t len);
 
 #endif

@@ -23,7 +23,7 @@ void global_deinit(struct global *global)
     free(global->name);
 }
 
-global_index vm_add_global(vm *vm, const char *name, size_t len)
+size_t vm_add_global(vm *vm, const char *name, size_t len)
 {
     for (size_t i = 0; i < vm->_globals_len; i++) {
         struct global global = vm->_globals[i];
@@ -31,7 +31,7 @@ global_index vm_add_global(vm *vm, const char *name, size_t len)
             return i;
     }
     DYNAMIC_ARRAY_GROW(vm->_globals, vm->_globals_cap, vm->_globals_len + 1);
-    global_index index = vm->_globals_len;
+    size_t index = vm->_globals_len;
     struct global *global = &vm->_globals[vm->_globals_len++];
     global_init(global, name, len);
     return index;

@@ -37,7 +37,6 @@
 #ifndef CLOX_BYTECODE_H
 #define CLOX_BYTECODE_H
 
-#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -46,26 +45,40 @@
 #include "value.h"
 #include "vm_fwd.h"
 
+static const int32_t _bytecode_max_u24 = (1 << 24) - 1;
+
 typedef int32_t constant_index;
+static const constant_index bytecode_max_constant_index = _bytecode_max_u24;
 
 typedef int32_t final_local_name_index;
+static const final_local_name_index bytecode_max_final_local_name_index = _bytecode_max_u24;
 
 typedef int32_t pop_count;
+static const pop_count bytecode_max_pop_count = _bytecode_max_u24;
 
 typedef int32_t global_index;
+static const global_index bytecode_max_global_index = _bytecode_max_u24;
 
 typedef int32_t stack_index;
+// 1 less than `bytecode_max_pop_count` so that it's possible to pop every value from the stack
+// with one POP_N instruction.
+static const stack_index bytecode_max_stack_index = bytecode_max_pop_count - 1;
 
 typedef int32_t jump_offset;
+static const jump_offset bytecode_max_jump_offset = (1 << 16) - 1;
 
-// Size of a jump offset value.
-static const size_t bytecode_jump_offset_size;
+// Size in bytes of a jump offset value.
+static const size_t bytecode_jump_offset_size = 2;
 
 typedef int32_t argument_count;
+static const argument_count bytecode_max_argument_count = _bytecode_max_u24;
 
 typedef int32_t upvalue_count;
+static const upvalue_count bytecode_max_upvalue_count = _bytecode_max_u24;
 
 typedef int32_t upvalue_index;
+// 1 less than `bytecode_max_upvalue_count` so that it's possible to reference every upvalue by index
+static const upvalue_index bytecode_max_upvalue_index = bytecode_max_upvalue_count - 1;
 
 // Instructions defined by the Lox VM's instruction set.
 //
@@ -290,19 +303,17 @@ void bytecode_chunk_deinit(vm *vm, struct bytecode_chunk *chunk);
 void bytecode_chunk_write(vm *vm, struct bytecode_chunk *chunk, uint8_t byte, line_number line);
 
 // Stores `value` in the chunk's constants and returns its index.
-constant_index bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value);
+size_t bytecode_chunk_add_constant(vm *vm, struct bytecode_chunk *chunk, value value);
 
 // Stores a copy of the first `len` bytes of `name` in the chunk's final local variable name pool
 // and returns its index.
-final_local_name_index bytecode_chunk_add_final_local_name(vm *vm, struct bytecode_chunk *chunk,
-                                                           const char *name, size_t len);
+size_t bytecode_chunk_add_final_local_name(vm *vm, struct bytecode_chunk *chunk, const char *name,
+                                           size_t len);
 
 // Writes `value` as a big-endian u16 to `out`.
 // Internal function, do not use.
-static inline void _bytecode_write_u16(uint8_t *out, uint16_t value)
+static inline void _bytecode_write_u16(uint8_t *out, int32_t value)
 {
-    static const int32_t max_u16 = (1 << 16) - 1;
-    assert(value >= 0 && value <= max_u16);
     out[0] = (value >> 8) & 0xFF;
     out[1] = value & 0xFF;
 }
@@ -318,14 +329,11 @@ static inline void _bytecode_chunk_write_u16(vm *vm, struct bytecode_chunk *chun
     bytecode_chunk_write(vm, chunk, bytes[1], line);
 }
 
-static const int32_t _bytecode_max_u24 = (1 << 24) - 1;
-
 // Writes `value` associated with line to the chunk's instructions as a big-endian u24.
 // Internal function, do not use.
 static inline void _bytecode_chunk_write_u24(vm *vm, struct bytecode_chunk *chunk, int32_t value,
                                              line_number line)
 {
-    assert(value >= 0 && value <= _bytecode_max_u24);
     bytecode_chunk_write(vm, chunk, (value >> 16) & 0xFF, line);
     bytecode_chunk_write(vm, chunk, (value >> 8) & 0xFF, line);
     bytecode_chunk_write(vm, chunk, value & 0xFF, line);
@@ -338,24 +346,12 @@ static inline void _bytecode_chunk_write_compact_u24(vm *vm, struct bytecode_chu
                                                      int32_t value, line_number line)
 {
     if (value < 0xFF) {
-        assert(value >= 0);
         bytecode_chunk_write(vm, chunk, value, line);
     } else {
         bytecode_chunk_write(vm, chunk, 0xFF, line);
         _bytecode_chunk_write_u24(vm, chunk, value, line);
     }
 }
-
-static const pop_count _bytecode_max_pop_count = _bytecode_max_u24;
-
-static const upvalue_count _bytecode_max_upvalue_count = _bytecode_max_u24;
-
-// 1 less than `_max_upvalue_count` so that it's possible to reference every upvalue by index
-static const upvalue_index _bytecode_max_upvalue_index = _bytecode_max_upvalue_count - 1;
-
-// 1 less than `_max_pop_count` so that it's possible to pop every value from the stack with one
-// POP_N instruction.
-static const stack_index _bytecode_max_stack_index = _bytecode_max_pop_count - 1;
 
 // Writes `opcode` associated with `line` to the chunk's instructions.
 static inline void bytecode_chunk_write_opcode(vm *vm, struct bytecode_chunk *chunk,
@@ -383,7 +379,6 @@ static inline void bytecode_chunk_write_final_local_name_index(vm *vm, struct by
 static inline void bytecode_write_pop_count(vm *vm, struct bytecode_chunk *chunk, pop_count count,
                                             line_number line)
 {
-    assert(count <= _bytecode_max_pop_count);
     _bytecode_chunk_write_compact_u24(vm, chunk, count, line);
 }
 
@@ -398,7 +393,6 @@ static inline void bytecode_chunk_write_global_index(vm *vm, struct bytecode_chu
 static inline void bytecode_chunk_write_upvalue_index(vm *vm, struct bytecode_chunk *chunk,
                                                       upvalue_index index, line_number line)
 {
-    assert(index <= _bytecode_max_upvalue_index);
     _bytecode_chunk_write_compact_u24(vm, chunk, index, line);
 }
 
@@ -406,11 +400,8 @@ static inline void bytecode_chunk_write_upvalue_index(vm *vm, struct bytecode_ch
 static inline void bytecode_chunk_write_stack_index(vm *vm, struct bytecode_chunk *chunk,
                                                     stack_index index, line_number line)
 {
-    assert(index <= _bytecode_max_stack_index);
     _bytecode_chunk_write_compact_u24(vm, chunk, index, line);
 }
-
-static const size_t bytecode_jump_offset_size = 2;
 
 // Writes `offset` associated with `line` to the chunk's instructions.
 static inline void bytecode_chunk_write_jump_offset(vm *vm, struct bytecode_chunk *chunk,
@@ -438,7 +429,6 @@ static inline void bytecode_chunk_write_argument_count(vm *vm, struct bytecode_c
 static inline void bytecode_chunk_write_upvalue_count(vm *vm, struct bytecode_chunk *chunk,
                                                       upvalue_count count, line_number line)
 {
-    assert(count <= _bytecode_max_upvalue_count);
     _bytecode_chunk_write_compact_u24(vm, chunk, count, line);
 }
 
